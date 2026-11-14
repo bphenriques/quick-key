@@ -1,8 +1,8 @@
-# Syncs the calendars listed in a YAML file and writes the events quickkey's month shows, in its format
+# Syncs the calendars listed in a YAML file and writes the events quick-key's month shows, in its format
 # (docs/src/calendar.md). vdirsyncer downloads them and khal expands repeating events; both are configured here, next to
 # the events file, so nothing else of theirs is needed.
 #
-#   quickkey-calendar-sync ~/.config/quickkey/calendars.yaml ~/.local/state/quickkey/events.json
+#   quick-key-calendar-sync ~/.config/quick-key/calendars.yaml ~/.local/state/quick-key/events.json
 #
 # where the YAML is a list of { name, url, color, basicAuth? }, as calendars.yaml here describes. The events file also
 # says when a sync is under way and why the last one failed, keeping the events it had.
@@ -90,7 +90,7 @@ def khal-config [calendars: list, state: path]: nothing -> string {
   | str join "\n"
 }
 
-# Each occurrence once, in quickkey's terms. khal lists an event once per day it spans, and --once would drop a
+# Each occurrence once, in quick-key's terms. khal lists an event once per day it spans, and --once would drop a
 # repeating event's later occurrences.
 def events [config: path]: nothing -> list {
   let from = (date now) - 62day | format date "%F"

@@ -1,12 +1,12 @@
 [book]
-title = "quickkey"
+title = "quick-key"
 authors = ["Bruno Henriques"]
 description = "A keyboard-driven Quickshell menu with live status."
 language = "en"
 src = "src"
 
 [output.html]
-site-url = "/quickkey/"
+site-url = "/quick-key/"
 preferred-dark-theme = "navy"
-git-repository-url = "https://github.com/bphenriques/quickkey"
-edit-url-template = "https://github.com/bphenriques/quickkey/edit/main/docs/{path}"
+git-repository-url = "https://github.com/bphenriques/quick-key"
+edit-url-template = "https://github.com/bphenriques/quick-key/edit/main/docs/{path}"

@@ -1,14 +1,14 @@
 # Plugins
 
-A plugin is one QML file whose root is `Plugin`, listed by name under `plugins` in `config.json` as `{ source, settings }`. `source` names the plugin implementing it (`command`), by default its own name, or is a path to a QML file. A plugin's file is its name capitalised (`niriMinimap`: `NiriMinimap.qml`), found in `$XDG_CONFIG_HOME/quickkey/plugins/`, then among the shipped ones. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on.
+A plugin is one QML file whose root is `Plugin`, listed by name under `plugins` in `config.json` as `{ source, settings }`. `source` names the plugin implementing it (`command`), by default its own name, or is a path to a QML file. A plugin's file is its name capitalised (`niriMinimap`: `NiriMinimap.qml`), found in `$XDG_CONFIG_HOME/quick-key/plugins/`, then among the shipped ones. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on.
 
 Its API, and the only one:
 
-- In: `name`, and `settings`, its own part of the config; it holds the defaults (`settings.height ?? 30`).
-- Commands: a setting holding a command runs through `exec(setting, ...args)`, or `commandLine(setting, ...args)` for a `Process`, its arguments passed as `$1`, `$2`; state from a source comes through `CommandState` (see Sources below).
-- Out: `glyph`, `text` and `detail`, shown by a menu entry whose `status` is its name and in the header when `menu.header` names it; `active`, which lights either; `tone`, when its status needs one (`alert` for do-not-disturb); `activate()`, what a click on its header item does; `refresh()`, called as the menu opens; `items`, what a menu entry with `list` set to its name shows, each `{ id, label, icon, detail, active, enabled }`, and `select(id)`, what choosing one does; and `shortcut`, its compositor key, shown while Super is held. The module rejects either naming a plugin not listed, and a plugin taking a built-in name.
+- In: `name`; `settings`, its own part of the config, which holds the defaults (`settings.height ?? 30`); and `state`, what its source last gave (see Sources below).
+- Commands: a setting holding a command runs through `exec(setting, ...args)`, or `commandLine(setting, ...args)` for a `Process`, its arguments passed as `$1`, `$2`.
+- Out: `glyph`, `text` and `detail`, shown by a menu entry whose `status` is its name and in the header when `menu.header` names it; `active`, which lights either; `tone`, when its status needs one (`alert` for do-not-disturb); `activate()`, what a click on its header item does; `refresh()`, called as the menu opens, which reads a `read` source again; `items`, what a menu entry with `list` set to its name shows, each `{ id, label, icon, detail, active, enabled }`, and `select(id)`, what choosing one does; and `shortcut`, its compositor key, shown while Super is held (`settings.shortcut` by default). The module rejects either naming a plugin not listed, and a plugin taking a built-in name.
 - Uses: the theme (`Config.theme`, `Config.popups`), the kit, and the services' APIs (`Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Startup`, `Compositor`), plus a compositor's own backend when it is built on one (`Niri`, whose `received` passes on every event).
-- Actions: an `IpcHandler` targeting its name, which menu entries and compositor keys call through `exec.ipc`.
+- IPC: every plugin answers `<name> activate` and `<name> refresh`, which compositor keys call through `exec.ipc`.
 
 | Shipped | Shows | Settings |
 |---|---|---|
@@ -27,8 +27,8 @@ Its API, and the only one:
 A plugin's state comes from one source, set in its settings:
 
 - `watch`: a command that runs for as long as it lasts, each line replacing the state. Its state lasts while it runs; restarted when it exits, waiting longer each time it exits without output.
-- `read`: a command run at start, as the menu opens, and on `qs -c quickkey ipc call <name> refresh`, its last line replacing the state. For what has no events.
-- `file`: a file the tool writes in place (replacing it drops the watch), read again on every change; a relative path is under `$XDG_RUNTIME_DIR`.
+- `read`: a command run at start, as the menu opens, and on `qs -c quick-key ipc call <name> refresh`, its last line replacing the state. For what has no events.
+- `file`: a file the tool writes, read again on every change, even before it exists; a relative path is under `$XDG_RUNTIME_DIR`.
 
 A line is a JSON object, `{"glyph", "text", "detail", "active", "tone", "items"}`, each field optional, or plain text, which becomes `text`. Each line replaces the whole state, and an empty one clears it; a line that is not a JSON object is logged and skipped. The shell ignores fields it does not know, and a plugin may read its own (`Recording.qml`'s `since`). `Ask.qml` keeps its own request and reply lines: a conversation, not state. `items` fill a menu level whose entry sets `list` to the plugin's name; `select` runs with the chosen item's `id`, and a `read` plugin is read again once it is done, so the item in use lights.
 

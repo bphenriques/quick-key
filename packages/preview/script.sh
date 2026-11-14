@@ -1,7 +1,7 @@
 # Runs a working tree of the shell in a nested niri, then opens a shell inside it to drive it.
-dir=$(realpath "${1:?usage: quickkey-preview <shell dir> [config.json]}")
+dir=$(realpath "${1:?usage: quick-key-preview <shell dir> [config.json]}")
 config_home=${XDG_CONFIG_HOME:-$HOME/.config}
-config=$(realpath "${2:-$config_home/quickkey/config.json}")
+config=$(realpath "${2:-$config_home/quick-key/config.json}")
 : "${WAYLAND_DISPLAY:?run inside a Wayland session}"
 
 work=$(mktemp -d)
@@ -10,9 +10,9 @@ trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$work"' EXIT
 # Your config, for fonts and icons, with this config.json in place of the shell's.
 mkdir "$work/config" "$work/config.shell"
 ln -s "$config_home"/* "$work/config/"
-rm -f "$work/config/quickkey"
-mv "$work/config.shell" "$work/config/quickkey"
-cp "$config" "$work/config/quickkey/config.json"
+rm -f "$work/config/quick-key"
+mv "$work/config.shell" "$work/config/quick-key"
+cp "$config" "$work/config/quick-key/config.json"
 
 # niri runs the command once it is up, which reports where; the read waits for it, opened read-write so the open itself cannot block.
 mkfifo "$work/ready"

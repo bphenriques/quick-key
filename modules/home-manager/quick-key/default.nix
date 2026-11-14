@@ -1,0 +1,105 @@
+self:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
+let
+  cfg = config.programs.quick-key;
+
+  # Unset options stay out of config.json, so the shell's own defaults (Config.qml) apply.
+  withoutNulls =
+    value:
+    if lib.isAttrs value then
+      lib.mapAttrs (_: withoutNulls) (lib.filterAttrs (_: v: v != null) value)
+    else if lib.isList value then
+      map withoutNulls value
+    else
+      value;
+
+  json = pkgs.formats.json { };
+  configFile = json.generate "quick-key-config.json" (withoutNulls cfg.settings);
+  themeFiles = lib.mapAttrs (name: colors: json.generate "quick-key-theme-${name}.json" colors) cfg.themes;
+  presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quick-key/themes")));
+  themeName = cfg.settings.theme.name;
+
+  color =
+    description:
+    lib.mkOption {
+      type = lib.types.str;
+      inherit description;
+    };
+in
+{
+  imports = [
+    ./settings.nix
+    (import ./calendar-sync.nix self)
+  ];
+
+  options.programs.quick-key = {
+    enable = lib.mkEnableOption "quick-key, a keyboard-driven Quickshell menu with live status";
+
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = self.packages.${pkgs.stdenv.hostPlatform.system}.quick-key;
+      defaultText = lib.literalExpression "quick-key.packages.\${pkgs.stdenv.hostPlatform.system}.quick-key";
+      description = "Shell package, its QML under share/quick-key";
+    };
+
+    themes = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            background = color "Background colour";
+            foreground = color "Text colour";
+            primary = color "Colour of what is on or in use";
+            alert = color "Colour of what needs attention";
+            warning = color "Colour of what may soon need attention";
+          };
+        }
+      );
+      default = { };
+      description = "Colour themes, written to $XDG_CONFIG_HOME/quick-key/themes/ and picked by `settings.theme.name`";
+    };
+
+    exec.ipc = lib.mkOption {
+      type = lib.types.str;
+      default = "${lib.getExe config.programs.quickshell.package} -c quick-key ipc call";
+      defaultText = lib.literalExpression ''"''${lib.getExe config.programs.quickshell.package} -c quick-key ipc call"'';
+      description = "Prefix for the shell's IPC calls; append the target and function, e.g. `menu toggle`";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    assertions = [
+      (lib.hm.assertions.assertPlatform "programs.quick-key" pkgs lib.platforms.linux)
+      {
+        assertion = themeName == null || cfg.themes ? ${themeName} || lib.elem themeName presets;
+        message = "programs.quick-key.settings.theme.name: '${toString themeName}' is neither in programs.quick-key.themes nor a preset: ${toString presets}";
+      }
+    ];
+
+    xdg.configFile = {
+      "quick-key/config.json".source = configFile;
+    }
+    // lib.mapAttrs' (name: file: lib.nameValuePair "quick-key/themes/${name}.json" { source = file; }) themeFiles;
+
+    programs.quickshell = {
+      enable = true;
+      systemd.enable = true;
+      activeConfig = "quick-key";
+      configs.quick-key = "${cfg.package}/share/quick-key";
+    };
+
+    # home-manager swaps the config symlink on switch, which a file watch would not follow; restart instead.
+    systemd.user.services.quickshell.Unit = {
+      PartOf = [ config.wayland.systemd.target ];
+      X-Restart-Triggers = [
+        "${cfg.package}"
+        "${configFile}"
+      ]
+      ++ map toString (lib.attrValues themeFiles);
+    };
+  };
+}

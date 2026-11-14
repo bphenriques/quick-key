@@ -1,0 +1,10 @@
+{
+  "plugins": {
+    "lastLine": { "source": "command", "settings": { "read": "printf 'first\\nsecond\\n'" } },
+    "watcher": { "source": "command", "settings": { "watch": "echo up" } },
+    "wallpaper": { "settings": { "file": "wallpaper" } },
+    "devices": { "source": "command", "settings": { "read": "echo '{\"items\": [{\"id\": \"a-1\"}, {\"id\": \"b-2\"}]}'" } },
+    "custom": {},
+    "broken": { "source": "missing" }
+  }
+}

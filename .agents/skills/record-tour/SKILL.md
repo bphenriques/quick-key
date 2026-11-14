@@ -1,6 +1,6 @@
 ---
 name: record-tour
-description: Record the README's video tour of quickkey on the live niri desktop, with made-up events. Use when the tour needs re-recording after a visible change.
+description: Record the README's video tour of quick-key on the live niri desktop, with made-up events. Use when the tour needs re-recording after a visible change.
 ---
 
 # Record tour

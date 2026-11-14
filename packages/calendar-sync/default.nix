@@ -1,6 +1,6 @@
 { lib, pkgs }:
 (import ../builders.nix { inherit pkgs lib; }).writeNushellApplication {
-  name = "quickkey-calendar-sync";
+  name = "quick-key-calendar-sync";
   runtimeInputs = [
     pkgs.vdirsyncer
     pkgs.khal

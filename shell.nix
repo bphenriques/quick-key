@@ -1,7 +1,7 @@
 { pkgs }:
 pkgs.mkShellNoCC {
-  name = "quickkey";
-  meta.description = "Development shell for quickkey";
+  name = "quick-key";
+  meta.description = "Development shell for quick-key";
 
   packages = [
     pkgs.git

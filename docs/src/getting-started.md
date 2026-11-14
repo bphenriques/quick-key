@@ -8,26 +8,29 @@ Add the flake:
 
 ```nix
 {
-  inputs.quickkey.url = "github:bphenriques/quickkey";
-  inputs.quickkey.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.quick-key.url = "github:bphenriques/quick-key/v0.1.0";
+  inputs.quick-key.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.quick-key.inputs.home-manager.follows = "home-manager";
 }
 ```
+
+A tag pins a release, whose notes list what changed in the options; leave it off to follow `main`.
 
 Import the module in home-manager and enable it:
 
 ```nix
 { inputs, ... }:
 {
-  imports = [ inputs.quickkey.homeManagerModules.default ];
+  imports = [ inputs.quick-key.homeManagerModules.default ];
 
-  programs.quickkey = {
+  programs.quick-key = {
     enable = true;
     settings.theme.name = "catppuccin-mocha";
   };
 }
 ```
 
-The module runs Quickshell as a user service bound to the Wayland session target, restarted when the configuration changes. Bind `"${config.programs.quickkey.exec.ipc} menu toggle"` to a compositor key.
+The module runs Quickshell as a user service bound to the Wayland session target, restarted when the configuration changes. Bind `"${config.programs.quick-key.exec.ipc} menu toggle"` to a compositor key.
 
 The config that owns a tool adds its entries and settings next to it (`lib.mkOrder` keeps the top level in order), so the menu grows with the desktop rather than in one file.
 
@@ -36,15 +39,15 @@ The config that owns a tool adds its entries and settings next to it (`lib.mkOrd
 Clone the repository, link the shell into Quickshell's configs and start it with the session:
 
 ```sh
-git clone https://github.com/bphenriques/quickkey ~/.local/share/quickkey
-ln -s ~/.local/share/quickkey/packages/quickkey ~/.config/quickshell/quickkey
+git clone https://github.com/bphenriques/quick-key ~/.local/share/quick-key
+ln -s ~/.local/share/quick-key/packages/quick-key ~/.config/quickshell/quick-key
 ```
 
 ```kdl
 // niri
-spawn-at-startup "qs" "-c" "quickkey"
+spawn-at-startup "qs" "-c" "quick-key"
 binds {
-    Mod+Space { spawn "qs" "-c" "quickkey" "ipc" "call" "menu" "toggle"; }
+    Mod+Space { spawn "qs" "-c" "quick-key" "ipc" "call" "menu" "toggle"; }
 }
 ```
 

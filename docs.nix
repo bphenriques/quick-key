@@ -1,9 +1,9 @@
-# Docs site (GitHub Pages): the mdBook in docs/, with the generated `programs.quickkey` options reference
+# Docs site (GitHub Pages): the mdBook in docs/, with the generated `programs.quick-key` options reference
 # injected over the placeholder at build time.
 { pkgs, self }:
 let
   inherit (pkgs) lib;
-  repo = "https://github.com/bphenriques/quickkey";
+  repo = "https://github.com/bphenriques/quick-key";
 
   # Only the options are read, so the module's home-manager config targets can stay undeclared.
   eval = lib.evalModules {
@@ -15,7 +15,7 @@ let
   };
 
   optionsDoc = pkgs.nixosOptionsDoc {
-    options = eval.options.programs.quickkey;
+    options = eval.options.programs.quick-key;
     warningsAreErrors = false;
     transformOptions =
       opt:
@@ -34,7 +34,7 @@ let
       };
   };
 in
-pkgs.runCommand "quickkey-docs" { nativeBuildInputs = [ pkgs.mdbook ]; } ''
+pkgs.runCommand "quick-key-docs" { nativeBuildInputs = [ pkgs.mdbook ]; } ''
   cp -r --no-preserve=mode ${./docs} book
   { echo "# Options reference"; echo; cat ${optionsDoc.optionsCommonMark}; } > book/src/options.md
   mdbook build book -d $out

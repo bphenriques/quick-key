@@ -9,7 +9,7 @@
   grim,
 }:
 writeShellApplication {
-  name = "quickkey-preview";
+  name = "quick-key-preview";
   runtimeInputs = [
     coreutils
     niri

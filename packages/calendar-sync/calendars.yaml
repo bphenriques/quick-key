@@ -1,4 +1,4 @@
-# The calendars quickkey shows, read-only; saving this file syncs them.
+# The calendars quick-key shows, read-only; saving this file syncs them.
 # Each needs a unique name (letters, digits, - and _), an iCal address, and a colour as "#rrggbb", quoted.
 # For a Google Calendar, its "Secret address in iCal format" (Settings, Integrate calendar).
 # One behind a login takes basicAuth: a username, and a password or a passwordFile (read at each sync, e.g. a sops secret).

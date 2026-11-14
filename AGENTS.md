@@ -22,9 +22,9 @@ Every change follows these; a change that cannot is a reason to revisit the rule
 
 ## Layout
 
-The shell, under `packages/quickkey/`:
+The shell, under `packages/quick-key/`:
 
-- `services/`: state read from its source (D-Bus, Pipewire, niri, commands), pushed by events. What a service declares at its top level is its API, read-only where it is state; what it keeps for itself sits in an object under an `id`, which no other file can reach. Sources without events (the outputs, plugins' `read` commands) are read on `refresh()`, which the menu calls as it opens. `CommandState` is the one channel plugins get state through (`watch`, `read`, `file`).
+- `services/`: state read from its source (D-Bus, Pipewire, niri, commands), pushed by events. What a service declares at its top level is its API, read-only where it is state; what it keeps for itself sits in an object under an `id`, which no other file can reach. Sources without events (the outputs, plugins' `read` commands) are read on `refresh()`, which the menu calls as it opens. `Plugin` holds each plugin's one source (`watch`, `read`, `file`, through `CommandState`) and its IPC target.
 - `ui/`: the kit ([Kit](docs/src/kit.md)). Widgets use it and the theme from `Config`, never raw colours or sizes.
 - `widgets/`: the surfaces. `menu/` splits into `MenuModel` (state, keys) and `Menu`, `MenuStatus` (view).
 - `plugins/`: the plugins the shell ships; `Plugin.qml` is their root, `services/Plugins.qml` loads them.
@@ -35,7 +35,8 @@ The rest:
 
 - `packages/calendar-sync/`: writes `calendar.file` from a list of calendars (vdirsyncer, khal); the shell never runs it.
 - `packages/preview/`: runs a working tree in a nested niri (see [DEVELOPMENT.md](DEVELOPMENT.md)).
-- `modules/home-manager/quickkey/`: the module. `default.nix` runs the shell, `settings.nix` is the schema of `config.json` and its assertions, `calendar-sync.nix` runs calendar-sync.
+- `tests/`: the flake checks beyond the builds (see [DEVELOPMENT.md](DEVELOPMENT.md)).
+- `modules/home-manager/quick-key/`: the module. `default.nix` runs the shell, `settings.nix` is the schema of `config.json` and its assertions, `calendar-sync.nix` runs calendar-sync.
 
 `settings.nix` mirrors `Config.qml`: one option per key, unset by default so `Config.qml`'s default applies. Change both together. A key holding a map or list with a default is an `opt`, never a `group`: an unset group is written as `{}`, which replaces the default.
 

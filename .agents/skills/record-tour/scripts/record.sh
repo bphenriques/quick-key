@@ -8,7 +8,7 @@ export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 export WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-1}
 NIRI_SOCKET=${NIRI_SOCKET:-$(ls "$XDG_RUNTIME_DIR"/niri.*.sock | head -1)}
 export NIRI_SOCKET
-cfg=${XDG_CONFIG_HOME:-$HOME/.config}/quickkey/config.json
+cfg=${XDG_CONFIG_HOME:-$HOME/.config}/quick-key/config.json
 
 # Events dated from today, so the month always has something to show.
 jq '
@@ -52,7 +52,7 @@ recorder=$!
 sleep 1
 
 key() { wtype -k "$1"; sleep "$2"; }
-qs -c quickkey ipc call menu toggle; sleep 2.5
+qs -c quick-key ipc call menu toggle; sleep 2.5
 wtype a; sleep 2.5
 key BackSpace 1
 wtype c; sleep 2
