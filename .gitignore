@@ -1,0 +1,8 @@
+result
+result-*
+.direnv
+.claude
+.idea/
+
+# mdbook local build output
+docs/book/
