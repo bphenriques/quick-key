@@ -1,0 +1,141 @@
+{
+  "menu": {
+    "entries": [
+      {
+        "key": "a",
+        "desc": "Audio output",
+        "status": "sink",
+        "submenu": [
+          {
+            "key": [
+              "Down",
+              "Up"
+            ],
+            "desc": "Volume",
+            "icon": "󰕾",
+            "cmd": [
+              "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-",
+              "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
+            ],
+            "keepOpen": true
+          },
+          {
+            "key": "m",
+            "desc": "Mute",
+            "icon": "󰝟",
+            "activeWhen": "sink-muted",
+            "cmd": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+            "keepOpen": true
+          }
+        ]
+      },
+      {
+        "key": "A",
+        "desc": "Audio input",
+        "status": "source",
+        "submenu": [
+          {
+            "key": [
+              "Down",
+              "Up"
+            ],
+            "desc": "Volume",
+            "icon": "󰍬",
+            "cmd": [
+              "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-",
+              "wpctl set-volume -l 1 @DEFAULT_AUDIO_SOURCE@ 5%+"
+            ],
+            "keepOpen": true
+          },
+          {
+            "key": "m",
+            "desc": "Mute",
+            "icon": "󰍭",
+            "activeWhen": "source-muted",
+            "cmd": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
+            "keepOpen": true
+          }
+        ]
+      },
+      {
+        "key": "n",
+        "desc": "Network",
+        "width": 640,
+        "status": "network",
+        "list": "wifi",
+        "submenu": [
+          {
+            "key": "p",
+            "desc": "Power",
+            "icon": "󰔡",
+            "activeWhen": "wifi",
+            "cmd": "nmcli radio wifi \"$([ \"$(nmcli radio wifi)\" = enabled ] && echo off || echo on)\"",
+            "keepOpen": true
+          }
+        ]
+      },
+      {
+        "key": "b",
+        "desc": "Bluetooth",
+        "width": 640,
+        "status": "bluetooth",
+        "list": "bluetooth",
+        "submenu": [
+          {
+            "key": "p",
+            "desc": "Power",
+            "icon": "󰔡",
+            "activeWhen": "bluetooth",
+            "cmd": "rfkill toggle bluetooth",
+            "keepOpen": true
+          }
+        ]
+      },
+      {
+        "key": "c",
+        "desc": "Calendar",
+        "status": "calendar",
+        "view": "calendar"
+      },
+      {
+        "key": "t",
+        "desc": "Tray",
+        "width": 640,
+        "status": "tray",
+        "list": "tray"
+      },
+      {
+        "key": "q",
+        "desc": "Session",
+        "width": 640,
+        "icon": "󰐥",
+        "submenu": [
+          {
+            "key": "l",
+            "desc": "Lock",
+            "icon": "󰌾",
+            "cmd": "loginctl lock-session"
+          },
+          {
+            "key": "s",
+            "desc": "Suspend",
+            "icon": "󰤄",
+            "cmd": "systemctl suspend"
+          },
+          {
+            "key": "S",
+            "desc": "Shutdown",
+            "icon": "󰐥",
+            "cmd": "systemctl poweroff"
+          },
+          {
+            "key": "R",
+            "desc": "Reboot",
+            "icon": "󰜉",
+            "cmd": "systemctl reboot"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -7,22 +7,27 @@ import qs.ui
 
 // A discreet pill on every screen while dictating, under the screen recording one: its icon while it listens, a spinner
 // while it transcribes; a click stops it.
-// settings.status: prints the dictation's state as it changes, one per line: `recording`, `transcribing`, or anything
-// else for idle. settings.stop: the command that stops dictating. settings.glyph: the pill's icon.
-Integration {
+// Its state's text (watch, read or file) is `recording`, `transcribing`, or anything else for idle. settings.stop: the
+// command that stops dictating. settings.glyph: the pill's icon.
+Plugin {
   id: root
 
-  property string phase: ""
+  readonly property string phase: command.state.text ?? ""
   readonly property bool recording: phase === "recording"
   readonly property bool transcribing: phase === "transcribing"
 
   glyph: settings.glyph ?? ""
   active: recording || transcribing
 
-  CommandWatcher {
-    shell: root.settings.status ?? ""
-    onRead: line => root.phase = line.trim()
-    onExited: root.phase = ""
+  function refresh() {
+    command.refresh();
+  }
+
+  CommandState {
+    id: command
+    watch: root.settings.watch ?? ""
+    read: root.settings.read ?? ""
+    file: root.settings.file ?? ""
   }
 
   CornerPill {

@@ -12,7 +12,7 @@ import qs.ui
 // the focused window lit, between thin strips of the workspaces above and below.
 // niri does not report how far a workspace is scrolled, so the map shows every column rather than the visible ones.
 // settings: height, maxWidth, opacity and borderWidth of the map, in pixels but for opacity.
-Integration {
+Plugin {
   id: root
 
   readonly property int mapHeight: settings.height ?? 30
@@ -214,7 +214,7 @@ Integration {
       anchors.left: true
       margins.top: Config.theme.edgeMargin
       margins.left: Config.theme.edgeMargin
-      WlrLayershell.namespace: "workspace-map"
+      WlrLayershell.namespace: "niriMinimap"
       mask: Region {}
 
       implicitWidth: content.implicitWidth

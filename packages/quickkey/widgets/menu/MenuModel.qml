@@ -19,7 +19,7 @@ Scope {
   // Super held a second shows the header's compositor keys, not at once, so a Super shortcut does not flash them.
   property bool shortcutsShown: false
 
-  readonly property var entries: Array.from(Config.menu.entries)
+  readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property var items: itemsOf(level)
   readonly property var actions: items.filter(item => !item.listed)
@@ -101,7 +101,7 @@ Scope {
         desc: entry.desc,
         status: entry.status ?? "",
         icon: entry.icon ?? "",
-        enabled: Display.available(entry.requires),
+        enabled: available(entry.requires),
         paired: MenuKeys.isPair(entry),
         entry: entry
       }));
@@ -122,9 +122,9 @@ Scope {
       key: action.key,
       desc: action.desc,
       icon: action.icon ?? "",
-      enabled: Display.available(action.requires) && Display.allows(action.layout),
+      enabled: available(action.requires),
       paired: MenuKeys.isPair(action),
-      active: isOn(action.activeWhen) || action.layout === Display.layout,
+      active: isOn(action.activeWhen),
       listed: /^[0-9]$/.test(action.key),
       entry: action
     }));
@@ -153,6 +153,12 @@ Scope {
     return keyChars(actions.filter((_, i) => i % columns === index % columns));
   }
 
+  // Whether an entry's requirements hold: the outputs it needs connected, and those it needs on.
+  function available(requires) {
+    return Array.from(requires?.connected ?? []).every(output => Compositor.connected.includes(output))
+      && Array.from(requires?.enabled ?? []).every(output => Compositor.enabled.includes(output));
+  }
+
   function isOn(state) {
     switch (state) {
     case "wifi": return Network.wifiEnabled;
@@ -161,7 +167,7 @@ Scope {
     case "shuffle": return Music.shuffle;
     case "sink-muted": return Audio.sinkMuted;
     case "source-muted": return Audio.sourceMuted;
-    default: return Integrations.get(state)?.active ?? false;
+    default: return Plugins.get(state)?.active ?? false;
     }
   }
 
@@ -221,15 +227,26 @@ Scope {
       return audioItems(Audio.sinks, Audio.sink?.name);
     case "sources":
       return audioItems(Audio.sources, Audio.source?.name);
-    default:
-      return [];
+    default: {
+      const plugin = Plugins.get(list);
+      return Array.from(plugin?.items ?? []).map(item => ({
+        id: item.id,
+        desc: item.label ?? item.id,
+        icon: item.icon ?? "",
+        detail: item.detail ?? "",
+        active: item.active ?? false,
+        enabled: item.enabled ?? true,
+        plugin: plugin
+      }));
+    }
     }
   }
 
   function show() {
     // Sources without change events are read as the menu opens.
     Audio.refreshDevices();
-    Display.refresh();
+    Compositor.refresh();
+    Plugins.refresh();
     open = true;
   }
 
@@ -293,6 +310,8 @@ Scope {
       hide();
     } else if (item.audio) {
       Audio.select(item.audio.kind, item.audio.name);
+    } else if (item.plugin) {
+      item.plugin.select(item.id);
     } else if (item.device || item.network) {
       const target = item.device ?? item.network;
       if (target.connected) target.disconnect();
@@ -313,7 +332,7 @@ Scope {
   // The mouse wheel on a row: a pair runs itself; an entry runs the action of its own on that key, e.g. volume.
   function act(item, name) {
     const action = item.entry?.submenu ? find(Array.from(item.entry.submenu), name) : MenuKeys.matches(item.entry?.key ?? [], name) ? item.entry : null;
-    if (action && Display.available(action.requires)) run(action, name);
+    if (action && available(action.requires)) run(action, name);
   }
 
   // Esc and Backspace are kept free of entries by the assertions in modules/home-manager/quickkey/settings.nix.

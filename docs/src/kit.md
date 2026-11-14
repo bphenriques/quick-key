@@ -1,6 +1,6 @@
 # Kit
 
-What the core's surfaces and the integrations are built from; an integration that needs something new adds it here first.
+What the core's surfaces and the plugins are built from; a plugin that needs something new adds it here first.
 
 | Component | Use |
 |---|---|

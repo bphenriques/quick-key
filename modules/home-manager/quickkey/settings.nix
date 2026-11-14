@@ -15,12 +15,19 @@ let
   builtinStatuses = [
     "sink"
     "source"
+    "brightness"
     "music"
     "network"
     "bluetooth"
-    "display"
     "tray"
     "calendar"
+  ];
+  builtinLists = [
+    "tray"
+    "bluetooth"
+    "wifi"
+    "sinks"
+    "sources"
   ];
   builtinStates = [
     "wifi"
@@ -30,18 +37,28 @@ let
     "sink-muted"
     "source-muted"
   ];
+  popupNames = [
+    "sink"
+    "source"
+    "brightness"
+    "keyboardLayout"
+    "keepAwake"
+  ];
   headerItems = [
     "clock"
-    "notifications"
     "keepAwake"
     "keyboardLayout"
     "battery"
   ];
-  # Integrations may not take a built-in name.
-  builtinNames = builtinStatuses ++ builtinStates ++ headerItems;
-  integrationNames = lib.attrNames settings.integrations;
+  # Plugins may not take a built-in name.
+  builtinNames = builtinStatuses ++ builtinStates ++ builtinLists ++ headerItems;
+  pluginNames = lib.attrNames settings.plugins;
+  sources = [
+    "watch"
+    "read"
+    "file"
+  ];
   headerNames = lib.concatLists (lib.filter (slot: slot != null) (lib.attrValues settings.menu.header));
-  displayLayouts = lib.attrNames (if settings.display.layouts == null then { } else settings.display.layouts);
 
   # Unset, the shell's default applies.
   opt =
@@ -60,7 +77,6 @@ let
     };
   shortcut = opt types.str "Compositor key, shown in the header while Super is held";
   glyphs = opt (types.attrsOf types.str);
-  wheel = opt (types.listOf types.str) "Commands the wheel runs, down then up";
   pixels = names: lib.genAttrs names (_: opt types.ints.unsigned "In pixels");
 
   entry = types.submodule {
@@ -86,12 +102,7 @@ let
       activeWhen = mkOption {
         type = types.nullOr types.str;
         default = null;
-        description = "State that lights the entry while on, for a toggle: one of ${toString builtinStates}, or an integration's name";
-      };
-      layout = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        description = "Display layout the entry selects, lit while current and dim while the connected screens do not allow it";
+        description = "State that lights the entry while on, for a toggle: one of ${toString builtinStates}, or a plugin's name";
       };
       width = mkOption {
         type = types.nullOr types.ints.positive;
@@ -111,17 +122,9 @@ let
         visible = "shallow";
       };
       list = mkOption {
-        type = types.nullOr (
-          types.enum [
-            "tray"
-            "bluetooth"
-            "wifi"
-            "sinks"
-            "sources"
-          ]
-        );
+        type = types.nullOr types.str;
         default = null;
-        description = "Nested entries filled at runtime (tray apps, paired Bluetooth devices, saved Wi-Fi networks in range, audio outputs or inputs), numbered after any submenu";
+        description = "Items filled at runtime, numbered after any submenu: one of ${toString builtinLists} (tray apps, paired Bluetooth devices, saved Wi-Fi networks in range, audio outputs or inputs), or a plugin's name";
       };
       pins = mkOption {
         type = types.listOf (
@@ -154,7 +157,7 @@ let
       status = mkOption {
         type = types.nullOr types.str;
         default = null;
-        description = "Status shown in place of the label: one of ${toString builtinStatuses}, or an integration's name";
+        description = "Status shown in place of the label: one of ${toString builtinStatuses}, or a plugin's name";
       };
       requires = {
         connected = mkOption {
@@ -220,16 +223,16 @@ let
         message = "programs.quickkey.settings.menu: '${e.desc}' in ${path} needs either cmd, submenu and/or list, or view";
       }
       {
-        assertion = e.status == null || lib.elem e.status (builtinStatuses ++ integrationNames);
-        message = "programs.quickkey.settings.menu: '${e.desc}' in ${path} shows status '${toString e.status}', neither built in nor an integration's";
+        assertion = e.status == null || lib.elem e.status (builtinStatuses ++ pluginNames);
+        message = "programs.quickkey.settings.menu: '${e.desc}' in ${path} shows status '${toString e.status}', neither built in nor a plugin's";
       }
       {
-        assertion = e.activeWhen == null || lib.elem e.activeWhen (builtinStates ++ integrationNames);
-        message = "programs.quickkey.settings.menu: '${e.desc}' in ${path} is lit by '${toString e.activeWhen}', neither built in nor an integration's";
+        assertion = e.activeWhen == null || lib.elem e.activeWhen (builtinStates ++ pluginNames);
+        message = "programs.quickkey.settings.menu: '${e.desc}' in ${path} is lit by '${toString e.activeWhen}', neither built in nor a plugin's";
       }
       {
-        assertion = e.layout == null || lib.elem e.layout displayLayouts;
-        message = "programs.quickkey.settings.menu: '${e.desc}' in ${path} selects layout '${toString e.layout}', not one of display.layouts: ${toString displayLayouts}";
+        assertion = e.list == null || lib.elem e.list (builtinLists ++ pluginNames);
+        message = "programs.quickkey.settings.menu: '${e.desc}' in ${path} lists '${toString e.list}', neither built in nor a plugin's";
       }
       {
         assertion = e.view == null || e.list == null;
@@ -266,11 +269,12 @@ in
   options.programs.quickkey.settings = {
     theme = group "Colours, font and sizes" (
       {
-        background = opt types.str "Background colour";
-        foreground = opt types.str "Text colour";
-        primary = opt types.str "Colour of what is on or in use";
-        alert = opt types.str "Colour of what needs attention";
-        warning = opt types.str "Colour of what may soon need attention";
+        name = opt types.str "Colour theme: a file in `themes` or a shipped preset (catppuccin-mocha, catppuccin-latte, gruvbox-dark, nord, tokyo-night)";
+        background = opt types.str "Background colour, over the theme's";
+        foreground = opt types.str "Text colour, over the theme's";
+        primary = opt types.str "Colour of what is on or in use, over the theme's";
+        alert = opt types.str "Colour of what needs attention, over the theme's";
+        warning = opt types.str "Colour of what may soon need attention, over the theme's";
         surfaceOpacity = opt (types.numbers.between 0 1) "Opacity of a panel's background";
         highlightOpacity = opt (types.numbers.between 0 1) "Opacity of a highlight";
         dimOpacity = opt (types.numbers.between 0 1) "Opacity of dimmed text and icons";
@@ -297,14 +301,10 @@ in
     );
 
     menu = group "The menu" {
-      entries = mkOption {
-        type = types.listOf entry;
-        default = [ ];
-        description = "Top-level entries, ordered with `lib.mkOrder`";
-      };
+      entries = opt (types.listOf entry) "Top-level entries, ordered with `lib.mkOrder`; unset, a starter menu";
       header = lib.genAttrs [ "left" "center" "right" ] (
         slot:
-        opt (types.listOf types.str) "Items in the header's ${slot} third, like waybar's modules-${slot}: ${toString headerItems} or integrations"
+        opt (types.listOf types.str) "Items in the header's ${slot} third, like waybar's modules-${slot}: ${toString headerItems} or plugins"
       );
       width = opt types.ints.positive "Width of a level, in pixels, unless its entry sets one";
       columns = opt types.ints.positive "Columns of a level, unless its entry sets them";
@@ -317,60 +317,59 @@ in
     };
 
     calendar = group "The calendar's events" {
-      file = opt types.str "Events file the month shows; `calendarSync` sets it";
-      remind = opt types.str "Command given an event's title and when, run before each timed event";
+      file = opt types.str "Events file the month shows; unset, `$XDG_STATE_HOME/quickkey/events.json`, where `calendarSync` writes";
+      remind = opt types.str "Command given an event's title and when, run before each timed event; unset, notify-send, empty for none";
       remindBefore = opt types.ints.unsigned "Minutes before a timed event the reminder runs";
     };
 
     popups = group "The pop-ups for volume, brightness, layout and keep-awake" {
       timeout = opt types.ints.positive "Milliseconds a pop-up stays";
+      show = opt (types.listOf (types.enum popupNames)) "Changes that pop up: ${toString popupNames}; unset, all";
     };
 
     audio = group "Audio devices" {
       devices = opt types.str "Command printing one device per line: kind (sink or source), name, type and label, tab separated, internal first";
       select = opt types.str "Command given a kind and a device name, making it the default";
-      adjust = group "The volume wheel" {
-        sink = wheel;
-        source = wheel;
-      };
-      glyphs = glyphs "Glyph by device type (headphones, headset, internal, external, microphone) and microphoneOff";
+      adjust = opt (types.submodule {
+        options = lib.genAttrs [ "sink" "source" ] (
+          _:
+          mkOption {
+            type = types.listOf types.str;
+            description = "Commands the wheel runs, down then up";
+          }
+        );
+      }) "The volume wheel's commands, for the sink and the source; unset, wpctl";
+      glyphs = glyphs "Glyph by device type (headphones, headset, internal, external, microphone) and microphoneOff, over the shipped ones";
     };
 
     brightness = group "The backlight" {
-      backlight = opt types.str "Command printing the backlight's value file, a tab, and its maximum";
-      adjust = wheel;
-    };
-
-    display = group "Outputs and their layouts" {
-      status = opt types.str "Command printing the current layout, then the layouts the connected screens allow, one per line";
-      layouts = opt (types.attrsOf types.str) "Label by layout, as the Display row shows it";
-      panel = opt types.str "Built-in panel the backlight dims: connector name, or make, model and serial";
-      glyphs = glyphs "Glyph by layout";
-    };
-
-    notifications = group "Do-not-disturb" {
-      watch = opt types.str "Command printing true or false for do-not-disturb, then again on every change";
-      toggle = opt types.str "Command pausing or resuming notifications";
-      inherit shortcut;
+      backlight = opt types.str "Command printing the backlight's value file, a tab, and its maximum; unset, the first in /sys/class/backlight";
+      adjust = opt (types.listOf types.str) "Commands the wheel runs, down then up; unset, brightnessctl";
+      panel = opt types.str "Panel the backlight dims: connector name, or make, model and serial; unset, the eDP, LVDS or DSI output";
     };
 
     keepAwake = group "Idle inhibition" {
-      command = opt types.str "Command inhibiting idle until its stdin closes";
+      command = opt types.str "Command inhibiting idle until its stdin closes; unset, systemd-inhibit";
       inherit shortcut;
     };
 
     keyboardLayout = group "Keyboard layouts" {
-      labels = opt (types.listOf types.str) "Short label per layout, in the compositor's order";
+      labels = opt (types.listOf types.str) "Short label per layout, in the compositor's order; unset, the first letters of its name";
       inherit shortcut;
     };
 
     battery = group "The battery" {
       low = opt (types.ints.between 0 100) "Percentage at which the battery shows as low";
       critical = opt (types.ints.between 0 100) "Percentage at which the battery shows as critical";
-      glyphs = group "Battery glyphs" {
-        discharging = opt (types.listOf types.str) "Eleven glyphs, empty to full";
-        charging = opt (types.listOf types.str) "Eleven glyphs, empty to full";
-      };
+      glyphs = opt (types.submodule {
+        options = lib.genAttrs [ "discharging" "charging" ] (
+          _:
+          mkOption {
+            type = types.listOf types.str;
+            description = "Eleven glyphs, empty to full";
+          }
+        );
+      }) "Battery glyphs, over the shipped ones";
     };
 
     music = group "The music status" {
@@ -378,19 +377,19 @@ in
       glyphs = glyphs "Glyph for music, shuffle and repeat";
     };
 
-    integrations = mkOption {
+    plugins = mkOption {
       type = types.attrsOf (
         types.submodule {
           options = {
             source = mkOption {
               type = types.nullOr (types.either types.path types.str);
               default = null;
-              description = "QML file whose root is an Integration, a path or relative to the shell; unset, the one shipped under this name";
+              description = "The plugin implementing this one, by name (`command`), or a QML file path; unset, its own name";
             };
             settings = mkOption {
               type = jsonType;
               default = { };
-              description = "Passed to the integration as `settings`";
+              description = "Passed to the plugin as `settings`";
             };
           };
         }
@@ -403,16 +402,24 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = lib.intersectLists integrationNames builtinNames == [ ];
-        message = "programs.quickkey.settings.integrations: ${toString (lib.intersectLists integrationNames builtinNames)} are built-in names";
+        assertion = lib.all (p: lib.count (source: p.settings ? ${source}) sources <= 1) (lib.attrValues settings.plugins);
+        message = "programs.quickkey.settings.plugins: ${
+          toString (
+            lib.attrNames (lib.filterAttrs (_: p: lib.count (source: p.settings ? ${source}) sources > 1) settings.plugins)
+          )
+        } set more than one of watch, read and file; set one";
       }
       {
-        assertion = lib.all (name: lib.elem name (headerItems ++ integrationNames)) headerNames;
+        assertion = lib.intersectLists pluginNames builtinNames == [ ];
+        message = "programs.quickkey.settings.plugins: ${toString (lib.intersectLists pluginNames builtinNames)} are built-in names";
+      }
+      {
+        assertion = lib.all (name: lib.elem name (headerItems ++ pluginNames)) headerNames;
         message = "programs.quickkey.settings.menu.header: ${
-          toString (lib.filter (name: !(lib.elem name (headerItems ++ integrationNames))) headerNames)
-        } are neither built in nor integrations";
+          toString (lib.filter (name: !(lib.elem name (headerItems ++ pluginNames))) headerNames)
+        } are neither built in nor plugins";
       }
     ]
-    ++ levelAssertions "the top level" settings.menu.entries;
+    ++ levelAssertions "the top level" (lib.optionals (settings.menu.entries != null) settings.menu.entries);
   };
 }

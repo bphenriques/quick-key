@@ -83,28 +83,27 @@ Scope {
     }
   }
 
-  // A header item by name: built in, or an integration's. A click does what its compositor key does, shown while Super is held.
+  // A header item by name: built in, or a plugin's. A click does what its compositor key does, shown while Super is held.
   component HeaderItem: ListItem {
     id: item
     required property string modelData
     // Shrinks, never grows: its text gives way before its neighbours.
     Layout.fillWidth: true
     Layout.maximumWidth: implicitWidth
-    readonly property bool builtin: ["clock", "notifications", "keepAwake", "keyboardLayout", "battery"].includes(modelData)
-    readonly property var integration: builtin ? null : Integrations.get(modelData)
-    readonly property string shortcut: integration?.shortcut ?? Config[modelData]?.shortcut ?? ""
+    readonly property bool builtin: ["clock", "keepAwake", "keyboardLayout", "battery"].includes(modelData)
+    readonly property var plugin: builtin ? null : Plugins.get(modelData)
+    readonly property string shortcut: plugin?.shortcut ?? Config[modelData]?.shortcut ?? ""
 
-    visible: modelData === "keyboardLayout" ? KeyboardLayout.names.length > 0 : modelData === "battery" ? Power.present : builtin || integration !== null
+    visible: modelData === "keyboardLayout" ? KeyboardLayout.names.length > 0 : modelData === "battery" ? Power.present : builtin || plugin !== null
     // The battery only shows state; the clock opens the calendar when there is one.
     enabled: modelData === "clock" ? menu.calendar !== null : modelData !== "battery"
     dimsWhenDisabled: false
     onActivated: {
       switch (modelData) {
       case "clock": menu.activate(menu.calendar); break;
-      case "notifications": DoNotDisturb.toggle(); break;
       case "keepAwake": IdleInhibit.toggle(); break;
       case "keyboardLayout": KeyboardLayout.next(); break;
-      default: integration?.activate();
+      default: plugin?.activate();
       }
     }
 

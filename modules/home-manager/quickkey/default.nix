@@ -18,7 +18,18 @@ let
     else
       value;
 
-  configFile = (pkgs.formats.json { }).generate "quickkey-config.json" (withoutNulls cfg.settings);
+  json = pkgs.formats.json { };
+  configFile = json.generate "quickkey-config.json" (withoutNulls cfg.settings);
+  themeFiles = lib.mapAttrs (name: colors: json.generate "quickkey-theme-${name}.json" colors) cfg.themes;
+  presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quickkey/themes")));
+  themeName = cfg.settings.theme.name;
+
+  color =
+    description:
+    lib.mkOption {
+      type = lib.types.str;
+      inherit description;
+    };
 in
 {
   imports = [
@@ -36,6 +47,22 @@ in
       description = "Shell package, its QML under share/quickkey";
     };
 
+    themes = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            background = color "Background colour";
+            foreground = color "Text colour";
+            primary = color "Colour of what is on or in use";
+            alert = color "Colour of what needs attention";
+            warning = color "Colour of what may soon need attention";
+          };
+        }
+      );
+      default = { };
+      description = "Colour themes, written to $XDG_CONFIG_HOME/quickkey/themes/ and picked by `settings.theme.name`";
+    };
+
     exec.ipc = lib.mkOption {
       type = lib.types.str;
       default = "${lib.getExe config.programs.quickshell.package} -c quickkey ipc call";
@@ -45,9 +72,18 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [ (lib.hm.assertions.assertPlatform "programs.quickkey" pkgs lib.platforms.linux) ];
+    assertions = [
+      (lib.hm.assertions.assertPlatform "programs.quickkey" pkgs lib.platforms.linux)
+      {
+        assertion = themeName == null || cfg.themes ? ${themeName} || lib.elem themeName presets;
+        message = "programs.quickkey.settings.theme.name: '${toString themeName}' is neither in programs.quickkey.themes nor a preset: ${toString presets}";
+      }
+    ];
 
-    xdg.configFile."quickkey/config.json".source = configFile;
+    xdg.configFile = {
+      "quickkey/config.json".source = configFile;
+    }
+    // lib.mapAttrs' (name: file: lib.nameValuePair "quickkey/themes/${name}.json" { source = file; }) themeFiles;
 
     programs.quickshell = {
       enable = true;
@@ -62,7 +98,8 @@ in
       X-Restart-Triggers = [
         "${cfg.package}"
         "${configFile}"
-      ];
+      ]
+      ++ map toString (lib.attrValues themeFiles);
     };
   };
 }

@@ -12,10 +12,16 @@ import qs.ui
 Scope {
   id: root
 
-  // What is or was last shown: "sink", "source", "brightness", "layout" or "idle"; kept while the window closes.
+  // What is or was last shown, one of Config.popups.show; kept while the window closes.
   property string kind: ""
 
+  // An unlisted pop-up never starts its service: the target is null.
+  function listed(kind) {
+    return Config.popups.show.includes(kind);
+  }
+
   function show(newKind) {
+    if (!listed(newKind)) return;
     kind = newKind;
     transient.show();
   }
@@ -32,7 +38,7 @@ Scope {
   }
 
   Connections {
-    target: Audio
+    target: root.listed("sink") || root.listed("source") ? Audio : null
     function onSinkVolumeChanged() { root.show("sink"); }
     function onSinkMutedChanged() { root.show("sink"); }
     function onSinkNameChanged() { root.show("sink"); }
@@ -41,18 +47,18 @@ Scope {
   }
 
   Connections {
-    target: Brightness
+    target: root.listed("brightness") ? Brightness : null
     function onPercentageChanged() { root.show("brightness"); }
   }
 
   Connections {
-    target: KeyboardLayout
-    function onIndexChanged() { root.show("layout"); }
+    target: root.listed("keyboardLayout") ? KeyboardLayout : null
+    function onIndexChanged() { root.show("keyboardLayout"); }
   }
 
   Connections {
-    target: IdleInhibit
-    function onEnabledChanged() { root.show("idle"); }
+    target: root.listed("keepAwake") ? IdleInhibit : null
+    function onEnabledChanged() { root.show("keepAwake"); }
   }
 
   LazyLoader {
@@ -64,13 +70,13 @@ Scope {
       readonly property bool metered: root.kind === "sink" || root.kind === "source" || root.kind === "brightness"
       readonly property bool muted: root.kind === "sink" ? Audio.sinkMuted
         : root.kind === "source" ? Audio.sourceMuted
-        : root.kind === "idle" ? !IdleInhibit.enabled
+        : root.kind === "keepAwake" ? !IdleInhibit.enabled
         : false
-      readonly property string tone: muted ? "dim" : root.kind === "idle" ? "primary" : "normal"
+      readonly property string tone: muted ? "dim" : root.kind === "keepAwake" ? "primary" : "normal"
       readonly property string glyph: root.kind === "sink" ? (muted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType))
         : root.kind === "source" ? (muted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType))
         : root.kind === "brightness" ? Glyphs.brightness(Brightness.percentage)
-        : root.kind === "idle" ? Glyphs.keepAwake
+        : root.kind === "keepAwake" ? Glyphs.keepAwake
         : Glyphs.keyboard
 
       anchors.right: true
@@ -146,7 +152,7 @@ Scope {
           // As wide as the widest value, so the pill holds still as it changes.
           width: Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)) * Metrics.cell
           tone: window.tone
-          text: root.kind === "layout" ? (KeyboardLayout.label || KeyboardLayout.name.slice(0, 2))
+          text: root.kind === "keyboardLayout" ? KeyboardLayout.label
             : IdleInhibit.enabled ? "on" : "off"
         }
       }

@@ -4,7 +4,7 @@ nix flake check -L          # formatting and package builds, check.sh included
 nix build .#docs            # docs site → result/index.html
 ```
 
-`packages/quickkey/check.sh` holds the design rules in [AGENTS.md](AGENTS.md) that a text search can (an integration's root and imports, Compositor, Label, glyphs through Icon, colours only through tones and the kit, font measures through Metrics, commands from the config); every build runs it.
+`packages/quickkey/check.sh` holds the design rules in [AGENTS.md](AGENTS.md) that a text search can (a plugin's root and imports, Compositor, Label, glyphs through Icon, colours only through tones and the kit, font measures through Metrics, commands from the config, plugin state only through `CommandState`); every build runs it.
 
 `nix run .#quickkey-preview -- <shell dir> [config.json]` runs a working tree in a nested niri, with your `config.json` or a fixture (the built one edited with `jq`), and opens a shell inside it with `wtype`, `wlrctl` and `grim` at hand. Exit that shell to stop it. Session actions run for real, so never press them there. `packages/preview/events.json` is a calendar to point `calendar.file` at, around 12 November 2026.
 

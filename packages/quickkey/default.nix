@@ -6,11 +6,14 @@ stdenvNoCC.mkDerivation {
     fileset = lib.fileset.unions [
       ./shell.qml
       ./Config.qml
-      ./Integration.qml
+      ./ThemeFile.qml
+      ./menu.json
+      ./Plugin.qml
       ./services
       ./ui
       ./widgets
-      ./integrations
+      ./plugins
+      ./themes
     ];
   };
   doCheck = true;

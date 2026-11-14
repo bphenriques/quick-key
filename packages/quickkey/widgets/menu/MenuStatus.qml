@@ -19,8 +19,8 @@ StatusLine {
   // Only the glyph and detail, e.g. on or off, without the text.
   property bool compact: false
 
-  // The integration a status not built in names, if any.
-  readonly property var integration: Integrations.get(status)
+  // The plugin a status not built in names, if any.
+  readonly property var plugin: Plugins.get(status)
   readonly property var value: valueFor(status)
 
   glyph: status ? glyphFor(status) : icon
@@ -32,8 +32,8 @@ StatusLine {
   // Volumes run from "5%" to "muted": room for the longest, so the glyph beside it holds still.
   detailChars: compact && (status === "sink" || status === "source") ? 5 : 0
   // Dim when quiet (the header) or when a status has nothing to report, e.g. music while mpd is not running.
-  tone: status === "notifications" && DoNotDisturb.enabled ? "alert"
-    : active || status === "keepAwake" && IdleInhibit.enabled || quiet && integration?.active ? "primary"
+  tone: plugin?.tone ? plugin.tone
+    : active || status === "keepAwake" && IdleInhibit.enabled || quiet && plugin?.active ? "primary"
     : status === "battery" && Power.level === "critical" ? "alert"
     : status === "battery" && Power.level === "low" ? "warning"
     : quiet || status && !value.text && !value.detail ? "dim"
@@ -59,14 +59,13 @@ StatusLine {
     case "music": return Glyphs.music;
     case "network": return Network.kind === "wifi" ? Glyphs.wifi : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected;
     case "bluetooth": return !Bluez.enabled ? Glyphs.bluetoothOff : Bluez.connected.length ? Glyphs.bluetoothConnected : Glyphs.bluetooth;
-    case "display": return Glyphs.display(Display.layout);
     case "tray": return Glyphs.tray;
+    case "brightness": return Glyphs.brightness(Brightness.percentage);
     case "calendar": return Glyphs.calendar;
     case "battery": return Power.present ? Glyphs.battery(Power.percentage, Power.pluggedIn) : "";
     case "keyboardLayout": return Glyphs.keyboard;
-    case "notifications": return DoNotDisturb.enabled ? Glyphs.doNotDisturb : Glyphs.notifications;
     case "keepAwake": return Glyphs.keepAwake;
-    default: return integration?.glyph ?? "";
+    default: return plugin?.glyph ?? "";
     }
   }
 
@@ -116,18 +115,19 @@ StatusLine {
       if (others.length) return { text: Bluez.connected.length + " devices connected", detail: "" };
       return { text: pinned(device.address, device.name), detail: device.batteryAvailable ? Math.round(device.battery * 100) + "%" : "" };
     }
-    case "display":
-      return { text: Config.display.layouts[Display.layout] ?? "", detail: Brightness.lit ? Brightness.percentage + "%" : "" };
     case "calendar":
       return calendarValue();
     case "tray":
       return { text: Tray.items.map(app => pinned(app.id, app.title || app.id)).join(", "), detail: "" };
+    case "brightness":
+      if (!Brightness.present) return { text: "", detail: "" };
+      return { text: "", detail: Brightness.lit ? Brightness.percentage + "%" : "off" };
     case "battery":
       return { text: Power.present ? Power.percentage + "%" : "", detail: "" };
     case "keyboardLayout":
       return { text: KeyboardLayout.label || KeyboardLayout.name, detail: "" };
     default:
-      return { text: integration?.text ?? "", detail: integration?.detail ?? "" };
+      return { text: plugin?.text ?? "", detail: plugin?.detail ?? "" };
     }
   }
 }

@@ -5,14 +5,14 @@ import Quickshell
 import Quickshell.Io
 
 // The niri backend of Compositor: keyboard layouts followed through its event stream, which replays everything on connect, and outputs on request.
-// `received` passes on every event, for integrations built on niri.
+// `received` passes on every event, for plugins built on niri.
 Singleton {
   id: root
 
   readonly property var layouts: internal.layouts
   readonly property int layoutIndex: internal.layoutIndex
 
-  // Every event as niri sends it, for integrations that follow more of niri than the shell does.
+  // Every event as niri sends it, for plugins that follow more of niri than the shell does.
   signal received(var event)
 
   QtObject {

@@ -11,7 +11,8 @@ Singleton {
 
   readonly property bool present: internal.maximum > 0
   // The panel it dims is on, as of the last time the menu opened.
-  readonly property bool lit: present && Compositor.enabled.includes(Config.display.panel)
+  readonly property string panel: Config.brightness.panel || Compositor.connected.find(output => /^(eDP|LVDS|DSI)-/.test(output)) || ""
+  readonly property bool lit: present && Compositor.enabled.includes(panel)
   readonly property int percentage: present ? Math.round(internal.current * 100 / internal.maximum) : 0
 
   QtObject {

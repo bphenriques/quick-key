@@ -2,21 +2,20 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs
 import qs.services
 import qs.ui
 
 // A pill on every screen while a screen recording runs: its time and whether the mic is in it; a click stops it.
-// settings.file: under $XDG_RUNTIME_DIR, the start time in epoch seconds while recording, empty otherwise.
+// Its state (watch, read or file) is {"active": true, "since": <epoch seconds>} while recording, empty otherwise.
 // settings.stop: the command that stops the recording.
-Integration {
+Plugin {
   id: root
 
-  property int startedAt: 0
   property int now: 0
-  readonly property bool recording: startedAt > 0
-  readonly property int elapsed: Math.max(0, now - startedAt)
+  readonly property bool recording: command.state.active ?? false
+  readonly property int startedAt: command.state.since ?? 0
+  readonly property int elapsed: startedAt ? Math.max(0, now - startedAt) : 0
   // The recording mix includes the default mic whenever it is unmuted.
   readonly property bool micLive: !Audio.sourceMuted
 
@@ -28,13 +27,15 @@ Integration {
   property string shownTime: ""
   onTextChanged: if (recording) shownTime = text
 
-  FileView {
-    path: root.settings.file ? Quickshell.env("XDG_RUNTIME_DIR") + "/" + root.settings.file : ""
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: root.startedAt = parseInt(text()) || 0
-    onLoadFailed: root.startedAt = 0
+  function refresh() {
+    command.refresh();
+  }
+
+  CommandState {
+    id: command
+    watch: root.settings.watch ?? ""
+    read: root.settings.read ?? ""
+    file: root.settings.file ?? ""
   }
 
   Timer {

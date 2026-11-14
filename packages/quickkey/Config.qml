@@ -5,9 +5,21 @@ import Quickshell
 import Quickshell.Io
 
 // Typed view of $XDG_CONFIG_HOME/quickkey/config.json, its schema in modules/home-manager/quickkey/settings.nix.
-// Grouped by feature, like waybar's modules; commands are run with sh -c, and one left unset shows as an empty status.
+// Grouped by feature, like waybar's modules; every setting is optional, and commands are run with sh -c.
 Singleton {
   id: root
+
+  readonly property string configDir: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/quickkey"
+  readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/quickkey"
+
+  // A colour set in theme wins over theme.name's file (the user's, then the shipped preset), which wins over the default.
+  readonly property QtObject colors: QtObject {
+    readonly property color background: adapter.theme.background || userTheme.palette.background || shippedTheme.palette.background || "#1d1f21"
+    readonly property color foreground: adapter.theme.foreground || userTheme.palette.foreground || shippedTheme.palette.foreground || "#c5c8c6"
+    readonly property color primary: adapter.theme.primary || userTheme.palette.primary || shippedTheme.palette.primary || "#81a2be"
+    readonly property color alert: adapter.theme.alert || userTheme.palette.alert || shippedTheme.palette.alert || "#cc6666"
+    readonly property color warning: adapter.theme.warning || userTheme.palette.warning || shippedTheme.palette.warning || "#f0c674"
+  }
 
   readonly property alias theme: adapter.theme
   readonly property alias menu: adapter.menu
@@ -16,13 +28,11 @@ Singleton {
   readonly property alias popups: adapter.popups
   readonly property alias audio: adapter.audio
   readonly property alias brightness: adapter.brightness
-  readonly property alias display: adapter.display
-  readonly property alias notifications: adapter.notifications
   readonly property alias keepAwake: adapter.keepAwake
   readonly property alias keyboardLayout: adapter.keyboardLayout
   readonly property alias battery: adapter.battery
   readonly property alias music: adapter.music
-  readonly property alias integrations: adapter.integrations
+  readonly property alias plugins: adapter.plugins
 
   // Keys of json that object does not declare, by path; free-form values (lists, maps) are not looked into.
   function unknownKeys(json, object, path) {
@@ -36,8 +46,40 @@ Singleton {
     return found;
   }
 
+  ThemeFile {
+    id: userTheme
+    path: adapter.theme.name ? root.configDir + "/themes/" + adapter.theme.name + ".json" : ""
+  }
+
+  ThemeFile {
+    id: shippedTheme
+    path: adapter.theme.name ? Quickshell.shellDir + "/themes/" + adapter.theme.name + ".json" : ""
+  }
+
+  // The starter menu, shaped as a config.json to copy from. Not a default bound in the adapter: it writes without breaking
+  // bindings, so this file loading after config.json would replace the user's entries.
+  readonly property var starterEntries: starter.entries
+
   FileView {
-    path: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/quickkey/config.json"
+    path: Quickshell.shellDir + "/menu.json"
+
+    JsonAdapter {
+      property JsonObject menu: JsonObject {
+        id: starter
+        property var entries: []
+      }
+    }
+  }
+
+  readonly property bool themeMissing: userTheme.missing && shippedTheme.missing
+  onThemeMissingChanged: if (themeMissing) console.warn("theme", adapter.theme.name, "not found in", configDir + "/themes or the presets");
+
+  // A reload rather than a re-read, so removed settings fall back to their defaults.
+  FileView {
+    path: root.configDir + "/config.json"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: Quickshell.reload(false)
 
     // A misspelt setting would otherwise do nothing, silently.
     onLoaded: {
@@ -53,11 +95,14 @@ Singleton {
       id: adapter
 
       property JsonObject theme: JsonObject {
-        property color background: "#1d1f21"
-        property color foreground: "#c5c8c6"
-        property color primary: "#81a2be"
-        property color alert: "#cc6666"
-        property color warning: "#f0c674"
+        // A theme in $XDG_CONFIG_HOME/quickkey/themes/ or a shipped one (themes/), by file name.
+        property string name
+        // Override the theme's colours, read through Config.colors.
+        property string background
+        property string foreground
+        property string primary
+        property string alert
+        property string warning
         property real surfaceOpacity: 0.92
         property real highlightOpacity: 0.25
         property real dimOpacity: 0.5
@@ -82,12 +127,13 @@ Singleton {
       }
 
       property JsonObject menu: JsonObject {
-        property var entries: []
-        // The top level's header, like waybar's modules-left, -center and -right: built-in items and integrations, by name (docs/src/menu.md).
+        // Unset (null), the starter menu in menu.json (Config.starterEntries); setting entries replaces it whole.
+        property var entries: null
+        // The top level's header, like waybar's modules-left, -center and -right: built-in items and plugins, by name (docs/src/menu.md).
         property JsonObject header: JsonObject {
           property var left: ["clock"]
           property var center: []
-          property var right: ["notifications", "keepAwake", "keyboardLayout", "battery"]
+          property var right: ["keepAwake", "keyboardLayout", "battery"]
         }
         property int width: 960
         property int columns: 2
@@ -103,10 +149,10 @@ Singleton {
       }
 
       property JsonObject calendar: JsonObject {
-        // The events file the month shows (docs/src/calendar.md); unset or not there yet, the month alone.
-        property string file
-        // Given an event's title and when (14:00 · Rua Augusta 120), reminds of it; unset, no reminders.
-        property string remind
+        // The events file the month shows (docs/src/calendar.md); not there yet, the month alone.
+        property string file: root.stateDir + "/events.json"
+        // Given an event's title and when (14:00 · Rua Augusta 120), reminds of it; empty, no reminders.
+        property string remind: "notify-send --app-name=Calendar --icon=x-office-calendar"
         // How many minutes before a timed event starts.
         property int remindBefore: 10
       }
@@ -114,6 +160,8 @@ Singleton {
       property JsonObject popups: JsonObject {
         // How long a pop-up stays, in milliseconds.
         property int timeout: 1500
+        // Which changes pop up.
+        property var show: ["sink", "source", "brightness", "keyboardLayout", "keepAwake"]
       }
 
       property JsonObject audio: JsonObject {
@@ -122,46 +170,31 @@ Singleton {
         // Given a kind and a device name, makes it the default.
         property string select
         // The pop-up wheel's commands, down then up, for the sink and the source.
-        property var adjust: ({})
+        property var adjust: ({
+          sink: ["wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-", "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"],
+          source: ["wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-", "wpctl set-volume -l 1 @DEFAULT_AUDIO_SOURCE@ 5%+"]
+        })
         // By device type (headphones, headset, internal, external, microphone), and microphoneOff.
         property var glyphs: ({})
       }
 
       property JsonObject brightness: JsonObject {
-        // Prints the path of a file holding the backlight's value, a tab, and its maximum.
-        property string backlight
+        // Prints the path of a file holding the backlight's value, a tab, and its maximum; by default the first backlight.
+        property string backlight: 'for d in /sys/class/backlight/*; do [ -r "$d/brightness" ] && printf "%s\\t%s\\n" "$d/brightness" "$(cat "$d/max_brightness")" && break; done'
         // The pop-up wheel's commands, down then up.
-        property var adjust: []
-      }
-
-      property JsonObject display: JsonObject {
-        // Prints the display layout, then the layouts the connected screens allow, one per line.
-        property string status
-        // What the Display row calls each layout.
-        property var layouts: ({})
-        // The laptop's panel, the screen the backlight dims.
+        property var adjust: ["brightnessctl set 5%-", "brightnessctl set 5%+"]
+        // The panel the backlight dims; unset, the built-in output (eDP, LVDS or DSI).
         property string panel
-        // By layout.
-        property var glyphs: ({})
-      }
-
-      property JsonObject notifications: JsonObject {
-        // Prints true or false for do-not-disturb, then again on every change.
-        property string watch
-        // Pauses notifications, or resumes them.
-        property string toggle
-        // Its compositor key, shown in the header while Super is held.
-        property string shortcut
       }
 
       property JsonObject keepAwake: JsonObject {
-        // Inhibits idle until its stdin closes.
-        property string command
+        // Inhibits idle until its stdin closes; exec, so stopping it releases the lock.
+        property string command: 'exec systemd-inhibit --what=idle --who=quickkey --why="Keep awake" cat'
         property string shortcut
       }
 
       property JsonObject keyboardLayout: JsonObject {
-        // A short label per layout, in the compositor's order.
+        // A short label per layout, in the compositor's order; unset, the first letters of its name.
         property var labels: []
         property string shortcut
       }
@@ -180,8 +213,8 @@ Singleton {
         property var glyphs: ({})
       }
 
-      // Optional parts by name, each { source, settings }: see docs/src/integrations.md.
-      property var integrations: ({})
+      // Optional parts by name, each { source, settings }: see docs/src/plugins.md.
+      property var plugins: ({})
     }
   }
 }

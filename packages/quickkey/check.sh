@@ -5,14 +5,14 @@ fail() {
   failed=1
 }
 
-# Rule 12: an integration is one file rooted at Integration, using the theme, the kit and the services, never the core's surfaces.
-for file in integrations/*.qml; do
-  grep -q '^Integration {' "$file" || fail "$file: root is not Integration"
+# Rule 12: a plugin is one file rooted at Plugin, using the theme, the kit and the services, never the core's surfaces.
+for file in plugins/*.qml; do
+  grep -q '^Plugin {' "$file" || fail "$file: root is not Plugin"
   grep -q '^import qs\.widgets' "$file" && fail "$file: imports the core's surfaces"
 done
 
-# Compositor: only Compositor and integrations reach a backend.
-for file in $(grep -rlE '\bNiri\.' --include='*.qml' . | grep -vE '^\./(services/Compositor\.qml|services/compositor/|integrations/)'); do
+# Compositor: only Compositor and plugins reach a backend.
+for file in $(grep -rlE '\bNiri\.' --include='*.qml' . | grep -vE '^\./(services/Compositor\.qml|services/compositor/|plugins/)'); do
   fail "$file: reaches niri past Compositor"
 done
 
@@ -27,7 +27,7 @@ for file in $(grep -rlE '(text|detail|fallbackDetail): .*Glyphs\.' --include='*.
 done
 
 # Rule 11: a widget never picks a theme colour itself; tones and the kit do.
-for file in $(grep -rlE 'Config\.theme\.(primary|foreground|background|alert|warning)\b' --include='*.qml' . | grep -vE '^\./(Config\.qml|ui/)'); do
+for file in $(grep -rlE 'Config\.(theme|colors)\.(primary|foreground|background|alert|warning)\b' --include='*.qml' . | grep -vE '^\./(Config\.qml|ui/)'); do
   fail "$file: picks a theme colour itself"
 done
 
@@ -44,6 +44,11 @@ done
 # Rule 2: commands come from the config, run with sh -c, never named in QML.
 for file in $(grep -rlE '(execDetached\(|command: |command = )\[ *"[^s"]|"sh", "-c", "' --include='*.qml' .); do
   fail "$file: runs a command named in QML"
+done
+
+# Plugins: state comes through CommandState, the one channel, never a watcher, reader or file of their own.
+for file in $(grep -lE '^\s*(CommandWatcher|CommandReader|FileView) \{' plugins/*.qml); do
+  fail "$file: reads state past CommandState"
 done
 
 exit "$failed"

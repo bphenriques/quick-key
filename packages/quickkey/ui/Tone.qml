@@ -9,17 +9,17 @@ import qs
 Singleton {
   function color(tone) {
     switch (tone) {
-    case "primary": return Config.theme.primary;
-    case "warning": return Config.theme.warning;
-    case "alert": return Config.theme.alert;
-    case "dim": return Qt.alpha(Config.theme.foreground, Config.theme.dimOpacity);
-    default: return Config.theme.foreground;
+    case "primary": return Config.colors.primary;
+    case "warning": return Config.colors.warning;
+    case "alert": return Config.colors.alert;
+    case "dim": return Qt.alpha(Config.colors.foreground, Config.theme.dimOpacity);
+    default: return Config.colors.foreground;
     }
   }
 
   // The background of a panel, at the theme's opacity unless given.
   function surface(opacity = Config.theme.surfaceOpacity) {
-    return Qt.alpha(Config.theme.background, opacity);
+    return Qt.alpha(Config.colors.background, opacity);
   }
 
   // A tone's colour behind something: a highlight, or a meter's track. `strength` multiplies theme.highlightOpacity.

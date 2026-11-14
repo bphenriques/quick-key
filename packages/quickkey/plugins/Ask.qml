@@ -16,7 +16,7 @@ import qs.ui
 // settings.notify: given a title and a text, tells of a reply or an approval while hidden; prints `default` when clicked.
 // settings.pasteImage: given a file, writes the clipboard's image there, failing when it holds none; `ask` then gets it.
 // settings.open: given the session, opens it in a terminal. settings.title, settings.glyph: the header.
-Integration {
+Plugin {
   id: root
 
   // In lines, like the menu's width in pixels: declared, so the panel holds still (rule 4).
@@ -471,7 +471,7 @@ Integration {
               .concat(root.approval ? [{ key: "Ctrl+y", what: "allow", clickable: true }] : [])
               .concat(root.exchanges.length > 0 ? [{ key: "Ctrl+l", what: "new", clickable: true }] : [])
               .concat(root.canMove ? [{ key: "Ctrl+o", what: "Move to terminal...", clickable: true }] : [])
-              // Last, so its changing word moves nothing; twice quickly hides (docs/src/integrations.md).
+              // Last, so its changing word moves nothing; twice quickly hides (docs/src/plugins.md).
               .concat([{ key: "Escape", what: root.escapeAction, clickable: true }])
             onPicked: key => root.act(key)
           }

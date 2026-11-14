@@ -1,9 +1,9 @@
 import QtQuick
 import Quickshell
 
-// The root of every integration (see docs/src/integrations.md).
+// The root of every plugin (see docs/src/plugins.md).
 Scope {
-  // Set by the shell: the integration's name in Config.integrations, and its settings there.
+  // Set by the shell: the plugin's name in Config.plugins, and its settings there.
   property string name
   property var settings: ({})
 
@@ -12,11 +12,22 @@ Scope {
   property string text
   property string detail
   property bool active: false
+  // The status's tone when it needs one (alert for do-not-disturb); unset, lit by active.
+  property string tone
   // Its compositor key, shown in the header while Super is held; set from its settings by the module that binds it.
   property string shortcut
 
+  // What a menu entry with `list` set to its name shows, each { id, label, icon, detail, active, enabled }.
+  property var items: []
+
   // What a click on its header item does.
   function activate() {}
+
+  // What choosing one of its items does, given the item's id.
+  function select(id) {}
+
+  // Called as the menu opens, to read what has no events.
+  function refresh() {}
 
   // A command from its settings as a Process takes it, the arguments passed as $1, $2... so none is parsed by the shell.
   function commandLine(shell, ...args) {
