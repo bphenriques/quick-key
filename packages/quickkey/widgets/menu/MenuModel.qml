@@ -244,7 +244,6 @@ Scope {
 
   function show() {
     // Sources without change events are read as the menu opens.
-    Audio.refreshDevices();
     Compositor.refresh();
     Plugins.refresh();
     open = true;
@@ -309,7 +308,7 @@ Scope {
       item.menuEntry.triggered();
       hide();
     } else if (item.audio) {
-      Audio.select(item.audio.kind, item.audio.name);
+      Audio.select(item.audio);
     } else if (item.plugin) {
       item.plugin.select(item.id);
     } else if (item.device || item.network) {

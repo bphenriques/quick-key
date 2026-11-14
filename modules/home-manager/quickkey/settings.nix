@@ -328,8 +328,6 @@ in
     };
 
     audio = group "Audio devices" {
-      devices = opt types.str "Command printing one device per line: kind (sink or source), name, type and label, tab separated, internal first";
-      select = opt types.str "Command given a kind and a device name, making it the default";
       adjust = opt (types.submodule {
         options = lib.genAttrs [ "sink" "source" ] (
           _:

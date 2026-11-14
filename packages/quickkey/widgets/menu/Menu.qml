@@ -134,12 +134,6 @@ Scope {
 
   Binding {
     target: Audio
-    property: "live"
-    value: menu.open
-  }
-
-  Binding {
-    target: Audio
     property: "metering"
     value: menu.level?.status === "source"
   }

@@ -5,14 +5,14 @@ import Quickshell
 import Quickshell.Services.Pipewire
 import qs
 
-// Default output and input.
+// Default output and input, and every device to pick from.
 Singleton {
   id: root
 
   readonly property PwNode sink: Pipewire.defaultAudioSink
   readonly property PwNode source: Pipewire.defaultAudioSource
 
-  // Every output and input as Config.audio.devices lists them, internal first: { kind, name, type, label }.
+  // Outputs and inputs backed by hardware, internal first then by label: { node, kind, name, type, label }.
   readonly property var sinks: internal.devices.filter(device => device.kind === "sink")
   readonly property var sources: internal.devices.filter(device => device.kind === "source")
 
@@ -25,58 +25,54 @@ Singleton {
   readonly property real sourceVolume: source?.audio?.volume ?? 0
   readonly property bool sinkMuted: sink?.audio?.muted ?? false
   readonly property bool sourceMuted: source?.audio?.muted ?? false
-  // Set while the menu is open: the device list only follows it then.
-  property bool live: false
   // Set while the input's level is shown: it is only sampled then.
   property bool metering: false
   // On the same linear scale as the volume.
   readonly property real sourceLevel: Math.min(1, sourcePeak.peak)
 
-  // The menu also asks on open, to catch headphones plugged into the same output.
-  function refreshDevices() {
-    lister.refresh();
+  // WirePlumber moves the streams that follow the default.
+  function select(device) {
+    if (device.kind === "sink") Pipewire.preferredDefaultAudioSink = device.node;
+    else Pipewire.preferredDefaultAudioSource = device.node;
   }
 
-  function select(kind, name) {
-    if (Config.audio.select) Quickshell.execDetached(["sh", "-c", Config.audio.select + ' "$1" "$2"', "sh", kind, name]);
+  // Form factor first; an output on USB, Bluetooth or HDMI is external.
+  function type(node) {
+    const formFactor = node.properties["device.form-factor"] ?? "";
+    if (formFactor === "headset") return "headset";
+    if (!node.isSink) return "microphone";
+    if (formFactor === "headphone") return "headphones";
+    const bus = node.properties["device.bus"] ?? "";
+    return bus === "usb" || bus === "bluetooth" || node.name.includes("hdmi") ? "external" : "internal";
+  }
+
+  function describe(node) {
+    const deviceType = type(node);
+    const label = deviceType === "internal" ? "Speakers" : deviceType === "headphones" ? "Headphones" : node.nickname || node.description;
+    return { node, kind: node.isSink ? "sink" : "source", name: node.name, type: deviceType, label };
   }
 
   QtObject {
     id: internal
-    property var devices: []
+    // A node's properties arrive once it is tracked; virtual ones have no device.
+    readonly property var nodes: Pipewire.nodes.values.filter(node => !node.isStream && node.audio)
+    readonly property var devices: nodes.filter(node => node.properties["device.id"]).map(node => root.describe(node))
+      .sort((a, b) => a.kind.localeCompare(b.kind) || rank(a) - rank(b) || a.label.localeCompare(b.label))
     readonly property var sinkDevice: root.sinks.find(device => device.name === root.sink?.name) ?? null
     readonly property var sourceDevice: root.sources.find(device => device.name === root.source?.name) ?? null
-  }
 
-  Connections {
-    target: Pipewire.nodes
-    enabled: root.live
-    function onValuesChanged() { root.refreshDevices(); }
-  }
-
-  Connections {
-    target: Pipewire
-    function onDefaultAudioSinkChanged() { root.refreshDevices(); }
-    function onDefaultAudioSourceChanged() { root.refreshDevices(); }
+    function rank(device) {
+      return device.type === "internal" || device.type === "microphone" ? 0 : 1;
+    }
   }
 
   PwObjectTracker {
-    objects: [root.sink, root.source]
+    objects: internal.nodes
   }
 
   PwNodePeakMonitor {
     id: sourcePeak
     node: root.source
     enabled: root.metering && !root.sourceMuted
-  }
-
-  CommandReader {
-    id: lister
-    shell: Config.audio.devices
-    atStart: true
-    onRead: text => internal.devices = text.trim().split("\n").filter(line => line).map(line => {
-      const [kind, name, type, label] = line.split("\t");
-      return { kind, name, type, label };
-    })
   }
 }

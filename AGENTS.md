@@ -24,7 +24,7 @@ Every change follows these; a change that cannot is a reason to revisit the rule
 
 The shell, under `packages/quickkey/`:
 
-- `services/`: state read from its source (D-Bus, Pipewire, niri, commands), pushed by events. What a service declares at its top level is its API, read-only where it is state; what it keeps for itself sits in an object under an `id`, which no other file can reach. Sources without events (the outputs, the audio device list, plugins' `read` commands) are read on `refresh()`, which the menu calls as it opens. `CommandState` is the one channel plugins get state through (`watch`, `read`, `file`).
+- `services/`: state read from its source (D-Bus, Pipewire, niri, commands), pushed by events. What a service declares at its top level is its API, read-only where it is state; what it keeps for itself sits in an object under an `id`, which no other file can reach. Sources without events (the outputs, plugins' `read` commands) are read on `refresh()`, which the menu calls as it opens. `CommandState` is the one channel plugins get state through (`watch`, `read`, `file`).
 - `ui/`: the kit ([Kit](docs/src/kit.md)). Widgets use it and the theme from `Config`, never raw colours or sizes.
 - `widgets/`: the surfaces. `menu/` splits into `MenuModel` (state, keys) and `Menu`, `MenuStatus` (view).
 - `plugins/`: the plugins the shell ships; `Plugin.qml` is their root, `services/Plugins.qml` loads them.

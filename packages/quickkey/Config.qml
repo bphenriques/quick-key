@@ -165,10 +165,6 @@ Singleton {
       }
 
       property JsonObject audio: JsonObject {
-        // Prints one device per line: kind (sink or source), name, type and friendly name, tab separated, internal first.
-        property string devices
-        // Given a kind and a device name, makes it the default.
-        property string select
         // The pop-up wheel's commands, down then up, for the sink and the source.
         property var adjust: ({
           sink: ["wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-", "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"],
