@@ -43,7 +43,7 @@ I don't expect anything back but if it saved you time and you feel like it, [buy
 
 ## AI Disclaimer
 
-I drive the architecture, the design, and the scope. AI has been invaluable to learn and iterate faster. I still take pride in giving my own voice to documentation and tweaking code by hand.
+I drive the architecture, the design, and the scope. AI has been invaluable to learn and iterate faster. 
 
 ## License
 
