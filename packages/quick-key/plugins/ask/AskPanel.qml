@@ -7,11 +7,11 @@ import Quickshell.Wayland
 import qs
 import qs.ui
 
-// Ask's panel in the middle of the screen: the conversation, the prompt and its keys, over the state in Ask.qml.
-OverlayWindow {
+// Ask's panel in the middle of the screen while shown: the conversation, the prompt and its keys, over the state in Ask.qml.
+Scope {
   id: panel
 
-  required property var ask
+  required property var plugin
 
   // The web links in a reply, each once, without the punctuation that ends a sentence.
   function links(text) {
@@ -38,7 +38,7 @@ OverlayWindow {
     Layout.fillWidth: true
     onActivated: {
       Qt.openUrlExternally(link.modelData);
-      panel.ask.shown = false;
+      panel.plugin.shown = false;
     }
 
     Icon {
@@ -71,7 +71,7 @@ OverlayWindow {
     id: exchange
     required property var modelData
     required property int index
-    readonly property bool waiting: panel.ask.busy && index === panel.ask.exchanges.length - 1
+    readonly property bool waiting: panel.plugin.busy && index === panel.plugin.exchanges.length - 1
     readonly property real indent: Metrics.line + Config.theme.spacing
     Layout.fillWidth: true
     spacing: Config.theme.spacing / 2
@@ -132,180 +132,185 @@ OverlayWindow {
       Spinner {
         tone: "dim"
         size: Metrics.line
-        mood: panel.ask.approval ? "attention" : "working"
+        mood: panel.plugin.approval ? "attention" : "working"
       }
 
       Label {
         Layout.fillWidth: true
-        tone: panel.ask.approval ? "warning" : "dim"
+        tone: panel.plugin.approval ? "warning" : "dim"
         wrapMode: Text.Wrap
-        text: panel.ask.approval ? "Allow " + panel.ask.approval + "?" : panel.ask.activity ? panel.ask.activity + " · " + panel.ask.waited + "s" : panel.ask.waited >= 2 ? panel.ask.waited + "s" : ""
+        text: panel.plugin.approval ? "Allow " + panel.plugin.approval + "?" : panel.plugin.activity ? panel.plugin.activity + " · " + panel.plugin.waited + "s" : panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""
       }
     }
   }
 
+  LazyLoader {
+    active: panel.plugin.shown
 
-  anchors.top: true
-  anchors.bottom: true
-  anchors.left: true
-  anchors.right: true
-  WlrLayershell.namespace: panel.ask.name
-  WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-  BackgroundEffect.blurRegion: Region {
-    item: card
-    radius: Config.theme.radius
-  }
+    OverlayWindow {
+      anchors.top: true
+      anchors.bottom: true
+      anchors.left: true
+      anchors.right: true
+      WlrLayershell.namespace: panel.plugin.name
+      WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+      BackgroundEffect.blurRegion: Region {
+        item: card
+        radius: Config.theme.radius
+      }
 
-  // A click beside the panel hides it, the conversation kept.
-  MouseArea {
-    anchors.fill: parent
-    onClicked: panel.ask.shown = false
-  }
+      // A click beside the panel hides it, the conversation kept.
+      MouseArea {
+        anchors.fill: parent
+        onClicked: panel.plugin.shown = false
+      }
 
-  Shadow {
-    anchors.fill: card
-    radius: card.radius
-  }
+      Shadow {
+        anchors.fill: card
+        radius: card.radius
+      }
 
-  Surface {
-    id: card
-    anchors.centerIn: parent
-    width: Config.menu.width
-    height: content.implicitHeight + 2 * Config.theme.padding
+      Surface {
+        id: card
+        anchors.centerIn: parent
+        width: Config.menu.width
+        height: content.implicitHeight + 2 * Config.theme.padding
 
-    MouseArea {
-      anchors.fill: parent
-    }
-
-    ColumnLayout {
-      id: content
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.margins: Config.theme.padding
-      spacing: Config.theme.padding
-
-      RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: Config.theme.itemPaddingX
-        Layout.rightMargin: Config.theme.itemPaddingX
-        spacing: Config.theme.spacing
-
-        Icon {
-          glyph: panel.ask.glyph
-          size: Metrics.line
+        MouseArea {
+          anchors.fill: parent
         }
 
-        Label {
-          Layout.fillWidth: true
-          font.bold: true
-          text: panel.ask.title
-        }
-      }
+        ColumnLayout {
+          id: content
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.margins: Config.theme.padding
+          spacing: Config.theme.padding
 
-      // Only the keys no one would guess (Return sends, as in any chat), each while it applies.
-      KeyLegend {
-        keys: [{ key: "Shift+Return", what: "newline" }]
-          .concat(panel.ask.approval ? [{ key: "Ctrl+y", what: "allow", clickable: true }] : [])
-          .concat(panel.ask.exchanges.length > 0 ? [{ key: "Ctrl+l", what: "new", clickable: true }] : [])
-          .concat(panel.ask.canMove ? [{ key: "Ctrl+o", what: "Move to terminal...", clickable: true }] : [])
-          // Last, so its changing word moves nothing; twice quickly hides (docs/src/plugins.md).
-          .concat([{ key: "Escape", what: panel.ask.escapeAction, clickable: true }])
-        onPicked: key => panel.ask.act(key)
-      }
+          RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Config.theme.itemPaddingX
+            Layout.rightMargin: Config.theme.itemPaddingX
+            spacing: Config.theme.spacing
 
-      Divider {
-        Layout.fillWidth: true
-      }
+            Icon {
+              glyph: panel.plugin.glyph
+              size: Metrics.line
+            }
 
-      ColumnLayout {
-        Layout.fillWidth: true
-        Layout.preferredHeight: panel.ask.lines * Metrics.line
-        Layout.leftMargin: Config.theme.itemPaddingX
-        Layout.rightMargin: Config.theme.itemPaddingX
-        // History and prompt as far apart as two exchanges.
-        spacing: Config.theme.padding
+            Label {
+              Layout.fillWidth: true
+              font.bold: true
+              text: panel.plugin.title
+            }
+          }
 
-        // The conversation, kept scrolled to its end.
-        Flickable {
-          id: thread
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          clip: true
-          contentHeight: exchangeList.implicitHeight
-          boundsBehavior: Flickable.StopAtBounds
-          onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
-          onHeightChanged: contentY = Math.max(0, contentHeight - height)
+          // Only the keys no one would guess (Return sends, as in any chat), each while it applies.
+          KeyLegend {
+            keys: [{ key: "Shift+Return", what: "newline" }]
+              .concat(panel.plugin.approval ? [{ key: "Ctrl+y", what: "allow", clickable: true }] : [])
+              .concat(panel.plugin.exchanges.length > 0 ? [{ key: "Ctrl+l", what: "new", clickable: true }] : [])
+              .concat(panel.plugin.canMove ? [{ key: "Ctrl+o", what: "Move to terminal...", clickable: true }] : [])
+              // Last, so its changing word moves nothing; twice quickly hides (docs/src/plugins.md).
+              .concat([{ key: "Escape", what: panel.plugin.escapeAction, clickable: true }])
+            onPicked: key => panel.plugin.act(key)
+          }
 
-          function page(down) {
-            contentY = Math.max(0, Math.min(contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
+          Divider {
+            Layout.fillWidth: true
           }
 
           ColumnLayout {
-            id: exchangeList
-            width: thread.width
-            // Wider between exchanges than within one, so each reads as a unit.
+            Layout.fillWidth: true
+            Layout.preferredHeight: panel.plugin.lines * Metrics.line
+            Layout.leftMargin: Config.theme.itemPaddingX
+            Layout.rightMargin: Config.theme.itemPaddingX
+            // History and prompt as far apart as two exchanges.
             spacing: Config.theme.padding
 
-            Repeater {
-              model: panel.ask.exchanges
+            // The conversation, kept scrolled to its end.
+            Flickable {
+              id: thread
+              Layout.fillWidth: true
+              Layout.fillHeight: true
+              clip: true
+              contentHeight: exchangeList.implicitHeight
+              boundsBehavior: Flickable.StopAtBounds
+              onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
+              onHeightChanged: contentY = Math.max(0, contentHeight - height)
 
-              Exchange {}
-            }
-          }
-        }
-
-        // Pasted for the next prompt; Escape clears it with the text.
-        Thumbnail {
-          Layout.leftMargin: Metrics.line + Config.theme.spacing
-          path: panel.ask.image
-        }
-
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Config.theme.spacing
-
-          Icon {
-            Layout.alignment: Qt.AlignTop
-            tone: "primary"
-            glyph: Glyphs.submenu
-            size: Metrics.line
-          }
-
-          TextArea {
-            id: prompt
-            Layout.fillWidth: true
-            Layout.preferredHeight: implicitHeight
-            placeholder: "Ask " + panel.ask.title
-            onTextChanged: panel.ask.draft = text
-            Component.onCompleted: set(panel.ask.draft)
-
-            // Return sends and Shift+Return breaks the line; the rest go to panel.ask.act, as the legend's clicks do.
-            onKeyPressed: event => {
-              const plain = !(event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier));
-              if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && plain) {
-                if (panel.ask.send(text)) clear();
-              } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
-                thread.page(event.key === Qt.Key_PageDown);
-              } else if (!panel.ask.act(MenuKeys.name(event))) {
-                return;
+              function page(down) {
+                contentY = Math.max(0, Math.min(contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
               }
-              event.accepted = true;
+
+              ColumnLayout {
+                id: exchangeList
+                width: thread.width
+                // Wider between exchanges than within one, so each reads as a unit.
+                spacing: Config.theme.padding
+
+                Repeater {
+                  model: panel.plugin.exchanges
+
+                  Exchange {}
+                }
+              }
             }
 
-            Connections {
-              target: panel.ask
+            // Pasted for the next prompt; Escape clears it with the text.
+            Thumbnail {
+              Layout.leftMargin: Metrics.line + Config.theme.spacing
+              path: panel.plugin.image
+            }
 
-              function onRestore(text) {
-                if (prompt.text === "") prompt.set(text);
+            RowLayout {
+              Layout.fillWidth: true
+              spacing: Config.theme.spacing
+
+              Icon {
+                Layout.alignment: Qt.AlignTop
+                tone: "primary"
+                glyph: Glyphs.submenu
+                size: Metrics.line
               }
 
-              function onClearPrompt() {
-                prompt.clear();
-              }
+              TextArea {
+                id: prompt
+                Layout.fillWidth: true
+                Layout.preferredHeight: implicitHeight
+                placeholder: "Ask " + panel.plugin.title
+                onTextChanged: panel.plugin.draft = text
+                Component.onCompleted: set(panel.plugin.draft)
 
-              function onPasteText() {
-                prompt.paste();
+                // Return sends and Shift+Return breaks the line; the rest go to panel.plugin.act, as the legend's clicks do.
+                onKeyPressed: event => {
+                  const plain = !(event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier));
+                  if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && plain) {
+                    if (panel.plugin.send(text)) clear();
+                  } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
+                    thread.page(event.key === Qt.Key_PageDown);
+                  } else if (!panel.plugin.act(MenuKeys.name(event))) {
+                    return;
+                  }
+                  event.accepted = true;
+                }
+
+                Connections {
+                  target: panel.plugin
+
+                  function onRestore(text) {
+                    if (prompt.text === "") prompt.set(text);
+                  }
+
+                  function onClearPrompt() {
+                    prompt.clear();
+                  }
+
+                  function onPasteText() {
+                    prompt.paste();
+                  }
+                }
               }
             }
           }

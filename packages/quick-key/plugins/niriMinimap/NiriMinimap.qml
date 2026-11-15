@@ -2,48 +2,21 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import qs
 import qs.services
 import qs.services.compositor
 import qs.ui
 
-// A corner minimap on moving between windows or workspaces; every column shows, since niri does not report scrolling.
+// When you move between windows or workspaces, the layout Minimap.qml draws; every column, since niri does not report scrolling.
 Plugin {
   id: root
 
-  readonly property int mapHeight: settings.height ?? 30
-  readonly property int maxWidth: settings.maxWidth ?? 180
-  readonly property real tileOpacity: settings.opacity ?? 0.7
-  readonly property int borderWidth: settings.borderWidth ?? 1
+  readonly property bool shown: transient.shown
+  views: ["Minimap.qml"]
 
   property bool overview: false
   // The focused output's workspaces and the columns around the active one, without titles, so it changes only with the layout.
   property var map: null
-
-  Fade {
-    id: fade
-    shown: transient.shown
-  }
-
-  readonly property var screen: Quickshell.screens.find(screen => screen.name === root.map?.output) ?? null
-  readonly property int gap: 2 * root.borderWidth
-  readonly property real dot: root.mapHeight / 8
-  readonly property real strip: root.mapHeight / 5
-  // Sized to mapHeight for the output's height, shrunk further if any of the three workspaces would pass maxWidth.
-  readonly property real scale: {
-    if (!screen || !root.map) return 0;
-    let fit = root.mapHeight / screen.height;
-    for (const columns of [root.map.above, root.map.columns, root.map.below]) {
-      const total = columns.reduce((sum, column) => sum + widthOf(column), 0);
-      if (total > 0) fit = Math.min(fit, (root.maxWidth - gap * (columns.length - 1)) / total);
-    }
-    return fit;
-  }
-
-  function widthOf(column) {
-    return Math.max(...column.map(window => window.width));
-  }
 
   Transient {
     id: transient
@@ -155,131 +128,4 @@ Plugin {
     }
   }
 
-  // A window, its app's icon in the middle; the focused one outlined in the primary colour.
-  component Tile: Rectangle {
-    id: tile
-
-    property bool focused: false
-    property string appId: ""
-
-    radius: Config.theme.itemRadius / 2
-    color: Tone.surface(root.tileOpacity)
-    border.width: root.borderWidth
-    border.color: Tone.color(focused ? "primary" : "dim")
-
-    Icon {
-      anchors.centerIn: parent
-      visible: tile.appId !== ""
-      size: Math.min(0.4 * root.mapHeight, 0.6 * Math.min(tile.width, tile.height))
-      source: tile.appId ? Quickshell.iconPath(DesktopEntries.heuristicLookup(tile.appId)?.icon ?? tile.appId, true) : ""
-      glyph: Glyphs.window
-      tone: tile.focused ? "normal" : "dim"
-    }
-  }
-
-  // A neighbouring workspace: one block per column, without windows or icons; the column focus would land on is outlined.
-  component Strip: Row {
-    id: strip
-
-    property var columns: []
-
-    visible: columns.length > 0
-    spacing: root.gap
-
-    Repeater {
-      model: strip.columns
-
-      Tile {
-        required property var modelData
-        readonly property bool target: modelData.some(window => window.focused)
-
-        width: root.widthOf(modelData) * root.scale
-        height: root.strip
-        focused: target
-      }
-    }
-  }
-
-  LazyLoader {
-    active: fade.loaded && root.screen !== null
-
-    OverlayWindow {
-      screen: root.screen
-      anchors.top: true
-      anchors.left: true
-      margins.top: Config.theme.edgeMargin
-      margins.left: Config.theme.edgeMargin
-      WlrLayershell.namespace: "niriMinimap"
-      mask: Region {}
-
-      implicitWidth: content.implicitWidth
-      implicitHeight: content.implicitHeight
-
-      Row {
-        id: content
-        opacity: fade.value
-        spacing: Config.theme.spacing
-
-        // niri stacks workspaces vertically; the active one is the long mark.
-        Column {
-          anchors.verticalCenter: parent.verticalCenter
-          spacing: root.dot
-
-          Repeater {
-            model: root.map.workspaces
-
-            Rectangle {
-              required property var modelData
-
-              width: root.dot
-              height: modelData.active ? 3 * root.dot : root.dot
-              radius: root.dot / 2
-              color: Tone.color(modelData.active ? "primary" : "dim")
-            }
-          }
-        }
-
-        Column {
-          anchors.verticalCenter: parent.verticalCenter
-          spacing: root.gap
-
-          Strip {
-            columns: root.map.above
-          }
-
-          Row {
-            spacing: root.gap
-
-            Repeater {
-              model: root.map.columns
-
-              Column {
-                id: column
-                required property var modelData
-
-                spacing: root.gap
-
-                Repeater {
-                  model: column.modelData
-
-                  Tile {
-                    required property var modelData
-
-                    width: root.widthOf(column.modelData) * root.scale
-                    height: modelData.height * root.scale
-                    focused: modelData.focused
-                    appId: modelData.appId
-                  }
-                }
-              }
-            }
-          }
-
-          Strip {
-            columns: root.map.below
-          }
-        }
-      }
-    }
-  }
 }

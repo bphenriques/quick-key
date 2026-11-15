@@ -5,15 +5,18 @@ fail() {
   failed=1
 }
 
-# Rule 12: a plugin's file is rooted at Plugin, using the theme, the kit and the services, never the core's surfaces.
-for file in plugins/*.qml plugins/*/*.qml; do
-  dir=$(basename "$(dirname "$file")")
-  [ "$dir" = plugins ] || [ "${dir^}.qml" = "$(basename "$file")" ] || continue
-  grep -q '^Plugin {' "$file" || fail "$file: root is not Plugin"
+# Rule 12: a plugin is a folder holding all of it, its file rooted at Plugin and every setting it reads in its Settings.qml.
+for file in plugins/*.qml; do
+  [ -e "$file" ] && fail "$file: a plugin is a folder, plugins/<name>/"
 done
 for dir in plugins/*/; do
   name=$(basename "$dir")
-  [ -f "$dir${name^}.qml" ] || fail "$dir: no plugin file named after the folder"
+  grep -qs '^Plugin {' "$dir${name^}.qml" || fail "$dir: no ${name^}.qml rooted at Plugin"
+  grep -qsE '^\s*(CornerPill|OverlayWindow|PanelWindow|LazyLoader|Variants|Rectangle|Row|Column|Item|Image|Label|Icon|Spinner) \{' "$dir${name^}.qml" && fail "$dir${name^}.qml: draws; its views go in their own files (views)"
+  grep -qs '^PluginSettings {' "${dir}Settings.qml" || fail "$dir: no Settings.qml rooted at PluginSettings"
+  for key in $(grep -rhoE '\bsettings\.[a-zA-Z]+' "$dir" | sed 's/^settings\.//' | sort -u); do
+    grep -qsE "property [a-z]+ $key\b" "${dir}Settings.qml" PluginSettings.qml || fail "$dir: reads settings.$key, which Settings.qml does not declare"
+  done
 done
 
 # Plugins and the built-in tables sit under the surfaces, never reaching into them.

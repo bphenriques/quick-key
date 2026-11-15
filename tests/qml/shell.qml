@@ -34,8 +34,12 @@ ShellRoot {
       until: () => Plugins.get("custom")?.text === "from the user's folder"
     },
     {
-      name: "a plugin in a folder of its own loads, its pieces by path",
+      name: "a plugin in a folder of its own loads, its views created with it",
       until: () => Plugins.get("folded")?.text === "from its folder"
+    },
+    {
+      name: "a plugin's settings are its Settings.qml, set from config.json over its defaults",
+      until: () => Plugins.get("folded")?.settings.greeting === "hi" && Plugins.get("folded").settings.count === 3 && !("unknown" in Plugins.get("folded").settings)
     },
     {
       name: "a plugin that fails to load is left out",

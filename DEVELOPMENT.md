@@ -4,7 +4,7 @@ nix flake check -L          # formatting, package builds (check.sh included) and
 nix build .#docs            # docs site → result/index.html
 ```
 
-`packages/quick-key/check.sh` holds the design rules in [AGENTS.md](AGENTS.md) that a text search can (a plugin's root and imports, built-ins only in their tables, no optional calls or `flatMap` (Qt's JavaScript cannot run them), Compositor, Label, glyphs through Icon, colours only through tones and the kit, font measures through Metrics, commands from the config, plugins declaring no source or IPC of their own); every build runs it.
+`packages/quick-key/check.sh` holds the design rules in [AGENTS.md](AGENTS.md) that a text search can (a plugin's folder, root, settings and views, its imports, built-ins only in their tables, no optional calls or `flatMap` (Qt's JavaScript cannot run them), Compositor, Label, glyphs through Icon, colours only through tones and the kit, font measures through Metrics, commands from the config, plugins declaring no source or IPC of their own); every build runs it.
 
 `tests/` holds the flake checks beyond the builds, listed in `tests/default.nix`: `module-eval` (what the module writes into `config.json` and which assertion rejects a bad setting) and `qml` (the shell's logic in a real Quickshell, headless, against the plugins in `tests/qml/config/`; `shell.qml` prints a TAP line per case) and `comments` (no comment over one line). One case per behaviour a user relies on, run against real commands and files, never stand-ins. What needs a session (PipeWire, UPower, niri, windows) is seen working on the desktop instead. `git add -N` a new test file, or the flake cannot see it.
 

@@ -10,6 +10,7 @@ stdenvNoCC.mkDerivation {
       ./builtins
       ./menu.json
       ./Plugin.qml
+      ./PluginSettings.qml
       ./services
       ./ui
       ./widgets

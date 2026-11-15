@@ -28,7 +28,7 @@ The shell, under `packages/quick-key/`:
 - `ui/`: the kit ([Kit](docs/src/kit.md)). Widgets use it and the theme from `Config`, never raw colours or sizes.
 - `builtins/`: the built-in names, one table each (`Statuses`, `Lists`, `States`, `HeaderItems`): what a status shows, what a list holds and does, what lights a toggle, what a header item does. `modules/home-manager/quick-key/builtins.nix` lists the same names for the module; the qml test holds them equal.
 - `widgets/`: the surfaces. `menu/` splits into `MenuModel` (levels and keys) and its view (`Menu`, `MenuHeader`, `MenuRow`, `MenuStatus`); `menu/calendar/` holds a calendar level (`CalendarModel`, `CalendarMonth`, `CalendarEvents`). A surface with state of its own keeps it in a `*Model`, the view only reading it.
-- `plugins/`: the plugins the shell ships; `Plugin.qml` is their root, `services/Plugins.qml` loads them. A plugin is one file, `<Name>.qml`, or a folder `<name>/` holding all of it: `<Name>.qml` (its state) beside its own pieces (`ask/AskPanel.qml`), created by path (`Qt.resolvedUrl`) since a plugin folder is not a module the shell imports.
+- `plugins/`: the plugins the shell ships; `Plugin.qml` is their root, `PluginSettings.qml` their settings' root, `services/Plugins.qml` loads them. A plugin is a folder holding all of it: `<Name>.qml` (its state and actions, never drawing), `Settings.qml` (every setting it takes), and its views, listed in `views` and created with it, since a plugin folder is not a module the shell imports.
 - `themes/`: the shipped colour presets, read through `ThemeFile.qml`.
 - `menu.json`: the starter menu, shaped as a `config.json` so users can copy it.
 

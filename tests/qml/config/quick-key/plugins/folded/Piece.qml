@@ -1,5 +1,7 @@
 import QtQuick
 
 QtObject {
-  readonly property string word: "from its folder"
+  required property var plugin
+
+  Component.onCompleted: plugin.text = "from its folder"
 }

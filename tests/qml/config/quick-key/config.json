@@ -6,7 +6,7 @@
     "wallpaper": { "settings": { "file": "wallpaper" } },
     "devices": { "source": "command", "settings": { "read": "echo '{\"items\": [{\"id\": \"a-1\"}, {\"id\": \"b-2\"}]}'" } },
     "custom": {},
-    "folded": {},
+    "folded": { "settings": { "greeting": "hi", "unknown": true } },
     "broken": { "source": "missing" }
   }
 }

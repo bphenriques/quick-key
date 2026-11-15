@@ -12,7 +12,7 @@ Plugin {
 
   // In lines, like the menu's width in pixels: declared, so the panel holds still (rule 4).
   readonly property int lines: 14
-  readonly property string title: settings.title ?? name
+  readonly property string title: settings.title || name
 
   // [{ prompt, image, reply, error, stopped }], the last one waiting while busy.
   property var exchanges: []
@@ -45,9 +45,10 @@ Plugin {
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText
 
-  glyph: settings.glyph ?? ""
+  glyph: settings.glyph
   active: busy || unread
   tone: approval ? "warning" : ""
+  views: ["AskPanel.qml"]
 
   function activate() {
     toggle();
@@ -261,18 +262,5 @@ Plugin {
         root.unread = false;
       }
     }
-  }
-
-  // Created by path while shown: a plugin's folder is not a module the shell imports.
-  property var panel: null
-  onShownChanged: {
-    if (!shown) {
-      panel?.destroy();
-      panel = null;
-      return;
-    }
-    const component = Qt.createComponent(Qt.resolvedUrl("AskPanel.qml"));
-    panel = component.createObject(root, { ask: root });
-    if (!panel) console.warn(name + ":", component.errorString());
   }
 }
