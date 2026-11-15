@@ -24,14 +24,17 @@ let
   presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quick-key/themes")));
   themeName = cfg.settings.theme.name;
 
-  # The standard tools Config.qml's defaults name, found first; systemd's own come with the system.
+  # extraPackages, then the standard tools Config.qml's defaults name, before the session's PATH; systemd's come with the system.
   launcher = pkgs.writeShellScript "quick-key" ''
     export PATH=${
-      lib.makeBinPath [
-        pkgs.util-linux
-        pkgs.brightnessctl
-        pkgs.libnotify
-      ]
+      lib.makeBinPath (
+        cfg.extraPackages
+        ++ [
+          pkgs.util-linux
+          pkgs.brightnessctl
+          pkgs.libnotify
+        ]
+      )
     }''${PATH:+:$PATH}
     exec ${lib.getExe config.programs.quickshell.package} --config quick-key
   '';
@@ -73,6 +76,13 @@ in
       );
       default = { };
       description = "Colour themes, written to $XDG_CONFIG_HOME/quick-key/themes/ and picked by `settings.theme.name`";
+    };
+
+    extraPackages = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [ ];
+      example = lib.literalExpression "[ config.services.dunst.package ]";
+      description = "Packages first on the shell's PATH, for what plugins and commands call by name; one here wins over a standard tool's";
     };
 
     exec.ipc = lib.mkOption {

@@ -5,6 +5,7 @@ let
 
   cfg = evalHome {
     programs.quick-key = {
+      extraPackages = [ pkgs.hello ];
       themes.mine = {
         background = "#000000";
         foreground = "#ffffff";
@@ -95,7 +96,7 @@ pkgs.runCommand "quick-key-module-eval" { nativeBuildInputs = [ pkgs.jq ]; } ''
   config=${cfg.xdg.configFile."quick-key/config.json".source}
   launcher=${toString cfg.systemd.user.services.quick-key.Service.ExecStart}
   grep -q -- '--config quick-key' $launcher
-  grep -q 'util-linux.*/bin' $launcher
+  grep -q 'PATH=[^:]*-hello-[^:]*/bin:[^:]*util-linux' $launcher
   jq -e '.audio == { glyphs: { headset: "H" } }' $config
   jq -e '.battery.glyphs == null and .menu.entries[0].icon == null' $config
   jq -e '.plugins.vpn == { source: "command", settings: { read: "vpn-status", show: { up: { glyph: "V" } }, items: [ { id: "home" } ] } }' $config
