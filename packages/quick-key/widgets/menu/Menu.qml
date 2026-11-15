@@ -146,7 +146,7 @@ Scope {
               Layout.fillWidth: root.menu.legend.length === 0
               visible: root.menu.actions.length > 0
               flow: GridLayout.LeftToRight
-              columns: root.menu.level?.entry?.columns ?? Config.menu.columns
+              columns: Config.menu.columns
               columnSpacing: Config.theme.padding
               rowSpacing: Config.theme.listSpacing
 

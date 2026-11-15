@@ -10,4 +10,4 @@
 - [Plugins](plugins.md)
 - [Compositor](compositor.md)
 
-[Options reference](options.md)
+[Reference](options.md)

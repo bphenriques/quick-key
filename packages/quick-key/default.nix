@@ -7,6 +7,8 @@ stdenvNoCC.mkDerivation {
       ./shell.qml
       ./Config.qml
       ./ThemeFile.qml
+      ./Validation.qml
+      ./check.qml
       ./builtins
       ./menu.json
       ./Plugin.qml

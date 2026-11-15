@@ -6,10 +6,10 @@ A Quickshell menu and its home-manager module. What it does is in [README.md](./
 
 Every change follows these; a change that cannot is a reason to revisit the rule here first, not to work around it.
 
-1. **Data, not code.** What the menu shows and does comes from `menu.entries`. QML has no case for a particular entry, tool or device; a new need becomes an option in `settings.nix`, with an assertion when it can be wrong. A built-in (status, list, state, action, header item) is one entry in its table, never a `case` or name test elsewhere.
+1. **Data, not code.** What the menu shows and does comes from `menu.entries`. QML has no case for a particular entry, tool or device; a new need becomes a setting in `Config.qml`, with a check in `Validation.qml` when it can be wrong. A built-in (status, list, state, action, header item) is one entry in its table, never a `case` or name test elsewhere.
 2. **Tools through the config.** QML runs nothing by name. The config that owns a tool sets its command, and a default may name only a standard tool (`systemd-inhibit`, `notify-send`, Wayland's `wl-paste`), or, in a plugin named after a tool, that tool: listing the plugin is choosing it. The shell reads only output it defines (the state line, see [Sources](docs/src/plugins.md#sources)), never a tool's own format. What needs more of one tool is a plugin. The compositor is reached only through `Compositor` (see [Compositor](docs/src/compositor.md)). The one exception: a link opens with the desktop's handler for links.
 3. **Events over polling.** What has no events is read when the menu opens; what must sample (the mic level) runs only while shown.
-4. **Layout is declared.** A level's columns and width come from its entry (`columns`, `width`, else `menu.columns`, `menu.width`), never measured from what it shows, so it holds still; entries flow across, so order decides neighbours. Make the menu wider before adding columns or truncating.
+4. **Layout is declared.** A level's width comes from its entry (`width`, else `menu.width`) and its columns from `menu.columns`, never measured from what it shows, so it holds still; entries flow across, so order decides neighbours. Make the menu wider before adding columns or truncating.
 5. **Order is explicit.** Top level by `lib.mkOrder`, rows pairing related things. Within a level, the list order, paired for the row it shares.
 6. **Labels.** Sentence case; `...` when it opens a picker or an app; a pair named for what it changes (`Volume`, `Track`). Device levels put Power on `p` and Configure... on `c`; every row of a level carries an icon (an `action` brings its own); `space` is only ever a picker. What ends the session takes Shift (Reboot, Shutdown).
 7. **Keys hold still.** Letters are actions, digits are list items, Ctrl+digit an item's own menu, which keeps letters from the labels its app supplies. A key may carry Ctrl or Alt in its name (`Ctrl+Left`, as niri writes bindings); hints show keys Emacs-style, `C-` Ctrl, `M-` Alt, `s-` Super, Shift as the capital letter (`C-←→`, `s-k`), symbols for the arrows, `DEL` for Backspace and `ESC` for Escape as Emacs writes them; a modifier never runs the plain key, Shift only picks the capital letter, and Super stays the compositor's. Pinned items keep their digit and dim while absent, and their label names them wherever the menu shows them; the rest follow by name (internal audio first), never by signal or recency.
@@ -26,7 +26,7 @@ The shell, under `packages/quick-key/`:
 
 - `services/`: state read from its source (D-Bus, Pipewire, niri, commands), pushed by events. What a service declares at its top level is its API, read-only where it is state; what it keeps for itself sits in an object under an `id`, which no other file can reach. Sources without events (the outputs, plugins' `read` commands) are read on `refresh()`, which the menu calls as it opens. `Plugin` holds each plugin's one source (`watch`, `read`, `file`, through `CommandState`) and its IPC target.
 - `ui/`: the kit ([Kit](docs/src/kit.md)). Widgets use it and the theme from `Config`, never raw colours or sizes.
-- `builtins/`: the built-in names, one table each (`Statuses`, `Lists`, `States`, `Actions`, `HeaderItems`): what a status shows, what a list holds and does, what lights a toggle, what an entry's `action` runs, what a header item does. Names are camelCase in every table. `modules/home-manager/quick-key/builtins.nix` lists the same names for the module; the qml test holds them equal.
+- `builtins/`: the built-in names, one table each (`Statuses`, `Lists`, `States`, `Actions`, `HeaderItems`): what a status shows, what a list holds and does, what lights a toggle, what an entry's `action` runs, what a header item does. Names are camelCase in every table.
 - `widgets/`: the surfaces. `menu/` splits into `MenuModel` (levels and keys) and its view (`Menu`, `MenuHeader`, `MenuRow`, `MenuStatus`); `menu/calendar/` holds a calendar level (`CalendarModel`, `CalendarMonth`, `CalendarEvents`). A surface with state of its own keeps it in a `*Model`, the view only reading it.
 - `plugins/`: the plugins the shell ships; `Plugin.qml` is their root, `PluginSettings.qml` their settings' root, `services/Plugins.qml` loads them. A plugin is a folder holding all of it: `<Name>.qml` (its state and actions, never drawing), `Settings.qml` (every setting it takes), and its views, listed in `views` and created with it, since a plugin folder is not a module the shell imports.
 - `themes/`: the shipped colour presets, read through `ThemeFile.qml`.
@@ -37,9 +37,9 @@ The rest:
 - `packages/calendar-sync/`: writes `calendar.file` from a list of calendars (vdirsyncer, khal); the shell never runs it.
 - `packages/preview/`: runs a working tree in a nested niri (see [DEVELOPMENT.md](DEVELOPMENT.md)).
 - `tests/`: the flake checks beyond the builds (see [DEVELOPMENT.md](DEVELOPMENT.md)).
-- `modules/home-manager/quick-key/`: the module. `default.nix` runs the shell, `settings.nix` is the schema of `config.json` and its assertions, `calendar-sync.nix` runs calendar-sync.
+- `modules/home-manager/quick-key/`: the module. `default.nix` runs the shell and writes `settings` as given to `config.json`, which must pass the shell's check as the configuration builds; `calendar-sync.nix` runs calendar-sync.
 
-`settings.nix` mirrors `Config.qml`: one option per key, unset by default so `Config.qml`'s default applies. Change both together; the qml test holds their keys equal. A key holding a map or list with a default is an `opt`, never a `group`: an unset group is written as `{}`, which replaces the default.
+`Config.qml` is the schema of `config.json`: each key, its kind and its default. What a schema cannot say (an entry's fields, a name that must exist) is a check in `Validation.qml`, which the shell logs as it starts and `check.qml` fails on. Nothing else lists the settings or the built-in names.
 
 ## Code style
 
@@ -61,6 +61,6 @@ The rest:
 
 ## Docs
 
-- `nix build .#docs` builds the mdBook in `docs/`. Chapters in `docs/src/`, ordered by `SUMMARY.md`. `docs.nix` injects the options reference. Preview with `mdbook serve docs`.
+- `nix build .#docs` builds the mdBook in `docs/`. Chapters in `docs/src/`, ordered by `SUMMARY.md`. `docs.nix` generates the reference: the settings as `Config.qml` declares them, then the module's options. Preview with `mdbook serve docs`.
 - Chapters explain the model, never the options.
 - Update the chapter in the same change as the behaviour.

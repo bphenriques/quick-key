@@ -5,7 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Typed view of $XDG_CONFIG_HOME/quick-key/config.json; its schema is modules/home-manager/quick-key/settings.nix.
+// The schema of $XDG_CONFIG_HOME/quick-key/config.json: each key, its kind and its default; Validation.qml holds what else can be wrong.
 Singleton {
   id: root
 
@@ -35,14 +35,20 @@ Singleton {
   readonly property alias music: adapter.music
   readonly property alias plugins: adapter.plugins
 
-  // Keys of json that object does not declare, by path; free-form values (lists, maps) are not looked into.
-  function unknownKeys(json, object, path) {
+  // config.json as written: {} without one, null until read, and why it could not be parsed.
+  property var written: null
+  property string invalid: ""
+
+  // What json sets that the settings do not declare, or declare as another kind of value; lists and maps are not looked into.
+  function undeclared(json, group = adapter, path = "") {
     let found = [];
     for (const key of Object.keys(json)) {
-      const value = object[key];
-      if (!(key in object)) found.push(path + key);
-      else if (value !== null && typeof value === "object" && "objectName" in value && json[key] !== null && typeof json[key] === "object")
-        found = found.concat(unknownKeys(json[key], value, path + key + "."));
+      const [value, declared] = [json[key], group[key]];
+      const isMap = value !== null && typeof value === "object" && !Array.isArray(value);
+      if (!(key in group)) found.push(path + key + " is not a setting");
+      else if (declared !== null && typeof declared === "object" && "objectName" in declared)
+        found = found.concat(isMap ? undeclared(value, declared, path + key + ".") : [path + key + " holds settings, not a value"]);
+      else if (declared !== null && typeof value !== typeof declared) found.push(path + key + " takes a " + typeof declared);
     }
     return found;
   }
@@ -81,13 +87,13 @@ Singleton {
     printErrors: false
     onFileChanged: Quickshell.reload(false)
 
-    // A misspelt setting would otherwise do nothing, silently.
+    onLoadFailed: root.written = {}
     onLoaded: {
       try {
-        const unknown = root.unknownKeys(JSON.parse(text()), adapter, "");
-        if (unknown.length) console.warn("config.json: ignoring unknown settings:", unknown.join(", "));
+        root.written = JSON.parse(text());
       } catch (error) {
-        console.warn("config.json:", error);
+        root.invalid = String(error);
+        root.written = {};
       }
     }
 

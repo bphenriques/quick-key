@@ -1,7 +1,9 @@
-# What the module writes and rejects; unset settings stay out of config.json, where an empty map would replace a default.
+# What the module writes and runs, and that the build fails on a setting the shell's check rejects.
 { pkgs, evalHome }:
 let
   inherit (pkgs) lib;
+
+  configOf = home: home.xdg.configFile."quick-key/config.json".source;
 
   cfg = evalHome {
     programs.quick-key = {
@@ -15,90 +17,57 @@ let
       };
       settings = {
         theme.name = "mine";
-        audio.glyphs.headset = "H";
         plugins.vpn = {
           type = "command";
           read = "vpn-status";
-          show.up.glyph = "V";
-          items = [ { id = "home"; } ];
         };
-        menu.entries = [
-          {
-            key = "v";
-            desc = "VPN";
-            status = "vpn";
-            cmd = "vpn-toggle";
-          }
+        menu.entries = lib.mkMerge [
+          (lib.mkOrder 200 [
+            {
+              key = "v";
+              desc = "VPN";
+              status = "vpn";
+              cmd = "vpn-toggle";
+            }
+          ])
+          (lib.mkOrder 100 [
+            {
+              key = "t";
+              desc = "Tray";
+              list = "tray";
+            }
+          ])
         ];
       };
     };
   };
 
   failed = settings: lib.filter (a: !a.assertion) (evalHome { programs.quick-key.settings = settings; }).assertions;
-  # By the assertion meant: its message names the reason.
-  rejects =
-    what: reason: settings:
-    lib.assertMsg (lib.any (a: lib.hasInfix reason a.message) (failed settings)) "${what} must be rejected for: ${reason}";
 in
 assert lib.assertMsg (failed { } == [ ]) "the defaults must pass";
 assert lib.assertMsg (
   !(cfg.systemd.user.services ? quickshell)
 ) "quick-key runs as its own service, leaving the user's Quickshell alone";
-assert rejects "an unknown theme" "neither in programs.quick-key.themes nor a preset" { theme.name = "nope"; };
-assert rejects "a plugin with two sources" "set more than one of watch, read and file" {
-  plugins.x = {
-    watch = "a";
-    read = "b";
-  };
-};
-assert rejects "every without read" "set every without read" { plugins.x.every = 5; };
-assert rejects "a plugin with a built-in name" "are built-in names" { plugins.sink = { }; };
-assert rejects "a list neither built in nor a plugin's" "lists 'nope'" {
-  menu.entries = [
-    {
-      key = "x";
-      desc = "X";
-      list = "nope";
-    }
-  ];
-};
-assert rejects "a pair action with one key" "per key of a pair, so needs two keys" {
-  menu.entries = [
-    {
-      key = "v";
-      desc = "Volume";
-      action = "sinkVolume";
-    }
-  ];
-};
-assert rejects "both cmd and action" "needs one of cmd, action" {
-  menu.entries = [
-    {
-      key = "m";
-      desc = "Mute";
-      cmd = "true";
-      action = "sinkMute";
-    }
-  ];
-};
-assert rejects "a reserved key" "reserved for the menu" {
-  menu.entries = [
-    {
-      key = "Escape";
-      desc = "X";
-      cmd = "true";
-    }
-  ];
-};
-pkgs.runCommand "quick-key-module-eval" { nativeBuildInputs = [ pkgs.jq ]; } ''
-  config=${cfg.xdg.configFile."quick-key/config.json".source}
-  launcher=${toString cfg.systemd.user.services.quick-key.Service.ExecStart}
-  grep -q -- '--config quick-key' $launcher
-  grep -q 'PATH=[^:]*-hello-[^:]*/bin:[^:]*util-linux' $launcher
-  jq -e '.audio == { glyphs: { headset: "H" } }' $config
-  jq -e '.battery.glyphs == null and .menu.entries[0].icon == null' $config
-  jq -e '.plugins.vpn == { type: "command", read: "vpn-status", show: { up: { glyph: "V" } }, items: [ { id: "home" } ] }' $config
-  jq -e '.menu.entries[0] | has("pins") or has("requires") | not' $config
-  jq -e '.primary == "#0000ff"' ${cfg.xdg.configFile."quick-key/themes/mine.json".source}
-  touch $out
-''
+assert lib.assertMsg (lib.any (a: lib.hasInfix "neither in programs.quick-key.themes nor a preset" a.message) (failed {
+  theme.name = "nope";
+})) "an unknown theme must be rejected";
+pkgs.runCommand "quick-key-module-eval"
+  {
+    nativeBuildInputs = [ pkgs.jq ];
+    rejected = pkgs.testers.testBuildFailure (
+      configOf (evalHome {
+        programs.quick-key.settings.audio.stepp = 1;
+      })
+    );
+  }
+  ''
+    config=${configOf cfg}
+    launcher=${toString cfg.systemd.user.services.quick-key.Service.ExecStart}
+    grep -q -- '--config quick-key' $launcher
+    grep -q 'PATH=[^:]*-hello-[^:]*/bin:[^:]*util-linux' $launcher
+    jq -e '.plugins.vpn == { type: "command", read: "vpn-status" }' $config
+    jq -e '.menu.entries | map(.key) == ["t", "v"]' $config
+    jq -e '.primary == "#0000ff"' ${cfg.xdg.configFile."quick-key/themes/mine.json".source}
+    grep -q 'audio.stepp is not a setting' $rejected/testBuildFailure.log
+    touch $out
+  ''

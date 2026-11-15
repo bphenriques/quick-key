@@ -111,12 +111,9 @@ Scope {
     return keyChars(actions.filter((_, i) => i % columns === index % columns));
   }
 
-  // Whether an entry can run now: its action able to, and the outputs it requires connected and on.
+  // Whether an entry can run now: a command always, an action when it has something to act on.
   function available(entry) {
-    const requires = entry.requires;
-    return (Actions.builtin[entry.action]?.available() ?? true)
-      && Array.from(requires?.connected ?? []).every(output => Compositor.connected.includes(output))
-      && Array.from(requires?.enabled ?? []).every(output => Compositor.enabled.includes(output));
+    return Actions.builtin[entry.action]?.available() ?? true;
   }
 
   // A pair runs one command or action per key, shown as one row (Down and Up).

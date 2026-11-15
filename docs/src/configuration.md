@@ -1,6 +1,6 @@
 # Configuration
 
-Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `notifications`, ...), and the shell reloads it on save. With Nix, `programs.quick-key.settings` writes it. The [options reference](options.md) lists every setting and what applies when it is unset.
+Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `notifications`, ...), and the shell reloads it on save. With Nix, `programs.quick-key.settings` writes it as given. The [reference](options.md) lists every setting and its default.
 
 ```json
 {
@@ -9,6 +9,10 @@ Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you 
   "plugins": { "vpn": { "type": "command", "watch": "my-vpn-status", "activate": "my-vpn-toggle", "show": { "up": { "active": true } } } }
 }
 ```
+
+## Checking
+
+`qs -p <the shell's folder>/check.qml` checks `config.json` and shows nothing: it prints what is wrong (a setting that does not exist, a value of another kind, a menu entry or plugin that cannot work) and exits 1. The shell logs the same as it starts. With Nix, the module runs it as the configuration builds, so a wrong setting fails the build, not the session.
 
 ## Themes
 

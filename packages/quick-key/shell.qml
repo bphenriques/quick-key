@@ -12,6 +12,7 @@ ShellRoot {
     Tray.items;
     Power.present;
     Calendar.enabled;
+    Validation.problems;
     Plugins.get;
   }
 

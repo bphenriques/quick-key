@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin adds a status, a list or a surface, listed by name under `plugins` in `config.json`, where it holds its settings. Most need no QML: the `command` plugin is made of a source and data. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on. The module rejects a menu entry naming a plugin not listed, and a plugin taking a built-in name.
+A plugin adds a status, a list or a surface, listed by name under `plugins` in `config.json`, where it holds its settings. Most need no QML: the `command` plugin is made of a source and data. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on. The check rejects a menu entry naming a plugin not listed, and a plugin taking a built-in name.
 
 ## Without QML
 

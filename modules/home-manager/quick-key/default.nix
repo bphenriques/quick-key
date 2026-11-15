@@ -8,21 +8,23 @@ self:
 let
   cfg = config.programs.quick-key;
 
-  # Unset options stay out of config.json, so the shell's own defaults (Config.qml) apply.
-  withoutNulls =
-    value:
-    if lib.isAttrs value then
-      lib.mapAttrs (_: withoutNulls) (lib.filterAttrs (_: v: v != null) value)
-    else if lib.isList value then
-      map withoutNulls value
-    else
-      value;
-
   json = pkgs.formats.json { };
-  configFile = json.generate "quick-key-config.json" (withoutNulls cfg.settings);
+  # The shell checks the settings it is given, so a wrong one fails the build, not the session.
+  configFile =
+    pkgs.runCommand "quick-key-config.json"
+      {
+        nativeBuildInputs = [ config.programs.quickshell.package ];
+        settings = json.generate "quick-key-settings.json" cfg.settings;
+      }
+      ''
+        export HOME=$TMPDIR XDG_CONFIG_HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR QT_QPA_PLATFORM=offscreen LC_ALL=C.UTF-8
+        install -D $settings $TMPDIR/quick-key/config.json
+        qs -p ${cfg.package}/share/quick-key/check.qml
+        cp $settings $out
+      '';
   themeFiles = lib.mapAttrs (name: colors: json.generate "quick-key-theme-${name}.json" colors) cfg.themes;
   presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quick-key/themes")));
-  themeName = cfg.settings.theme.name;
+  themeName = cfg.settings.theme.name or null;
 
   # extraPackages, then the standard tools the shell's and its plugins' defaults name, before the session's PATH; systemd's come with the system.
   launcher = pkgs.writeShellScript "quick-key" ''
@@ -48,10 +50,7 @@ let
     };
 in
 {
-  imports = [
-    ./settings.nix
-    (import ./calendar-sync.nix self)
-  ];
+  imports = [ (import ./calendar-sync.nix self) ];
 
   options.programs.quick-key = {
     enable = lib.mkEnableOption "quick-key, a keyboard-driven Quickshell menu with live status";
@@ -61,6 +60,13 @@ in
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.quick-key;
       defaultText = lib.literalExpression "quick-key.packages.\${pkgs.stdenv.hostPlatform.system}.quick-key";
       description = "Shell package, its QML under share/quick-key";
+    };
+
+    settings = lib.mkOption {
+      inherit (json) type;
+      default = { };
+      example = lib.literalExpression ''{ theme.name = "nord"; clock.format = "%H:%M"; }'';
+      description = "Written to `$XDG_CONFIG_HOME/quick-key/config.json`, which the shell checks as the configuration builds";
     };
 
     themes = lib.mkOption {

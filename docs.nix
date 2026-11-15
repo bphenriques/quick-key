@@ -1,4 +1,4 @@
-# Docs site: the mdBook in docs/, the generated options reference injected over its placeholder.
+# Docs site: the mdBook in docs/, the reference (the settings Config.qml declares, the module's options) generated over its placeholder.
 { pkgs, self }:
 let
   inherit (pkgs) lib;
@@ -35,6 +35,13 @@ let
 in
 pkgs.runCommand "quick-key-docs" { nativeBuildInputs = [ pkgs.mdbook ]; } ''
   cp -r --no-preserve=mode ${./docs} book
-  { echo "# Options reference"; echo; cat ${optionsDoc.optionsCommonMark}; } > book/src/options.md
+  {
+    echo "# Reference"; echo
+    echo "## Settings"; echo
+    echo 'Every key of `config.json` (`programs.quick-key.settings` with Nix), with its default, as the shell declares them:'; echo
+    echo '```qml'; sed -n '/^      id: adapter$/,/^    }$/p' ${./packages/quick-key/Config.qml} | sed '1,2d;$d;s/^      //'; echo '```'; echo
+    echo "## Module options"; echo
+    cat ${optionsDoc.optionsCommonMark}
+  } > book/src/options.md
   mdbook build book -d $out
 ''
