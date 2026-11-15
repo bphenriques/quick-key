@@ -6,8 +6,14 @@ fail() {
 }
 
 # Rule 12: a plugin's file is rooted at Plugin, using the theme, the kit and the services, never the core's surfaces.
-for file in plugins/*.qml; do
+for file in plugins/*.qml plugins/*/*.qml; do
+  dir=$(basename "$(dirname "$file")")
+  [ "$dir" = plugins ] || [ "${dir^}.qml" = "$(basename "$file")" ] || continue
   grep -q '^Plugin {' "$file" || fail "$file: root is not Plugin"
+done
+for dir in plugins/*/; do
+  name=$(basename "$dir")
+  [ -f "$dir${name^}.qml" ] || fail "$dir: no plugin file named after the folder"
 done
 
 # Plugins and the built-in tables sit under the surfaces, never reaching into them.
@@ -55,9 +61,9 @@ for file in $(grep -rlE 'case "|\b(list|status|state|modelData)\)? ?[!=]== "' --
   fail "$file: names a built-in outside its table"
 done
 
-# An optional call (`f?.()`) crashes Qt 6's QML compiler at load (6.12).
-for file in $(grep -rlF '?.(' --include='*.qml' .); do
-  fail "$file: an optional call, which crashes the QML compiler"
+# Qt 6.12's JavaScript: an optional call (`f?.()`) crashes the QML compiler at load, and arrays have no flatMap.
+for file in $(grep -rlE '\?\.\(|\.flatMap\(' --include='*.qml' .); do
+  fail "$file: an optional call or flatMap, which Qt's JavaScript cannot run"
 done
 
 # Plugins: Plugin holds the one source and IPC target; none declares its own.

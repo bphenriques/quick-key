@@ -271,7 +271,7 @@ Plugin {
       panel = null;
       return;
     }
-    const component = Qt.createComponent(Qt.resolvedUrl("ask/AskPanel.qml"));
+    const component = Qt.createComponent(Qt.resolvedUrl("AskPanel.qml"));
     panel = component.createObject(root, { ask: root });
     if (!panel) console.warn(name + ":", component.errorString());
   }

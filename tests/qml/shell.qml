@@ -34,6 +34,10 @@ ShellRoot {
       until: () => Plugins.get("custom")?.text === "from the user's folder"
     },
     {
+      name: "a plugin in a folder of its own loads, its pieces by path",
+      until: () => Plugins.get("folded")?.text === "from its folder"
+    },
+    {
       name: "a plugin that fails to load is left out",
       until: () => Plugins.get("broken") === null && Plugins.get("lastLine") !== null
     },

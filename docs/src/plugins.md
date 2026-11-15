@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin is a QML file whose root is `Plugin`, its own pieces in a folder beside it (`ask/` for `Ask.qml`) and created by path, since the folder is not a module, listed by name under `plugins` in `config.json` as `{ source, settings }`. `source` names the plugin implementing it (`command`), by default its own name, or is a path to a QML file. A plugin's file is its name capitalised (`niriMinimap`: `NiriMinimap.qml`), found in `$XDG_CONFIG_HOME/quick-key/plugins/`, then among the shipped ones. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on.
+A plugin is a QML file whose root is `Plugin`, listed by name under `plugins` in `config.json` as `{ source, settings }`. `source` names the plugin implementing it (`command`), by default its own name, or is a path to a QML file. A plugin's file is its name capitalised (`niriMinimap`: `NiriMinimap.qml`), alone or in a folder of that name with its own pieces (`ask/Ask.qml` beside `ask/AskPanel.qml`), which it creates by path since the folder is not a module. It is found in `$XDG_CONFIG_HOME/quick-key/plugins/`, then among the shipped ones. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on.
 
 Its API, and the only one:
 

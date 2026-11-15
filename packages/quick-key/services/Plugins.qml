@@ -22,11 +22,11 @@ Singleton {
 
     property var loaded: ({})
 
-    // A source with a slash is a path, else a plugin's name, its file capitalised (niriMinimap: NiriMinimap.qml).
+    // A source with a slash is a path, else a plugin's name: its file capitalised, alone or in a folder of that name (ask/Ask.qml).
     function component(name, spec) {
       const source = spec.source ?? name;
       const file = source.charAt(0).toUpperCase() + source.slice(1) + ".qml";
-      const sources = source.includes("/") ? [source] : [Config.configDir + "/plugins/" + file, "plugins/" + file];
+      const sources = source.includes("/") ? [source] : [].concat(...[Config.configDir + "/plugins", "plugins"].map(dir => [dir + "/" + file, dir + "/" + source + "/" + file]));
       let found = null;
       for (const path of sources) {
         found = Qt.createComponent(path.startsWith("/") ? "file://" + path : Quickshell.shellPath(path));
