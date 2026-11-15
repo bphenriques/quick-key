@@ -35,9 +35,10 @@ The shell, under `packages/quick-key/`:
 The rest:
 
 - `packages/calendar-sync/`: writes `calendar.file` from a list of calendars (vdirsyncer, khal); the shell never runs it.
+- `packages/dunst-paused/`: prints whether dunst is paused on every change, for `integrations.dunst`.
 - `packages/preview/`: runs a working tree in a nested niri (see [DEVELOPMENT.md](DEVELOPMENT.md)).
 - `tests/`: the flake checks beyond the builds (see [DEVELOPMENT.md](DEVELOPMENT.md)).
-- `modules/home-manager/quick-key/`: the module. `default.nix` runs the shell, `settings.nix` is the schema of `config.json` and its assertions, `calendar-sync.nix` runs calendar-sync.
+- `modules/home-manager/quick-key/`: the module. `default.nix` runs the shell, `settings.nix` is the schema of `config.json` and its assertions, `calendar-sync.nix` runs calendar-sync, and each `integrations.<tool>` (`dunst.nix`) wires a tool into a plugin made of commands, its values defaults the user can change. An integration earns its place when a common tool needs glue every user would write the same way.
 
 `settings.nix` mirrors `Config.qml`: one option per key, unset by default so `Config.qml`'s default applies. Change both together. A key holding a map or list with a default is an `opt`, never a `group`: an unset group is written as `{}`, which replaces the default.
 

@@ -20,6 +20,8 @@ plugins.doNotDisturb = {
 };
 ```
 
+With Nix, `programs.quick-key.integrations.dunst.enable` defines this plugin for dunst, each value a default you can change in `settings.plugins.doNotDisturb`; you place it in `menu.header` or an entry.
+
 The source is how the tool tells you, one of three:
 
 - `watch`: the tool has events. A command run for as long as it lasts, each line the new state; restarted when it exits, waiting longer each time it exits without output. It must flush each line (`stdbuf -oL`, `--line-buffered`).
