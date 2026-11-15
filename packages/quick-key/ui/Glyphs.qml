@@ -15,11 +15,15 @@ Singleton {
   readonly property string wifi: "\u{F05A9}" // md-wifi
   readonly property string ethernet: "\u{F0200}" // md-ethernet
   readonly property string disconnected: "\u{F05AA}" // md-wifi_off
+  readonly property string volume: "\u{F057E}" // md-volume_high
   readonly property string volumeOff: "\u{F075F}" // md-volume_off
   readonly property string keyboard: "\u{F030C}" // md-keyboard
   readonly property string bluetooth: "\u{F00AF}" // md-bluetooth
   readonly property string bluetoothConnected: "\u{F00B1}" // md-bluetooth_connect
   readonly property string bluetoothOff: "\u{F00B2}" // md-bluetooth_off
+  readonly property string power: "\u{F0521}" // md-toggle_switch
+  readonly property string playPause: "\u{F040E}" // md-play_pause
+  readonly property string track: "\u{F04AD}" // md-skip_next
   readonly property string keepAwake: "\u{F0176}" // md-coffee
   readonly property string tray: "\u{F003B}" // md-apps
   readonly property string notifications: "\u{F009A}" // md-bell

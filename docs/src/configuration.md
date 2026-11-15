@@ -22,17 +22,16 @@ A colour set in `theme` itself wins over the theme's. Anything that writes the f
 
 ## Defaults
 
-Unset, the menu is a starter one (audio, network, Bluetooth, calendar, tray, session), and features use standard tools from `PATH`:
+Unset, the menu is a starter one (audio, network, Bluetooth, music, calendar, tray, session). Volume, mute, Wi-Fi and Bluetooth power, and playback are built-in actions (see [Menu](menu.md)), no tool needed; the rest use standard tools from `PATH`:
 
 | Feature | Tool |
 |---|---|
-| Volume, mute | `wpctl` |
-| Wi-Fi, Bluetooth power | `nmcli`, `rfkill` |
 | Brightness | the first `/sys/class/backlight` device, `brightnessctl` |
+| Bluetooth, when rfkill blocks it | `rfkill` |
 | Keep awake | `systemd-inhibit` |
 | Session | `loginctl`, `systemctl` |
 | Calendar reminders | `notify-send` |
 
 `popups.show` lists the changes that pop up (`sink`, `source`, `brightness`, `keyboardLayout`, `keepAwake`; all by default), so another on-screen display can take any of them over.
 
-Setting `menu.entries` replaces the starter menu whole. To start from it, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json): it is a valid `config.json`. Do-not-disturb and display layouts have no standard tool, so they are plugins you list with your own commands ([Plugins](plugins.md)).
+Setting `menu.entries` replaces the starter menu whole. To start from it, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json): it is a valid `config.json`. Do-not-disturb (the `dunst` plugin, or your own) and display layouts are plugins you list ([Plugins](plugins.md)).

@@ -38,9 +38,9 @@ Scope {
         key: entry.key,
         desc: entry.desc,
         status: entry.status ?? "",
-        icon: entry.icon ?? "",
-        enabled: available(entry.requires),
-        paired: MenuKeys.isPair(entry),
+        icon: entry.icon ?? Actions.builtin[entry.action]?.icon ?? "",
+        enabled: available(entry),
+        paired: isPair(entry),
         entry: entry
       }));
     if (level.kind === "menu") {
@@ -63,10 +63,10 @@ Scope {
     const actions = Array.from(level.entry.submenu ?? []).map(action => ({
       key: action.key,
       desc: action.desc,
-      icon: action.icon ?? "",
-      enabled: available(action.requires),
-      paired: MenuKeys.isPair(action),
-      active: isOn(action.activeWhen),
+      icon: action.icon ?? Actions.builtin[action.action]?.icon ?? "",
+      enabled: available(action),
+      paired: isPair(action),
+      active: isOn(action.activeWhen ?? Actions.builtin[action.action]?.state),
       listed: /^[0-9]$/.test(action.key),
       entry: action
     }));
@@ -111,10 +111,17 @@ Scope {
     return keyChars(actions.filter((_, i) => i % columns === index % columns));
   }
 
-  // Whether an entry's requirements hold: the outputs it needs connected, and those it needs on.
-  function available(requires) {
-    return Array.from(requires?.connected ?? []).every(output => Compositor.connected.includes(output))
+  // Whether an entry can run now: its action able to, and the outputs it requires connected and on.
+  function available(entry) {
+    const requires = entry.requires;
+    return (Actions.builtin[entry.action]?.available() ?? true)
+      && Array.from(requires?.connected ?? []).every(output => Compositor.connected.includes(output))
       && Array.from(requires?.enabled ?? []).every(output => Compositor.enabled.includes(output));
+  }
+
+  // A pair runs one command or action per key, shown as one row (Down and Up).
+  function isPair(entry) {
+    return MenuKeys.isPair(entry) || !!Actions.builtin[entry.action]?.pair;
   }
 
   function isOn(state) {
@@ -167,8 +174,16 @@ Scope {
     return candidates.find(item => MenuKeys.matches(item.key, name));
   }
 
-  // A pair runs the command of the key pressed; clicking a pair, which names no key, runs nothing.
+  // A pair runs the command or action of the key pressed, a click on it nothing; an action keeps the menu open by default.
   function run(entry, name) {
+    const action = Actions.builtin[entry.action];
+    if (action) {
+      const second = MenuKeys.names(entry.key).indexOf(name);
+      if (action.pair && second < 0) return;
+      if (entry.keepOpen === false) hide();
+      action.run(second === 1);
+      return;
+    }
     const cmd = MenuKeys.isPair(entry) ? Array.from(entry.cmd)[MenuKeys.names(entry.key).indexOf(name)] : entry.cmd;
     if (!cmd) return;
     if (!entry.keepOpen) hide();
@@ -197,7 +212,7 @@ Scope {
   // The mouse wheel on a row: a pair runs itself; an entry runs the action of its own on that key, e.g. volume.
   function act(item, name) {
     const action = item.entry?.submenu ? find(Array.from(item.entry.submenu), name) : MenuKeys.matches(item.entry?.key ?? [], name) ? item.entry : null;
-    if (action && available(action.requires)) run(action, name);
+    if (action && available(action)) run(action, name);
   }
 
   // Esc and Backspace are kept free of entries by the assertions in modules/home-manager/quick-key/settings.nix.

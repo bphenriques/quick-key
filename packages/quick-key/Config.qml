@@ -27,6 +27,7 @@ Singleton {
   readonly property alias calendar: adapter.calendar
   readonly property alias popups: adapter.popups
   readonly property alias audio: adapter.audio
+  readonly property alias bluetooth: adapter.bluetooth
   readonly property alias brightness: adapter.brightness
   readonly property alias keepAwake: adapter.keepAwake
   readonly property alias keyboardLayout: adapter.keyboardLayout
@@ -164,13 +165,16 @@ Singleton {
       }
 
       property JsonObject audio: JsonObject {
-        // The pop-up wheel's commands, down then up, for the sink and the source.
-        property var adjust: ({
-          sink: ["wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-", "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"],
-          source: ["wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-", "wpctl set-volume -l 1 @DEFAULT_AUDIO_SOURCE@ 5%+"]
-        })
+        // Percent a volume key or the wheel moves the volume, and the most it reaches.
+        property int step: 5
+        property int max: 100
         // By device type (headphones, headset, internal, external, microphone), and microphoneOff.
         property var glyphs: ({})
+      }
+
+      property JsonObject bluetooth: JsonObject {
+        // Unblocks an adapter rfkill turned off, so the Bluetooth action can power it on.
+        property string unblock: "rfkill unblock bluetooth"
       }
 
       property JsonObject brightness: JsonObject {

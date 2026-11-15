@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
+import qs
 
 // Default output and input, and every device to pick from.
 Singleton {
@@ -28,6 +29,19 @@ Singleton {
   property bool metering: false
   // On the same linear scale as the volume.
   readonly property real sourceLevel: Math.min(1, sourcePeak.peak)
+
+  // The output's or input's volume a step down or up (Config.audio.step), never past Config.audio.max.
+  function adjust(kind, up) {
+    const node = kind === "sink" ? sink : source;
+    if (!node?.audio) return;
+    const step = Config.audio.step / 100;
+    node.audio.volume = Math.max(0, Math.min(Config.audio.max / 100, Math.round((node.audio.volume + (up ? step : -step)) / step) * step));
+  }
+
+  function toggleMute(kind) {
+    const node = kind === "sink" ? sink : source;
+    if (node?.audio) node.audio.muted = !node.audio.muted;
+  }
 
   // WirePlumber moves the streams that follow the default.
   function select(device) {

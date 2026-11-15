@@ -14,6 +14,24 @@ Singleton {
   readonly property bool repeat: (internal.player?.loopState ?? MprisLoopState.None) !== MprisLoopState.None
   readonly property bool shuffle: internal.player?.shuffle ?? false
 
+  function togglePlaying() {
+    internal.player?.togglePlaying();
+  }
+
+  // The previous track, or the next one when `forward`.
+  function skip(forward) {
+    if (forward) internal.player?.next();
+    else internal.player?.previous();
+  }
+
+  function toggleRepeat() {
+    if (internal.player) internal.player.loopState = repeat ? MprisLoopState.None : MprisLoopState.Playlist;
+  }
+
+  function toggleShuffle() {
+    if (internal.player) internal.player.shuffle = !shuffle;
+  }
+
   QtObject {
     id: internal
 

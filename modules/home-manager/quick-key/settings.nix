@@ -74,10 +74,15 @@ let
         default = null;
         description = "Command to run, or one per key for a pair (e.g. Down and Up) shown as one row";
       };
+      action = mkOption {
+        type = types.nullOr (types.enum names.actions);
+        default = null;
+        description = "Built-in action to run in place of cmd, bringing its icon, lit state and availability: one of ${toString names.actions}";
+      };
       keepOpen = mkOption {
         type = types.nullOr types.bool;
         default = null;
-        description = "Keep the menu open after running cmd";
+        description = "Keep the menu open after running cmd; false closes it after an action, which keeps it open by default";
       };
       activeWhen = mkOption {
         type = types.nullOr types.str;
@@ -203,8 +208,13 @@ let
     ]
     ++ lib.concatMap (e: [
       {
-        assertion = (e.cmd != null) != (e.submenu != null || e.list != null || e.view != null);
-        message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} needs either cmd, submenu and/or list, or view";
+        assertion =
+          lib.count (x: x) [
+            (e.cmd != null)
+            (e.action != null)
+            (e.submenu != null || e.list != null || e.view != null)
+          ] == 1;
+        message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} needs one of cmd, action, or submenu and/or list or view";
       }
       {
         assertion = e.status == null || lib.elem e.status (builtinStatuses ++ pluginNames);
@@ -223,11 +233,11 @@ let
         message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} cannot combine view with list";
       }
       {
-        assertion = e.keepOpen == null || e.cmd != null;
-        message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} can only set keepOpen with cmd";
+        assertion = e.keepOpen == null || e.cmd != null || e.action != null;
+        message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} can only set keepOpen with cmd or action";
       }
       {
-        assertion = e.submenu == null || lib.all (a: a.icon != null) e.submenu;
+        assertion = e.submenu == null || lib.all (a: a.icon != null || a.action != null) e.submenu;
         message = "programs.quick-key.settings.menu: every action in '${e.desc}' needs an icon";
       }
       {
@@ -245,6 +255,10 @@ let
       {
         assertion = !(lib.isList e.cmd) || (lib.isList e.key && lib.length e.cmd == lib.length e.key);
         message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} pairs keys and commands, so needs as many of each";
+      }
+      {
+        assertion = !(lib.elem e.action names.pairs) || (lib.isList e.key && lib.length e.key == 2);
+        message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} runs '${toString e.action}' per key of a pair, so needs two keys";
       }
     ]) entries
     ++ lib.concatMap (e: lib.optionals (e.submenu != null) (levelAssertions "${path} > ${e.desc}" e.submenu)) entries;
@@ -312,16 +326,13 @@ in
     };
 
     audio = group "Audio devices" {
-      adjust = opt (types.submodule {
-        options = lib.genAttrs [ "sink" "source" ] (
-          _:
-          mkOption {
-            type = types.listOf types.str;
-            description = "Commands the wheel runs, down then up";
-          }
-        );
-      }) "The volume wheel's commands, for the sink and the source; unset, wpctl";
+      step = opt (types.ints.between 1 100) "Percent a volume key or the wheel moves the volume";
+      max = opt (types.ints.between 1 150) "Percent the volume reaches at most";
       glyphs = glyphs "Glyph by device type (headphones, headset, internal, external, microphone) and microphoneOff, over the shipped ones";
+    };
+
+    bluetooth = group "The Bluetooth adapter" {
+      unblock = opt types.str "Command unblocking an adapter rfkill turned off, so the bluetooth action can power it on; unset, rfkill";
     };
 
     brightness = group "The backlight" {

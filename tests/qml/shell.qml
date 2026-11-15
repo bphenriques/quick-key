@@ -109,7 +109,21 @@ ShellRoot {
       until: () => {
         const names = JSON.parse(Quickshell.env("BUILTINS"));
         const same = (table, list) => JSON.stringify(Object.keys(table).sort()) === JSON.stringify([...list].sort());
-        return same(Statuses.builtin, names.statuses) && same(Lists.builtin, names.lists) && same(States.builtin, names.states) && same(HeaderItems.builtin, names.headerItems);
+        const pairs = {};
+        for (const [name, action] of Object.entries(Actions.builtin)) if (action.pair) pairs[name] = action;
+        return same(Statuses.builtin, names.statuses) && same(Lists.builtin, names.lists) && same(States.builtin, names.states)
+          && same(HeaderItems.builtin, names.headerItems) && same(Actions.builtin, names.actions) && same(pairs, names.pairs);
+      }
+    },
+    {
+      name: "an action brings its icon and pairing, and dims with nothing to act on",
+      until: () => {
+        const [play, track, awake] = menu.itemsOf({ kind: "entry", entry: { submenu: [
+          { key: "p", desc: "Play", action: "play-pause" },
+          { key: ["Left", "Right"], desc: "Track", action: "track", icon: "T" },
+          { key: "k", desc: "Keep awake", action: "keep-awake" }
+        ] } });
+        return play.enabled === false && play.icon === Glyphs.playPause && track.paired && track.icon === "T" && awake.enabled && !awake.active;
       }
     }
   ]

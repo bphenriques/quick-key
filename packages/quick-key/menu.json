@@ -12,20 +12,12 @@
               "Up"
             ],
             "desc": "Volume",
-            "icon": "󰕾",
-            "cmd": [
-              "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-",
-              "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
-            ],
-            "keepOpen": true
+            "action": "sink-volume"
           },
           {
             "key": "m",
             "desc": "Mute",
-            "icon": "󰝟",
-            "activeWhen": "sink-muted",
-            "cmd": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-            "keepOpen": true
+            "action": "sink-mute"
           }
         ]
       },
@@ -40,20 +32,12 @@
               "Up"
             ],
             "desc": "Volume",
-            "icon": "󰍬",
-            "cmd": [
-              "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-",
-              "wpctl set-volume -l 1 @DEFAULT_AUDIO_SOURCE@ 5%+"
-            ],
-            "keepOpen": true
+            "action": "source-volume"
           },
           {
             "key": "m",
             "desc": "Mute",
-            "icon": "󰍭",
-            "activeWhen": "source-muted",
-            "cmd": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
-            "keepOpen": true
+            "action": "source-mute"
           }
         ]
       },
@@ -67,10 +51,7 @@
           {
             "key": "p",
             "desc": "Power",
-            "icon": "󰔡",
-            "activeWhen": "wifi",
-            "cmd": "nmcli radio wifi \"$([ \"$(nmcli radio wifi)\" = enabled ] && echo off || echo on)\"",
-            "keepOpen": true
+            "action": "wifi"
           }
         ]
       },
@@ -84,10 +65,37 @@
           {
             "key": "p",
             "desc": "Power",
-            "icon": "󰔡",
-            "activeWhen": "bluetooth",
-            "cmd": "rfkill toggle bluetooth",
-            "keepOpen": true
+            "action": "bluetooth"
+          }
+        ]
+      },
+      {
+        "key": "m",
+        "desc": "Music",
+        "status": "music",
+        "submenu": [
+          {
+            "key": "p",
+            "desc": "Play/pause",
+            "action": "play-pause"
+          },
+          {
+            "key": [
+              "Left",
+              "Right"
+            ],
+            "desc": "Track",
+            "action": "track"
+          },
+          {
+            "key": "z",
+            "desc": "Repeat",
+            "action": "repeat"
+          },
+          {
+            "key": "x",
+            "desc": "Shuffle",
+            "action": "shuffle"
           }
         ]
       },

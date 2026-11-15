@@ -12,6 +12,7 @@ Singleton {
     repeat: () => Music.repeat,
     shuffle: () => Music.shuffle,
     "sink-muted": () => Audio.sinkMuted,
-    "source-muted": () => Audio.sourceMuted
+    "source-muted": () => Audio.sourceMuted,
+    "keep-awake": () => IdleInhibit.enabled
   })
 }

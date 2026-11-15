@@ -94,14 +94,14 @@ Scope {
         implicitWidth: Config.theme.osdIconSize + 2 * Config.theme.padding
         implicitHeight: levelColumn.implicitHeight + 2 * Config.theme.padding
 
-        // The wheel adjusts the level shown, with the commands the tool's module set.
+        // The wheel adjusts the level shown: the volume directly, the backlight with brightness.adjust.
         WheelSteps {
           anchors.fill: parent
           hoverEnabled: true
           onContainsMouseChanged: transient.held = containsMouse
           onStepped: up => {
-            const commands = root.kind === "brightness" ? Config.brightness.adjust : Config.audio.adjust[root.kind];
-            if (commands) Quickshell.execDetached(["sh", "-c", commands[up ? 1 : 0]]);
+            if (root.kind !== "brightness") Audio.adjust(root.kind, up);
+            else if (Config.brightness.adjust) Quickshell.execDetached(["sh", "-c", Config.brightness.adjust[up ? 1 : 0]]);
           }
         }
 

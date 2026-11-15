@@ -64,6 +64,25 @@ assert rejects "a list neither built in nor a plugin's" "lists 'nope'" {
     }
   ];
 };
+assert rejects "a pair action with one key" "per key of a pair, so needs two keys" {
+  menu.entries = [
+    {
+      key = "v";
+      desc = "Volume";
+      action = "sink-volume";
+    }
+  ];
+};
+assert rejects "both cmd and action" "needs one of cmd, action" {
+  menu.entries = [
+    {
+      key = "m";
+      desc = "Mute";
+      cmd = "true";
+      action = "sink-mute";
+    }
+  ];
+};
 assert rejects "a reserved key" "reserved for the menu" {
   menu.entries = [
     {
