@@ -1,8 +1,7 @@
 import QtQuick
 import qs
 
-// Something shown for a moment: show() shows it for Config.popups.timeout, held on while `held`.
-// show() does nothing until `armed`, so state replayed at startup is not shown as a change.
+// Shown for Config.popups.timeout on show(), held while `held`; inert until `armed`, so state replayed at startup is no change.
 Timer {
   id: root
 

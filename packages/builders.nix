@@ -1,8 +1,7 @@
 # Build helpers for the packages here.
 { pkgs, lib }:
 {
-  # An executable `name` that runs a nu-checked nushell `script` with `runtimeInputs` (plus nushell) on PATH.
-  # Other arguments (`meta`, `passthru`) reach `writeShellApplication`.
+  # Like writeShellApplication, whose other arguments it takes, for a nushell `script` nu-checked at build.
   writeNushellApplication =
     {
       name,

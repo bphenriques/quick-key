@@ -1,8 +1,7 @@
 import QtQuick
 import Quickshell.Io
 
-// A command from the config that runs for as long as it lasts, read line by line; restarted after it exits, waiting twice as
-// long each time it exits without output (up to a minute), so a missing tool cannot spawn forever.
+// A config command run for as long as it lasts, read by line; restarts back off up to a minute, so a missing tool cannot spin.
 Process {
   id: root
 

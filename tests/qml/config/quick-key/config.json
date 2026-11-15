@@ -1,4 +1,5 @@
 {
+  "calendar": { "remind": "" },
   "plugins": {
     "lastLine": { "source": "command", "settings": { "read": "printf 'first\\nsecond\\n'" } },
     "watcher": { "source": "command", "settings": { "watch": "echo up" } },

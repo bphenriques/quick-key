@@ -1,21 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import qs
 import qs.ui
 
-// Quick turns with an agent, in a panel in the middle of the screen; the conversation moves to a terminal from there.
-// settings.ask: given a prompt, the session ("" for a new one) and an image ("" for none), prints a JSON object per line:
-// {"run", "session"} first, {"status"} as it moves on (the tool it uses), {"approval"} (what it asks to run) when it waits
-// for one, then {"session", "reply"} or {"error"}.
-// settings.approve: given the run and allow or deny, answers its approval. settings.stop: given the run, stops it.
-// settings.notify: given a title and a text, tells of a reply or an approval while hidden; prints `default` when clicked.
-// settings.pasteImage: given a file, writes the clipboard's image there, failing when it holds none; `ask` then gets it.
-// settings.open: given the session, opens it in a terminal. settings.title, settings.glyph: the header.
+// Quick turns with an agent in a panel; its settings and line protocol are in docs/src/plugins.md.
 Plugin {
   id: root
 
@@ -56,6 +47,7 @@ Plugin {
 
   glyph: settings.glyph ?? ""
   active: busy || unread
+  tone: approval ? "warning" : ""
 
   function activate() {
     toggle();
@@ -81,6 +73,7 @@ Plugin {
     activity = "";
     sentAt = now = Math.floor(Date.now() / 1000);
     request.conversation = conversation;
+    request.complaint = "";
     request.command = commandLine(settings.ask, prompt, session, sent);
     request.running = true;
     return true;
@@ -91,6 +84,7 @@ Plugin {
     try {
       answer = JSON.parse(line);
     } catch (error) {
+      console.warn(name + ": not JSON, ignored:", line);
       return;
     }
     // Stopped before it said its name: closing the stream does not stop a run, so stop it now that it has one.
@@ -154,8 +148,7 @@ Plugin {
     approval = "";
   }
 
-  // Stops the run where it runs, not only here; its prompt goes back to the input. Before the run has a name, the stream
-  // stays open until it does (receive).
+  // Stops the run where it runs and puts its prompt back; one not yet named is stopped once it is (receive).
   function stop() {
     if (!busy) return;
     finish({ error: "Stopped", stopped: true });
@@ -216,138 +209,6 @@ Plugin {
     }
   }
 
-  // The web links in a reply, each once, without the punctuation that ends a sentence.
-  function links(text) {
-    const found = (text.match(/https?:\/\/[^\s<>"'()\[\]]+/g) ?? []).map(url => url.replace(/[.,;:!?]+$/, ""));
-    return [...new Set(found)];
-  }
-
-  // A link as read: its host, then the last part of its path (recipes.example.com › bacalhau-com-natas).
-  function linkLabel(url) {
-    const [, host, path] = url.match(/^https?:\/\/([^\/?#]+)([^?#]*)/) ?? [null, url, ""];
-    const last = path.split("/").filter(part => part !== "").pop();
-    if (!last) return host;
-    let page = last;
-    try {
-      page = decodeURIComponent(last);
-    } catch (error) {}
-    return host + " › " + page.replace(/\.html?$/, "");
-  }
-
-  // A link under a reply. Opened by the desktop's handler for links, the one thing here not from the config (design rule 2, AGENTS.md);
-  // the panel hides so the browser shows.
-  component LinkRow: ListItem {
-    id: link
-    required property string modelData
-    Layout.fillWidth: true
-    onActivated: {
-      Qt.openUrlExternally(link.modelData);
-      root.shown = false;
-    }
-
-    Icon {
-      tone: "primary"
-      glyph: Glyphs.link
-      size: Metrics.line
-    }
-
-    Label {
-      Layout.fillWidth: true
-      tone: "primary"
-      elide: Text.ElideMiddle
-      text: root.linkLabel(link.modelData)
-    }
-  }
-
-  // An image sent or about to be, four lines tall and as wide as its shape, so a screenshot gets no bands.
-  component Thumbnail: Image {
-    property string path
-    visible: path !== ""
-    source: path ? "file://" + path : ""
-    fillMode: Image.PreserveAspectFit
-    sourceSize.height: Metrics.line * 4
-    Layout.preferredHeight: Metrics.line * 4
-    Layout.preferredWidth: implicitHeight > 0 ? Layout.preferredHeight * implicitWidth / implicitHeight : 0
-  }
-
-  // A prompt and what came of it: the reply (selectable, copied as selected), its links, or the wait for it.
-  component Exchange: ColumnLayout {
-    id: exchange
-    required property var modelData
-    required property int index
-    readonly property bool waiting: root.busy && index === root.exchanges.length - 1
-    readonly property real indent: Metrics.line + Config.theme.spacing
-    Layout.fillWidth: true
-    spacing: Config.theme.spacing / 2
-
-    RowLayout {
-      Layout.fillWidth: true
-      spacing: Config.theme.spacing
-
-      Icon {
-        Layout.alignment: Qt.AlignTop
-        tone: "dim"
-        glyph: Glyphs.submenu
-        size: Metrics.line
-      }
-
-      Label {
-        Layout.fillWidth: true
-        tone: "dim"
-        wrapMode: Text.Wrap
-        text: exchange.modelData.prompt
-      }
-    }
-
-    Thumbnail {
-      Layout.leftMargin: exchange.indent
-      path: exchange.modelData.image ?? ""
-    }
-
-    TextField {
-      Layout.fillWidth: true
-      Layout.leftMargin: exchange.indent
-      visible: text !== ""
-      // A stop was asked for, so it only reports; a failure needs attention.
-      tone: exchange.modelData.stopped ? "dim" : exchange.modelData.error ? "warning" : "normal"
-      // A line that is only a link shows once, as its row below.
-      text: exchange.modelData.error || exchange.modelData.reply.split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
-      readOnly: true
-      selectByMouse: true
-      persistentSelection: true
-      activeFocusOnPress: false
-      copyOnSelect: true
-    }
-
-    Repeater {
-      model: root.links(exchange.modelData.reply)
-
-      LinkRow {
-        Layout.leftMargin: exchange.indent - Config.theme.itemPaddingX
-      }
-    }
-
-    // An approval needs attention; the rest only reports: the tool in use, and the time once the wait is noticeable.
-    RowLayout {
-      visible: exchange.waiting
-      Layout.leftMargin: exchange.indent
-      spacing: Config.theme.spacing
-
-      Spinner {
-        tone: "dim"
-        size: Metrics.line
-        mood: root.approval ? "attention" : "working"
-      }
-
-      Label {
-        Layout.fillWidth: true
-        tone: root.approval ? "warning" : "dim"
-        wrapMode: Text.Wrap
-        text: root.approval ? "Allow " + root.approval + "?" : root.activity ? root.activity + " · " + root.waited + "s" : root.waited >= 2 ? root.waited + "s" : ""
-      }
-    }
-  }
-
   Timer {
     interval: 1000
     repeat: true
@@ -360,15 +221,23 @@ Plugin {
     property int conversation: 0
     // Stopped before its run had a name: kept open until it has one.
     property bool stopping: false
+    // Its last line on stderr, the error when it ends without an answer.
+    property string complaint: ""
 
     stdout: SplitParser {
       onRead: line => root.receive(line)
     }
 
+    stderr: SplitParser {
+      onRead: line => {
+        if (line.trim()) request.complaint = line.trim();
+      }
+    }
+
     // Ended without an answer: it crashed or was killed.
     onExited: {
       stopping = false;
-      if (root.busy && conversation === root.conversation) root.finish({ error: "No answer" });
+      if (root.busy && conversation === root.conversation) root.finish({ error: complaint || "No answer" });
     }
   }
 
@@ -394,178 +263,16 @@ Plugin {
     }
   }
 
-  LazyLoader {
-    active: root.shown
-
-    OverlayWindow {
-      anchors.top: true
-      anchors.bottom: true
-      anchors.left: true
-      anchors.right: true
-      WlrLayershell.namespace: root.name
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-      BackgroundEffect.blurRegion: Region {
-        item: card
-        radius: Config.theme.radius
-      }
-
-      // A click beside the panel hides it, the conversation kept.
-      MouseArea {
-        anchors.fill: parent
-        onClicked: root.shown = false
-      }
-
-      Shadow {
-        anchors.fill: card
-        radius: card.radius
-      }
-
-      Surface {
-        id: card
-        anchors.centerIn: parent
-        width: Config.menu.width
-        height: content.implicitHeight + 2 * Config.theme.padding
-
-        MouseArea {
-          anchors.fill: parent
-        }
-
-        ColumnLayout {
-          id: content
-          anchors.verticalCenter: parent.verticalCenter
-          anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.margins: Config.theme.padding
-          spacing: Config.theme.padding
-
-          RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: Config.theme.itemPaddingX
-            Layout.rightMargin: Config.theme.itemPaddingX
-            spacing: Config.theme.spacing
-
-            Icon {
-              glyph: root.glyph
-              size: Metrics.line
-            }
-
-            Label {
-              Layout.fillWidth: true
-              font.bold: true
-              text: root.title
-            }
-          }
-
-          // Only the keys no one would guess (Return sends, as in any chat), each while it applies.
-          KeyLegend {
-            keys: [{ key: "Shift+Return", what: "newline" }]
-              .concat(root.approval ? [{ key: "Ctrl+y", what: "allow", clickable: true }] : [])
-              .concat(root.exchanges.length > 0 ? [{ key: "Ctrl+l", what: "new", clickable: true }] : [])
-              .concat(root.canMove ? [{ key: "Ctrl+o", what: "Move to terminal...", clickable: true }] : [])
-              // Last, so its changing word moves nothing; twice quickly hides (docs/src/plugins.md).
-              .concat([{ key: "Escape", what: root.escapeAction, clickable: true }])
-            onPicked: key => root.act(key)
-          }
-
-          Divider {
-            Layout.fillWidth: true
-          }
-
-          ColumnLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: root.lines * Metrics.line
-            Layout.leftMargin: Config.theme.itemPaddingX
-            Layout.rightMargin: Config.theme.itemPaddingX
-            // History and prompt as far apart as two exchanges.
-            spacing: Config.theme.padding
-
-            // The conversation, kept scrolled to its end.
-            Flickable {
-              id: thread
-              Layout.fillWidth: true
-              Layout.fillHeight: true
-              clip: true
-              contentHeight: exchangeList.implicitHeight
-              boundsBehavior: Flickable.StopAtBounds
-              onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
-              onHeightChanged: contentY = Math.max(0, contentHeight - height)
-
-              function page(down) {
-                contentY = Math.max(0, Math.min(contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
-              }
-
-              ColumnLayout {
-                id: exchangeList
-                width: thread.width
-                // Wider between exchanges than within one, so each reads as a unit.
-                spacing: Config.theme.padding
-
-                Repeater {
-                  model: root.exchanges
-
-                  Exchange {}
-                }
-              }
-            }
-
-            // Pasted for the next prompt; Escape clears it with the text.
-            Thumbnail {
-              Layout.leftMargin: Metrics.line + Config.theme.spacing
-              path: root.image
-            }
-
-            RowLayout {
-              Layout.fillWidth: true
-              spacing: Config.theme.spacing
-
-              Icon {
-                Layout.alignment: Qt.AlignTop
-                tone: "primary"
-                glyph: Glyphs.submenu
-                size: Metrics.line
-              }
-
-              TextArea {
-                id: prompt
-                Layout.fillWidth: true
-                Layout.preferredHeight: implicitHeight
-                placeholder: "Ask " + root.title
-                onTextChanged: root.draft = text
-                Component.onCompleted: set(root.draft)
-
-                // Return sends and Shift+Return breaks the line; the rest go to root.act, as the legend's clicks do.
-                onKeyPressed: event => {
-                  const plain = !(event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier));
-                  if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && plain) {
-                    if (root.send(text)) clear();
-                  } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
-                    thread.page(event.key === Qt.Key_PageDown);
-                  } else if (!root.act(MenuKeys.name(event))) {
-                    return;
-                  }
-                  event.accepted = true;
-                }
-
-                Connections {
-                  target: root
-
-                  function onRestore(text) {
-                    if (prompt.text === "") prompt.set(text);
-                  }
-
-                  function onClearPrompt() {
-                    prompt.clear();
-                  }
-
-                  function onPasteText() {
-                    prompt.paste();
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+  // Created by path while shown: a plugin's folder is not a module the shell imports.
+  property var panel: null
+  onShownChanged: {
+    if (!shown) {
+      panel?.destroy();
+      panel = null;
+      return;
     }
+    const component = Qt.createComponent(Qt.resolvedUrl("ask/AskPanel.qml"));
+    panel = component.createObject(root, { ask: root });
+    if (!panel) console.warn(name + ":", component.errorString());
   }
 }

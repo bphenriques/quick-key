@@ -2,8 +2,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// Text typed in, in the theme font and coloured by `tone`; plain text, wrapped at its width. A `placeholder` shows while
-// empty; `copyOnSelect` copies what the mouse selects, as a terminal does.
+// Plain text input in the theme font, coloured by `tone`; `copyOnSelect` copies a mouse selection, as a terminal does.
 TextEdit {
   id: root
 

@@ -17,7 +17,7 @@ Example:
 ```nix
 { inputs, ... }:
 {
-  imports = [ inputs.quick-key.homeManagerModules.default ];
+  imports = [ inputs.quick-key.homeModules.default ];
 
   programs.quick-key = {
     enable = true;

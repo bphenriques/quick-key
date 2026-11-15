@@ -6,7 +6,7 @@ A Quickshell menu and its home-manager module. What it does is in [README.md](./
 
 Every change follows these; a change that cannot is a reason to revisit the rule here first, not to work around it.
 
-1. **Data, not code.** What the menu shows and does comes from `menu.entries`. QML has no case for a particular entry, tool or device; a new need becomes an option in `settings.nix`, with an assertion when it can be wrong.
+1. **Data, not code.** What the menu shows and does comes from `menu.entries`. QML has no case for a particular entry, tool or device; a new need becomes an option in `settings.nix`, with an assertion when it can be wrong. A built-in (list, status, state, header item) is one entry in its table, never a `case` or name test elsewhere.
 2. **Tools through the config.** QML runs nothing by name. The config that owns a tool sets its command, and a default may name only a standard tool (`wpctl`, `systemd-inhibit`). The shell reads only output it defines (the state line, see [Sources](docs/src/plugins.md#sources)), never a tool's own format. What needs more of one tool is a plugin. The compositor is reached only through `Compositor` (see [Compositor](docs/src/compositor.md)). The one exception: a link opens with the desktop's handler for links.
 3. **Events over polling.** What has no events is read when the menu opens; what must sample (the mic level) runs only while shown.
 4. **Layout is declared.** A level's columns and width come from its entry (`columns`, `width`, else `menu.columns`, `menu.width`), never measured from what it shows, so it holds still; entries flow across, so order decides neighbours. Make the menu wider before adding columns or truncating.
@@ -26,8 +26,9 @@ The shell, under `packages/quick-key/`:
 
 - `services/`: state read from its source (D-Bus, Pipewire, niri, commands), pushed by events. What a service declares at its top level is its API, read-only where it is state; what it keeps for itself sits in an object under an `id`, which no other file can reach. Sources without events (the outputs, plugins' `read` commands) are read on `refresh()`, which the menu calls as it opens. `Plugin` holds each plugin's one source (`watch`, `read`, `file`, through `CommandState`) and its IPC target.
 - `ui/`: the kit ([Kit](docs/src/kit.md)). Widgets use it and the theme from `Config`, never raw colours or sizes.
-- `widgets/`: the surfaces. `menu/` splits into `MenuModel` (state, keys) and `Menu`, `MenuStatus` (view).
-- `plugins/`: the plugins the shell ships; `Plugin.qml` is their root, `services/Plugins.qml` loads them.
+- `builtins/`: the built-in names, one table each (`Statuses`, `Lists`, `States`, `HeaderItems`): what a status shows, what a list holds and does, what lights a toggle, what a header item does. `modules/home-manager/quick-key/builtins.nix` lists the same names for the module; the qml test holds them equal.
+- `widgets/`: the surfaces. `menu/` splits into `MenuModel` (levels and keys) and its view (`Menu`, `MenuHeader`, `MenuRow`, `MenuStatus`); `menu/calendar/` holds a calendar level (`CalendarModel`, `CalendarMonth`, `CalendarEvents`). A surface with state of its own keeps it in a `*Model`, the view only reading it.
+- `plugins/`: the plugins the shell ships; `Plugin.qml` is their root, `services/Plugins.qml` loads them. A plugin is its state in `<Name>.qml`; a view of its own goes in `plugins/<name>/` (`ask/AskPanel.qml`), created by path (`Qt.resolvedUrl`): a plugin folder is not a module the shell imports.
 - `themes/`: the shipped colour presets, read through `ThemeFile.qml`.
 - `menu.json`: the starter menu, shaped as a `config.json` so users can copy it.
 
@@ -49,7 +50,7 @@ The rest:
 ## Comments
 
 - Default to none. Comment only what the code can't say: the why, a non-obvious constraint, a cross-file pointer.
-- One line. Never restate code or repeat what the docs say.
+- One line, never two in a row (`tests/comments.nix` fails the check). Never restate code or repeat what the docs say.
 
 ## Writing style (docs, README)
 

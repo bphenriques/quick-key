@@ -75,6 +75,10 @@ in
     assertions = [
       (lib.hm.assertions.assertPlatform "programs.quick-key" pkgs lib.platforms.linux)
       {
+        assertion = config.programs.quickshell.package != null;
+        message = "programs.quick-key: programs.quickshell.package runs the service, so it cannot be null";
+      }
+      {
         assertion = themeName == null || cfg.themes ? ${themeName} || lib.elem themeName presets;
         message = "programs.quick-key.settings.theme.name: '${toString themeName}' is neither in programs.quick-key.themes nor a preset: ${toString presets}";
       }
@@ -85,21 +89,29 @@ in
     }
     // lib.mapAttrs' (name: file: lib.nameValuePair "quick-key/themes/${name}.json" { source = file; }) themeFiles;
 
+    # Only adds a config, so a Quickshell of the user's own (a bar) keeps its service.
     programs.quickshell = {
       enable = true;
-      systemd.enable = true;
-      activeConfig = "quick-key";
       configs.quick-key = "${cfg.package}/share/quick-key";
     };
 
-    # home-manager swaps the config symlink on switch, which a file watch would not follow; restart instead.
-    systemd.user.services.quickshell.Unit = {
-      PartOf = [ config.wayland.systemd.target ];
-      X-Restart-Triggers = [
-        "${cfg.package}"
-        "${configFile}"
-      ]
-      ++ map toString (lib.attrValues themeFiles);
+    systemd.user.services.quick-key = {
+      Unit = {
+        Description = "quick-key, a keyboard-driven Quickshell menu";
+        PartOf = [ config.wayland.systemd.target ];
+        After = [ config.wayland.systemd.target ];
+        # home-manager swaps the config symlink on switch, which a file watch would not follow; restart instead.
+        X-Restart-Triggers = [
+          "${cfg.package}"
+          "${configFile}"
+        ]
+        ++ map toString (lib.attrValues themeFiles);
+      };
+      Service = {
+        ExecStart = "${lib.getExe config.programs.quickshell.package} --config quick-key";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ config.wayland.systemd.target ];
     };
   };
 }

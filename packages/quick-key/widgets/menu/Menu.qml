@@ -8,151 +8,36 @@ import Quickshell.Wayland
 import qs
 import qs.services
 import qs.ui
+import qs.builtins
+import qs.widgets.menu.calendar
 
 // The keyboard menu with live status: entries come from programs.quick-key.settings.menu.entries.
 Scope {
   id: root
 
-  // A row of the menu: its key, then its status or label.
-  component MenuRow: ListItem {
-    id: row
-    required property var modelData
-    property int chars: 1
-
-    enabled: modelData.enabled !== false
-    onActivated: menu.activate(modelData)
-    onSecondaryActivated: menu.openMenu(modelData)
-    onScrolled: up => menu.act(modelData, up ? "Up" : "Down")
-
-    KeyHint {
-      key: row.modelData.key
-      paired: row.modelData.paired ?? false
-      chars: row.chars
-    }
-
-    MenuStatus {
-      Layout.fillWidth: true
-      image: row.modelData.image ?? ""
-      status: row.modelData.status ?? ""
-      fallback: row.modelData.desc
-      fallbackDetail: row.modelData.detail ?? ""
-      fallbackGlyphs: row.modelData.glyphs ?? []
-      icon: row.modelData.icon ?? ""
-      active: row.modelData.active ?? false
-      pins: row.modelData.entry?.pins ?? []
-    }
-  }
-
-  // Part of the header: its items in a row, aligned left, centre or right. The sides share the width equally, each at least
-  // what its items need; the centre takes the width its items want of the rest, shortening its text when crowded.
-  // A plain row of equal parts was simpler but cut the clock and could widen the menu; the minimums prevent both.
-  component HeaderSlot: Item {
-    id: slot
-    property var items: []
-    property int alignment: Qt.AlignLeft
-    readonly property bool centre: alignment === Qt.AlignHCenter
-    // The least its items need, their text shortened, never their icons.
-    readonly property real contentMinimum: row.Layout.minimumWidth
-    // Set on the sides: at least what their items need, or what either side needs when there is a centre to keep centred.
-    property real sideMinimum: 0
-    property bool centred: false
-    default property alias content: row.data
-
-    visible: !centre || slot.items.length > 0
-    Layout.fillWidth: true
-    Layout.minimumWidth: centre ? contentMinimum : sideMinimum
-    // Sides start from what their items want, or both from the same width when keeping a centre centred.
-    Layout.preferredWidth: centre || !centred ? row.implicitWidth : sideMinimum
-    Layout.maximumWidth: centre ? row.implicitWidth : Number.POSITIVE_INFINITY
-    implicitHeight: row.implicitHeight
-
-    RowLayout {
-      id: row
-      anchors.verticalCenter: parent.verticalCenter
-      // Never wider than its share: its items' text gives way instead (see StatusLine).
-      width: Math.min(implicitWidth, slot.width)
-      x: slot.alignment === Qt.AlignRight ? slot.width - width : slot.alignment === Qt.AlignHCenter ? (slot.width - width) / 2 : 0
-      // No spacing: each item's own padding already spaces them.
-      spacing: 0
-
-      Repeater {
-        model: Array.from(slot.items)
-
-        HeaderItem {}
-      }
-    }
-  }
-
-  // A header item by name: built in, or a plugin's. A click does what its compositor key does, shown while Super is held.
-  component HeaderItem: ListItem {
-    id: item
-    required property string modelData
-    // Shrinks, never grows: its text gives way before its neighbours.
-    Layout.fillWidth: true
-    Layout.maximumWidth: implicitWidth
-    readonly property bool builtin: ["clock", "keepAwake", "keyboardLayout", "battery"].includes(modelData)
-    readonly property var plugin: builtin ? null : Plugins.get(modelData)
-    readonly property string shortcut: plugin?.shortcut ?? Config[modelData]?.shortcut ?? ""
-
-    visible: modelData === "keyboardLayout" ? KeyboardLayout.names.length > 0 : modelData === "battery" ? Power.present : builtin || plugin !== null
-    // The battery only shows state; the clock opens the calendar when there is one.
-    enabled: modelData === "clock" ? menu.calendar !== null : modelData !== "battery"
-    dimsWhenDisabled: false
-    onActivated: {
-      switch (modelData) {
-      case "clock": menu.activate(menu.calendar); break;
-      case "keepAwake": IdleInhibit.toggle(); break;
-      case "keyboardLayout": KeyboardLayout.next(); break;
-      default: plugin?.activate();
-      }
-    }
-
-    KeyHint {
-      visible: menu.shortcutsShown && item.shortcut !== ""
-      key: item.shortcut
-      chars: MenuKeys.label(item.shortcut).length
-    }
-
-    Label {
-      visible: item.modelData === "clock"
-      Layout.fillWidth: true
-      elide: Text.ElideRight
-      font.bold: true
-      text: Clock.text
-    }
-
-    MenuStatus {
-      visible: item.modelData !== "clock"
-      quiet: true
-      status: item.modelData === "clock" ? "" : item.modelData
-    }
-  }
-
-  MenuModel {
-    id: menu
-  }
+  readonly property MenuModel menu: MenuModel {}
 
   Binding {
     target: Audio
     property: "metering"
-    value: menu.level?.status === "source"
+    value: !!Statuses.builtin[root.menu.level?.status]?.meter
   }
 
   IpcHandler {
     target: "menu"
 
     function toggle(): void {
-      menu.toggle();
+      root.menu.toggle();
     }
 
     function toggleEntry(key: string): void {
-      menu.toggleEntry(key);
+      root.menu.toggleEntry(key);
     }
   }
 
   LazyLoader {
     id: dismiss
-    active: menu.open
+    active: root.menu.open
 
     Variants {
       model: Quickshell.screens
@@ -160,14 +45,14 @@ Scope {
       DismissArea {
         required property var modelData
         screen: modelData
-        onDismissed: menu.hide()
+        onDismissed: root.menu.hide()
       }
     }
   }
 
   // Created after the dismiss areas, so it stacks above them on the same layer.
   LazyLoader {
-    active: menu.open && dismiss.item !== null
+    active: root.menu.open && dismiss.item !== null
 
     OverlayWindow {
       // The whole screen, so levels of different sizes never resize the window: a resize shows the old size for a frame.
@@ -196,7 +81,7 @@ Scope {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Config.theme.edgeMargin
-        width: menu.width
+        width: root.menu.width
         height: content.implicitHeight + 2 * Config.theme.padding
 
         function isSuper(event) {
@@ -206,18 +91,18 @@ Scope {
         focus: true
         Keys.onPressed: event => {
           if (isSuper(event) && !event.isAutoRepeat) superHeld.start();
-          event.accepted = menu.handleKey(event);
+          event.accepted = root.menu.handleKey(event);
         }
         Keys.onReleased: event => {
           if (!isSuper(event)) return;
           superHeld.stop();
-          menu.shortcutsShown = false;
+          root.menu.shortcutsShown = false;
         }
 
         Timer {
           id: superHeld
           interval: 1000
-          onTriggered: menu.shortcutsShown = true
+          onTriggered: root.menu.shortcutsShown = true
         }
 
         ColumnLayout {
@@ -228,96 +113,46 @@ Scope {
           anchors.margins: Config.theme.padding
           spacing: Config.theme.padding
 
-          // Like waybar's: none grows the menu; in a side too full, its text ends in an ellipsis.
-          // At the top level they hold Config.menu.header's items; inside a level, its title on the left and its state on the right.
-          RowLayout {
-            id: header
-            // Both sides as wide when there is a centre to keep centred.
-            readonly property bool centred: centreSlot.visible
-            readonly property real sideMinimum: Math.max(leftSlot.contentMinimum, rightSlot.contentMinimum)
-
+          MenuHeader {
             Layout.fillWidth: true
-            // Never widens the menu: a header whose icons cannot fit overflows instead (rule 4: make the menu wider).
-            Layout.minimumWidth: 0
-            spacing: Config.theme.spacing
-
-            HeaderSlot {
-              id: leftSlot
-              centred: header.centred
-              sideMinimum: header.centred ? header.sideMinimum : contentMinimum
-              items: menu.level ? [] : Config.menu.header.left
-
-              // Inside a level the title goes back up, like Backspace.
-              ListItem {
-                visible: menu.level !== null
-                onActivated: menu.back()
-
-                Label {
-                  font.bold: true
-                  text: menu.title
-                }
-              }
-            }
-
-            HeaderSlot {
-              id: centreSlot
-              alignment: Qt.AlignHCenter
-              items: menu.level ? [] : Config.menu.header.center
-            }
-
-            HeaderSlot {
-              id: rightSlot
-              centred: header.centred
-              sideMinimum: header.centred ? header.sideMinimum : contentMinimum
-              alignment: Qt.AlignRight
-              items: menu.level ? [] : Config.menu.header.right
-
-              // A level that lists its items (tray apps, devices, networks) shows only its state, not the items again.
-              MenuStatus {
-                visible: menu.level !== null
-                Layout.rightMargin: Config.theme.itemPaddingX
-                quiet: true
-                compact: !!menu.level?.entry?.list
-                status: menu.level?.entry?.list === "tray" ? "" : menu.level?.status ?? ""
-              }
-            }
+            menu: root.menu
           }
 
           // A level's legend shares its line with its actions, the keys on the left and the actions on the right.
           RowLayout {
             Layout.fillWidth: true
-            visible: menu.legend.length > 0 || menu.actions.length > 0
+            visible: root.menu.legend.length > 0 || root.menu.actions.length > 0
             spacing: Config.theme.padding
 
             KeyLegend {
-              visible: menu.legend.length > 0
-              keys: menu.legend
-              onPicked: key => menu.calendarKey(key)
+              visible: root.menu.legend.length > 0
+              keys: root.menu.legend
+              onPicked: key => root.menu.calendar.handleKey(key)
             }
 
             Item {
-              Layout.fillWidth: menu.legend.length > 0
+              Layout.fillWidth: root.menu.legend.length > 0
             }
 
-            // Declared, not inferred: the level's own columns, else menu.columns; entries flow across, so neighbours sit side by
-            // side. Hidden when empty: an empty GridLayout keeps the height of its last rows.
+            // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
             GridLayout {
               id: actionsGrid
-              Layout.fillWidth: menu.legend.length === 0
-              visible: menu.actions.length > 0
+              Layout.fillWidth: root.menu.legend.length === 0
+              visible: root.menu.actions.length > 0
               flow: GridLayout.LeftToRight
-              columns: menu.level?.entry?.columns ?? Config.menu.columns
+              columns: root.menu.level?.entry?.columns ?? Config.menu.columns
               columnSpacing: Config.theme.padding
               rowSpacing: Config.theme.listSpacing
 
               Repeater {
-                model: menu.actions
+                model: root.menu.actions
 
                 MenuRow {
                   required property int index
+                  menu: root.menu
                   Layout.fillWidth: true
                   Layout.preferredWidth: 1
-                  chars: menu.columnChars(index, actionsGrid.columns)
+                  chars: root.menu.columnChars(index, actionsGrid.columns)
                 }
               }
             }
@@ -327,7 +162,7 @@ Scope {
             Layout.fillWidth: true
             Layout.leftMargin: Config.theme.itemPaddingX
             Layout.rightMargin: Config.theme.itemPaddingX
-            visible: !!menu.level?.entry?.view && Calendar.error !== "" && !Calendar.syncing
+            visible: !!root.menu.level?.entry?.view && Calendar.error !== "" && !Calendar.syncing
             // Alert, not warning: the warning hue sits too close to calendar colours to read as a fault.
             tone: "alert"
             wrapMode: Text.Wrap
@@ -336,29 +171,30 @@ Scope {
 
           Divider {
             Layout.fillWidth: true
-            visible: menu.actions.length > 0 && (menu.rows.length > 0 || menu.emptyText !== "" || !!menu.level?.entry?.view)
+            visible: root.menu.actions.length > 0 && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || !!root.menu.level?.entry?.view)
           }
 
           // An empty list says why, in its place.
           Label {
-            visible: menu.emptyText !== ""
+            visible: root.menu.emptyText !== ""
             Layout.leftMargin: Config.theme.itemPaddingX
             tone: "dim"
-            text: menu.emptyText
+            text: root.menu.emptyText
           }
 
           // What a level lists, apart from its actions and across the full width.
           ColumnLayout {
             Layout.fillWidth: true
-            visible: menu.rows.length > 0
+            visible: root.menu.rows.length > 0
             spacing: Config.theme.listSpacing
 
             Repeater {
-              model: menu.rows
+              model: root.menu.rows
 
               MenuRow {
+                menu: root.menu
                 Layout.fillWidth: true
-                chars: menu.keyChars(menu.rows)
+                chars: root.menu.keyChars(root.menu.rows)
               }
             }
           }
@@ -366,16 +202,16 @@ Scope {
           // The month, and the events from its selected day beside it as tall as the month, 2 to 3.
           RowLayout {
             Layout.fillWidth: true
-            visible: menu.level?.entry?.view === "calendar"
+            visible: root.menu.inCalendar
             spacing: Config.theme.padding
 
-            MenuCalendar {
+            CalendarMonth {
               Layout.fillWidth: true
               Layout.preferredWidth: 2
               Layout.alignment: Qt.AlignTop
-              selected: menu.selected
-              onStepped: months => menu.moveSelected(0, months, 0)
-              onPicked: day => menu.select(day)
+              selected: root.menu.calendar.selected
+              onStepped: months => root.menu.calendar.moveSelected(0, months, 0)
+              onPicked: day => root.menu.calendar.select(day)
             }
 
             Divider {
@@ -384,16 +220,16 @@ Scope {
               visible: events.visible
             }
 
-            MenuEvents {
+            CalendarEvents {
               id: events
               Layout.fillWidth: true
               Layout.fillHeight: true
               Layout.preferredWidth: 3
               Layout.preferredHeight: 0
               visible: Calendar.enabled
-              selected: menu.selected
-              focused: menu.eventFocus
-              onPicked: row => menu.focusEvent(row)
+              selected: root.menu.calendar.selected
+              focused: root.menu.calendar.focused
+              onPicked: row => root.menu.calendar.focus(row)
             }
           }
         }

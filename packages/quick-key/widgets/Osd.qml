@@ -7,8 +7,7 @@ import qs
 import qs.services
 import qs.ui
 
-// Brief feedback when volume, the audio device, brightness, the keyboard layout or keep awake changes.
-// A slim bar at the right edge, so it never resembles a notification.
+// A slim bar at the right edge on a volume, device, brightness, layout or keep-awake change, so it never reads as a notification.
 Scope {
   id: root
 

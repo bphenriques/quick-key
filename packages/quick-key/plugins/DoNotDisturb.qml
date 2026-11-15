@@ -2,8 +2,7 @@ import QtQuick
 import qs
 import qs.ui
 
-// Whether notifications are paused, from the notification daemon's commands: `watch` or `read` prints `true` or `false`
-// (or a state line with `active`), `activate` pauses or resumes them.
+// Whether notifications are paused: the source gives `true` or `false` (or `active`), `activate` toggles them.
 Plugin {
   readonly property bool paused: state.active ?? state.text === "true"
 

@@ -44,7 +44,7 @@
         }
       );
 
-      homeManagerModules.default = import ./modules/home-manager/quick-key self;
+      homeModules.default = import ./modules/home-manager/quick-key self;
 
       formatter = forAllSystems (system: treefmtEval.${system}.config.build.wrapper);
 

@@ -34,7 +34,7 @@ empty=$(niri msg --json workspaces | jq --arg o "$name" '[.[] | select(.output =
 
 restore() {
   mv -f "$work/config.orig" "$cfg"
-  systemctl --user restart quickshell.service
+  systemctl --user restart quick-key.service
   niri msg action focus-workspace "$back"
   rm -rf "$work"
 }
@@ -42,7 +42,7 @@ mv "$cfg" "$work/config.orig"
 trap restore EXIT
 cp "$work/config.json" "$cfg"
 niri msg action focus-workspace "$empty"
-systemctl --user restart quickshell.service
+systemctl --user restart quick-key.service
 sleep 4
 
 # The menu sits bottom centre; this frame fits its largest level at the default size.

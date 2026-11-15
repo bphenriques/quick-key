@@ -4,8 +4,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// Loads the plugins Config.plugins names, from their source or found by name. One that fails to load is logged and left
-// out; the rest of the shell runs on.
+// Loads the plugins Config.plugins names; one that fails to load is logged and left out.
 Singleton {
   id: root
 
@@ -23,8 +22,7 @@ Singleton {
 
     property var loaded: ({})
 
-    // source is a path when it has a slash, else the plugin implementing this one, by default its own name. A plugin's
-    // file is its name capitalised (niriMinimap: NiriMinimap.qml), in the user's plugins folder or shipped.
+    // A source with a slash is a path, else a plugin's name, its file capitalised (niriMinimap: NiriMinimap.qml).
     function component(name, spec) {
       const source = spec.source ?? name;
       const file = source.charAt(0).toUpperCase() + source.slice(1) + ".qml";

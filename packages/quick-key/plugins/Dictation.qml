@@ -5,10 +5,7 @@ import qs
 import qs.services
 import qs.ui
 
-// A discreet pill on every screen while dictating, under the screen recording one: its icon while it listens, a spinner
-// while it transcribes; a click stops it.
-// Its state's text (watch, read or file) is `recording`, `transcribing`, or anything else for idle. settings.stop: the
-// command that stops dictating. settings.glyph: the pill's icon.
+// A dim pill on every screen while dictating, under the recording one; its settings are in docs/src/plugins.md.
 Plugin {
   id: root
 

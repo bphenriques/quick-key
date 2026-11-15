@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin is one QML file whose root is `Plugin`, listed by name under `plugins` in `config.json` as `{ source, settings }`. `source` names the plugin implementing it (`command`), by default its own name, or is a path to a QML file. A plugin's file is its name capitalised (`niriMinimap`: `NiriMinimap.qml`), found in `$XDG_CONFIG_HOME/quick-key/plugins/`, then among the shipped ones. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on.
+A plugin is a QML file whose root is `Plugin`, its own pieces in a folder beside it (`ask/` for `Ask.qml`) and created by path, since the folder is not a module, listed by name under `plugins` in `config.json` as `{ source, settings }`. `source` names the plugin implementing it (`command`), by default its own name, or is a path to a QML file. A plugin's file is its name capitalised (`niriMinimap`: `NiriMinimap.qml`), found in `$XDG_CONFIG_HOME/quick-key/plugins/`, then among the shipped ones. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on.
 
 Its API, and the only one:
 
@@ -14,13 +14,34 @@ Its API, and the only one:
 |---|---|---|
 | `Command.qml` | the state its command gives, under any name (`source = "command"`) | a source (see Sources), `activate`, `select` (given the item's id), `shortcut` |
 | `DoNotDisturb.qml` | do-not-disturb: a bell, red while notifications are paused; a click pauses or resumes | a source (`true` or `false`, or a state line with `active`), `activate`, `shortcut` |
-| `Ask.qml` | a panel for quick turns with an agent, its keys below; a reply's links as rows; the tool in use while waiting, a knock while an approval waits; a notification while hidden; lit while waiting or unread | `ask` (prompt, session, image: a JSON object per line, `{run, session}`, `{status}`, `{approval}`, then `{session, reply}` or `{error}`), `approve` (run, allow or deny), `stop` (run), `notify` (title, text; prints `default` when clicked), `pasteImage` (file; fails when the clipboard holds no image), `open` (session), `title`, `glyph` |
+| `Ask.qml` | a panel for quick turns with an agent, its keys below; a reply's links as rows; the tool in use while waiting, a knock while an approval waits; a notification while hidden; lit while waiting or unread, in the warning colour while an approval waits | `ask` (prompt, session, image: a JSON object per line, `{run, session}`, `{status}`, `{approval}`, then `{session, reply}` or `{error}`), `approve` (run, allow or deny), `stop` (run), `notify` (title, text; prints `default` when clicked), `pasteImage` (file; fails when the clipboard holds no image), `open` (session), `title`, `glyph` |
 | `Dictation.qml` | a dim pill on every screen while dictating, top right one slot under the recording pill: its icon while it listens (dim while the mic is muted), a spinner while it transcribes; a click stops it; lit while dictating | a source whose text is `recording`, `transcribing` or anything else for idle, `stop`, `glyph` |
 | `Recording.qml` | a pill on every screen while recording, a click stops it; status: the time, lit while recording | a source: `{"active": true, "since": <epoch seconds>}` while recording, empty otherwise; `stop` |
 | `Wallpaper.qml` | status: the wallpaper's name | a source whose text is the wallpaper's path or name |
 | `NiriMinimap.qml` | a minimap of niri's workspaces as you move between windows or workspaces | `height`, `maxWidth`, `opacity`, `borderWidth` |
 
 `Ask.qml`'s keys: `RET` sends (a failed or stopped prompt sent again replaces its exchange), `S-RET` breaks the line, `C-v` attaches the clipboard's image when it holds one. `ESC` steps back: denies an approval, else stops the run, else clears the prompt and image, else hides; twice quickly hides from anywhere, never losing the conversation. `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal between runs.
+
+Only `ask` is required, and its smallest form prints one line, `{"session", "reply"}` or `{"error"}`; ended without either, its last line on stderr is the error. The rest adds on: `{run}` lets `stop` reach the run, `{status}` names what it is doing, and `{approval}` with `approve` asks before it acts. Without `stop`, stopping closes the stream. Claude Code, carrying on in its session:
+
+```nix
+plugins.ask.settings = {
+  title = "Claude";
+  ask = lib.getExe (pkgs.writeShellApplication {
+    name = "ask-claude";
+    runtimeInputs = [ pkgs.claude-code pkgs.jq ];
+    text = ''
+      resume=()
+      if [ -n "$2" ]; then resume=(--resume "$2"); fi
+      claude -p "$1" "''${resume[@]}" --output-format json </dev/null \
+        | jq -c 'if .is_error then {error: .result} else {session: .session_id, reply: .result} end'
+    '';
+  });
+  open = "foot claude --resume";
+};
+```
+
+Each `ask` names its own plugin, so two agents are two plugins with `source = "ask"`.
 
 ## Sources
 

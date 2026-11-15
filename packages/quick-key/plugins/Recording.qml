@@ -6,9 +6,7 @@ import qs
 import qs.services
 import qs.ui
 
-// A pill on every screen while a screen recording runs: its time and whether the mic is in it; a click stops it.
-// Its state (watch, read or file) is {"active": true, "since": <epoch seconds>} while recording, empty otherwise.
-// settings.stop: the command that stops the recording.
+// A pill on every screen while recording, a click stops it; its settings are in docs/src/plugins.md.
 Plugin {
   id: root
 

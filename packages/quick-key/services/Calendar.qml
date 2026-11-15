@@ -16,8 +16,7 @@ Singleton {
   // Whether a sync is running, and why the last one failed ("" when it did not): the file's own word.
   readonly property bool syncing: store.syncing
   readonly property string error: store.error
-  // Every day with events, in order, each event once per day it falls on: { id, key, day, event }. `key` names the day
-  // (2026-11-12) and `id` the row, the same across reads of the file while the event is.
+  // Each event once per day it falls on, in order: { id, key, day, event }, `id` the same across reads of the file.
   readonly property var timeline: store.timeline
   // The next event not over yet, timed ones first: an all-day one (a daily habit) would otherwise hold it every day.
   readonly property var next: store.events.find(event => !event.allDay && event.end > Clock.date)

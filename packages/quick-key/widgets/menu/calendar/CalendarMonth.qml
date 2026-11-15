@@ -6,8 +6,7 @@ import qs
 import qs.services
 import qs.ui
 
-// The month of the selected day in the clock's locale, weeks starting on its first day (services/Clock.qml).
-// Today is lit, the selected day highlighted, days of the months around dim; a dot per colour marks a day's events.
+// The selected day's month in the clock's locale: today lit, the selected day highlighted, a dot per event colour.
 Item {
   id: root
 

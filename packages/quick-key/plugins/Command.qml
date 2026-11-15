@@ -2,8 +2,7 @@ import QtQuick
 import Quickshell.Io
 import qs
 
-// A plugin made of commands (docs/src/plugins.md), used under any name: `source = "command"`. `select` runs with the
-// chosen item's id.
+// A plugin made of commands, under any name (`source = "command"`); see docs/src/plugins.md.
 Plugin {
   id: root
 

@@ -4,8 +4,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// The shell's icon set, each named after its entry in the Nerd Fonts glyph list. A feature's glyphs setting
-// (Config.audio.glyphs) overrides its defaults.
+// The icon set, named after the Nerd Fonts glyph list; a feature's glyphs setting overrides its defaults.
 Singleton {
   readonly property string microphone: Config.audio.glyphs.microphone ?? "\u{F036C}" // md-microphone
   readonly property string microphoneOff: Config.audio.glyphs.microphoneOff ?? "\u{F036D}" // md-microphone_off

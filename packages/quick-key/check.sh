@@ -5,10 +5,14 @@ fail() {
   failed=1
 }
 
-# Rule 12: a plugin is one file rooted at Plugin, using the theme, the kit and the services, never the core's surfaces.
+# Rule 12: a plugin's file is rooted at Plugin, using the theme, the kit and the services, never the core's surfaces.
 for file in plugins/*.qml; do
   grep -q '^Plugin {' "$file" || fail "$file: root is not Plugin"
-  grep -q '^import qs\.widgets' "$file" && fail "$file: imports the core's surfaces"
+done
+
+# Plugins and the built-in tables sit under the surfaces, never reaching into them.
+for file in $(grep -rl '^import qs\.widgets' --include='*.qml' plugins builtins); do
+  fail "$file: imports the core's surfaces"
 done
 
 # Compositor: only Compositor and plugins reach a backend.
@@ -46,8 +50,18 @@ for file in $(grep -rlE '(execDetached\(|command: |command = )\[ *"[^s"]|"sh", "
   fail "$file: runs a command named in QML"
 done
 
+# Rule 1: a built-in (list, status, state, header item) is one entry in its table in builtins/; widgets never test its name.
+for file in $(grep -rlE 'case "|\b(list|status|state|modelData)\)? ?[!=]== "' --include='*.qml' widgets); do
+  fail "$file: names a built-in outside its table"
+done
+
+# An optional call (`f?.()`) crashes Qt 6's QML compiler at load (6.12).
+for file in $(grep -rlF '?.(' --include='*.qml' .); do
+  fail "$file: an optional call, which crashes the QML compiler"
+done
+
 # Plugins: Plugin holds the one source and IPC target; none declares its own.
-for file in $(grep -lE '^\s*(CommandState|CommandWatcher|CommandReader|FileView|IpcHandler) \{' plugins/*.qml); do
+for file in $(grep -rlE '^\s*(CommandState|CommandWatcher|CommandReader|FileView|IpcHandler) \{' --include='*.qml' plugins); do
   fail "$file: declares a source or IPC target past Plugin"
 done
 

@@ -15,8 +15,7 @@ Singleton {
   readonly property string text: Config.clock.format ? format(date, Config.clock.format)
     : date.toLocaleDateString(locale, Locale.LongFormat) + " " + date.toLocaleTimeString(locale, Locale.ShortFormat)
 
-  // strftime, as waybar's clock takes it: %a %A %b %B %d %m %y %Y %H %I %M %p %%, a - after % drops the zero padding (%-d),
-  // and %o, the English ordinal suffix of the day (st, nd, rd, th).
+  // strftime as waybar takes it (%a %A %b %B %d %m %y %Y %H %I %M %p %%, %-d unpadded), plus %o, the English ordinal.
   function format(date, pattern) {
     const pad = (value, flag) => flag === "-" ? String(value) : String(value).padStart(2, "0");
     return pattern.replace(/%(-?)([a-zA-Z%])/g, (all, flag, code) => {

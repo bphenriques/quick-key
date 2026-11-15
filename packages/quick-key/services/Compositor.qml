@@ -4,8 +4,7 @@ import QtQuick
 import Quickshell
 import qs.services.compositor
 
-// What the core asks of the compositor (see docs/src/compositor.md), from the backend for the one running.
-// Without one, the outputs are the screens Wayland reports, by connector name, and there are no keyboard layouts.
+// What the core asks of the compositor (docs/src/compositor.md); without a backend, Wayland's screens and no layouts.
 Singleton {
   id: root
 

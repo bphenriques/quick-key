@@ -1,5 +1,4 @@
-# What the module writes and rejects. Unset settings must stay out of config.json: a map written empty would
-# replace the shell's default (Config.qml) rather than fall back to it.
+# What the module writes and rejects; unset settings stay out of config.json, where an empty map would replace a default.
 { pkgs, evalHome }:
 let
   inherit (pkgs) lib;
@@ -39,6 +38,10 @@ let
     lib.assertMsg (lib.any (a: lib.hasInfix reason a.message) (failed settings)) "${what} must be rejected for: ${reason}";
 in
 assert lib.assertMsg (failed { } == [ ]) "the defaults must pass";
+assert lib.assertMsg (
+  lib.hasSuffix "--config quick-key" (toString cfg.systemd.user.services.quick-key.Service.ExecStart)
+  && !(cfg.systemd.user.services ? quickshell)
+) "quick-key runs as its own service, leaving the user's Quickshell alone";
 assert rejects "an unknown theme" "neither in programs.quick-key.themes nor a preset" { theme.name = "nope"; };
 assert rejects "a plugin with two sources" "set more than one of watch, read and file" {
   plugins.x.settings = {
@@ -70,6 +73,7 @@ pkgs.runCommand "quick-key-module-eval" { nativeBuildInputs = [ pkgs.jq ]; } ''
   jq -e '.audio == { glyphs: { headset: "H" } }' $config
   jq -e '.battery.glyphs == null and .menu.entries[0].icon == null' $config
   jq -e '.plugins.vpn == { source: "command", settings: { read: "vpn-status" } }' $config
+  jq -e '.menu.entries[0] | has("pins") or has("requires") | not' $config
   jq -e '.primary == "#0000ff"' ${cfg.xdg.configFile."quick-key/themes/mine.json".source}
   touch $out
 ''

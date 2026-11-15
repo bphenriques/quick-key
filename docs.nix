@@ -1,5 +1,4 @@
-# Docs site (GitHub Pages): the mdBook in docs/, with the generated `programs.quick-key` options reference
-# injected over the placeholder at build time.
+# Docs site: the mdBook in docs/, the generated options reference injected over its placeholder.
 { pkgs, self }:
 let
   inherit (pkgs) lib;
@@ -8,7 +7,7 @@ let
   # Only the options are read, so the module's home-manager config targets can stay undeclared.
   eval = lib.evalModules {
     modules = [
-      self.homeManagerModules.default
+      self.homeModules.default
       { _module.check = false; }
     ];
     specialArgs = { inherit pkgs; };

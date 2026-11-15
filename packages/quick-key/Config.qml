@@ -5,8 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Typed view of $XDG_CONFIG_HOME/quick-key/config.json, its schema in modules/home-manager/quick-key/settings.nix.
-// Grouped by feature, like waybar's modules; every setting is optional, and commands are run with sh -c.
+// Typed view of $XDG_CONFIG_HOME/quick-key/config.json; its schema is modules/home-manager/quick-key/settings.nix.
 Singleton {
   id: root
 
@@ -57,8 +56,7 @@ Singleton {
     path: adapter.theme.name ? Quickshell.shellDir + "/themes/" + adapter.theme.name + ".json" : ""
   }
 
-  // The starter menu, shaped as a config.json to copy from. Not a default bound in the adapter: it writes without breaking
-  // bindings, so this file loading after config.json would replace the user's entries.
+  // Not bound as the adapter's default: menu.json loading after config.json would then replace the user's entries.
   readonly property var starterEntries: starter.entries
 
   FileView {

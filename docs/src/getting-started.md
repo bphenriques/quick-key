@@ -21,7 +21,7 @@ Import the module in home-manager and enable it:
 ```nix
 { inputs, ... }:
 {
-  imports = [ inputs.quick-key.homeManagerModules.default ];
+  imports = [ inputs.quick-key.homeModules.default ];
 
   programs.quick-key = {
     enable = true;
@@ -30,7 +30,7 @@ Import the module in home-manager and enable it:
 }
 ```
 
-The module runs Quickshell as a user service bound to the Wayland session target, restarted when the configuration changes. Bind `"${config.programs.quick-key.exec.ipc} menu toggle"` to a compositor key.
+The module runs it as its own user service, `quick-key`, bound to the Wayland session target and restarted when the configuration changes; a Quickshell config of your own (a bar) runs beside it. Bind `"${config.programs.quick-key.exec.ipc} menu toggle"` to a compositor key.
 
 The config that owns a tool adds its entries and settings next to it (`lib.mkOrder` keeps the top level in order), so the menu grows with the desktop rather than in one file.
 

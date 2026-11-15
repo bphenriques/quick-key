@@ -4,8 +4,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// The colour of each tone: normal, dim, primary, warning or alert. Dim is the normal colour at reduced alpha,
-// so anything coloured by tone dims the same way; widgets never set opacity to dim.
+// Each tone's colour; dim is the normal one at reduced alpha, so widgets never set opacity to dim.
 Singleton {
   function color(tone) {
     switch (tone) {

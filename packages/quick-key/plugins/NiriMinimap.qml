@@ -8,10 +8,7 @@ import qs.services
 import qs.services.compositor
 import qs.ui
 
-// A minimap in the corner when you move to another window or workspace: the non-empty workspaces top to bottom, then the active one's columns to scale (none when empty),
-// the focused window lit, between thin strips of the workspaces above and below.
-// niri does not report how far a workspace is scrolled, so the map shows every column rather than the visible ones.
-// settings: height, maxWidth, opacity and borderWidth of the map, in pixels but for opacity.
+// A corner minimap on moving between windows or workspaces; every column shows, since niri does not report scrolling.
 Plugin {
   id: root
 
@@ -21,9 +18,7 @@ Plugin {
   readonly property int borderWidth: settings.borderWidth ?? 1
 
   property bool overview: false
-  // On the focused output: its non-empty workspaces in order { active }, then the columns of the active one and of the workspaces above and below it,
-  // each column its windows top to bottom { appId, width, height, focused }; focused is the window focus lands on in that workspace.
-  // Changes only when the layout does: titles are left out.
+  // The focused output's workspaces and the columns around the active one, without titles, so it changes only with the layout.
   property var map: null
 
   Fade {

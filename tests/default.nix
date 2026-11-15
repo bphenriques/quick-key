@@ -5,8 +5,7 @@
   home-manager,
 }:
 let
-  # home-manager's own evaluation (modules/default.nix) without the check that throws on a failed assertion, so a
-  # test can read config.assertions.
+  # home-manager's evaluation without the check that throws on a failed assertion, so tests can read config.assertions.
   hmLib = import "${home-manager}/modules/lib/stdlib-extended.nix" pkgs.lib;
   evalHome =
     module:
@@ -19,7 +18,7 @@ let
           lib = hmLib;
         }
         ++ [
-          self.homeManagerModules.default
+          self.homeModules.default
           {
             home = {
               username = "test";
@@ -35,4 +34,5 @@ in
 {
   module-eval = import ./module.nix { inherit pkgs evalHome; };
   qml = import ./qml { inherit pkgs self; };
+  comments = import ./comments.nix { inherit pkgs self; };
 }

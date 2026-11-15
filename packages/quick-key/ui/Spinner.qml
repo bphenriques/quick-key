@@ -1,8 +1,7 @@
 import QtQuick
 import qs
 
-// A wait in one block cell whose `mood` says whose turn it is: `working` spins ("on it"), `attention` knocks ("your
-// turn"). Its own tempo, not the theme's; still when animations are off.
+// A one-cell wait: `working` spins, `attention` knocks; its own tempo, still when animations are off.
 Item {
   id: root
 

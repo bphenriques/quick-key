@@ -2,9 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// A plugin's state from one source (docs/src/plugins.md): `watch` runs for as long as it lasts, each line replacing the
-// state; `read` runs on refresh(), its last line replacing it; `file` is read again whenever the file changes. A line is
-// a JSON object, or else plain text; an empty one clears the state.
+// A plugin's state from its one source: watch, read or file (docs/src/plugins.md#sources).
 Scope {
   id: root
 

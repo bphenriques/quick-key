@@ -6,9 +6,7 @@ import qs
 import qs.services
 import qs.ui
 
-// Every event under a heading per day (Calendar.timeline), from the selected day on: it starts at that day, `No events`
-// under its heading when it has none, and keeps the event in focus in view. Each row is a bar in the event's colour, start
-// over end, then title over location, one line when neither has a second; a click focuses it, as the keys do.
+// Every event under a heading per day (Calendar.timeline), from the selected day on, the focused one kept in view.
 ListView {
   id: root
 
@@ -33,8 +31,7 @@ ListView {
   spacing: Config.theme.spacing / 2
   boundsBehavior: Flickable.StopAtBounds
 
-  // With an event in focus, keeps it in view; else starts at the selected day.
-  // The day's heading stays on top, so the row is placed below it: placed at the very top, the heading would cover it.
+  // Keeps the focused event, else the selected day, in view, below the sticky day heading that would cover it.
   function follow() {
     const at = model.findIndex(row => focused ? row.id === focused : row.key === selectedKey);
     if (at < 0) return;
@@ -48,8 +45,7 @@ ListView {
   onFocusedChanged: follow()
   onHeightChanged: follow()
 
-  // The left column's two lines on `day`: "All day" for an event that fills it, with its last day when it runs past,
-  // else start and end, `…` for what falls on another day.
+  // The left column's lines on `day`: "All day" (with its last day when later), else start and end, `…` for another day.
   function times(event, day) {
     const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
     // Ending at midnight, an event ends on the day before.
@@ -62,8 +58,7 @@ ListView {
     ];
   }
 
-  // Whether something at `y`, `height` tall, ends in view. Only the bottom edge counts: the top row is checked while the
-  // list scrolls to a new day, and hiding it for that frame read as a fade.
+  // Whether it ends in view; only the bottom counts, or the top row would blink while the list scrolls to a new day.
   function fits(y, height) {
     return y + height <= contentY + root.height + 1;
   }

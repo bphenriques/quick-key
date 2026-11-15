@@ -40,8 +40,7 @@ Singleton {
     return typeof key === "string" ? [key] : Array.from(key);
   }
 
-  // Whether an entry runs one command per key, shown as one row (e.g. Down and Up). Lists from config.json are
-  // list-like objects, not JavaScript arrays, so Array.isArray cannot tell.
+  // Whether an entry runs one command per key (a pair); config lists are list-like, so Array.isArray cannot tell.
   function isPair(entry) {
     return entry?.cmd != null && typeof entry.cmd !== "string";
   }
@@ -51,8 +50,7 @@ Singleton {
     return root.names(key).includes(name);
   }
 
-  // A key as the shell shows it, Emacs-style: C- Ctrl, M- Alt (Meta), s- Super (niri's Mod), Shift as the capital letter
-  // (S- on other keys); arrows as symbols. A pair shows its shared modifiers once (C-←→).
+  // A key Emacs-style: C- Ctrl, M- Alt, s- Super, Shift as the capital (S- otherwise), arrows as symbols; a pair shares its prefix.
   function label(key, paired = false) {
     const parts = (paired ? root.names(key) : root.names(key).slice(0, 1)).map(root.shortName);
     const shared = parts.every(part => part.prefix === parts[0].prefix);

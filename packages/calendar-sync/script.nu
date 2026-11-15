@@ -1,11 +1,4 @@
-# Syncs the calendars listed in a YAML file and writes the events quick-key's month shows, in its format
-# (docs/src/calendar.md). vdirsyncer downloads them and khal expands repeating events; both are configured here, next to
-# the events file, so nothing else of theirs is needed.
-#
-#   quick-key-calendar-sync ~/.config/quick-key/calendars.yaml ~/.local/state/quick-key/events.json
-#
-# where the YAML is a list of { name, url, color, basicAuth? }, as calendars.yaml here describes. The events file also
-# says when a sync is under way and why the last one failed, keeping the events it had.
+# Syncs the calendars in a YAML file (calendars.yaml) into quick-key's events file (docs/src/calendar.md), via vdirsyncer and khal.
 
 # ISO throughout, so khal's output is read without parsing dates.
 const KHAL_LOCALE = "[locale]
@@ -90,8 +83,7 @@ def khal-config [calendars: list, state: path]: nothing -> string {
   | str join "\n"
 }
 
-# Each occurrence once, in quick-key's terms. khal lists an event once per day it spans, and --once would drop a
-# repeating event's later occurrences.
+# Each occurrence once: khal lists an event per day it spans, and --once would drop a repeating event's later occurrences.
 def events [config: path]: nothing -> list {
   let from = (date now) - 62day | format date "%F"
   let to = (date now) + 366day | format date "%F"
@@ -152,8 +144,7 @@ def main [calendars_file: path, events_file: path] {
   vdirsyncer-config $calendars $state | save -f $vdirsyncer
   khal-config $calendars $state | save -f $khal
 
-  # One calendar at a time, so a failure names it and its reason and keeps its last events without holding back the
-  # others. Discover is a no-op once the pairs are known, and needed whenever one is added.
+  # One at a time, so a failure names its calendar and keeps its last events; discover is a no-op once the pairs are known.
   let discovered = ^vdirsyncer -c $vdirsyncer discover | complete
   let failures = if $discovered.exit_code != 0 {
     $calendars | each {|c| { name: $c.name, reason: (reason $discovered.stderr) } }

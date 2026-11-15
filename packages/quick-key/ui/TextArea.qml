@@ -1,7 +1,6 @@
 import QtQuick
 
-// A TextField that grows with its text up to `maxLines`, then scrolls to keep the cursor in view. Its keys reach `keyPressed`
-// first, so the owner can take some (Return to send) and leave the rest to the field.
+// A TextField growing to `maxLines`, then scrolling; keys reach `keyPressed` first, so the owner can take some.
 Flickable {
   id: root
 

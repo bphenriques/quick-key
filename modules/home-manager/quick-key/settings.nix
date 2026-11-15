@@ -12,43 +12,17 @@ let
   inherit (cfg) settings;
   jsonType = (pkgs.formats.json { }).type;
 
-  builtinStatuses = [
-    "sink"
-    "source"
-    "brightness"
-    "music"
-    "network"
-    "bluetooth"
-    "tray"
-    "calendar"
-  ];
-  builtinLists = [
-    "tray"
-    "bluetooth"
-    "wifi"
-    "sinks"
-    "sources"
-  ];
-  builtinStates = [
-    "wifi"
-    "bluetooth"
-    "repeat"
-    "shuffle"
-    "sink-muted"
-    "source-muted"
-  ];
+  names = import ./builtins.nix;
+  builtinStatuses = names.statuses;
+  builtinLists = names.lists;
+  builtinStates = names.states;
+  inherit (names) headerItems;
   popupNames = [
     "sink"
     "source"
     "brightness"
     "keyboardLayout"
     "keepAwake"
-  ];
-  headerItems = [
-    "clock"
-    "keepAwake"
-    "keyboardLayout"
-    "battery"
   ];
   # Plugins may not take a built-in name.
   builtinNames = builtinStatuses ++ builtinStates ++ builtinLists ++ headerItems;
@@ -127,26 +101,28 @@ let
         description = "Items filled at runtime, numbered after any submenu: one of ${toString builtinLists} (tray apps, paired Bluetooth devices, saved Wi-Fi networks in range, audio outputs or inputs), or a plugin's name";
       };
       pins = mkOption {
-        type = types.listOf (
-          types.submodule {
-            options = {
-              match = mkOption {
-                type = types.str;
-                description = "Pattern, with * for anything, on the item's id: audio node name, Bluetooth address, Wi-Fi name or tray app id";
+        type = types.nullOr (
+          types.listOf (
+            types.submodule {
+              options = {
+                match = mkOption {
+                  type = types.str;
+                  description = "Pattern, with * for anything, on the item's id: audio node name, Bluetooth address, Wi-Fi name or tray app id";
+                };
+                label = mkOption {
+                  type = types.str;
+                  description = "Name shown for the item, also while it is absent";
+                };
+                icon = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Glyph shown for the item, the same present or absent";
+                };
               };
-              label = mkOption {
-                type = types.str;
-                description = "Name shown for the item, also while it is absent";
-              };
-              icon = mkOption {
-                type = types.nullOr types.str;
-                default = null;
-                description = "Glyph shown for the item, the same present or absent";
-              };
-            };
-          }
+            }
+          )
         );
-        default = [ ];
+        default = null;
         description = "Items of the list that keep digits 1 onwards, dimmed while absent";
       };
       view = mkOption {
@@ -159,18 +135,20 @@ let
         default = null;
         description = "Status shown in place of the label: one of ${toString builtinStatuses}, or a plugin's name";
       };
-      requires = {
-        connected = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Outputs that must be connected for the entry to be enabled: connector name, or make, model and serial";
+      requires = opt (types.submodule {
+        options = {
+          connected = mkOption {
+            type = types.listOf types.str;
+            default = [ ];
+            description = "Outputs that must be connected for the entry to be enabled: connector name, or make, model and serial";
+          };
+          enabled = mkOption {
+            type = types.listOf types.str;
+            default = [ ];
+            description = "Outputs that must also be on, e.g. the panel a brightness entry dims";
+          };
         };
-        enabled = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Outputs that must also be on, e.g. the panel a brightness entry dims";
-        };
-      };
+      }) "Outputs the entry needs; unset, none";
       icon = mkOption {
         type = types.nullOr types.str;
         default = null;
@@ -247,11 +225,11 @@ let
         message = "programs.quick-key.settings.menu: every action in '${e.desc}' needs an icon";
       }
       {
-        assertion = e.pins == [ ] || e.list != null;
+        assertion = e.pins == null || e.list != null;
         message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} can only set pins with list";
       }
       {
-        assertion = lib.length e.pins <= 9;
+        assertion = e.pins == null || lib.length e.pins <= 9;
         message = "programs.quick-key.settings.menu: '${e.desc}' in ${path} has more pins than digits";
       }
       {

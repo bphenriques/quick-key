@@ -13,9 +13,5 @@ _: {
     statix.priority = 2;
   };
 
-  # No nushell formatter. nufmt is pre-1.0 and rewrites valid scripts into ones that do not parse: it
-  # strips the parentheses from `data: ((payload $user) | merge {…})` inside a record literal, where
-  # nushell then reads the `|` as closure parameters. Gating CI on a formatter that can do that trades a
-  # real check for a cosmetic one. `writeNushellApplication` nu-checks every script at build instead,
-  # which is what caught this.
+  # No nushell formatter: nufmt (pre-1.0) rewrites valid scripts into broken ones; writeNushellApplication nu-checks at build.
 }

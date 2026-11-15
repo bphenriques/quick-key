@@ -4,8 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// Icon, text cut with an ellipsis when it does not fit, and an optional dim detail on the right.
-// `tone` colours the icon and text (see Label).
+// Icon, text elided to fit and an optional dim detail on the right, coloured by `tone`.
 RowLayout {
   id: root
 

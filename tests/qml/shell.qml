@@ -3,6 +3,7 @@ import Quickshell
 import qs
 import qs.services
 import qs.ui
+import qs.builtins
 import qs.widgets.menu
 
 // Each case waits up to five seconds for its condition, then prints `ok` or `not ok`; the plugins are config/'s.
@@ -44,6 +45,37 @@ ShellRoot {
     {
       name: "keys show Emacs-style",
       until: () => MenuKeys.label(["Ctrl+Left", "Ctrl+Right"], true) === "C-←→" && MenuKeys.label("Return") === "RET" && MenuKeys.label("Alt+k") === "M-k"
+    },
+    {
+      name: "keys are named as entries declare them: Shift picks the capital, a modifier alone has no name",
+      until: () => JSON.stringify([
+        { key: Qt.Key_A, modifiers: Qt.ShiftModifier, text: "A" },
+        { key: Qt.Key_Left, modifiers: Qt.ControlModifier, text: "" },
+        { key: Qt.Key_C, modifiers: Qt.ControlModifier | Qt.AltModifier, text: "\u0003" },
+        { key: Qt.Key_Question, modifiers: Qt.ShiftModifier, text: "?" },
+        { key: Qt.Key_Shift, modifiers: Qt.ShiftModifier, text: "" }
+      ].map(event => MenuKeys.name(event))) === '["A","Ctrl+Left","Ctrl+Alt+c","?",""]'
+    },
+    {
+      name: "a month or year away keeps the day, or the month's last when it has fewer",
+      until: () => [[new Date(2027, 0, 31), [0, 1, 0]], [new Date(2028, 1, 29), [1, 0, 0]], [new Date(2026, 11, 31), [0, 0, 1]]].map(([from, move]) => {
+        menu.calendar.selected = from;
+        menu.calendar.moveSelected(...move);
+        return Calendar.key(menu.calendar.selected);
+      }).join() === "2027-02-28,2029-02-28,2027-01-01"
+    },
+    {
+      name: "an event shows on every day it overlaps, all-day ones first",
+      until: () => Calendar.timeline.map(row => row.key.slice(8) + " " + row.event.title).join() ===
+        "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call"
+    },
+    {
+      name: "the shell defines each built-in name the module accepts, and no other",
+      until: () => {
+        const names = JSON.parse(Quickshell.env("BUILTINS"));
+        const same = (table, list) => JSON.stringify(Object.keys(table).sort()) === JSON.stringify([...list].sort());
+        return same(Statuses.builtin, names.statuses) && same(Lists.builtin, names.lists) && same(States.builtin, names.states) && same(HeaderItems.builtin, names.headerItems);
+      }
     }
   ]
 
