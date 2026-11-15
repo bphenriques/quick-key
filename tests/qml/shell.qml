@@ -119,9 +119,9 @@ ShellRoot {
       name: "an action brings its icon and pairing, and dims with nothing to act on",
       until: () => {
         const [play, track, awake] = menu.itemsOf({ kind: "entry", entry: { submenu: [
-          { key: "p", desc: "Play", action: "play-pause" },
+          { key: "p", desc: "Play", action: "playPause" },
           { key: ["Left", "Right"], desc: "Track", action: "track", icon: "T" },
-          { key: "k", desc: "Keep awake", action: "keep-awake" }
+          { key: "k", desc: "Keep awake", action: "keepAwake" }
         ] } });
         return play.enabled === false && play.icon === Glyphs.playPause && track.paired && track.icon === "T" && awake.enabled && !awake.active;
       }

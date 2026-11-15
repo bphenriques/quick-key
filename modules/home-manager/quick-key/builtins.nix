@@ -25,28 +25,28 @@
     "bluetooth"
     "repeat"
     "shuffle"
-    "sink-muted"
-    "source-muted"
-    "keep-awake"
+    "sinkMuted"
+    "sourceMuted"
+    "keepAwake"
   ];
   actions = [
-    "sink-volume"
-    "sink-mute"
-    "source-volume"
-    "source-mute"
+    "sinkVolume"
+    "sinkMute"
+    "sourceVolume"
+    "sourceMute"
     "wifi"
     "bluetooth"
-    "play-pause"
+    "playPause"
     "track"
     "repeat"
     "shuffle"
-    "keep-awake"
-    "keyboard-layout"
+    "keepAwake"
+    "keyboardLayout"
   ];
   # Actions run per key of a pair (Down and Up), so their entries need two keys.
   pairs = [
-    "sink-volume"
-    "source-volume"
+    "sinkVolume"
+    "sourceVolume"
     "track"
   ];
   headerItems = [

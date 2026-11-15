@@ -59,7 +59,7 @@ for file in $(grep -rlE '(execDetached\(|command: |command = )\[ *"[^s"]|"sh", "
   fail "$file: runs a command named in QML"
 done
 
-# Rule 1: a built-in (list, status, state, header item) is one entry in its table in builtins/; widgets never test its name.
+# Rule 1: a built-in (status, list, state, action, header item) is one entry in its table in builtins/; widgets never test its name.
 for file in $(grep -rlE 'case "|\b(list|status|state|modelData)\)? ?[!=]== "' --include='*.qml' widgets); do
   fail "$file: names a built-in outside its table"
 done

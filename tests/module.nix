@@ -43,8 +43,7 @@ let
 in
 assert lib.assertMsg (failed { } == [ ]) "the defaults must pass";
 assert lib.assertMsg (
-  lib.hasSuffix "--config quick-key" (toString cfg.systemd.user.services.quick-key.Service.ExecStart)
-  && !(cfg.systemd.user.services ? quickshell)
+  !(cfg.systemd.user.services ? quickshell)
 ) "quick-key runs as its own service, leaving the user's Quickshell alone";
 assert rejects "an unknown theme" "neither in programs.quick-key.themes nor a preset" { theme.name = "nope"; };
 assert rejects "a plugin with two sources" "set more than one of watch, read and file" {
@@ -69,7 +68,7 @@ assert rejects "a pair action with one key" "per key of a pair, so needs two key
     {
       key = "v";
       desc = "Volume";
-      action = "sink-volume";
+      action = "sinkVolume";
     }
   ];
 };
@@ -79,7 +78,7 @@ assert rejects "both cmd and action" "needs one of cmd, action" {
       key = "m";
       desc = "Mute";
       cmd = "true";
-      action = "sink-mute";
+      action = "sinkMute";
     }
   ];
 };
@@ -94,6 +93,9 @@ assert rejects "a reserved key" "reserved for the menu" {
 };
 pkgs.runCommand "quick-key-module-eval" { nativeBuildInputs = [ pkgs.jq ]; } ''
   config=${cfg.xdg.configFile."quick-key/config.json".source}
+  launcher=${toString cfg.systemd.user.services.quick-key.Service.ExecStart}
+  grep -q -- '--config quick-key' $launcher
+  grep -q 'util-linux.*/bin' $launcher
   jq -e '.audio == { glyphs: { headset: "H" } }' $config
   jq -e '.battery.glyphs == null and .menu.entries[0].icon == null' $config
   jq -e '.plugins.vpn == { source: "command", settings: { read: "vpn-status", show: { up: { glyph: "V" } }, items: [ { id: "home" } ] } }' $config

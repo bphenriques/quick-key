@@ -12,12 +12,12 @@
               "Up"
             ],
             "desc": "Volume",
-            "action": "sink-volume"
+            "action": "sinkVolume"
           },
           {
             "key": "m",
             "desc": "Mute",
-            "action": "sink-mute"
+            "action": "sinkMute"
           }
         ]
       },
@@ -32,12 +32,12 @@
               "Up"
             ],
             "desc": "Volume",
-            "action": "source-volume"
+            "action": "sourceVolume"
           },
           {
             "key": "m",
             "desc": "Mute",
-            "action": "source-mute"
+            "action": "sourceMute"
           }
         ]
       },
@@ -77,7 +77,7 @@
           {
             "key": "p",
             "desc": "Play/pause",
-            "action": "play-pause"
+            "action": "playPause"
           },
           {
             "key": [

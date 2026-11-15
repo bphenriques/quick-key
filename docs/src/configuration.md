@@ -22,7 +22,7 @@ A colour set in `theme` itself wins over the theme's. Anything that writes the f
 
 ## Defaults
 
-Unset, the menu is a starter one (audio, network, Bluetooth, music, calendar, tray, session). Volume, mute, Wi-Fi and Bluetooth power, and playback are built-in actions (see [Menu](menu.md)), no tool needed; the rest use standard tools from `PATH`:
+Unset, the menu is a starter one (audio, network, Bluetooth, music, calendar, tray, session). Volume, mute, Wi-Fi and Bluetooth power, and playback are built-in actions (see [Menu](menu.md)), no tool needed; the rest use standard tools from `PATH`, which the Nix module puts first on the shell's `PATH` so they resolve the same on every machine:
 
 | Feature | Tool |
 |---|---|

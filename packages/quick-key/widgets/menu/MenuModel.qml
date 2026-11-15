@@ -59,18 +59,18 @@ Scope {
       }));
     }
 
-    // An entry's own actions by letter, then what its list holds by digit.
-    const actions = Array.from(level.entry.submenu ?? []).map(action => ({
-      key: action.key,
-      desc: action.desc,
-      icon: action.icon ?? Actions.builtin[action.action]?.icon ?? "",
-      enabled: available(action),
-      paired: isPair(action),
-      active: isOn(action.activeWhen ?? Actions.builtin[action.action]?.state),
-      listed: /^[0-9]$/.test(action.key),
-      entry: action
+    // An entry's own rows by letter, then what its list holds by digit.
+    const own = Array.from(level.entry.submenu ?? []).map(entry => ({
+      key: entry.key,
+      desc: entry.desc,
+      icon: entry.icon ?? Actions.builtin[entry.action]?.icon ?? "",
+      enabled: available(entry),
+      paired: isPair(entry),
+      active: isOn(entry.activeWhen ?? Actions.builtin[entry.action]?.state),
+      listed: /^[0-9]$/.test(entry.key),
+      entry: entry
     }));
-    return actions.concat(numbered(level.entry.list, level.entry.pins));
+    return own.concat(numbered(level.entry.list, level.entry.pins));
   }
 
   // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order.

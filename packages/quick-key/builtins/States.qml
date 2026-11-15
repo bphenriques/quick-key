@@ -11,8 +11,8 @@ Singleton {
     bluetooth: () => Bluez.enabled,
     repeat: () => Music.repeat,
     shuffle: () => Music.shuffle,
-    "sink-muted": () => Audio.sinkMuted,
-    "source-muted": () => Audio.sourceMuted,
-    "keep-awake": () => IdleInhibit.enabled
+    sinkMuted: () => Audio.sinkMuted,
+    sourceMuted: () => Audio.sourceMuted,
+    keepAwake: () => IdleInhibit.enabled
   })
 }

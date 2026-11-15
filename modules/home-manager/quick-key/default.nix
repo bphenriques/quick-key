@@ -24,6 +24,18 @@ let
   presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quick-key/themes")));
   themeName = cfg.settings.theme.name;
 
+  # The standard tools Config.qml's defaults name, found first; systemd's own come with the system.
+  launcher = pkgs.writeShellScript "quick-key" ''
+    export PATH=${
+      lib.makeBinPath [
+        pkgs.util-linux
+        pkgs.brightnessctl
+        pkgs.libnotify
+      ]
+    }''${PATH:+:$PATH}
+    exec ${lib.getExe config.programs.quickshell.package} --config quick-key
+  '';
+
   color =
     description:
     lib.mkOption {
@@ -108,7 +120,7 @@ in
         ++ map toString (lib.attrValues themeFiles);
       };
       Service = {
-        ExecStart = "${lib.getExe config.programs.quickshell.package} --config quick-key";
+        ExecStart = "${launcher}";
         Restart = "on-failure";
       };
       Install.WantedBy = [ config.wayland.systemd.target ];
