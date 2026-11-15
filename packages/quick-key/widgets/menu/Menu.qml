@@ -18,6 +18,12 @@ Scope {
   readonly property MenuModel menu: MenuModel {}
 
   Binding {
+    target: Plugins
+    property: "menuOpen"
+    value: root.menu.open
+  }
+
+  Binding {
     target: Audio
     property: "metering"
     value: !!Statuses.builtin[root.menu.level?.status]?.meter

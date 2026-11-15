@@ -14,6 +14,8 @@ ShellRoot {
   property int waited: 0
   // Every text the watcher has shown, in order.
   property var watched: []
+  // The ticker's value a second into the case that waits with the menu closed.
+  property string ticked: ""
 
   readonly property var cases: [
     {
@@ -40,6 +42,31 @@ ShellRoot {
     {
       name: "a plugin's settings are its Settings.qml, set from config.json over its defaults",
       until: () => Plugins.get("folded")?.settings.greeting === "hi" && Plugins.get("folded").settings.count === 3 && !("unknown" in Plugins.get("folded").settings)
+    },
+    {
+      name: "show gives a value its look",
+      until: () => Plugins.get("paused")?.glyph === "B" && Plugins.get("paused").tone === "alert" && Plugins.get("paused").active
+    },
+    {
+      name: "a line's own fields win over the look show gives its value",
+      until: () => Plugins.get("override")?.text === "live" && Plugins.get("override").detail === "d"
+    },
+    {
+      name: "static items light by value, dim unless enabled, and give the status its label and icon",
+      until: () => JSON.stringify((Plugins.get("layouts")?.items ?? []).map(item => [item.id, item.active, item.enabled])) === '[["a",false,true],["b",true,true],["c",false,false]]'
+        && Plugins.get("layouts").text === "B" && Plugins.get("layouts").glyph === "I"
+    },
+    {
+      name: "a read with every waits while the menu is closed",
+      until: () => {
+        if (root.waited === 1000) root.ticked = Plugins.get("ticker")?.text ?? "";
+        return root.waited >= 3000 && Plugins.get("ticker")?.text === root.ticked;
+      }
+    },
+    {
+      name: "a read with every reads again while the menu is open",
+      start: () => Plugins.menuOpen = true,
+      until: () => Number(Plugins.get("ticker")?.text) >= Number(root.ticked) + 2
     },
     {
       name: "a plugin that fails to load is left out",

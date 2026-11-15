@@ -8,6 +8,9 @@ import qs
 Singleton {
   id: root
 
+  // Set by the menu while it is open, when plugins with `every` read again.
+  property bool menuOpen: false
+
   function get(name) {
     return internal.loaded[name] ?? null;
   }

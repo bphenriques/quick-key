@@ -20,8 +20,6 @@ Singleton {
   readonly property string bluetooth: "\u{F00AF}" // md-bluetooth
   readonly property string bluetoothConnected: "\u{F00B1}" // md-bluetooth_connect
   readonly property string bluetoothOff: "\u{F00B2}" // md-bluetooth_off
-  readonly property string notifications: "\u{F009A}" // md-bell
-  readonly property string doNotDisturb: "\u{F009B}" // md-bell_off
   readonly property string keepAwake: "\u{F0176}" // md-coffee
   readonly property string tray: "\u{F003B}" // md-apps
   readonly property string wallpaper: "\u{F0E09}" // md-wallpaper

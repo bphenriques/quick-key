@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// A plugin's state from its one source: watch, read or file (docs/src/plugins.md#sources).
+// A plugin's state from its one source: watch, read or file (docs/src/plugins.md#sources); a plain line is its `value`.
 Scope {
   id: root
 
@@ -23,7 +23,7 @@ Scope {
       return;
     }
     if (!line.startsWith("{")) {
-      state = { text: line };
+      state = { value: line };
       return;
     }
     try {

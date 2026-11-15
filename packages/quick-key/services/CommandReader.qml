@@ -23,8 +23,9 @@ Process {
     }
   }
 
-  Component.onCompleted: if (atStart) refresh()
-  onShellChanged: if (atStart) refresh()
+  // Both fire as it starts; callLater runs the read once.
+  Component.onCompleted: if (atStart) Qt.callLater(refresh)
+  onShellChanged: if (atStart) Qt.callLater(refresh)
 
   onExited: if (pending) {
     pending = false;

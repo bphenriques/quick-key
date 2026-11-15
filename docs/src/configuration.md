@@ -6,7 +6,7 @@ Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you 
 {
   "theme": { "name": "nord", "monospaceFont": "JetBrainsMono Nerd Font" },
   "clock": { "format": "%A, %-d%o %B %H:%M" },
-  "plugins": { "doNotDisturb": { "settings": { "watch": "my-dnd-status", "activate": "my-dnd-toggle" } } }
+  "plugins": { "vpn": { "source": "command", "settings": { "watch": "my-vpn-status", "activate": "my-vpn-toggle", "show": { "up": { "active": true } } } } }
 }
 ```
 

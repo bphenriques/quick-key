@@ -32,6 +32,12 @@ let
     "read"
     "file"
   ];
+  manySources = lib.attrNames (
+    lib.filterAttrs (_: p: lib.count (source: p.settings.${source} != null) sources > 1) settings.plugins
+  );
+  everyWithoutRead = lib.attrNames (
+    lib.filterAttrs (_: p: p.settings.every != null && p.settings.read == null) settings.plugins
+  );
   headerNames = lib.concatLists (lib.filter (slot: slot != null) (lib.attrValues settings.menu.header));
 
   # Unset, the shell's default applies.
@@ -363,9 +369,48 @@ in
               description = "The plugin implementing this one, by name (`command`), or a QML file path; unset, its own name";
             };
             settings = mkOption {
-              type = jsonType;
+              type = types.submodule {
+                freeformType = jsonType;
+                options = {
+                  watch = opt types.str "Command whose every line is the state, run for as long as it lasts";
+                  read = opt types.str "Command whose last line is the state, run as the menu opens";
+                  file = opt types.str "File holding the state, read on every change; relative, under `$XDG_RUNTIME_DIR`";
+                  every = opt types.ints.positive "Seconds between runs of `read` while the menu is open";
+                  show = opt (types.attrsOf (
+                    types.submodule {
+                      freeformType = jsonType;
+                      options = {
+                        glyph = opt types.str "Glyph shown";
+                        text = opt types.str "Text shown";
+                        detail = opt types.str "Data on the right";
+                        active = opt types.bool "Whether it is lit";
+                        tone = opt (types.enum [
+                          "primary"
+                          "warning"
+                          "alert"
+                          "dim"
+                        ]) "Tone over the one `active` gives";
+                      };
+                    }
+                  )) "Look of each value the source gives, by value";
+                  items = opt (types.listOf (
+                    types.submodule {
+                      options = {
+                        id = mkOption {
+                          type = types.str;
+                          description = "What the source's `value` names when it is in use, and what `select` is given";
+                        };
+                        label = opt types.str "Name shown; unset, the id";
+                        icon = opt types.str "Glyph shown";
+                        detail = opt types.str "Data on the right";
+                      };
+                    }
+                  )) "Items that never change; the source's `value` names the one in use and `enabled` those that can be picked";
+                  shortcut = opt types.str "Compositor key, shown in the header while Super is held";
+                };
+              };
               default = { };
-              description = "Passed to the plugin as `settings`";
+              description = "Passed to the plugin as `settings`, read through its Settings.qml";
             };
           };
         }
@@ -378,12 +423,12 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = lib.all (p: lib.count (source: p.settings ? ${source}) sources <= 1) (lib.attrValues settings.plugins);
-        message = "programs.quick-key.settings.plugins: ${
-          toString (
-            lib.attrNames (lib.filterAttrs (_: p: lib.count (source: p.settings ? ${source}) sources > 1) settings.plugins)
-          )
-        } set more than one of watch, read and file; set one";
+        assertion = manySources == [ ];
+        message = "programs.quick-key.settings.plugins: ${toString manySources} set more than one of watch, read and file; set one";
+      }
+      {
+        assertion = everyWithoutRead == [ ];
+        message = "programs.quick-key.settings.plugins: ${toString everyWithoutRead} set every without read";
       }
       {
         assertion = lib.intersectLists pluginNames builtinNames == [ ];

@@ -15,8 +15,8 @@ Scope {
   // Its surfaces: files in its folder, each given `plugin` and created with it, so what it draws only reads its state.
   property list<string> views: []
 
-  // The state its source (settings.watch, read or file) last gave, each field optional; {} without one.
-  readonly property var state: source.state
+  // What its source last gave over the look `settings.show` (else the matching static item) gives its `value`; {} without one.
+  readonly property var state: compose(source.state)
 
   // What a menu entry with `status` set to the name shows, and whether one with `activeWhen` set to it is lit.
   property string glyph
@@ -42,6 +42,17 @@ Scope {
     source.refresh();
   }
 
+  // The line's own fields win over the look; static items light by `value` and dim unless in `enabled`.
+  function compose(line) {
+    const value = line.value == null ? undefined : String(line.value);
+    const fixed = Array.from(settings.items);
+    const item = fixed.find(item => item.id === value);
+    const look = value === undefined ? {} : settings.show[value] ?? (item ? { glyph: item.icon ?? "", text: item.label ?? item.id } : { text: value });
+    const enabled = line.enabled ? Array.from(line.enabled) : null;
+    const items = fixed.length ? fixed.map(item => Object.assign({}, item, { active: item.id === value, enabled: !enabled || enabled.includes(item.id) })) : line.items;
+    return Object.assign({}, look, line, items ? { items } : {});
+  }
+
   // A command from its settings as a Process takes it, the arguments passed as $1, $2... so none is parsed by the shell.
   function commandLine(shell, ...args) {
     return ["sh", "-c", shell + args.map((_, i) => ' "$' + (i + 1) + '"').join(""), "sh", ...args];
@@ -58,6 +69,13 @@ Scope {
       const component = Qt.createComponent(folder + file);
       if (!component.createObject(root, { plugin: root })) console.warn("plugin", name + ":", file, "not created:", component.errorString());
     }
+  }
+
+  Timer {
+    interval: root.settings.every * 1000
+    running: root.settings.every > 0 && root.settings.read !== "" && Plugins.menuOpen
+    repeat: true
+    onTriggered: source.refresh()
   }
 
   CommandState {
