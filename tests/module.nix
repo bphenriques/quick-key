@@ -17,12 +17,10 @@ let
         theme.name = "mine";
         audio.glyphs.headset = "H";
         plugins.vpn = {
-          source = "command";
-          settings = {
-            read = "vpn-status";
-            show.up.glyph = "V";
-            items = [ { id = "home"; } ];
-          };
+          type = "command";
+          read = "vpn-status";
+          show.up.glyph = "V";
+          items = [ { id = "home"; } ];
         };
         menu.entries = [
           {
@@ -48,12 +46,12 @@ assert lib.assertMsg (
 ) "quick-key runs as its own service, leaving the user's Quickshell alone";
 assert rejects "an unknown theme" "neither in programs.quick-key.themes nor a preset" { theme.name = "nope"; };
 assert rejects "a plugin with two sources" "set more than one of watch, read and file" {
-  plugins.x.settings = {
+  plugins.x = {
     watch = "a";
     read = "b";
   };
 };
-assert rejects "every without read" "set every without read" { plugins.x.settings.every = 5; };
+assert rejects "every without read" "set every without read" { plugins.x.every = 5; };
 assert rejects "a plugin with a built-in name" "are built-in names" { plugins.sink = { }; };
 assert rejects "a list neither built in nor a plugin's" "lists 'nope'" {
   menu.entries = [
@@ -99,7 +97,7 @@ pkgs.runCommand "quick-key-module-eval" { nativeBuildInputs = [ pkgs.jq ]; } ''
   grep -q 'PATH=[^:]*-hello-[^:]*/bin:[^:]*util-linux' $launcher
   jq -e '.audio == { glyphs: { headset: "H" } }' $config
   jq -e '.battery.glyphs == null and .menu.entries[0].icon == null' $config
-  jq -e '.plugins.vpn == { source: "command", settings: { read: "vpn-status", show: { up: { glyph: "V" } }, items: [ { id: "home" } ] } }' $config
+  jq -e '.plugins.vpn == { type: "command", read: "vpn-status", show: { up: { glyph: "V" } }, items: [ { id: "home" } ] }' $config
   jq -e '.menu.entries[0] | has("pins") or has("requires") | not' $config
   jq -e '.primary == "#0000ff"' ${cfg.xdg.configFile."quick-key/themes/mine.json".source}
   touch $out

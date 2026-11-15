@@ -1,6 +1,6 @@
 import QtQuick
 
-// What every plugin takes in config.json's `plugins.<name>.settings`; each plugin's Settings.qml adds its own.
+// What every plugin takes in config.json's `plugins.<name>`, beside its `type`; each plugin's Settings.qml adds its own.
 QtObject {
   // Its one source of state, at most one set (docs/src/plugins.md#sources).
   property string watch

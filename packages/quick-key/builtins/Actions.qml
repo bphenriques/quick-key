@@ -12,6 +12,7 @@ Singleton {
     sinkVolume: { pair: true, icon: Glyphs.volume, available: () => Audio.sink !== null, run: up => Audio.adjust("sink", up) },
     sinkMute: { icon: Glyphs.volumeOff, state: "sinkMuted", available: () => Audio.sink !== null, run: () => Audio.toggleMute("sink") },
     sourceVolume: { pair: true, icon: Glyphs.microphone, available: () => Audio.source !== null, run: up => Audio.adjust("source", up) },
+    brightness: { pair: true, icon: Glyphs.brightnessLevels[1], available: () => Brightness.lit, run: up => Brightness.adjust(up) },
     sourceMute: { icon: Glyphs.microphoneOff, state: "sourceMuted", available: () => Audio.source !== null, run: () => Audio.toggleMute("source") },
     wifi: { icon: Glyphs.power, state: "wifi", available: () => Network.wifiPresent, run: () => Network.toggleWifi() },
     bluetooth: { icon: Glyphs.power, state: "bluetooth", available: () => Bluez.present, run: () => Bluez.toggle() },

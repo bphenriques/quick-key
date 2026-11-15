@@ -15,6 +15,12 @@ Singleton {
   readonly property bool lit: present && Compositor.enabled.includes(panel)
   readonly property int percentage: present ? Math.round(internal.current * 100 / internal.maximum) : 0
 
+  // A step down or up, by Config.brightness.adjust.
+  function adjust(up) {
+    const command = Config.brightness.adjust[up ? 1 : 0];
+    if (command) Quickshell.execDetached(["sh", "-c", command]);
+  }
+
   QtObject {
     id: internal
     property string file: ""

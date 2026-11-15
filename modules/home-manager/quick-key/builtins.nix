@@ -34,6 +34,7 @@
     "sinkMute"
     "sourceVolume"
     "sourceMute"
+    "brightness"
     "wifi"
     "bluetooth"
     "playPause"
@@ -47,6 +48,7 @@
   pairs = [
     "sinkVolume"
     "sourceVolume"
+    "brightness"
     "track"
   ];
   headerItems = [

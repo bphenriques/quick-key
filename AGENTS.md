@@ -7,7 +7,7 @@ A Quickshell menu and its home-manager module. What it does is in [README.md](./
 Every change follows these; a change that cannot is a reason to revisit the rule here first, not to work around it.
 
 1. **Data, not code.** What the menu shows and does comes from `menu.entries`. QML has no case for a particular entry, tool or device; a new need becomes an option in `settings.nix`, with an assertion when it can be wrong. A built-in (status, list, state, action, header item) is one entry in its table, never a `case` or name test elsewhere.
-2. **Tools through the config.** QML runs nothing by name. The config that owns a tool sets its command, and a default may name only a standard tool (`wpctl`, `systemd-inhibit`), or, in a plugin named after a tool, that tool: listing the plugin is choosing it. The shell reads only output it defines (the state line, see [Sources](docs/src/plugins.md#sources)), never a tool's own format. What needs more of one tool is a plugin. The compositor is reached only through `Compositor` (see [Compositor](docs/src/compositor.md)). The one exception: a link opens with the desktop's handler for links.
+2. **Tools through the config.** QML runs nothing by name. The config that owns a tool sets its command, and a default may name only a standard tool (`systemd-inhibit`, `notify-send`, Wayland's `wl-paste`), or, in a plugin named after a tool, that tool: listing the plugin is choosing it. The shell reads only output it defines (the state line, see [Sources](docs/src/plugins.md#sources)), never a tool's own format. What needs more of one tool is a plugin. The compositor is reached only through `Compositor` (see [Compositor](docs/src/compositor.md)). The one exception: a link opens with the desktop's handler for links.
 3. **Events over polling.** What has no events is read when the menu opens; what must sample (the mic level) runs only while shown.
 4. **Layout is declared.** A level's columns and width come from its entry (`columns`, `width`, else `menu.columns`, `menu.width`), never measured from what it shows, so it holds still; entries flow across, so order decides neighbours. Make the menu wider before adding columns or truncating.
 5. **Order is explicit.** Top level by `lib.mkOrder`, rows pairing related things. Within a level, the list order, paired for the row it shares.
@@ -39,7 +39,7 @@ The rest:
 - `tests/`: the flake checks beyond the builds (see [DEVELOPMENT.md](DEVELOPMENT.md)).
 - `modules/home-manager/quick-key/`: the module. `default.nix` runs the shell, `settings.nix` is the schema of `config.json` and its assertions, `calendar-sync.nix` runs calendar-sync.
 
-`settings.nix` mirrors `Config.qml`: one option per key, unset by default so `Config.qml`'s default applies. Change both together. A key holding a map or list with a default is an `opt`, never a `group`: an unset group is written as `{}`, which replaces the default.
+`settings.nix` mirrors `Config.qml`: one option per key, unset by default so `Config.qml`'s default applies. Change both together; the qml test holds their keys equal. A key holding a map or list with a default is an `opt`, never a `group`: an unset group is written as `{}`, which replaces the default.
 
 ## Code style
 

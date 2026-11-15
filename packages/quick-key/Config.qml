@@ -180,7 +180,7 @@ Singleton {
       property JsonObject brightness: JsonObject {
         // Prints the path of a file holding the backlight's value, a tab, and its maximum; by default the first backlight.
         property string backlight: 'for d in /sys/class/backlight/*; do [ -r "$d/brightness" ] && printf "%s\\t%s\\n" "$d/brightness" "$(cat "$d/max_brightness")" && break; done'
-        // The pop-up wheel's commands, down then up.
+        // What the brightness action and the pop-up's wheel run, down then up.
         property var adjust: ["brightnessctl set 5%-", "brightnessctl set 5%+"]
         // The panel the backlight dims; unset, the built-in output (eDP, LVDS or DSI).
         property string panel
@@ -212,7 +212,7 @@ Singleton {
         property var glyphs: ({})
       }
 
-      // Optional parts by name, each { source, settings }: see docs/src/plugins.md.
+      // Optional parts by name, each its settings and `type`: see docs/src/plugins.md.
       property var plugins: ({})
     }
   }

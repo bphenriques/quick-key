@@ -33,11 +33,9 @@ let
     "file"
   ];
   manySources = lib.attrNames (
-    lib.filterAttrs (_: p: lib.count (source: p.settings.${source} != null) sources > 1) settings.plugins
+    lib.filterAttrs (_: p: lib.count (source: p.${source} != null) sources > 1) settings.plugins
   );
-  everyWithoutRead = lib.attrNames (
-    lib.filterAttrs (_: p: p.settings.every != null && p.settings.read == null) settings.plugins
-  );
+  everyWithoutRead = lib.attrNames (lib.filterAttrs (_: p: p.every != null && p.read == null) settings.plugins);
   headerNames = lib.concatLists (lib.filter (slot: slot != null) (lib.attrValues settings.menu.header));
 
   # Unset, the shell's default applies.
@@ -337,7 +335,7 @@ in
 
     brightness = group "The backlight" {
       backlight = opt types.str "Command printing the backlight's value file, a tab, and its maximum; unset, the first in /sys/class/backlight";
-      adjust = opt (types.listOf types.str) "Commands the wheel runs, down then up; unset, brightnessctl";
+      adjust = opt (types.listOf types.str) "Commands the brightness action and the pop-up's wheel run, down then up; unset, brightnessctl";
       panel = opt types.str "Panel the backlight dims: connector name, or make, model and serial; unset, the eDP, LVDS or DSI output";
     };
 
@@ -373,61 +371,49 @@ in
     plugins = mkOption {
       type = types.attrsOf (
         types.submodule {
+          freeformType = jsonType;
           options = {
-            source = mkOption {
-              type = types.nullOr (types.either types.path types.str);
-              default = null;
-              description = "The plugin implementing this one, by name (`command`), or a QML file path; unset, its own name";
-            };
-            settings = mkOption {
-              type = types.submodule {
+            type = opt (types.either types.path types.str) "The plugin implementing this one, by name (`command`), or a QML file path; unset, its own name";
+            watch = opt types.str "Command whose every line is the state, run for as long as it lasts";
+            read = opt types.str "Command whose last line is the state, run as the menu opens";
+            file = opt types.str "File holding the state, read on every change; relative, under `$XDG_RUNTIME_DIR`";
+            every = opt types.ints.positive "Seconds between runs of `read` while the menu is open";
+            show = opt (types.attrsOf (
+              types.submodule {
                 freeformType = jsonType;
                 options = {
-                  watch = opt types.str "Command whose every line is the state, run for as long as it lasts";
-                  read = opt types.str "Command whose last line is the state, run as the menu opens";
-                  file = opt types.str "File holding the state, read on every change; relative, under `$XDG_RUNTIME_DIR`";
-                  every = opt types.ints.positive "Seconds between runs of `read` while the menu is open";
-                  show = opt (types.attrsOf (
-                    types.submodule {
-                      freeformType = jsonType;
-                      options = {
-                        glyph = opt types.str "Glyph shown";
-                        text = opt types.str "Text shown";
-                        detail = opt types.str "Data on the right";
-                        active = opt types.bool "Whether it is lit";
-                        tone = opt (types.enum [
-                          "primary"
-                          "warning"
-                          "alert"
-                          "dim"
-                        ]) "Tone over the one `active` gives";
-                      };
-                    }
-                  )) "Look of each value the source gives, by value";
-                  items = opt (types.listOf (
-                    types.submodule {
-                      options = {
-                        id = mkOption {
-                          type = types.str;
-                          description = "What the source's `value` names when it is in use, and what `select` is given";
-                        };
-                        label = opt types.str "Name shown; unset, the id";
-                        icon = opt types.str "Glyph shown";
-                        detail = opt types.str "Data on the right";
-                      };
-                    }
-                  )) "Items that never change; the source's `value` names the one in use and `enabled` those that can be picked";
-                  shortcut = opt types.str "Compositor key, shown in the header while Super is held";
+                  glyph = opt types.str "Glyph shown";
+                  text = opt types.str "Text shown";
+                  detail = opt types.str "Data on the right";
+                  active = opt types.bool "Whether it is lit";
+                  tone = opt (types.enum [
+                    "primary"
+                    "warning"
+                    "alert"
+                    "dim"
+                  ]) "Tone over the one `active` gives";
                 };
-              };
-              default = { };
-              description = "Passed to the plugin as `settings`, read through its Settings.qml";
-            };
+              }
+            )) "Look of each value the source gives, by value";
+            items = opt (types.listOf (
+              types.submodule {
+                options = {
+                  id = mkOption {
+                    type = types.str;
+                    description = "What the source's `value` names when it is in use, and what `select` is given";
+                  };
+                  label = opt types.str "Name shown; unset, the id";
+                  icon = opt types.str "Glyph shown";
+                  detail = opt types.str "Data on the right";
+                };
+              }
+            )) "Items that never change; the source's `value` names the one in use and `enabled` those that can be picked";
+            shortcut = opt types.str "Compositor key, shown in the header while Super is held";
           };
         }
       );
       default = { };
-      description = "Optional parts of the shell, by the name `status` and `activeWhen` use";
+      description = "Optional parts of the shell, by the name `status` and `activeWhen` use; each holds its settings, read through its Settings.qml, beside `type`";
     };
   };
 

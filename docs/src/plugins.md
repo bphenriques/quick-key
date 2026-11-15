@@ -1,21 +1,19 @@
 # Plugins
 
-A plugin adds a status, a list or a surface, listed by name under `plugins` in `config.json` as `{ source, settings }`. Most need no QML: the `command` plugin is made of a source and data. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on. The module rejects a menu entry naming a plugin not listed, and a plugin taking a built-in name.
+A plugin adds a status, a list or a surface, listed by name under `plugins` in `config.json`, where it holds its settings. Most need no QML: the `command` plugin is made of a source and data. Nothing loads unlisted; one that fails to load is logged and left out, and the shell runs on. The module rejects a menu entry naming a plugin not listed, and a plugin taking a built-in name.
 
 ## Without QML
 
-`source = "command"`, under any name. Its source gives a value; its settings say how each value looks.
+`type = "command"`, under any name. Its source gives a value; `show` says how each value looks.
 
 ```nix
 plugins.doNotDisturb = {
-  source = "command";
-  settings = {
-    watch = "dnd-status --follow";             # prints true or false on every change
-    activate = "dnd-toggle";                   # a click on its header item
-    show = {
-      "true"  = { glyph = "󰂛"; tone = "alert"; active = true; };
-      "false" = { glyph = "󰂚"; };
-    };
+  type = "command";
+  watch = "dnd-status --follow";             # prints true or false on every change
+  activate = "dnd-toggle";                   # a click on its header item
+  show = {
+    "true"  = { glyph = "󰂛"; tone = "alert"; active = true; };
+    "false" = { glyph = "󰂚"; };
   };
 };
 ```
@@ -32,15 +30,13 @@ The source is how the tool tells you, one of three:
 
 ```nix
 plugins.displayLayout = {
-  source = "command";
-  settings = {
-    read = "displayctl status";                # {"value": "extend", "enabled": ["laptop", "extend"]}
-    select = "displayctl layout";
-    items = [
-      { id = "laptop"; label = "Laptop only"; icon = "󰌢"; }
-      { id = "extend"; label = "Extend"; icon = "󰍺"; }
-    ];
-  };
+  type = "command";
+  read = "displayctl status";                # {"value": "extend", "enabled": ["laptop", "extend"]}
+  select = "displayctl layout";
+  items = [
+    { id = "laptop"; label = "Laptop only"; icon = "󰌢"; }
+    { id = "extend"; label = "Extend"; icon = "󰍺"; }
+  ];
 };
 ```
 
@@ -57,7 +53,7 @@ A line that is not a JSON object is logged and skipped. The shell ignores fields
 
 ## With QML
 
-A plugin that needs behaviour (a timer, a surface, a protocol) is a folder holding all of it: `<Name>.qml`, rooted at `Plugin`, holds its state and actions and never draws; `Settings.qml`, rooted at `PluginSettings`, declares every setting it takes with its default; and each view it draws is a file of its own beside them. `source` names the plugin implementing it, by default its own name, or is a path to a plugin's file. Its folder is its name (`niriMinimap/NiriMinimap.qml`), found in `$XDG_CONFIG_HOME/quick-key/plugins/`, then among the shipped ones.
+A plugin that needs behaviour (a timer, a surface, a protocol) is a folder holding all of it: `<Name>.qml`, rooted at `Plugin`, holds its state and actions and never draws; `Settings.qml`, rooted at `PluginSettings`, declares every setting it takes with its default; and each view it draws is a file of its own beside them. `type`, beside its settings, names the plugin implementing it, by default its own name, or is a path to a plugin's file. Its folder is its name (`niriMinimap/NiriMinimap.qml`), found in `$XDG_CONFIG_HOME/quick-key/plugins/`, then among the shipped ones.
 
 Its API, and the only one:
 
@@ -70,9 +66,9 @@ Its API, and the only one:
 
 | Shipped | Shows | Settings |
 |---|---|---|
-| `command` | the state its source gives, under any name (`source = "command"`) | a source, `show`, `items`, `activate`, `select` (given the item's id), `shortcut` |
+| `command` | the state its source gives, under any name (`type = "command"`) | a source, `show`, `items`, `activate`, `select` (given the item's id), `shortcut` |
 | `dunst` | do-not-disturb for dunst: a bell, red while notifications are paused; a click pauses or resumes them | defaults naming `dunstctl` and `dbus-monitor` (on `PATH`; with Nix, add dunst to `extraPackages`) for its source and `activate`, and the bells in `show`, which a `show` of your own replaces whole; `shortcut` |
-| `ask` | a panel for quick turns with an agent, its keys below; a reply's links as rows; the tool in use while waiting, a knock while an approval waits; a notification while hidden; lit while waiting or unread, in the warning colour while an approval waits | `ask` (prompt, session, image: a JSON object per line, `{run, session}`, `{status}`, `{approval}`, then `{session, reply}` or `{error}`), `approve` (run, allow or deny), `stop` (run), `notify` (title, text; prints `default` when clicked), `pasteImage` (file; fails when the clipboard holds no image), `open` (session), `title`, `glyph` |
+| `ask` | a panel for quick turns with an agent, its keys below; a reply's links as rows; the tool in use while waiting, a knock while an approval waits; a notification while hidden; lit while waiting or unread, in the warning colour while an approval waits | `ask` (prompt, session, image: a JSON object per line, `{session}`, `{status}`, `{approval}`, then `{reply}` or `{error}`; `allow` or `deny` arrives on its stdin), `notify` (title, text; prints `default` when clicked; `notify-send` by default, empty for none), `pasteImage` (file; fails when the clipboard holds no image; `wl-paste` by default), `open` (session), `title`, `glyph` |
 | `dictation` | a dim pill on every screen while dictating, top right one slot under the recording pill: its icon while it listens (dim while the mic is muted), a spinner while it transcribes; a click stops it; lit while dictating | a source whose value is `recording`, `transcribing` or anything else for idle (`show` can give a value its `phase`), `stop`, `glyph` |
 | `recording` | a pill on every screen while recording, a click stops it; status: the time, lit while recording | a source: `{"active": true, "since": <epoch seconds>}` while recording, empty otherwise; `stop` |
 | `wallpaper` | status: the wallpaper's name | a source whose value is the wallpaper's path or name |
@@ -80,10 +76,10 @@ Its API, and the only one:
 
 `Ask.qml`'s keys: `RET` sends (a failed or stopped prompt sent again replaces its exchange), `S-RET` breaks the line, `C-v` attaches the clipboard's image when it holds one. `ESC` steps back: denies an approval, else stops the run, else clears the prompt and image, else hides; twice quickly hides from anywhere, never losing the conversation. `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal between runs.
 
-Only `ask` is required, and its smallest form prints one line, `{"session", "reply"}` or `{"error"}`; ended without either, its last line on stderr is the error. The rest adds on: `{run}` lets `stop` reach the run, `{status}` names what it is doing, and `{approval}` with `approve` asks before it acts. Without `stop`, stopping closes the stream. Claude Code, carrying on in its session:
+Only `ask` is required, and its smallest form prints one line, `{"session", "reply"}` or `{"error"}`; ended without either, its last line on stderr is the error. The rest adds on: `{session}` as the turn starts keeps the conversation when it is stopped, `{status}` names what it is doing, and `{approval}` asks before it acts, the answer a line on its stdin, `allow` or `deny`. That stdin stays open for the turn, so a tool that reads its own takes `</dev/null`. Stopping ends the command (SIGTERM); one whose run lives elsewhere traps that to stop it there, and the next prompt waits until it has ended. Claude Code, carrying on in its session:
 
 ```nix
-plugins.ask.settings = {
+plugins.ask = {
   title = "Claude";
   ask = lib.getExe (pkgs.writeShellApplication {
     name = "ask-claude";
@@ -99,4 +95,4 @@ plugins.ask.settings = {
 };
 ```
 
-Each `ask` names its own plugin, so two agents are two plugins with `source = "ask"`.
+Each `ask` names its own plugin, so two agents are two plugins with `type = "ask"`.

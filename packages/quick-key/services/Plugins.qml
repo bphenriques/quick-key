@@ -25,30 +25,31 @@ Singleton {
 
     property var loaded: ({})
 
-    // A source with a slash is a plugin file's path, else a plugin's name: its folder, in the user's plugins then the shipped ones.
+    // A type with a slash is a plugin file's path, else a plugin's name: its folder, in the user's plugins then the shipped ones.
     function component(name, spec) {
-      const source = spec.source ?? name;
-      const file = source + "/" + source.charAt(0).toUpperCase() + source.slice(1) + ".qml";
-      const sources = source.includes("/") ? [source] : [Config.configDir + "/plugins/" + file, "plugins/" + file];
+      const type = spec.type ?? name;
+      const file = type + "/" + type.charAt(0).toUpperCase() + type.slice(1) + ".qml";
+      const paths = type.includes("/") ? [type] : [Config.configDir + "/plugins/" + file, "plugins/" + file];
       let found = null;
-      for (const path of sources) {
+      for (const path of paths) {
         found = Qt.createComponent(path.startsWith("/") ? "file://" + path : Quickshell.shellPath(path));
         if (found.status === Component.Ready) break;
       }
       return found;
     }
 
-    // The plugin's Settings.qml, beside it, set from config.json; a key it does not declare is logged and left out.
-    function settings(name, component, values) {
+    // The plugin's Settings.qml, beside it, set from its part of config.json but `type`; a key it does not declare is logged and left out.
+    function settings(name, component, spec) {
       const file = Qt.createComponent(component.url.toString().replace(/[^/]*$/, "Settings.qml"));
       const object = file.createObject(root);
       if (!object) {
         console.warn("plugin", name, "not loaded:", file.errorString());
         return null;
       }
-      const unknown = Object.keys(values).filter(key => !(key in object));
+      const keys = Object.keys(spec).filter(key => key !== "type");
+      const unknown = keys.filter(key => !(key in object));
       if (unknown.length) console.warn("plugin", name + ": ignoring unknown settings:", unknown.join(", "));
-      for (const key of Object.keys(values)) if (key in object) object[key] = values[key];
+      for (const key of keys) if (key in object) object[key] = spec[key];
       return object;
     }
 
@@ -58,7 +59,7 @@ Singleton {
         console.warn("plugin", name, "not loaded:", component.errorString());
         return null;
       }
-      const settings = internal.settings(name, component, spec.settings ?? {});
+      const settings = internal.settings(name, component, spec);
       if (!settings) return null;
       const plugin = component.createObject(root, { name: name, settings: settings, folder: component.url.toString().replace(/[^/]*$/, "") });
       if (!plugin) {

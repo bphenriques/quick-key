@@ -6,5 +6,39 @@ The header is `menu.header.left`, `center` and `right`, like waybar's modules: b
 
 The mouse reaches what the keys do, nothing more: a click runs a row, a right click opens a tray app's menu, the wheel steps a row's pair (volume, brightness) or the calendar's month, a click on a day selects it, the title goes back (at the top, the clock opens the calendar), and a click on a header item flips it (keep awake, keyboard layout) or calls a plugin's `activate()`. Holding Super for a second shows their compositor keys (each feature's `shortcut`, set by the module that binds it, or a plugin's).
 
-An entry runs a command (`cmd`) or a built-in action (`action`), which the shell does through its own services, no tool needed: `sinkVolume` and `sourceVolume` (a pair, by `audio.step` up to `audio.max`), `sinkMute`, `sourceMute`, `wifi` and `bluetooth` (power), `playPause`, `track` (a pair), `repeat` and `shuffle` (the music player), `keepAwake` and `keyboardLayout`. An action brings its icon and what lights it, both yours to override, keeps the menu open unless `keepOpen` is false, and dims while it has nothing to act on (no player, no adapter). A pair's first key steps down or back, as in `[ "Down" "Up" ]` and `[ "Left" "Right" ]`.
+An entry runs a command (`cmd`) or a built-in action (`action`), which the shell does through its own services, no tool needed: `sinkVolume` and `sourceVolume` (a pair, by `audio.step` up to `audio.max`), `sinkMute`, `sourceMute`, `brightness` (a pair, the one that runs a tool: `brightness.adjust`), `wifi` and `bluetooth` (power), `playPause`, `track` (a pair), `repeat` and `shuffle` (the music player), `keepAwake` and `keyboardLayout`. An action brings its icon and what lights it, both yours to override, keeps the menu open unless `keepOpen` is false, and dims while it has nothing to act on (no player, no adapter). A pair's first key steps down or back, as in `[ "Down" "Up" ]` and `[ "Left" "Right" ]`.
 
+## An entry
+
+```nix
+{
+  key = "a";
+  desc = "Audio output";
+  status = "sink";    # shown in place of the label: the output in use and its volume
+  list = "sinks";     # its level lists the outputs, on digits
+  submenu = [         # and its actions, on letters
+    { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; }   # built in: brings its icon and dims without an output
+    { key = "m"; desc = "Mute"; action = "sinkMute"; }                   # lit while muted, by the state it brings
+    { key = "c"; desc = "Configure..."; icon = "<glyph>"; cmd = "pavucontrol"; }
+  ];
+}
+```
+
+## Built-in names
+
+Each field takes one of its column's names, or a plugin's. `activeWhen` lights an entry of your own; an `action` already brings its state.
+
+| | `status` | `list` | `action` | `activeWhen` | `menu.header` |
+|---|---|---|---|---|---|
+| Audio output | `sink` | `sinks` | `sinkVolume`, `sinkMute` | `sinkMuted` | |
+| Audio input | `source` | `sources` | `sourceVolume`, `sourceMute` | `sourceMuted` | |
+| Network | `network` | `wifi` | `wifi` | `wifi` | |
+| Bluetooth | `bluetooth` | `bluetooth` | `bluetooth` | `bluetooth` | |
+| Backlight | `brightness` | | `brightness` | | |
+| Music | `music` | | `playPause`, `track`, `repeat`, `shuffle` | `repeat`, `shuffle` | |
+| Tray | `tray` | `tray` | | | |
+| Calendar | `calendar` | | | | |
+| Battery | `battery` | | | | `battery` |
+| Keyboard layout | `keyboardLayout` | | `keyboardLayout` | | `keyboardLayout` |
+| Keep awake | `keepAwake` | | `keepAwake` | `keepAwake` | `keepAwake` |
+| Clock | | | | | `clock` |

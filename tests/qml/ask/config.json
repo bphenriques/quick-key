@@ -1,0 +1,18 @@
+{
+  "plugins": {
+    "approved": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/approved.sh\"",
+      "notify": ""
+    },
+    "stopped": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/stopped.sh\"",
+      "notify": ""
+    },
+    "trapped": {
+      "type": "command",
+      "file": "trapped"
+    }
+  }
+}

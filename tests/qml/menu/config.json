@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "devices": {
+      "type": "command",
+      "read": "echo '{\"items\": [{\"id\": \"a-1\"}, {\"id\": \"b-2\"}]}'"
+    }
+  }
+}

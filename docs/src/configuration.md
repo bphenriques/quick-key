@@ -6,7 +6,7 @@ Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you 
 {
   "theme": { "name": "nord", "monospaceFont": "JetBrainsMono Nerd Font" },
   "clock": { "format": "%A, %-d%o %B %H:%M" },
-  "plugins": { "vpn": { "source": "command", "settings": { "watch": "my-vpn-status", "activate": "my-vpn-toggle", "show": { "up": { "active": true } } } } }
+  "plugins": { "vpn": { "type": "command", "watch": "my-vpn-status", "activate": "my-vpn-toggle", "show": { "up": { "active": true } } } }
 }
 ```
 
@@ -31,6 +31,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music, calendar, tr
 | Keep awake | `systemd-inhibit` |
 | Session | `loginctl`, `systemctl` |
 | Calendar reminders | `notify-send` |
+| The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
 
 `popups.show` lists the changes that pop up (`sink`, `source`, `brightness`, `keyboardLayout`, `keepAwake`; all by default), so another on-screen display can take any of them over.
 

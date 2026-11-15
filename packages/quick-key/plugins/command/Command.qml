@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell.Io
 import qs
 
-// A plugin made of commands, under any name (`source = "command"`); see docs/src/plugins.md.
+// A plugin made of commands, under any name (`type = "command"`); see docs/src/plugins.md.
 Plugin {
   id: root
 

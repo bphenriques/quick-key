@@ -101,7 +101,7 @@ Scope {
           onContainsMouseChanged: transient.held = containsMouse
           onStepped: up => {
             if (root.kind !== "brightness") Audio.adjust(root.kind, up);
-            else if (Config.brightness.adjust) Quickshell.execDetached(["sh", "-c", Config.brightness.adjust[up ? 1 : 0]]);
+            else Brightness.adjust(up);
           }
         }
 

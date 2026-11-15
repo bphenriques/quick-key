@@ -1,0 +1,70 @@
+{
+  "plugins": {
+    "lastLine": {
+      "type": "command",
+      "read": "printf 'first\\nsecond\\n'"
+    },
+    "watcher": {
+      "type": "command",
+      "watch": "echo up"
+    },
+    "wallpaper": {
+      "file": "wallpaper"
+    },
+    "custom": {},
+    "folded": {
+      "greeting": "hi",
+      "unknown": true
+    },
+    "broken": {
+      "type": "missing"
+    },
+    "paused": {
+      "type": "command",
+      "read": "echo true",
+      "show": {
+        "true": {
+          "glyph": "B",
+          "tone": "alert",
+          "active": true
+        },
+        "false": {
+          "glyph": "b"
+        }
+      }
+    },
+    "override": {
+      "type": "command",
+      "read": "echo '{\"value\":\"x\",\"text\":\"live\"}'",
+      "show": {
+        "x": {
+          "text": "shown",
+          "detail": "d"
+        }
+      }
+    },
+    "layouts": {
+      "type": "command",
+      "read": "echo '{\"value\":\"b\",\"enabled\":[\"a\",\"b\"]}'",
+      "items": [
+        {
+          "id": "a",
+          "label": "A"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "icon": "I"
+        },
+        {
+          "id": "c"
+        }
+      ]
+    },
+    "ticker": {
+      "type": "command",
+      "read": "n=$(cat \"$XDG_RUNTIME_DIR/tick\" 2>/dev/null || echo 0); echo $((n + 1)) | tee \"$XDG_RUNTIME_DIR/tick\"",
+      "every": 1
+    }
+  }
+}

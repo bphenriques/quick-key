@@ -33,6 +33,6 @@ let
 in
 {
   module-eval = import ./module.nix { inherit pkgs evalHome; };
-  qml = import ./qml { inherit pkgs self; };
   comments = import ./comments.nix { inherit pkgs self; };
 }
+// import ./qml { inherit pkgs self; }

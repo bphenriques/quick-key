@@ -23,10 +23,7 @@ Plugin {
   property bool shown: false
   property bool busy: false
   property bool unread: false
-  // Bumped when a conversation ends, so output for an ended one is dropped.
-  property int conversation: 0
-  // The current run as the agent names it, what it waits to be allowed to run, and what it is doing.
-  property string run: ""
+  // What the agent waits to be allowed to run, and what it is doing.
   property string approval: ""
   property string activity: ""
   // Seconds the current run has taken, ticking only while it runs and the panel shows.
@@ -61,7 +58,8 @@ Plugin {
 
   function send(prompt) {
     prompt = prompt.trim();
-    if ((!prompt && !image) || busy || request.stopping || !settings.ask) return false;
+    // A stopped command may still be ending, when it traps its end.
+    if ((!prompt && !image) || busy || request.running || !settings.ask) return false;
     // Asking again what failed or was stopped replaces that exchange, so the thread keeps one of each.
     const last = exchanges[exchanges.length - 1];
     const kept = last && last.error && last.prompt === prompt && last.image === image ? exchanges.slice(0, -1) : exchanges;
@@ -69,11 +67,9 @@ Plugin {
     const sent = image;
     image = "";
     busy = true;
-    run = "";
     approval = "";
     activity = "";
     sentAt = now = Math.floor(Date.now() / 1000);
-    request.conversation = conversation;
     request.complaint = "";
     request.command = commandLine(settings.ask, prompt, session, sent);
     request.running = true;
@@ -88,32 +84,21 @@ Plugin {
       console.warn(name + ": not JSON, ignored:", line);
       return;
     }
-    // Stopped before it said its name: closing the stream does not stop a run, so stop it now that it has one.
-    if (request.stopping) {
-      if (answer.run) {
-        exec(settings.stop, answer.run);
-        request.stopping = false;
-        request.running = false;
-      }
-      return;
-    }
-    if (request.conversation !== conversation || !busy) return;
-    if (answer.run) {
-      run = answer.run;
-      // Known from the start, so asking again after a stop carries on in the same session.
-      session = answer.session ?? session;
-    } else if (answer.approval) {
+    // A stopped command, still ending.
+    if (!busy) return;
+    // Named as the turn starts, so asking again after a stop carries on in the same session.
+    if (answer.session) session = answer.session;
+    if (answer.approval) {
       approval = answer.approval;
       notify("Allow " + approval + "?");
     } else if (answer.status) {
       activity = answer.status;
-    } else {
+    } else if (answer.reply !== undefined || answer.error !== undefined) {
       finish(answer);
     }
   }
 
   function finish(answer) {
-    if (answer.session) session = answer.session;
     const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? "No answer", stopped: !!answer.stopped });
     exchanges = exchanges.slice(0, -1).concat([last]);
     busy = false;
@@ -144,35 +129,27 @@ Plugin {
   }
 
   function answerApproval(allowed) {
-    if (!approval || !settings.approve) return;
-    exec(settings.approve, run, allowed ? "allow" : "deny");
+    if (!approval) return;
+    request.write((allowed ? "allow" : "deny") + "\n");
     approval = "";
   }
 
-  // Stops the run where it runs and puts its prompt back; one not yet named is stopped once it is (receive).
+  // Ends the command and puts its prompt back; a command whose run lives elsewhere traps its end to stop it there.
   function stop() {
     if (!busy) return;
     finish({ error: "Stopped", stopped: true });
-    if (!settings.stop) {
-      request.running = false;
-    } else if (run) {
-      exec(settings.stop, run);
-      request.running = false;
-    } else {
-      request.stopping = true;
-    }
+    request.running = false;
   }
 
   // A new conversation; the unsent prompt stays.
   function reset() {
     stop();
-    conversation++;
     exchanges = [];
     session = "";
     unread = false;
   }
 
-  // Only between runs: a run lives as long as its stream here.
+  // Only between turns: a turn lives as long as its command here.
   function moveToTerminal() {
     if (!canMove) return;
     exec(settings.open, session);
@@ -219,11 +196,11 @@ Plugin {
 
   Process {
     id: request
-    property int conversation: 0
-    // Stopped before its run had a name: kept open until it has one.
-    property bool stopping: false
     // Its last line on stderr, the error when it ends without an answer.
     property string complaint: ""
+
+    // Open for the approvals' answers.
+    stdinEnabled: true
 
     stdout: SplitParser {
       onRead: line => root.receive(line)
@@ -237,8 +214,7 @@ Plugin {
 
     // Ended without an answer: it crashed or was killed.
     onExited: {
-      stopping = false;
-      if (root.busy && conversation === root.conversation) root.finish({ error: complaint || "No answer" });
+      if (root.busy) root.finish({ error: complaint || "No answer" });
     }
   }
 

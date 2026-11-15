@@ -24,7 +24,7 @@ let
   presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quick-key/themes")));
   themeName = cfg.settings.theme.name;
 
-  # extraPackages, then the standard tools Config.qml's defaults name, before the session's PATH; systemd's come with the system.
+  # extraPackages, then the standard tools the shell's and its plugins' defaults name, before the session's PATH; systemd's come with the system.
   launcher = pkgs.writeShellScript "quick-key" ''
     export PATH=${
       lib.makeBinPath (
@@ -33,6 +33,7 @@ let
           pkgs.util-linux
           pkgs.brightnessctl
           pkgs.libnotify
+          pkgs.wl-clipboard
         ]
       )
     }''${PATH:+:$PATH}
