@@ -212,7 +212,7 @@ Scope {
     if (action && available(action)) run(action, name);
   }
 
-  // Esc and Backspace are kept free of entries by the assertions in modules/home-manager/quick-key/settings.nix.
+  // Esc and Backspace are kept free of entries by the check (Validation.qml).
   function handleKey(event) {
     const name = MenuKeys.name(event);
     // A modifier on its own has no name, and Super belongs to the compositor: a chord with it runs nothing here.

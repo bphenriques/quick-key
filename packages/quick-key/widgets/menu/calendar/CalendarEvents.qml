@@ -33,7 +33,7 @@ ListView {
 
   // Keeps the focused event, else the selected day, in view, below the sticky day heading that would cover it.
   function follow() {
-    const at = model.findIndex(row => focused ? row.id === focused : row.key === selectedKey);
+    const at = model ? model.findIndex(row => focused ? row.id === focused : row.key === selectedKey) : -1;
     if (at < 0) return;
     positionViewAtIndex(at, focused ? ListView.Contain : ListView.Beginning);
     const item = itemAtIndex(at);
@@ -42,6 +42,7 @@ ListView {
   }
 
   onModelChanged: follow()
+  onSelectedKeyChanged: follow()
   onFocusedChanged: follow()
   onHeightChanged: follow()
 

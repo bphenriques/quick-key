@@ -22,9 +22,12 @@ Item {
   readonly property int maxDots: 4
   // Tighter than a menu row: six weeks of them stack up.
   readonly property real cellPadding: Config.theme.itemPaddingY / 2
+  // By month, so a day picked within it rebuilds nothing.
+  readonly property int year: selected.getFullYear()
+  readonly property int month: selected.getMonth()
   // Six weeks from the one holding the 1st, so the grid never changes height.
   readonly property var days: {
-    const first = new Date(selected.getFullYear(), selected.getMonth(), 1);
+    const first = new Date(year, month, 1);
     const lead = (first.getDay() - firstDay + 7) % 7;
     return Array.from({ length: 42 }, (_, i) => new Date(first.getFullYear(), first.getMonth(), 1 - lead + i));
   }
@@ -61,7 +64,7 @@ Item {
         id: cell
         required property date modelData
         readonly property bool isToday: modelData.toDateString() === Clock.date.toDateString()
-        readonly property bool inMonth: modelData.getMonth() === root.selected.getMonth()
+        readonly property bool inMonth: modelData.getMonth() === root.month
 
         Layout.fillWidth: true
         Layout.preferredWidth: 1

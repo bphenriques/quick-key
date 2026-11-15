@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.widgets.menu
+import qs.widgets.menu.calendar
 
 // The calendar's dates and the events it shows on them; the events are events.json's, around 12 November 2026.
 ShellRoot {
@@ -19,8 +20,21 @@ ShellRoot {
         name: "an event shows on every day it overlaps, all-day ones first",
         until: () => Calendar.timeline.map(row => row.key.slice(8) + " " + row.event.title).join() ===
           "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call"
+      },
+      {
+        name: "the events follow the selected day from one day with events to another",
+        start: () => events.selected = new Date(2026, 10, 25),
+        until: () => events.contentY > 0
       }
     ]
+  }
+
+  // Short enough that the last day is out of view from the first.
+  CalendarEvents {
+    id: events
+    width: 400
+    height: 100
+    selected: new Date(2026, 10, 12)
   }
 
   MenuModel {
