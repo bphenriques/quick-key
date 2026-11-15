@@ -6,13 +6,6 @@ import qs
 Plugin {
   id: root
 
-  glyph: state.glyph ?? ""
-  text: state.text ?? ""
-  detail: state.detail ?? ""
-  active: state.active ?? false
-  tone: state.tone ?? ""
-  items: state.items ?? []
-
   function activate() {
     exec(settings.activate);
   }

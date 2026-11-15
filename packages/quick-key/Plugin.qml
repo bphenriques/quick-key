@@ -18,18 +18,18 @@ Scope {
   // What its source last gave over the look `settings.show` (else the matching static item) gives its `value`; {} without one.
   readonly property var state: compose(source.state)
 
-  // What a menu entry with `status` set to the name shows, and whether one with `activeWhen` set to it is lit.
-  property string glyph
-  property string text
-  property string detail
-  property bool active: false
+  // What a menu entry with `status` set to the name shows, and whether one with `activeWhen` set to it is lit; by default, the state.
+  property string glyph: state.glyph ?? ""
+  property string text: state.text ?? ""
+  property string detail: state.detail ?? ""
+  property bool active: state.active ?? false
   // The status's tone when it needs one (alert for do-not-disturb); unset, lit by active.
-  property string tone
+  property string tone: state.tone ?? ""
   // Its compositor key, shown in the header while Super is held.
   property string shortcut: settings.shortcut
 
   // What a menu entry with `list` set to its name shows, each { id, label, icon, detail, active, enabled }.
-  property var items: []
+  property var items: state.items ?? []
 
   // What a click on its header item, or `<name> activate` over IPC, does.
   function activate() {}

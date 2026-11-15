@@ -35,7 +35,6 @@ in
   imports = [
     ./settings.nix
     (import ./calendar-sync.nix self)
-    (import ./dunst.nix self)
   ];
 
   options.programs.quick-key = {

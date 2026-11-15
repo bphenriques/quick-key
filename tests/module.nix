@@ -35,13 +35,6 @@ let
     };
   };
 
-  dunst = evalHome {
-    programs.quick-key = {
-      integrations.dunst.enable = true;
-      settings.plugins.doNotDisturb.settings.show."true".glyph = "X";
-    };
-  };
-
   failed = settings: lib.filter (a: !a.assertion) (evalHome { programs.quick-key.settings = settings; }).assertions;
   # By the assertion meant: its message names the reason.
   rejects =
@@ -86,9 +79,6 @@ pkgs.runCommand "quick-key-module-eval" { nativeBuildInputs = [ pkgs.jq ]; } ''
   jq -e '.battery.glyphs == null and .menu.entries[0].icon == null' $config
   jq -e '.plugins.vpn == { source: "command", settings: { read: "vpn-status", show: { up: { glyph: "V" } }, items: [ { id: "home" } ] } }' $config
   jq -e '.menu.entries[0] | has("pins") or has("requires") | not' $config
-  dunst=${dunst.xdg.configFile."quick-key/config.json".source}
-  jq -e '.plugins.doNotDisturb.source == "command" and (.plugins.doNotDisturb.settings.watch | endswith("/quick-key-dunst-paused"))' $dunst
-  jq -e '.plugins.doNotDisturb.settings.show == { "true": { glyph: "X", tone: "alert", active: true }, "false": { glyph: "󰂚" } }' $dunst
   jq -e '.primary == "#0000ff"' ${cfg.xdg.configFile."quick-key/themes/mine.json".source}
   touch $out
 ''

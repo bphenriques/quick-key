@@ -28,7 +28,6 @@
       shellPackages = pkgs: rec {
         quick-key = pkgs.callPackage ./packages/quick-key { };
         quick-key-calendar-sync = pkgs.callPackage ./packages/calendar-sync { };
-        quick-key-dunst-paused = pkgs.callPackage ./packages/dunst-paused { };
         quick-key-preview = pkgs.callPackage ./packages/preview { };
         default = quick-key;
       };
