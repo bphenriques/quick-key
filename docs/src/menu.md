@@ -1,14 +1,6 @@
 # Menu
 
-Every key visible, then its status, labels starting together after a gutter as wide as the longest key in their column. A letter opens a level or runs a command; Esc closes, Backspace goes back. A key pair (`[ "Down" "Up" ]` with one command each) shares a row. A level can also list things found at runtime under its actions, numbered 1 to 9: `list = "tray"`, `"bluetooth"`, `"wifi"`, `"sinks"`, `"sources"` or a plugin's name, with `pins` for items that keep their digit. A list with nothing in it says why in its place (`No paired devices`, `No saved networks in range`), unless the header already does (off). A level that takes keys beyond its rows lists them on one line under its header (`KeyLegend`), with the level's actions on the right of it, from the same list that handles them: the calendar's, and Ctrl+digit for a tray app's menu. `menu toggleEntry <key>` over IPC opens a top-level entry directly, for a compositor shortcut; Backspace still leads to the top level.
-
-The header is `menu.header.left`, `center` and `right`, like waybar's modules: built-in items (`clock`, `keepAwake`, `keyboardLayout`, `battery`) and plugins, by name. The centre is as wide as its items and centred, the sides share the rest, so the menu holds still; crowded, text shortens with an ellipsis, the centre's first, while icons and short values (`80%`, `EN`) stay whole. Inside a level the left holds its title, the right its state. The clock takes `clock.format`, strftime as waybar's (`%A, %-d%o %B %H:%M`, `%o` the English ordinal), else the locale's long date; `clock.locale` (`en_GB`) names days and months for the clock and the calendar, else the system's.
-
-The mouse reaches what the keys do, nothing more: a click runs a row, a right click opens a tray app's menu, the wheel steps a row's pair (volume, brightness) or the calendar's month, a click on a day selects it, the title goes back (at the top, the clock opens the calendar), and a click on a header item flips it (keep awake, keyboard layout) or calls a plugin's `activate()`. Holding Super for a second shows their compositor keys (each feature's `shortcut`, set by the module that binds it, or a plugin's).
-
-An entry runs a command (`cmd`) or a built-in action (`action`), which the shell does through its own services, no tool needed: `sinkVolume` and `sourceVolume` (a pair, by `audio.step` up to `audio.max`), `sinkMute`, `sourceMute`, `brightness` (a pair, the one that runs a tool: `brightness.adjust`), `wifi` and `bluetooth` (power), `playPause`, `track` (a pair), `repeat` and `shuffle` (the music player), `keepAwake` and `keyboardLayout`. An action brings its icon and what lights it, both yours to override, keeps the menu open unless `keepOpen` is false, and dims while it has nothing to act on (no player, no adapter). A pair's first key steps down or back, as in `[ "Down" "Up" ]` and `[ "Left" "Right" ]`.
-
-## An entry
+The menu is a list of entries. Each has a key and a label, and either does something or opens a level of its own.
 
 ```nix
 {
@@ -17,16 +9,45 @@ An entry runs a command (`cmd`) or a built-in action (`action`), which the shell
   status = "sink";    # shown in place of the label: the output in use and its volume
   list = "sinks";     # its level lists the outputs, on digits
   submenu = [         # and its actions, on letters
-    { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; }   # built in: brings its icon and dims without an output
-    { key = "m"; desc = "Mute"; action = "sinkMute"; }                   # lit while muted, by the state it brings
+    { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; }
+    { key = "m"; desc = "Mute"; action = "sinkMute"; }
     { key = "c"; desc = "Configure..."; icon = "<glyph>"; cmd = "pavucontrol"; }
   ];
 }
 ```
 
+## Keys
+
+- A letter runs its entry or opens its level. `Esc` closes the menu, `Backspace` goes back.
+- Digits pick from a level's list. `Ctrl+digit` opens a tray app's own menu.
+- Two keys with a command or action each (`[ "Down" "Up" ]`) share a row; the first steps down or back.
+- `Ctrl` and `Alt` may prefix a key (`Ctrl+Left`). Hints show keys Emacs-style: `C-←`, `M-k`, `RET`, `DEL`.
+- Holding `Super` for a second shows the compositor keys each feature is bound to.
+- `menu toggleEntry <key>` over IPC opens an entry directly, for a compositor shortcut.
+
+## What an entry does
+
+One of:
+
+- `cmd`: a shell command. The menu closes, unless `keepOpen = true`.
+- `action`: a built-in action (below). It brings its icon and what lights it, keeps the menu open, and dims while it has nothing to act on (no player, no adapter).
+- `submenu`, `list` or `view`: a level. `list` adds items found at runtime on digits, `pins` keeps chosen ones on their digit, and `view = "calendar"` shows the [calendar](calendar.md).
+
+`status` shows live state in place of the label, `activeWhen` lights an entry of your own, and `icon` sets its glyph. A level is as wide as its entry's `width`, else `menu.width`.
+
+## Header
+
+`menu.header.left`, `center` and `right` hold built-in items (`clock`, `keepAwake`, `keyboardLayout`, `battery`) and plugins, like waybar's modules. Inside a level, the header shows its title and state instead. Crowded, text shortens; icons and short values stay whole.
+
+The clock takes `clock.format` (strftime as waybar's, plus `%o` for the English ordinal), else the locale's long date. `clock.locale` names days and months.
+
+## Mouse
+
+The mouse reaches what the keys do: a click runs a row, a right click opens a tray app's menu, the wheel steps a pair (volume, brightness) or the calendar's month, and the title goes back. At the top, the clock opens the calendar.
+
 ## Built-in names
 
-Each field takes one of its column's names, or a plugin's. `activeWhen` lights an entry of your own; an `action` already brings its state.
+Each field takes one of its column's names, or a plugin's.
 
 | | `status` | `list` | `action` | `activeWhen` | `menu.header` |
 |---|---|---|---|---|---|
@@ -42,3 +63,5 @@ Each field takes one of its column's names, or a plugin's. `activeWhen` lights a
 | Keyboard layout | `keyboardLayout` | | `keyboardLayout` | | `keyboardLayout` |
 | Keep awake | `keepAwake` | | `keepAwake` | `keepAwake` | `keepAwake` |
 | Clock | | | | | `clock` |
+
+Volume steps by `audio.step` up to `audio.max`. `brightness` is the one action that runs a tool: `brightness.adjust`.
