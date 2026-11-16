@@ -16,7 +16,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
 | `Spinner` | a wait in one block cell, its `mood` saying whose turn it is: `working` spins, `attention` knocks; its own tempo, still when animations are off |
 | `Divider` | a line between two groups of rows |
-| `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
+| `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus), washed for a moment on `flash()` (a key that ran it); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel; a capsule outlined in its tone |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |

@@ -15,6 +15,14 @@ ListItem {
   onSecondaryActivated: menu.openMenu(modelData)
   onScrolled: up => menu.act(modelData, up ? "Up" : "Down")
 
+  Connections {
+    target: row.menu
+
+    function onPressed(item) {
+      if (String(item.key) === String(row.modelData.key)) row.flash();
+    }
+  }
+
   KeyHint {
     key: row.modelData.key
     paired: row.modelData.paired ?? false

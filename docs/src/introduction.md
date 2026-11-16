@@ -1,6 +1,6 @@
 # Introduction
 
-A [Quickshell](https://quickshell.org) menu with live status and a calendar, and a pop-up for volume, brightness, keyboard-layout and keep-awake changes; optional plugins add the rest (a workspace minimap, the screen-recording pill, the wallpaper's name). It runs without a config, and `config.json` changes only what you set (see [Configuration](configuration.md)).
+A [Quickshell](https://quickshell.org) menu with live status and a calendar, and a pop-up for volume, brightness, keyboard-layout and keep-awake changes. It is a menu first, beside the bar or shell you have and in place of neither; optional plugins add the rest (a workspace minimap, the screen-recording pill, the wallpaper's name), most of them a command and a few lines of config (see [Recipes](recipes.md)). It runs without a config, and `config.json` changes only what you set (see [Configuration](configuration.md)).
 
 ## Runtime
 

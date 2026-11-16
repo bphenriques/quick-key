@@ -41,6 +41,7 @@ StatusLine {
     Layout.leftMargin: Config.theme.spacing / 2
     Layout.preferredWidth: Config.theme.meterLength
     value: root.builtin?.meter ? root.builtin.meter() : 0
+    tone: root.builtin?.muted && root.builtin.muted() ? "dim" : "primary"
   }
 
   function pinned(id, name) {

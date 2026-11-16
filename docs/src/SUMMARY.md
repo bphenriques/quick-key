@@ -8,6 +8,7 @@
 - [Calendar](calendar.md)
 - [Kit](kit.md)
 - [Plugins](plugins.md)
+- [Recipes](recipes.md)
 - [Compositor](compositor.md)
 
 [Reference](options.md)

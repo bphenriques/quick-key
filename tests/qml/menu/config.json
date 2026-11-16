@@ -1,4 +1,10 @@
 {
+  "menu": {
+    "entries": [
+      { "key": "x", "desc": "Run", "icon": "i", "cmd": "true", "keepOpen": true },
+      { "key": "p", "desc": "Play", "action": "playPause" }
+    ]
+  },
   "plugins": {
     "devices": {
       "type": "command",

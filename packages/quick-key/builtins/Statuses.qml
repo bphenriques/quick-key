@@ -11,20 +11,23 @@ Singleton {
 
   readonly property var none: ({ text: "", detail: "" })
 
-  // Each: glyph(), value(pinned, quiet) as { text, detail, glyphs }, and optionally tone(), meter(), detailChars, inLevel.
+  // Each: glyph(), value(pinned, quiet) as { text, detail, glyphs }, and optionally tone(), detailChars, inLevel, and a meter() for its level, dim while muted(), sampled only while shown.
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
       value: pinned => !Audio.sink ? root.none : { text: pinned(Audio.sink.name, Audio.sinkName), detail: Audio.sinkMuted ? "muted" : Math.round(Audio.sinkVolume * 100) + "%" },
       // Room for "muted", so the glyph beside a volume holds still.
-      detailChars: 5
+      detailChars: 5,
+      meter: () => Audio.sinkVolume,
+      muted: () => Audio.sinkMuted
     },
     source: {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
       value: pinned => !Audio.source ? root.none : { text: pinned(Audio.source.name, Audio.sourceName), detail: Audio.sourceMuted ? "muted" : Math.round(Audio.sourceVolume * 100) + "%" },
       detailChars: 5,
       // The input moving as you speak, in its own level beside the volume.
-      meter: () => Audio.sourceMuted ? 0 : Audio.sourceLevel
+      meter: () => Audio.sourceMuted ? 0 : Audio.sourceLevel,
+      sampled: true
     },
     music: {
       glyph: () => Glyphs.music,
@@ -60,7 +63,8 @@ Singleton {
     },
     brightness: {
       glyph: () => Glyphs.brightness(Brightness.percentage),
-      value: () => !Brightness.present ? root.none : { text: "", detail: Brightness.lit ? Brightness.percentage + "%" : "off" }
+      value: () => !Brightness.present ? root.none : { text: "", detail: Brightness.lit ? Brightness.percentage + "%" : "off" },
+      meter: () => Brightness.lit ? Brightness.percentage / 100 : 0
     },
     calendar: {
       glyph: () => Glyphs.calendar,

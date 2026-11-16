@@ -31,6 +31,28 @@ Rectangle {
     }
   }
 
+  // A key's press on the row, shown as a click's is: washed at once, then easing back.
+  function flash() {
+    release.restart();
+  }
+
+  Rectangle {
+    id: press
+    anchors.fill: parent
+    radius: parent.radius
+    color: Tone.wash("primary", 2)
+    opacity: 0
+
+    NumberAnimation {
+      id: release
+      target: press
+      property: "opacity"
+      from: 1
+      to: 0
+      duration: 2 * Config.theme.animationDuration
+    }
+  }
+
   RowLayout {
     id: row
     anchors.verticalCenter: parent.verticalCenter

@@ -26,7 +26,7 @@ Scope {
   Binding {
     target: Audio
     property: "metering"
-    value: !!Statuses.builtin[root.menu.level?.status]?.meter
+    value: !!Statuses.builtin[root.menu.level?.status]?.sampled
   }
 
   IpcHandler {

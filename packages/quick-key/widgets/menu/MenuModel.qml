@@ -17,6 +17,9 @@ Scope {
   property bool shortcutsShown: false
   readonly property CalendarModel calendar: CalendarModel {}
 
+  // A key ran an item, for its row to show it.
+  signal pressed(var item)
+
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property bool inCalendar: level?.entry?.view === "calendar"
@@ -26,7 +29,8 @@ Scope {
   readonly property int width: level?.width ?? Config.menu.width
   // Why a level's list is empty, in its place; "" while it lists something.
   readonly property string emptyText: level?.entry?.list && rows.length === 0 ? Lists.builtin[level.entry.list]?.empty() ?? "" : ""
-  readonly property string title: inCalendar ? calendar.title : level?.title ?? ""
+  // A level below another shows the way to it (Tray › Solaar).
+  readonly property string title: inCalendar ? calendar.title : stack.map(level => level.title).join(" › ")
   // The top-level entry the clock opens.
   readonly property var calendarEntry: itemsOf(null).find(item => item.entry.view === "calendar") ?? null
   // Keys a level takes beyond its rows, shown under the header (KeyLegend): { key, what }.
@@ -223,8 +227,10 @@ Scope {
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (name === "BackSpace" && level) back();
     else if (name.startsWith("Ctrl+") && listed) openMenu(listed);
-    else if (item) activate(item, name);
-    else return false;
+    else if (item) {
+      if (item.enabled !== false) pressed(item);
+      activate(item, name);
+    } else return false;
     return true;
   }
 

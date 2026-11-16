@@ -18,8 +18,8 @@ ListView {
 
   readonly property string selectedKey: Calendar.key(selected)
 
-  // The timeline, with the selected day in it even when it has no events.
-  model: {
+  // The timeline, with the selected day in it even when it has no events; kept apart from `model`, which cannot be read while ListView replaces it.
+  readonly property var rows: {
     const at = Calendar.timeline.findIndex(row => row.key >= selectedKey);
     if (at >= 0 && Calendar.timeline[at].key === selectedKey) return Calendar.timeline;
     const before = at < 0 ? Calendar.timeline.length : at;
@@ -27,13 +27,15 @@ ListView {
     return Calendar.timeline.slice(0, before).concat([{ id: "", key: selectedKey, day, event: null }], Calendar.timeline.slice(before));
   }
 
+  model: rows
+
   clip: true
   spacing: Config.theme.spacing / 2
   boundsBehavior: Flickable.StopAtBounds
 
   // Keeps the focused event, else the selected day, in view, below the sticky day heading that would cover it.
   function follow() {
-    const at = model ? model.findIndex(row => focused ? row.id === focused : row.key === selectedKey) : -1;
+    const at = rows.findIndex(row => focused ? row.id === focused : row.key === selectedKey);
     if (at < 0) return;
     positionViewAtIndex(at, focused ? ListView.Contain : ListView.Beginning);
     const item = itemAtIndex(at);
@@ -71,31 +73,42 @@ ListView {
       : Clock.format(day, "%A %-d %B");
   }
 
-  // A one-line row's height: what a heading needs below it to be shown.
-  readonly property real shortestRow: Metrics.line + 2 * Config.theme.itemPaddingY
+  // The height of a day's first row, one line or two (an end, a place): what its heading needs below it to be shown.
+  function firstRowHeight(key) {
+    const first = rows.find(row => row.key === key);
+    const twoLines = first?.event && (times(first.event, first.day)[1] || first.event.location);
+    return (twoLines ? 2 : 1) * Metrics.line + 2 * Config.theme.itemPaddingY;
+  }
+
   readonly property real headingPadding: Config.theme.spacing / 2
   readonly property real headingHeight: Metrics.line + headingPadding
 
   section.property: "key"
   // The day of the rows shown stays on top, over them: the first row shown always has its heading.
   section.labelPositioning: ViewSection.InlineLabels | ViewSection.CurrentLabelAtStart
-  section.delegate: Rectangle {
+  // ListView reuses a heading and shows it again itself, so what hides it is inside, not the heading's own `visible`.
+  section.delegate: Item {
+    id: day
     required property string section
 
-    // Only with room for an event under it: a heading alone at the bottom says nothing.
-    visible: root.fits(y, height + root.shortestRow)
     width: root.width
     implicitHeight: heading.implicitHeight
-    // The card's own colour, so rows scrolling under it are hidden, not shown through.
-    color: Tone.surface()
 
-    Label {
-      id: heading
-      leftPadding: Config.theme.itemPaddingX
-      topPadding: root.headingPadding
-      tone: "dim"
-      font.bold: true
-      text: root.heading(Calendar.parse(parent.section))
+    Rectangle {
+      anchors.fill: parent
+      // Only with room for its first event under it: a heading alone at the bottom says nothing.
+      visible: root.fits(day.y, day.height + root.firstRowHeight(day.section))
+      // Opaque only while it stays on top, so rows scrolling under it are hidden, not shown through.
+      color: day.y - root.contentY < 1 ? Tone.surface(1) : "transparent"
+
+      Label {
+        id: heading
+        leftPadding: Config.theme.itemPaddingX
+        topPadding: root.headingPadding
+        tone: "dim"
+        font.bold: true
+        text: root.heading(Calendar.parse(day.section))
+      }
     }
   }
 
