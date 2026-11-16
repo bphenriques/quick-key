@@ -25,10 +25,6 @@ Singleton {
   readonly property real sourceVolume: source?.audio?.volume ?? 0
   readonly property bool sinkMuted: sink?.audio?.muted ?? false
   readonly property bool sourceMuted: source?.audio?.muted ?? false
-  // Set while the input's level is shown: it is only sampled then.
-  property bool metering: false
-  // On the same linear scale as the volume.
-  readonly property real sourceLevel: Math.min(1, sourcePeak.peak)
 
   // The output's or input's volume a step down or up (Config.audio.step), never past Config.audio.max.
   function adjust(kind, up) {
@@ -81,11 +77,5 @@ Singleton {
 
   PwObjectTracker {
     objects: internal.nodes
-  }
-
-  PwNodePeakMonitor {
-    id: sourcePeak
-    node: root.source
-    enabled: root.metering && !root.sourceMuted
   }
 }

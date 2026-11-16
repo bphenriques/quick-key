@@ -17,9 +17,6 @@ Scope {
   property bool shortcutsShown: false
   readonly property CalendarModel calendar: CalendarModel {}
 
-  // A key ran an item, for its row to show it.
-  signal pressed(var item)
-
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property bool inCalendar: level?.entry?.view === "calendar"
@@ -227,10 +224,8 @@ Scope {
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (name === "BackSpace" && level) back();
     else if (name.startsWith("Ctrl+") && listed) openMenu(listed);
-    else if (item) {
-      if (item.enabled !== false) pressed(item);
-      activate(item, name);
-    } else return false;
+    else if (item) activate(item, name);
+    else return false;
     return true;
   }
 

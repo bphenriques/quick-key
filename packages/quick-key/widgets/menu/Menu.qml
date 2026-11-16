@@ -23,12 +23,6 @@ Scope {
     value: root.menu.open
   }
 
-  Binding {
-    target: Audio
-    property: "metering"
-    value: !!Statuses.builtin[root.menu.level?.status]?.sampled
-  }
-
   IpcHandler {
     target: "menu"
 

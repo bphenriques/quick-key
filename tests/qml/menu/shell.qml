@@ -5,11 +5,6 @@ import qs.widgets.menu
 
 // What the menu makes of its entries: a list's digits, key names and hints, and what an action brings.
 ShellRoot {
-  id: root
-
-  // The key of each item the menu said a key ran.
-  property var pressed: []
-
   Suite {
     cases: [
       {
@@ -41,21 +36,8 @@ ShellRoot {
           ] } });
           return play.enabled === false && play.icon === Glyphs.playPause && track.paired && track.icon === "T" && awake.enabled && !awake.active;
         }
-      },
-      {
-        name: "a key that runs a row is told to it, one that cannot run is not",
-        start: () => [[Qt.Key_P, "p"], [Qt.Key_X, "x"]].forEach(([key, text]) => menu.handleKey({ key: key, modifiers: Qt.NoModifier, text: text })),
-        until: () => root.pressed.join() === "x"
       }
     ]
-  }
-
-  Connections {
-    target: menu
-
-    function onPressed(item) {
-      root.pressed = root.pressed.concat([item.key]);
-    }
   }
 
   MenuModel {

@@ -11,7 +11,7 @@ Singleton {
 
   readonly property var none: ({ text: "", detail: "" })
 
-  // Each: glyph(), value(pinned, quiet) as { text, detail, glyphs }, and optionally tone(), detailChars, inLevel, and a meter() for its level, dim while muted(), sampled only while shown.
+  // Each: glyph(), value(pinned, quiet) as { text, detail, glyphs }, and optionally tone(), detailChars, inLevel, and a meter() for its level, dim while muted().
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -25,9 +25,8 @@ Singleton {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
       value: pinned => !Audio.source ? root.none : { text: pinned(Audio.source.name, Audio.sourceName), detail: Audio.sourceMuted ? "muted" : Math.round(Audio.sourceVolume * 100) + "%" },
       detailChars: 5,
-      // The input moving as you speak, in its own level beside the volume.
-      meter: () => Audio.sourceMuted ? 0 : Audio.sourceLevel,
-      sampled: true
+      meter: () => Audio.sourceVolume,
+      muted: () => Audio.sourceMuted
     },
     music: {
       glyph: () => Glyphs.music,
