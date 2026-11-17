@@ -34,5 +34,6 @@ in
 {
   module-eval = import ./module.nix { inherit pkgs evalHome; };
   comments = import ./comments.nix { inherit pkgs self; };
+  calendar-sync = import ./calendar-sync { inherit pkgs self; };
 }
 // import ./qml { inherit pkgs self; }

@@ -4,6 +4,8 @@
   runtimeInputs = [
     pkgs.vdirsyncer
     pkgs.khal
+    pkgs.todoman
+    pkgs.util-linux
     pkgs.coreutils
   ];
   script = ./script.nu;

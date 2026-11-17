@@ -17,6 +17,8 @@ RowLayout {
   // Characters the detail always takes, so what is beside it holds still as the value changes.
   property int detailChars: 0
   property string tone: "normal"
+  // Its text struck through, for what is done.
+  property bool struck: false
 
   spacing: Config.theme.spacing
 
@@ -32,6 +34,7 @@ RowLayout {
     // Squeezed, text ends in an ellipsis, but a short value (80%, EN) stays whole.
     Layout.minimumWidth: Math.min(implicitWidth, 6 * Metrics.cell)
     elide: Text.ElideRight
+    font.strikeout: root.struck
     tone: root.tone
     text: root.text
   }

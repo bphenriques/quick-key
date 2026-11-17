@@ -1,0 +1,4 @@
+- name: personal
+  url: https://dav.test/user/calendar/
+  color: "#ff8c00"
+  tasks: true

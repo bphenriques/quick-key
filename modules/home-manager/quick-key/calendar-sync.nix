@@ -33,6 +33,14 @@ in
       description = "Events written for the shell, with vdirsyncer's and khal's own files beside it";
     };
 
+    tasksFile = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = "${dirOf cfg.eventsFile}/tasks.json";
+      defaultText = lib.literalExpression ''"''${dirOf config.programs.quick-key.calendarSync.eventsFile}/tasks.json"'';
+      description = "Tasks written for the tasks plugin, from the calendars with `tasks: true`";
+    };
+
     interval = lib.mkOption {
       type = lib.types.str;
       default = "*:0/30";
@@ -45,6 +53,32 @@ in
       default = "${lib.getExe' pkgs.systemd "systemctl"} --user start --no-block quick-key-calendar-sync.service";
       defaultText = lib.literalExpression ''"''${lib.getExe' pkgs.systemd "systemctl"} --user start --no-block quick-key-calendar-sync.service"'';
       description = "Command that syncs now, for a menu entry";
+    };
+
+    exec.done = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = lib.escapeShellArgs [
+        (lib.getExe cfg.package)
+        "done"
+        cfg.calendars
+        cfg.eventsFile
+      ];
+      defaultText = lib.literalMD "calendar-sync's `done`, given a task's id";
+      description = "Command that ticks a task off, given its id, for the tasks plugin";
+    };
+
+    exec.reopen = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = lib.escapeShellArgs [
+        (lib.getExe cfg.package)
+        "reopen"
+        cfg.calendars
+        cfg.eventsFile
+      ];
+      defaultText = lib.literalMD "calendar-sync's `reopen`, given a task's id";
+      description = "Command that unticks a task, given its id, for the tasks plugin";
     };
   };
 

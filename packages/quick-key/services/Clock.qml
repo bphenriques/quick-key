@@ -39,6 +39,19 @@ Singleton {
     });
   }
 
+  // A day as the files key it: 2026-11-12.
+  function dayKey(day) {
+    return Qt.formatDate(day, "yyyy-MM-dd");
+  }
+
+  // "2026-11-12" or "2026-11-12T14:00" as local time: Date would read a bare date as UTC.
+  function parse(text) {
+    const [date, time] = text.split("T");
+    const [year, month, day] = date.split("-").map(Number);
+    const [hours, minutes] = (time ?? "0:0").split(":").map(Number);
+    return new Date(year, month - 1, day, hours, minutes);
+  }
+
   function ordinal(day) {
     if (day >= 11 && day <= 13) return "th";
     return ["th", "st", "nd", "rd"][day % 10] ?? "th";

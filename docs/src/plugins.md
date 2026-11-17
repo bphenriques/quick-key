@@ -49,7 +49,7 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 - `value`: what `show` and `items` look up; a plain line is its value.
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
 - `enabled`: the ids of `items` that can be picked; unset, all.
-- `items`: items that change, each `{ id, label, icon, detail, active, enabled }`, when the settings list none.
+- `items`: items that change, each `{ id, label, icon, detail, active, enabled, done, tone }`, when the settings list none. A `done` item dims, struck through, and can still be picked; `tone` (`warning`) marks one that needs attention.
 
 A line that is not a JSON object is logged and skipped. The shell ignores fields it does not know, and a plugin may read its own (`recording`'s `since`).
 
@@ -63,6 +63,7 @@ List one by name to use it: `plugins.dunst = { };`.
 - **`recording`:** a pill on every screen while recording, and the elapsed time as a status. Its source gives `{"active": true, "since": <epoch seconds>}` while recording; `stop` ends it.
 - **`dictation`:** a pill while dictating, a spinner while transcribing. Its source gives `recording`, `transcribing` or anything else for idle; `stop` ends it.
 - **`niriMinimap`:** a minimap of niri's workspaces as you move between them. Sized by `height`, `maxWidth`, `opacity` and `borderWidth`.
+- **`tasks`:** tasks to tick off, from the tasks file its `file` names (see [Tasks](tasks.md)). `done` and `reopen` are given a task's id and write the file again; `sync` runs as the menu opens on a file five minutes old, and after a tick; `remind`, unset by default, is given a title and a time as a timed task falls due.
 - **`ask`:** a panel for quick turns with an agent, below.
 
 ## Ask

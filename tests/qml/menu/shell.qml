@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs.services
 import qs.ui
 import qs.widgets.menu
 
@@ -36,6 +37,14 @@ ShellRoot {
           ] } });
           return play.enabled === false && play.icon === Glyphs.playPause && track.paired && track.icon === "T" && awake.enabled && !awake.active;
         }
+      },
+      {
+        name: "pick shows the level's whole list in the picker, and the chosen item runs as its digit would",
+        start: () => {
+          menu.push({ kind: "entry", title: "Devices", entry: { list: "devices", submenu: [{ key: "space", desc: "All...", action: "pick" }] } });
+          menu.activate(menu.items.find(item => item.key === "space"), "space");
+        },
+        until: () => Plugins.get("picked")?.text === "b-2"
       }
     ]
   }

@@ -32,8 +32,11 @@ Singleton {
   readonly property string window: "\u{F0614}" // md-application_outline
   readonly property string record: "\u{F044B}" // md-record_rec
   readonly property string calendar: "\u{F00ED}" // md-calendar
+  readonly property string checkbox: "\u{F0131}" // md-checkbox_blank_outline
+  readonly property string checkboxChecked: "\u{F0132}" // md-checkbox_marked
   readonly property var brightnessLevels: ["\u{F00DE}", "\u{F00DF}", "\u{F00E0}"] // md-brightness_5, _6, _7
   readonly property string check: "\u{F012C}" // md-check
+  readonly property string search: "\u{F0349}" // md-magnify
   readonly property string submenu: "\u{F0142}" // md-chevron_right
   readonly property string link: "\u{F0337}" // md-link
   readonly property var audioDevices: ({

@@ -16,6 +16,10 @@ StatusLine {
   property string icon: ""
   property bool quiet: false
   property bool active: false
+  // A listed item that is done (a ticked task): dim and struck through, though it still runs.
+  property bool done: false
+  // A listed item's own tone (warning on a late task), over its status's.
+  property string itemTone: ""
   property var pins: []
   // Only the glyph and detail, e.g. on or off, without the text.
   property bool compact: false
@@ -31,8 +35,9 @@ StatusLine {
   detail: value.detail || fallbackDetail
   detailGlyphs: value.glyphs ?? fallbackGlyphs
   detailChars: compact ? builtin?.detailChars ?? 0 : 0
-  // Dim only in the header: a row dims when it cannot run (ListItem), never for having nothing to report.
-  tone: plugin?.tone || (builtin?.tone ? builtin.tone() : "") || (active || quiet && plugin?.active ? "primary" : quiet ? "dim" : "normal")
+  struck: done
+  // Dim only in the header or when done: a row dims when it cannot run (ListItem), never for having nothing to report.
+  tone: done ? "dim" : itemTone || plugin?.tone || (builtin?.tone ? builtin.tone() : "") || (active || quiet && plugin?.active ? "primary" : quiet ? "dim" : "normal")
 
   // Only in its own level: beside the volume on the top row it reads as a picture of that number.
   Meter {

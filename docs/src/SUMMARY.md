@@ -6,6 +6,7 @@
 - [Configuration](configuration.md)
 - [Menu](menu.md)
 - [Calendar](calendar.md)
+- [Tasks](tasks.md)
 - [Kit](kit.md)
 - [Plugins](plugins.md)
 - [Recipes](recipes.md)

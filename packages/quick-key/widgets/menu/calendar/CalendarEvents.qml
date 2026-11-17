@@ -16,14 +16,14 @@ ListView {
 
   signal picked(var row)
 
-  readonly property string selectedKey: Calendar.key(selected)
+  readonly property string selectedKey: Clock.dayKey(selected)
 
   // The timeline, with the selected day in it even when it has no events; kept apart from `model`, which cannot be read while ListView replaces it.
   readonly property var rows: {
     const at = Calendar.timeline.findIndex(row => row.key >= selectedKey);
     if (at >= 0 && Calendar.timeline[at].key === selectedKey) return Calendar.timeline;
     const before = at < 0 ? Calendar.timeline.length : at;
-    const day = Calendar.parse(selectedKey);
+    const day = Clock.parse(selectedKey);
     return Calendar.timeline.slice(0, before).concat([{ id: "", key: selectedKey, day, event: null }], Calendar.timeline.slice(before));
   }
 
@@ -107,7 +107,7 @@ ListView {
         topPadding: root.headingPadding
         tone: "dim"
         font.bold: true
-        text: root.heading(Calendar.parse(day.section))
+        text: root.heading(Clock.parse(day.section))
       }
     }
   }

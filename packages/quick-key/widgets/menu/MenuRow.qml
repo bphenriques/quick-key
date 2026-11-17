@@ -30,6 +30,8 @@ ListItem {
     fallbackGlyphs: row.modelData.glyphs ?? []
     icon: row.modelData.icon ?? ""
     active: row.modelData.active ?? false
+    done: row.modelData.done ?? false
+    itemTone: row.modelData.tone ?? ""
     pins: row.modelData.entry?.pins ?? []
   }
 }

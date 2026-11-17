@@ -44,7 +44,7 @@ QtObject {
     const rows = Calendar.timeline;
     const at = focused ? rows.findIndex(row => row.id === focused) : -1;
     if (name === "Return") {
-      const first = rows.find(row => row.key >= Calendar.key(selected));
+      const first = rows.find(row => row.key >= Clock.dayKey(selected));
       if (first) focus(first);
       return true;
     }

@@ -69,8 +69,59 @@ ShellRoot {
         name: "a read with every reads again while the menu is open",
         start: () => Plugins.menuOpen = true,
         until: () => Number(Plugins.get("ticker")?.text) >= Number(root.ticked) + 2
+      },
+      {
+        name: "tasks list by due, undated last, done ones in place, a late one in warning; the status names the most urgent open one due by today and counts them, warning when one is late",
+        start: () => root.tasks("write"),
+        until: () => {
+          const tasks = Plugins.get("tasks");
+          const ticked = (tasks?.items ?? []).find(item => item.id === "e");
+          return tasks.items.map(item => item.id).join() === "a,e,f,b,c,d" && tasks.text === "Late" && tasks.detail === "3"
+            && tasks.tone === "warning" && ticked.done && ticked.icon === Glyphs.checkboxChecked
+            && tasks.items.map(item => item.tone).join() === "warning,,,,,";
+        }
+      },
+      {
+        name: "picking an open task ticks it off, then syncs",
+        start: () => Plugins.get("tasks").select("c"),
+        until: () => Plugins.get("tasks").items.find(item => item.id === "c").done && Plugins.get("synced")?.text === "synced"
+      },
+      {
+        name: "picking a done task unticks it",
+        start: () => Plugins.get("tasks").select("e"),
+        until: () => !Plugins.get("tasks").items.find(item => item.id === "e").done
+      },
+      {
+        name: "a timed task reminds as it falls due",
+        start: () => Plugins.get("tasks").remind(),
+        until: () => (Plugins.get("reminded")?.text ?? "").startsWith("Now ")
+      },
+      {
+        name: "opening the menu leaves a fresh tasks file alone",
+        start: () => {
+          root.tasks("unsync");
+          Plugins.get("tasks").refresh();
+        },
+        until: () => suite.waited >= 1000 && !Plugins.get("synced")?.text
+      },
+      {
+        name: "opening the menu syncs a tasks file five minutes old",
+        start: () => root.tasks("write", "2026-01-01T00:00"),
+        until: () => {
+          if (Plugins.get("tasks").state.updated === "2026-01-01T00:00") Plugins.get("tasks").refresh();
+          return Plugins.get("synced")?.text === "synced";
+        }
+      },
+      {
+        name: "the count stops at 9+",
+        start: () => root.tasks("many"),
+        until: () => Plugins.get("tasks").detail === "9+"
       }
     ]
+  }
+
+  function tasks(...args) {
+    Quickshell.execDetached(["sh", Quickshell.env("XDG_CONFIG_HOME") + "/quick-key/tasks.sh", ...args]);
   }
 
   Connections {

@@ -2,7 +2,15 @@
   "plugins": {
     "devices": {
       "type": "command",
-      "read": "echo '{\"items\": [{\"id\": \"a-1\"}, {\"id\": \"b-2\"}]}'"
+      "read": "echo '{\"items\": [{\"id\": \"a-1\"}, {\"id\": \"b-2\"}]}'",
+      "select": "sh -c 'echo \"$1\" > \"$XDG_RUNTIME_DIR/picked\"' sh"
+    },
+    "picked": {
+      "type": "command",
+      "file": "picked"
     }
+  },
+  "menu": {
+    "picker": "sed -n 2p"
   }
 }

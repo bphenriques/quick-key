@@ -22,10 +22,6 @@ Singleton {
   readonly property var next: store.events.find(event => !event.allDay && event.end > Clock.date)
     ?? store.events.find(event => event.end > Clock.date) ?? null
 
-  function key(day) {
-    return Qt.formatDate(day, "yyyy-MM-dd");
-  }
-
   // The events on a day, all-day first, then by start.
   function eventsOn(day) {
     return store.days[key(day)] ?? [];
@@ -39,14 +35,6 @@ Singleton {
   // Text on one line, as a row shows it: an address often comes as several.
   function line(text) {
     return (text ?? "").trim().replace(/\s*\n\s*/g, ", ");
-  }
-
-  // "2026-11-12" or "2026-11-12T14:00" as local time: Date would read a bare date as UTC.
-  function parse(text) {
-    const [date, time] = text.split("T");
-    const [year, month, day] = date.split("-").map(Number);
-    const [hours, minutes] = (time ?? "0:0").split(":").map(Number);
-    return new Date(year, month - 1, day, hours, minutes);
   }
 
   QtObject {
@@ -66,8 +54,8 @@ Singleton {
 
     function read(json) {
       events = Array.from(json.events ?? []).map(event => {
-        const start = root.parse(event.start);
-        const end = root.parse(event.end);
+        const start = Clock.parse(event.start);
+        const end = Clock.parse(event.end);
         // An all-day event's end is its last day; it runs to the start of the next.
         if (event.allDay) end.setDate(end.getDate() + 1);
         const title = root.line(event.title);
@@ -79,7 +67,7 @@ Singleton {
         const last = event.end > event.start ? new Date(event.end - 1) : event.start;
         for (let day = new Date(event.start.getFullYear(), event.start.getMonth(), event.start.getDate()); day <= last;
              day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)) {
-          const key = root.key(day);
+          const key = Clock.dayKey(day);
           if (!byDay[key]) byDay[key] = [];
           byDay[key].push(event);
         }
@@ -87,12 +75,12 @@ Singleton {
       const rows = [];
       for (const key of Object.keys(byDay).sort()) {
         byDay[key].sort((a, b) => (b.allDay - a.allDay) || (a.start - b.start));
-        const day = root.parse(key);
+        const day = Clock.parse(key);
         for (const event of byDay[key]) rows.push({ id: key + " " + event.id, key, day, event });
       }
       days = byDay;
       timeline = rows;
-      updated = json.updated ? root.parse(json.updated) : null;
+      updated = json.updated ? Clock.parse(json.updated) : null;
       syncing = !!json.syncing;
       error = json.error ?? "";
       loaded = true;

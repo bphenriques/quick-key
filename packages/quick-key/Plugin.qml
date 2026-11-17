@@ -28,7 +28,7 @@ Scope {
   // Its compositor key, shown in the header while Super is held.
   property string shortcut: settings.shortcut
 
-  // What a menu entry with `list` set to its name shows, each { id, label, icon, detail, active, enabled }.
+  // What a menu entry with `list` set to its name shows, each { id, label, icon, detail, active, enabled, done, tone }.
   property var items: state.items ?? []
 
   // What a click on its header item, or `<name> activate` over IPC, does.

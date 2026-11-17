@@ -98,6 +98,8 @@ Scope {
       detail: item.detail ?? "",
       active: item.active ?? false,
       enabled: item.enabled ?? true,
+      done: item.done ?? false,
+      tone: item.tone ?? "",
       select: () => plugin.select(item.id)
     }));
   }
@@ -114,7 +116,7 @@ Scope {
 
   // Whether an entry can run now: a command always, an action when it has something to act on.
   function available(entry) {
-    return Actions.builtin[entry.action]?.available() ?? true;
+    return Actions.builtin[entry.action]?.available(listed(level?.entry?.list)) ?? true;
   }
 
   // A pair runs one command or action per key, shown as one row (Down and Up).
@@ -178,8 +180,10 @@ Scope {
     if (action) {
       const second = MenuKeys.names(entry.key).indexOf(name);
       if (action.pair && second < 0) return;
-      if (entry.keepOpen === false) hide();
-      action.run(second === 1);
+      // Read before hide(), which leaves the level.
+      const list = listed(level?.entry?.list);
+      if (entry.keepOpen === false || action.closes) hide();
+      action.run(second === 1, list);
       return;
     }
     const cmd = MenuKeys.isPair(entry) ? Array.from(entry.cmd)[MenuKeys.names(entry.key).indexOf(name)] : entry.cmd;

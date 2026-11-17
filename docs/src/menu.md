@@ -63,5 +63,8 @@ Each field takes one of its column's names, or a plugin's.
 | Keyboard layout | `keyboardLayout` | | `keyboardLayout` | | `keyboardLayout` |
 | Keep awake | `keepAwake` | | `keepAwake` | `keepAwake` | `keepAwake` |
 | Clock | | | | | `clock` |
+| Any list | | | `pick` | | |
 
-Volume steps by `audio.step` up to `audio.max`. `brightness` is the one action that runs a tool: `brightness.adjust`.
+Volume steps by `audio.step` up to `audio.max`. `brightness` and `pick` are the actions that run a tool: `brightness.adjust`, and `menu.picker`, a dmenu-like command such as `fuzzel --dmenu`.
+
+`pick`, on `space` by rule, shows its level's whole list in `menu.picker`, past the nine on digits, and the chosen item runs as its digit would.

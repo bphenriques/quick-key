@@ -143,6 +143,8 @@ Singleton {
         }
         property int width: 960
         property int columns: 2
+        // A dmenu-like command (fuzzel --dmenu) the `pick` action shows a level's whole list in: a line per item in, the chosen one out; unset, no picking.
+        property string picker
       }
 
       property JsonObject clock: JsonObject {

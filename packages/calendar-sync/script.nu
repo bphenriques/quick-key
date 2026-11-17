@@ -1,4 +1,4 @@
-# Syncs the calendars in a YAML file (calendars.yaml) into quick-key's events file (docs/src/calendar.md), via vdirsyncer and khal.
+# Syncs the calendars in a YAML file (calendars.yaml) into quick-key's events file (docs/src/calendar.md), via vdirsyncer and khal, and their tasks into its tasks file (docs/src/tasks.md), via todoman.
 
 # ISO throughout, so khal's output is read without parsing dates.
 const KHAL_LOCALE = "[locale]
@@ -35,6 +35,7 @@ def read-calendars [file: path]: nothing -> list {
       (if not (is-string $c.url?) { "url is missing" })
       (if not ((is-string $c.color?) and $c.color =~ '^#[0-9a-fA-F]{6}$') { "color must be quoted \"#rrggbb\"" })
       (if not ($auth == null or (valid-auth $auth)) { "basicAuth needs a username, and a password or a passwordFile" })
+      (if not ($c.tasks? in [null true false]) { "tasks must be true or false" })
     ] | compact | each {|problem| $"entry ($it.index + 1): ($problem)" }
   } | flatten
   let repeated = $calendars | each {|c| if (is-record $c) { $c.name? } } | compact | uniq --repeated
@@ -56,15 +57,17 @@ def vdirsyncer-auth [auth]: nothing -> string {
   $"\nusername = ($auth.username | to json --raw)\n($password)"
 }
 
+# A calendar of tasks syncs both ways, so a tick here reaches its server, the server winning a conflict; the rest are only read.
 def vdirsyncer-config [calendars: list, state: path]: nothing -> string {
   $calendars | each {|c| $"
 [pair ($c.name)]
 a = \"($c.name)_remote\"
 b = \"($c.name)_local\"
 collections = null
+conflict_resolution = \"a wins\"
 
 [storage ($c.name)_remote]
-type = \"http\"
+type = \"(if $c.tasks? == true { 'caldav' } else { 'http' })\"
 url = ($c.url | to json --raw)(vdirsyncer-auth $c.basicAuth?)
 
 [storage ($c.name)_local]
@@ -106,6 +109,54 @@ def events [config: path]: nothing -> list {
   }
 }
 
+def todoman-config [state: path]: nothing -> path {
+  $state | path join todoman.py
+}
+
+# Only the calendars of tasks, linked into a folder of their own: todoman reads every calendar its glob finds.
+def write-todoman-config [calendars: list, relative: path] {
+  # Whole, as the links and todoman both read it from elsewhere.
+  let state = $relative | path expand
+  let lists = $state | path join tasks
+  rm -rf $lists
+  mkdir $lists
+  for c in $calendars { ^ln -s ($state | path join vdirs $c.name) ($lists | path join $c.name) }
+  [
+    $"path = ($lists | path join '*' | to json --raw)"
+    $"cache_path = ($state | path join todoman.db | to json --raw)"
+    $"default_list = ($calendars | first | get name | to json --raw)"
+    'date_format = "%Y-%m-%d"'
+    'time_format = "%H:%M"'
+  ] | str join "\n" | save -f (todoman-config $state)
+}
+
+# todoman gives seconds since the epoch, a day's own as midnight; coreutils, as nushell's local time keeps today's offset all year.
+def local-time [seconds: int]: nothing -> string {
+  let time = ^date --date $"@($seconds)" "+%Y-%m-%dT%H:%M"
+  if ($time | str ends-with "T00:00") { $time | str substring 0..9 } else { $time }
+}
+
+# Open tasks, and those done today, so a tick stays to be undone until tomorrow.
+def write-tasks [calendars: list, state: path, error?: string] {
+  let today = date now | format date "%Y-%m-%d"
+  let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
+  let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY
+  | from json
+  | where {|t| not $t.completed or ($t.completed_at != null and ((local-time $t.completed_at) | str starts-with $today)) }
+  | each {|t| {
+    id: ($t.id | into string)
+    title: $t.summary
+    due: (if $t.due == null { null } else { local-time $t.due })
+    done: $t.completed
+    color: ($colors | get --optional $t.list | default "")
+  } }
+  let content = { updated: (date now | format date "%Y-%m-%dT%H:%M"), tasks: $tasks }
+  let file = $state | path join tasks.json
+  # One line, as quick-key reads a plugin's file.
+  (if $error == null { $content } else { $content | insert error $error }) | to json --raw | save -f $"($file).tmp"
+  mv -f $"($file).tmp" $file
+}
+
 # vdirsyncer's first error line, its addresses left out: one can be secret.
 def reason [stderr: string]: nothing -> string {
   let errors = $stderr | lines | where {|line| $line =~ '(?i)error' }
@@ -133,6 +184,7 @@ def main [calendars_file: path, events_file: path] {
   }
   if ($calendars | is-empty) {
     print $"No calendars in ($calendars_file), so no events."
+    rm -rf ($state | path join tasks) ($state | path join tasks.json)
     rm -f $events_file
     return
   }
@@ -157,13 +209,70 @@ def main [calendars_file: path, events_file: path] {
   let events = try { events $khal } catch { $kept.events }
   let now = date now | format date "%Y-%m-%dT%H:%M"
 
+  let lists = $calendars | where {|c| $c.tasks? == true }
+  if ($lists | is-empty) {
+    rm -rf ($state | path join tasks) ($state | path join tasks.json)
+  } else {
+    let failed = $failures | where name in $lists.name
+    locked $events_file tasks $calendars_file $events_file ...(if ($failed | is-empty) { [] } else { [--error (failure $failed)] })
+  }
+
   if ($failures | is-empty) {
     write-events $events_file { updated: $now, events: $events }
   } else {
-    let error = $failures | group-by reason | items {|reason, failed| $"($failed.name | str join ', '): ($reason)" } | str join "; "
+    let error = failure $failures
     # Only a sync that fetched something makes the events newer.
     let updated = if ($failures | length) == ($calendars | length) { $kept.updated } else { $now }
     write-events $events_file { updated: $updated, events: $events, error: $error }
     exit 1
   }
+}
+
+def failure [failures: list]: nothing -> string {
+  $failures | group-by reason | items {|reason, failed| $"($failed.name | str join ', '): ($reason)" } | str join "; "
+}
+
+def task-lists [calendars_file: path]: nothing -> list {
+  read-calendars $calendars_file | where {|c| $c.tasks? == true }
+}
+
+# This script's subcommand, under the state's lock: a tick and a sync's rewrite of the tasks file never interleave, and neither waits on the network.
+def locked [events_file: path, ...args] {
+  ^flock ($events_file | path dirname | path join lock) nu $env.CURRENT_FILE ...$args
+}
+
+# Writes the tasks file from what is already synced, without syncing.
+def "main tasks" [calendars_file: path, events_file: path, --error: string] {
+  let state = $events_file | path dirname
+  let lists = task-lists $calendars_file
+  write-todoman-config $lists $state
+  write-tasks $lists $state $error
+}
+
+# Ticks a task off by its id in the tasks file, and writes that file again; the next sync takes it to its server.
+def "main done" [calendars_file: path, events_file: path, id: int] {
+  locked $events_file tick done $calendars_file $events_file $id
+}
+
+def "main reopen" [calendars_file: path, events_file: path, id: int] {
+  locked $events_file tick reopen $calendars_file $events_file $id
+}
+
+# What done and reopen run under the lock. todoman has no command to reopen: its status goes back to needing action, the record of its completion dropped.
+def "main tick" [how: string, calendars_file: path, events_file: path, id: int] {
+  let state = $events_file | path dirname
+  let config = todoman-config $state
+  if $how == "done" {
+    ^todo --config $config done $id | ignore
+  } else {
+    let file = ^todo --config $config path $id | str trim
+    open --raw $file
+    | split row "\n"
+    | where {|line| not ($line =~ '^(COMPLETED|PERCENT-COMPLETE)[:;]') }
+    | each {|line| $line | str replace --regex '^STATUS:COMPLETED(\r?)$' 'STATUS:NEEDS-ACTION$1' }
+    | str join "\n"
+    | save -f $"($file).tmp"
+    mv -f $"($file).tmp" $file
+  }
+  write-tasks (task-lists $calendars_file) $state
 }
