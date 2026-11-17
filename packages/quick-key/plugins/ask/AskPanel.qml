@@ -258,6 +258,10 @@ Scope {
               }
             }
 
+            Divider {
+              Layout.fillWidth: true
+            }
+
             // Pasted for the next prompt; Escape clears it with the text.
             Thumbnail {
               Layout.leftMargin: Metrics.line + Config.theme.spacing
