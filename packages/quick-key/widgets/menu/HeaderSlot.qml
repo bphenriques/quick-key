@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
-// A third of the header; sides get at least their items' width so the clock is never cut, the centre shortens its text.
+// A third of a bar; sides get at least their items' width so the clock is never cut, the centre shortens its text.
 Item {
   id: slot
 
@@ -16,7 +16,6 @@ Item {
   // Set on the sides: at least what their items need, or what either side needs when there is a centre to keep centred.
   property real sideMinimum: 0
   property bool centred: false
-  default property alias content: row.data
 
   visible: !centre || slot.items.length > 0
   Layout.fillWidth: true
@@ -36,7 +35,7 @@ Item {
     spacing: 0
 
     Repeater {
-      model: Array.from(slot.items)
+      model: slot.items
 
       HeaderItem {
         menu: slot.menu

@@ -6,15 +6,15 @@ import qs.ui
 import qs.builtins
 import qs.widgets.menu.calendar
 
-// The menu's state and keys; every level, static or filled at runtime, is a list of items { key, desc, ... }.
+// The menu's state and keys; a level is its bar over its body, each a list of items { key, desc, ... }, static or filled at runtime.
 Scope {
   id: root
 
   property bool open: false
   // Levels opened below the top one, the last is shown: an entry's (kind "entry") or an app's own menu (kind "menu").
   property var stack: []
-  // Super held a second shows the header's compositor keys, not at once, so a Super shortcut does not flash them.
-  property bool shortcutsShown: false
+  // The modifier held a second, whose keys show: "Ctrl" the bar's, "Super" the compositor's; not at once, so a chord does not flash them.
+  property string held: ""
   readonly property CalendarModel calendar: CalendarModel {}
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
@@ -26,24 +26,32 @@ Scope {
   readonly property int width: level?.width ?? Config.menu.width
   // Why a level's list is empty, in its place; "" while it lists something.
   readonly property string emptyText: level?.entry?.list && rows.length === 0 ? Lists.builtin[level.entry.list]?.empty() ?? "" : ""
-  // A level below another shows the way to it (Tray › Solaar).
-  readonly property string title: inCalendar ? calendar.title : stack.map(level => level.title).join(" › ")
-  // The top-level entry the clock opens.
-  readonly property var calendarEntry: itemsOf(null).find(item => item.entry.view === "calendar") ?? null
-  // Keys a level takes beyond its rows, shown under the header (KeyLegend): { key, what }.
+  // The level's bar by slot: the top level's is Config.menu.header, an entry's its own `header`, an app's menu the app and the way into it (blueman › Plugins).
+  readonly property var bar: level === null ? Config.menu.header : level.kind === "entry" ? level.entry.header ?? {} : {}
+  readonly property var barSlots: level?.kind === "menu" ? { left: [appOf(stack.filter(level => level.kind === "menu"))], center: [], right: [] }
+    : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
+  readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
+  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }.
   readonly property var legend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
 
+  // An entry as a row or a bar item shows it.
+  function itemOf(entry) {
+    const action = Actions.builtin[entry.action];
+    return {
+      key: entry.key ?? "",
+      desc: entry.desc,
+      status: entry.status ?? "",
+      format: entry.format ?? "",
+      icon: entry.icon ?? (action ? action.icon() : ""),
+      enabled: available(entry),
+      paired: isPair(entry),
+      active: isOn(entry.activeWhen ?? action?.state),
+      entry: entry
+    };
+  }
+
   function itemsOf(level) {
-    if (level === null)
-      return entries.map(entry => ({
-        key: entry.key,
-        desc: entry.desc,
-        status: entry.status ?? "",
-        icon: entry.icon ?? Actions.builtin[entry.action]?.icon ?? "",
-        enabled: available(entry),
-        paired: isPair(entry),
-        entry: entry
-      }));
+    if (level === null) return entries.map(itemOf);
     if (level.kind === "menu") {
       const children = Array.from(menuOpener.children.values).filter(child => !child.isSeparator && child.enabled);
       const labels = children.map(child => child.text.replace(/_/g, ""));
@@ -60,18 +68,28 @@ Scope {
       }));
     }
 
-    // An entry's own rows by letter, then what its list holds by digit.
-    const own = Array.from(level.entry.submenu ?? []).map(entry => ({
-      key: entry.key,
-      desc: entry.desc,
-      icon: entry.icon ?? Actions.builtin[entry.action]?.icon ?? "",
-      enabled: available(entry),
-      paired: isPair(entry),
-      active: isOn(entry.activeWhen ?? Actions.builtin[entry.action]?.state),
-      listed: /^[0-9]$/.test(entry.key),
-      entry: entry
-    }));
+    // An entry's own rows by letter, in their level (a value beside its label, with its meter), then what its list holds by digit.
+    const own = Array.from(level.entry.submenu ?? []).map(entry => Object.assign(itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true }));
     return own.concat(numbered(level.entry.list, level.entry.pins));
+  }
+
+  // A bar slot's items: a name is a status or plugin to show, an entry with a list each of its items, any other entry itself.
+  function barOf(slot) {
+    return Array.from(slot ?? []).reduce((items, part) => items.concat(typeof part === "string" ? [{ key: "", desc: part, status: part }]
+      : part.list ? barList(part) : [itemOf(part)]), []);
+  }
+
+  // An app's menu as its bar shows it: the app's icon, and its name with the submenus opened since.
+  function appOf(menus) {
+    return { key: "", desc: menus.map(menu => menu.title).join(" › "), image: menus[0]?.image ?? "", named: true };
+  }
+
+  // A list in a bar: its `limit` (at most nine) on digits, then 0 for the whole list in the picker when there are more.
+  function barList(entry) {
+    const all = listed(entry.list);
+    const shown = numbered(entry.list, entry.pins).slice(0, entry.limit ?? 9);
+    const more = all.length - shown.length;
+    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, enabled: Config.menu.picker !== "", closes: true, select: () => Picker.pick(all) }) : shown;
   }
 
   // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order.
@@ -96,6 +114,7 @@ Scope {
       desc: item.label ?? item.id,
       icon: item.icon ?? "",
       detail: item.detail ?? "",
+      meter: item.meter,
       active: item.active ?? false,
       enabled: item.enabled ?? true,
       done: item.done ?? false,
@@ -141,8 +160,10 @@ Scope {
     else show();
   }
 
+  // A top-level entry by its key, in the body or the bar, as a compositor shortcut opens it.
   function toggleEntry(key) {
-    const item = find(itemsOf(null), key);
+    const header = Config.menu.header;
+    const item = find(itemsOf(null).concat(barOf(header.left), barOf(header.center), barOf(header.right)), key);
     if (!item) return;
     if (level?.entry === item.entry) {
       hide();
@@ -156,7 +177,7 @@ Scope {
   function hide() {
     open = false;
     stack = [];
-    shortcutsShown = false;
+    held = "";
   }
 
   // A level starts with no event in focus, coming back to it too.
@@ -192,23 +213,25 @@ Scope {
     Quickshell.execDetached(["sh", "-c", cmd]);
   }
 
-  // A listed item does what it says; an entry with a level below opens it, any other runs.
+  // A listed item does what it says; an entry with a level below opens it, any other runs; a plugin's name in a bar activates it.
   function activate(item, name) {
     if (item.enabled === false) return;
     if (item.select) {
       if (item.closes) hide();
       item.select();
+    } else if (!item.entry) {
+      Plugins.get(item.status)?.activate();
     } else if (item.entry.submenu || item.entry.list || item.entry.view) {
       calendar.reset();
-      push({ kind: "entry", title: item.entry.desc, status: item.entry.status, entry: item.entry, width: item.entry.width });
+      push({ kind: "entry", entry: item.entry, width: item.entry.width });
     } else {
       run(item.entry, name);
     }
   }
 
-  // A tray app's own menu: Ctrl with its digit, or a right click.
+  // A tray app's own menu: Alt with its digit, or a right click.
   function openMenu(item) {
-    if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, handle: item.app.menu, width: level.width });
+    if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, image: item.image ?? "", handle: item.app.menu, width: width });
   }
 
   // The mouse wheel on a row: a pair runs itself; an entry runs the action of its own on that key, e.g. volume.
@@ -217,18 +240,21 @@ Scope {
     if (action && available(action)) run(action, name);
   }
 
-  // Esc and Backspace are kept free of entries by the check (Validation.qml).
+  // The body's keys first, then Alt for an item's own menu and Ctrl for the bar (with Alt, a bar item's own menu); Esc and Backspace are kept free by the check.
   function handleKey(event) {
     const name = MenuKeys.name(event);
     // A modifier on its own has no name, and Super belongs to the compositor: a chord with it runs nothing here.
     if (!name || event.modifiers & Qt.MetaModifier) return false;
-    const item = find(items, name);
-    const listed = find(rows, name.replace(/^Ctrl\+/, ""));
+    const [, ctrl, alt, key] = name.match(/^(Ctrl\+)?(Alt\+)?(.*)$/);
+    const own = find(items, name);
+    const target = alt && /^[0-9]$/.test(key) ? find(ctrl ? barItems : rows, key) : null;
+    const barred = ctrl && !alt ? find(barItems, key) : null;
     if (name === "Escape") hide();
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (name === "BackSpace" && level) back();
-    else if (name.startsWith("Ctrl+") && listed) openMenu(listed);
-    else if (item) activate(item, name);
+    else if (own) activate(own, name);
+    else if (target) openMenu(target);
+    else if (barred) activate(barred, key);
     else return false;
     return true;
   }

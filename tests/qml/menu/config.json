@@ -11,6 +11,23 @@
     }
   },
   "menu": {
-    "picker": "sed -n 2p"
+    "picker": "sed -n 2p",
+    "header": {
+      "left": [
+        {
+          "key": "x",
+          "desc": "X",
+          "cmd": "echo bar > \"$XDG_RUNTIME_DIR/picked\""
+        }
+      ],
+      "center": [],
+      "right": [
+        {
+          "desc": "Devices",
+          "list": "devices",
+          "limit": 1
+        }
+      ]
+    }
   }
 }

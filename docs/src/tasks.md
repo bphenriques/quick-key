@@ -1,6 +1,6 @@
 # Tasks
 
-The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. Its status names the most urgent open task due by today and counts them, up to `9+`, in the warning tone when one is late.
+The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
 
 ```nix
 plugins.tasks = {

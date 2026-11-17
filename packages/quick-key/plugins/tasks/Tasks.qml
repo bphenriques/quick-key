@@ -4,24 +4,30 @@ import qs
 import qs.services
 import qs.ui
 
-// Tasks from a file (docs/src/tasks.md): the most urgent due by today as its status, each on a digit to tick and untick.
+// Tasks from a file (docs/src/tasks.md): how many are due by today as its status, each on a digit to tick and untick.
 Plugin {
   id: root
 
   readonly property string today: Clock.dayKey(Clock.date)
   // By due, undated last, never by whether done: a tick keeps its digit, so the same key unticks it.
-  readonly property var tasks: Array.from(state.tasks ?? []).sort((a, b) => (a.due ?? "~").localeCompare(b.due ?? "~") || a.title.localeCompare(b.title))
+  readonly property var tasks: Array.from(state.tasks ?? []).sort((a, b) => root.order(a.due ?? "~", b.due ?? "~") || a.title.localeCompare(b.title))
   // Open and due by today, late first.
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
   // The tasks reminded of, by id and due, so each is once.
   property var reminded: ({})
 
   glyph: settings.glyph
-  text: due.length > 0 ? due[0].title : ""
+  text: ""
   // Two characters at most, so the row holds still.
   detail: due.length > 9 ? "9+" : due.length > 0 ? String(due.length) : ""
   tone: due.length > 0 && due[0].due.slice(0, 10) < today ? "warning" : ""
+  fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.stamp(Clock.parse(state.updated)) : "" })
   items: tasks.map(task => ({ id: task.id, label: task.title, icon: task.done ? Glyphs.checkboxChecked : Glyphs.checkbox, detail: when(task.due), done: !!task.done, tone: !task.done && task.due && task.due.slice(0, 10) < today ? "warning" : "" }))
+
+  // Dates by code point: a locale may sort the undated mark (~) before digits.
+  function order(a, b) {
+    return a < b ? -1 : a > b ? 1 : 0;
+  }
 
   // Its time when today, else its day, and the time when it has one.
   function when(due) {

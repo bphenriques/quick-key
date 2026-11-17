@@ -20,5 +20,6 @@ FileView {
     property string primary
     property string alert
     property string warning
+    property string border
   }
 }

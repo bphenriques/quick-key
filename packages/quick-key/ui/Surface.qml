@@ -1,10 +1,11 @@
 import QtQuick
+import QtQuick.Window
 import qs
 
-// A panel: the theme's background, outlined in primary.
+// A panel: the theme's background, outlined in its border colour.
 Rectangle {
   color: Tone.surface()
-  border.color: Tone.color("primary")
-  border.width: Config.theme.borderWidth
+  border.color: Config.colors.border
+  border.width: Config.theme.borderWidth / Screen.devicePixelRatio
   radius: Config.theme.radius
 }

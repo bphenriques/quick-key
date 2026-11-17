@@ -5,49 +5,51 @@ import qs.services
 import qs.ui
 import qs.builtins
 
-// Status line for a menu status id (`status` in programs.quick-key.settings.menu.entries), or an icon and label without one.
+// A status by name (`status` in an entry), or an icon and label without one. On a row its label stays and the status follows as a value; in a bar the status alone.
 StatusLine {
   id: root
 
   required property string status
+  // The entry's own look over the status's fields ("{song}"); after a | its detail, kept whole on the right ("{title}|{when}").
+  property string format: ""
   property string fallback: ""
   property string fallbackDetail: ""
   property var fallbackGlyphs: []
   property string icon: ""
+  // In a bar: the status alone, dim unless lit.
   property bool quiet: false
   property bool active: false
   // A listed item that is done (a ticked task): dim and struck through, though it still runs.
   property bool done: false
-  // A listed item's own tone (warning on a late task), over its status's.
+  // A listed item's own tone for its value (warning on a late task's date), over its status's.
   property string itemTone: ""
   property var pins: []
-  // Only the glyph and detail, e.g. on or off, without the text.
-  property bool compact: false
+  // An entry's own row in its level: its value follows its label, with the status's meter; a listed item brings its own meter (each output's volume).
+  property bool inLevel: false
+  property var listedMeter: undefined
 
   readonly property var builtin: Statuses.builtin[status] ?? null
   readonly property var plugin: builtin ? null : Plugins.get(status)
-  readonly property var value: builtin ? builtin.value((id, name) => root.pinned(id, name), quiet) : { text: plugin?.text ?? "", detail: plugin?.detail ?? "" }
+  readonly property var fields: builtin ? builtin.fields((id, name) => root.pinned(id, name)) : Object.assign({ text: plugin?.text ?? "", detail: plugin?.detail ?? "" }, plugin?.fields ?? {})
+  readonly property var value: format ? { text: Statuses.formatted(format.split("|")[0], fields), detail: Statuses.formatted(format.split("|")[1] ?? "", fields) } : builtin ? builtin.value(fields) : { text: plugin?.text ?? "", detail: plugin?.detail ?? "" }
+  readonly property string statusTone: plugin?.tone || (builtin?.tone ? builtin.tone() : "")
+  readonly property bool blank: glyph === "" && text === "" && detail === ""
 
-  glyph: !status ? icon : builtin ? builtin.glyph() : plugin?.glyph ?? ""
-  // In the header an icon sits closer to its own text than to its neighbours.
+  glyph: icon || (builtin ? builtin.glyph() : plugin?.glyph ?? "")
+  // In a bar an icon sits closer to its own text than to its neighbours.
   spacing: quiet ? Config.theme.spacing / 2 : Config.theme.spacing
-  text: compact ? "" : value.text || fallback
-  detail: value.detail || fallbackDetail
-  detailGlyphs: value.glyphs ?? fallbackGlyphs
-  detailChars: compact ? builtin?.detailChars ?? 0 : 0
+  title: status && !quiet ? fallback : ""
+  text: status ? value.text : fallback
+  detail: status ? value.detail : fallbackDetail
+  detailGlyphs: status ? value.glyphs ?? [] : fallbackGlyphs
   struck: done
-  // Dim only in the header or when done: a row dims when it cannot run (ListItem), never for having nothing to report.
-  tone: done ? "dim" : itemTone || plugin?.tone || (builtin?.tone ? builtin.tone() : "") || (active || quiet && plugin?.active ? "primary" : quiet ? "dim" : "normal")
-
-  // Only in its own level: beside the volume on the top row it reads as a picture of that number.
-  Meter {
-    visible: root.compact && !!root.builtin?.meter
-    // A neighbour, not part of the value: the full gap, half of it from the row.
-    Layout.leftMargin: Config.theme.spacing / 2
-    Layout.preferredWidth: Config.theme.meterLength
-    value: root.builtin?.meter ? root.builtin.meter() : 0
-    tone: root.builtin?.muted && root.builtin.muted() ? "dim" : "primary"
-  }
+  meter: listedMeter !== undefined ? listedMeter : inLevel && builtin?.meter ? builtin.meter() : -1
+  // A listed item's meter is lit while it is in use, like its value.
+  meterTone: listedMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
+  // A row's label and icon stay plain, its value takes the tone; a listed item in use is lit whole; a bar dims what is not lit.
+  tone: done ? "dim" : quiet ? statusTone || (active || plugin?.active ? "primary" : "dim") : !status && active ? "primary" : "normal"
+  // A status's tone is its own value's: a format shows other fields.
+  valueTone: done ? "dim" : itemTone || !format && statusTone || (active ? "primary" : "dim")
 
   function pinned(id, name) {
     return Array.from(pins).find(pin => MenuKeys.glob(pin.match, id))?.label ?? name;

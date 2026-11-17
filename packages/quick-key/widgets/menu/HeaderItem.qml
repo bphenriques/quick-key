@@ -1,45 +1,59 @@
 import QtQuick
 import QtQuick.Layouts
 import qs
-import qs.builtins
 import qs.services
 import qs.ui
 
-// A header item by name: built in, or a plugin's. A click does what its compositor key does, shown while Super is held.
+// An item of a bar: an entry as its status or else its icon, a listed item (a tray app) as its image, or a status or plugin by name.
 ListItem {
   id: item
 
   required property MenuModel menu
-  required property string modelData
-  readonly property var builtin: HeaderItems.builtin[modelData] ?? null
-  readonly property var plugin: builtin ? null : Plugins.get(modelData)
-  readonly property string shortcut: plugin?.shortcut ?? Config[modelData]?.shortcut ?? ""
+  required property var modelData
+  readonly property var entry: modelData.entry ?? null
+  readonly property var plugin: entry ? null : Plugins.get(modelData.status)
+  // Whether a click does anything: a name only shows, unless it is a plugin's.
+  readonly property bool runs: !!(modelData.select || plugin || entry && (entry.cmd || entry.action || entry.submenu || entry.list || entry.view))
+  readonly property string shortcut: entry?.shortcut ?? plugin?.shortcut ?? ""
+  readonly property string hint: menu.held === "Ctrl" && modelData.key ? "Ctrl+" + modelData.key : menu.held === "Super" ? shortcut : ""
 
   // Shrinks, never grows: its text gives way before its neighbours.
   Layout.fillWidth: true
   Layout.maximumWidth: implicitWidth
-  visible: builtin ? builtin.shown() : plugin !== null
-  enabled: !builtin || (builtin.enabled ? builtin.enabled(menu) : !!builtin.activate)
-  dimsWhenDisabled: false
-  onActivated: builtin ? builtin.activate(menu) : plugin?.activate()
+  visible: !modelData.status || !status.blank
+  enabled: runs && modelData.enabled !== false
+  dimsWhenDisabled: runs
+  onActivated: menu.activate(modelData, modelData.key)
+  onSecondaryActivated: menu.openMenu(modelData)
+  onScrolled: up => menu.act(modelData, up ? "Up" : "Down")
 
   KeyHint {
-    visible: item.menu.shortcutsShown && item.shortcut !== ""
-    key: item.shortcut
-    chars: MenuKeys.label(item.shortcut).length
-  }
-
-  Label {
-    visible: !!item.builtin?.label
-    Layout.fillWidth: true
-    elide: Text.ElideRight
-    font.bold: true
-    text: item.builtin?.label ? item.builtin.label() : ""
+    visible: item.hint !== ""
+    key: item.hint
+    chars: MenuKeys.label(item.hint).length
   }
 
   MenuStatus {
-    visible: !item.builtin?.label
+    id: status
+    visible: !!item.modelData.status
     quiet: true
-    status: item.builtin?.label ? "" : item.modelData
+    status: item.modelData.status ?? ""
+    format: item.modelData.format ?? ""
+    active: item.modelData.active ?? false
+  }
+
+  Icon {
+    visible: !item.modelData.status && (!!item.modelData.image || !!item.modelData.icon)
+    source: item.modelData.image ?? ""
+    glyph: item.modelData.icon ?? ""
+    tone: item.modelData.active ? "primary" : item.modelData.image ? "normal" : "dim"
+    monochrome: !!item.modelData.image && Config.theme.monochromeTray
+  }
+
+  // An app's name beside its icon (its menu's bar), an app without an icon, or how many more there are.
+  Label {
+    visible: !item.modelData.status && (item.modelData.named || !item.modelData.image && !item.modelData.icon)
+    tone: "dim"
+    text: item.modelData.desc
   }
 }

@@ -19,6 +19,7 @@ Singleton {
     readonly property color primary: adapter.theme.primary || userTheme.palette.primary || shippedTheme.palette.primary || "#81a2be"
     readonly property color alert: adapter.theme.alert || userTheme.palette.alert || shippedTheme.palette.alert || "#cc6666"
     readonly property color warning: adapter.theme.warning || userTheme.palette.warning || shippedTheme.palette.warning || "#f0c674"
+    readonly property color border: adapter.theme.border || userTheme.palette.border || shippedTheme.palette.border || primary
   }
 
   readonly property alias theme: adapter.theme
@@ -109,6 +110,8 @@ Singleton {
         property string primary
         property string alert
         property string warning
+        // Panels' outline; unset, primary.
+        property string border
         property real surfaceOpacity: 0.92
         property real highlightOpacity: 0.25
         property real dimOpacity: 0.5
@@ -119,7 +122,10 @@ Singleton {
         property int radius: 10
         property int itemRadius: 6
         property int iconSize: 24
-        property int borderWidth: 2
+        // Tray icons in a bar in greys, like the glyphs beside them.
+        property bool monochromeTray: false
+        // Outlines and dividers, in device pixels.
+        property int borderWidth: 1
         property int spacing: 8
         property int padding: 14
         property int itemPaddingX: 8
@@ -135,11 +141,11 @@ Singleton {
       property JsonObject menu: JsonObject {
         // Unset (null), the starter menu in menu.json (Config.starterEntries); setting entries replaces it whole.
         property var entries: null
-        // The top level's header, like waybar's modules-left, -center and -right: built-in items and plugins, by name (docs/src/menu.md).
+        // The top level's bar, like waybar's modules-left, -center and -right: entries, and statuses and plugins by name (docs/src/menu.md).
         property JsonObject header: JsonObject {
-          property var left: ["clock"]
+          property var left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar" }]
           property var center: []
-          property var right: ["keepAwake", "keyboardLayout", "battery"]
+          property var right: [{ key: "i", desc: "Keep awake", action: "keepAwake" }, { key: "k", desc: "Keyboard layout", status: "keyboardLayout", action: "keyboardLayout" }, "battery", { desc: "Tray", list: "tray" }]
         }
         property int width: 960
         property int columns: 2
@@ -197,13 +203,11 @@ Singleton {
       property JsonObject keepAwake: JsonObject {
         // Inhibits idle until its stdin closes; exec, so stopping it releases the lock.
         property string command: 'exec systemd-inhibit --what=idle --who=quick-key --why="Keep awake" cat'
-        property string shortcut
       }
 
       property JsonObject keyboardLayout: JsonObject {
         // A short label per layout, in the compositor's order; unset, the first letters of its name.
         property var labels: []
-        property string shortcut
       }
 
       property JsonObject battery: JsonObject {
@@ -216,7 +220,7 @@ Singleton {
       property JsonObject music: JsonObject {
         // The MPRIS identity of the player the Music status follows; unset, the one playing, else any.
         property string player
-        // music, shuffle and repeat.
+        // music, paused, off (nothing playing), shuffle and repeat.
         property var glyphs: ({})
       }
 

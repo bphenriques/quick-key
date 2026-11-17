@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell.Widgets
 import qs
 
@@ -10,6 +11,8 @@ Item {
   property string source: ""
   property string tone: "normal"
   property real size: Config.theme.iconSize
+  // An image in greys, to sit with the glyphs beside it.
+  property bool monochrome: false
 
   visible: glyph !== "" || source !== ""
   implicitWidth: size
@@ -29,6 +32,10 @@ Item {
     anchors.fill: parent
     visible: root.source !== ""
     source: root.source
+    layer.enabled: root.monochrome
+    layer.effect: MultiEffect {
+      saturation: -1
+    }
     // An image has no colour to dim, so a dim one fades instead.
     opacity: root.tone === "dim" ? Config.theme.dimOpacity : 1
 

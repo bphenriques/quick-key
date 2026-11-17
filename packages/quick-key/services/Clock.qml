@@ -39,6 +39,11 @@ Singleton {
     });
   }
 
+  // A past moment as a sync's age reads: its time today, else its day too.
+  function stamp(moment) {
+    return format(moment, moment.toDateString() === date.toDateString() ? "%H:%M" : "%-d %b %H:%M");
+  }
+
   // A day as the files key it: 2026-11-12.
   function dayKey(day) {
     return Qt.formatDate(day, "yyyy-MM-dd");

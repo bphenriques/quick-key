@@ -11,96 +11,100 @@ Singleton {
 
   readonly property var none: ({ text: "", detail: "" })
 
-  // Each: glyph(), value(pinned, quiet) as { text, detail, glyphs }, and optionally tone(), detailChars, inLevel, and a meter() for its level, dim while muted().
+  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), and a meter() for its level, dim while muted().
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
-      value: pinned => !Audio.sink ? root.none : { text: pinned(Audio.sink.name, Audio.sinkName), detail: Audio.sinkMuted ? "muted" : Math.round(Audio.sinkVolume * 100) + "%" },
-      // Room for "muted", so the glyph beside a volume holds still.
-      detailChars: 5,
+      fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.sinkMuted ? "muted" : Math.round(Audio.sinkVolume * 100) + "%" },
+      value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
       meter: () => Audio.sinkVolume,
       muted: () => Audio.sinkMuted
     },
     source: {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
-      value: pinned => !Audio.source ? root.none : { text: pinned(Audio.source.name, Audio.sourceName), detail: Audio.sourceMuted ? "muted" : Math.round(Audio.sourceVolume * 100) + "%" },
-      detailChars: 5,
+      fields: pinned => !Audio.source ? {} : { device: pinned(Audio.source.name, Audio.sourceName), volume: Audio.sourceMuted ? "muted" : Math.round(Audio.sourceVolume * 100) + "%" },
+      value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
       meter: () => Audio.sourceVolume,
       muted: () => Audio.sourceMuted
     },
+    // Its glyph says whether it plays; with nothing playing it says so, which reads as state rather than something missing.
     music: {
-      glyph: () => Glyphs.music,
-      value: () => !Music.present || !Music.title ? root.none : {
-        text: Music.title + (Music.artist ? " · " + Music.artist : ""),
-        detail: Music.playing ? "" : "paused",
-        glyphs: [Music.repeat ? Glyphs.repeat : "", Music.shuffle ? Glyphs.shuffle : ""].filter(glyph => glyph)
-      }
+      glyph: () => !Music.present || !Music.title ? Glyphs.musicOff : Music.playing ? Glyphs.music : Glyphs.musicPaused,
+      fields: () => !Music.present || !Music.title ? { song: "No song playing" } : { song: Music.title + (Music.artist ? " · " + Music.artist : ""), title: Music.title, artist: Music.artist, state: Music.playing ? "" : "paused" },
+      value: fields => ({
+        text: fields.song,
+        detail: "",
+        glyphs: !fields.title ? [] : [Music.repeat ? Glyphs.repeat : "", Music.shuffle ? Glyphs.shuffle : ""].filter(glyph => glyph)
+      })
     },
     network: {
       glyph: () => Network.kind === "wifi" ? Glyphs.wifi : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected,
-      value: pinned => ({
-        text: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? "Ethernet" : "Disconnected",
-        detail: Network.wifiEnabled ? "" : "Wi-Fi off"
-      })
+      fields: pinned => ({
+        name: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? "Ethernet" : "Disconnected",
+        wifi: Network.wifiEnabled ? "" : "Wi-Fi off"
+      }),
+      value: fields => ({ text: fields.name, detail: fields.wifi })
     },
     bluetooth: {
       glyph: () => !Bluez.enabled ? Glyphs.bluetoothOff : Bluez.connected.length ? Glyphs.bluetoothConnected : Glyphs.bluetooth,
-      value: pinned => {
-        if (!Bluez.present) return root.none;
-        if (!Bluez.enabled) return { text: "", detail: "off" };
+      fields: pinned => {
+        if (!Bluez.present) return {};
+        if (!Bluez.enabled) return { state: "off" };
         const [device, ...others] = Bluez.connected;
-        if (!device) return { text: "No device connected", detail: "" };
-        if (others.length) return { text: Bluez.connected.length + " devices connected", detail: "" };
-        return { text: pinned(device.address, device.name), detail: device.batteryAvailable ? Math.round(device.battery * 100) + "%" : "" };
-      }
-    },
-    tray: {
-      glyph: () => Glyphs.tray,
-      value: pinned => ({ text: Tray.items.map(app => pinned(app.id, app.title || app.id)).join(", "), detail: "" }),
-      // Its value is the list its level already shows.
-      inLevel: false
+        if (!device) return { device: "No device connected" };
+        if (others.length) return { device: Bluez.connected.length + " devices connected" };
+        return { device: pinned(device.address, device.name), battery: device.batteryAvailable ? Math.round(device.battery * 100) + "%" : "" };
+      },
+      value: fields => ({ text: fields.device ?? "", detail: fields.state ?? fields.battery ?? "" })
     },
     brightness: {
       glyph: () => Glyphs.brightness(Brightness.percentage),
-      value: () => !Brightness.present ? root.none : { text: "", detail: Brightness.lit ? Brightness.percentage + "%" : "off" },
+      fields: () => !Brightness.present ? {} : { level: Brightness.lit ? Brightness.percentage + "%" : "off" },
+      value: fields => ({ text: "", detail: fields.level ?? "" }),
       meter: () => Brightness.lit ? Brightness.percentage / 100 : 0
     },
     calendar: {
       glyph: () => Glyphs.calendar,
-      value: (pinned, quiet) => root.calendar(quiet)
+      fields: () => root.calendar(),
+      value: fields => ({ text: "", detail: fields.when ?? "" })
+    },
+    clock: {
+      glyph: () => Glyphs.calendar,
+      fields: () => ({ date: Clock.text }),
+      value: fields => ({ text: fields.date, detail: "" })
     },
     battery: {
       glyph: () => Power.present ? Glyphs.battery(Power.percentage, Power.pluggedIn) : "",
-      value: () => ({ text: Power.present ? Power.percentage + "%" : "", detail: "" }),
+      fields: () => !Power.present ? {} : { level: Power.percentage + "%" },
+      value: fields => ({ text: fields.level ?? "", detail: "" }),
       tone: () => Power.level === "critical" ? "alert" : Power.level === "low" ? "warning" : ""
     },
     keyboardLayout: {
       glyph: () => Glyphs.keyboard,
-      value: () => ({ text: KeyboardLayout.label || KeyboardLayout.name, detail: "" })
+      fields: () => ({ layout: KeyboardLayout.label || KeyboardLayout.name }),
+      value: fields => ({ text: fields.layout, detail: "" })
     },
     keepAwake: {
       glyph: () => Glyphs.keepAwake,
+      fields: () => ({}),
       value: () => root.none,
       tone: () => IdleInhibit.enabled ? "primary" : ""
     }
   })
 
-  // In a level's header how old the events are; on a row the next event, and when.
-  function calendar(quiet) {
-    if (!Calendar.enabled) return none;
-    if (quiet) {
-      const updated = Calendar.updated;
-      return {
-        text: "",
-        // Its age even after a failed sync, the line under the legend saying why: the events shown are that old.
-        detail: Calendar.syncing ? "syncing…" : !updated ? ""
-          : "updated " + Clock.format(updated, updated.toDateString() === Clock.date.toDateString() ? "%H:%M" : "%-d %b %H:%M")
-      };
-    }
+  // A format with each {field} replaced; a field without a value leaves nothing.
+  function formatted(format, fields) {
+    return format.replace(/\{(\w+)\}/g, (_, name) => fields[name] ?? "").trim();
+  }
+
+  // The next event and when, and how old the events are: their age even after a failed sync, the line under the legend saying why.
+  function calendar() {
+    if (!Calendar.enabled) return {};
+    const updated = Calendar.syncing ? "syncing…" : Calendar.updated ? "updated " + Clock.stamp(Calendar.updated) : "";
     const next = Calendar.next;
-    if (!next) return none;
+    if (!next) return { updated };
     const today = next.start.toDateString() === Clock.date.toDateString() || next.start < Clock.date;
     const when = next.allDay ? (today ? "today" : Clock.format(next.start, "%a")) : Clock.format(next.start, today ? "%H:%M" : "%a %H:%M");
-    return { text: next.title, detail: when };
+    return { title: next.title, when, updated };
   }
 }

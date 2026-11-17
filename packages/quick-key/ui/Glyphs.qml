@@ -9,6 +9,8 @@ Singleton {
   readonly property string microphone: Config.audio.glyphs.microphone ?? "\u{F036C}" // md-microphone
   readonly property string microphoneOff: Config.audio.glyphs.microphoneOff ?? "\u{F036D}" // md-microphone_off
   readonly property string music: Config.music.glyphs.music ?? "\u{F075A}" // md-music
+  readonly property string musicPaused: Config.music.glyphs.paused ?? "\u{F03E4}" // md-pause
+  readonly property string musicOff: Config.music.glyphs.off ?? "\u{F075B}" // md-music_off
   readonly property string shuffle: Config.music.glyphs.shuffle ?? "\u{F049F}" // md-shuffle_variant
   readonly property string repeat: Config.music.glyphs.repeat ?? "\u{F0456}" // md-repeat
 

@@ -12,6 +12,6 @@ QtObject {
   property var show: ({})
   // Its items when they never change, each { id, label, icon, detail }; the source's `value` names the one in use.
   property var items: []
-  // Its compositor key, shown in the header while Super is held.
+  // Its compositor key, shown beside it while Super is held.
   property string shortcut
 }

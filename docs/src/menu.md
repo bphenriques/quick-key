@@ -1,13 +1,13 @@
 # Menu
 
-The menu is a list of entries. Each has a key and a label, and either does something or opens a level of its own.
+The menu is a list of levels. Each is an optional bar floating over its body: the body lists entries, each with a key and a label, that either do something or open a level of their own; the bar holds what you glance at.
 
 ```nix
 {
   key = "a";
   desc = "Audio output";
-  status = "sink";    # shown in place of the label: the output in use and its volume
-  list = "sinks";     # its level lists the outputs, on digits
+  status = "sink";    # on the right of its row: the output in use and its volume
+  list = "sinks";     # its level lists the outputs, on digits, each with its volume
   submenu = [         # and its actions, on letters
     { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; }
     { key = "m"; desc = "Mute"; action = "sinkMute"; }
@@ -19,51 +19,57 @@ The menu is a list of entries. Each has a key and a label, and either does somet
 ## Keys
 
 - A letter runs its entry or opens its level. `Esc` closes the menu, `Backspace` goes back.
-- Digits pick from a level's list. `Ctrl+digit` opens a tray app's own menu.
+- Digits pick from a level's list; `Alt+digit` opens an item's own menu (a tray app's).
+- `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second shows the bar's keys.
 - Two keys with a command or action each (`[ "Down" "Up" ]`) share a row; the first steps down or back.
-- `Ctrl` and `Alt` may prefix a key (`Ctrl+Left`). Hints show keys Emacs-style: `C-←`, `M-k`, `RET`, `DEL`.
-- Holding `Super` for a second shows the compositor keys each feature is bound to.
-- `menu toggleEntry <key>` over IPC opens an entry directly, for a compositor shortcut.
+- `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`) where its bar does not take it. Hints show keys Emacs-style: `C-←`, `M-k`, `RET`, `DEL`.
+- Holding `Super` for a second shows each bar entry's `shortcut`, the compositor key bound to it.
+- `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
 
 ## What an entry does
 
 One of:
 
 - `cmd`: a shell command. The menu closes, unless `keepOpen = true`.
-- `action`: a built-in action (below). It brings its icon and what lights it, keeps the menu open, and dims while it has nothing to act on (no player, no adapter).
+- `action`: a built-in action (below). It brings its icon, which shows its state (Wi-Fi off), and what lights it, keeps the menu open, and dims while it has nothing to act on (no player, no adapter).
 - `submenu`, `list` or `view`: a level. `list` adds items found at runtime on digits, `pins` keeps chosen ones on their digit, and `view = "calendar"` shows the [calendar](calendar.md).
 
-`status` shows live state in place of the label, `activeWhen` lights an entry of your own, and `icon` sets its glyph. A level is as wide as its entry's `width`, else `menu.width`.
+The label is `desc`, and never changes. `status` shows live state on the right of the row, short by default, or beside the label for an action in its level (Brightness 55%); `format` picks its fields instead (`"{song}"`), and what follows a `|` stays whole on the right (`"{title}|{when}"`). `activeWhen` lights an entry of your own, and `icon` sets its glyph. A level is as wide as its entry's `width`, else `menu.width`.
 
-## Header
+## Bars
 
-`menu.header.left`, `center` and `right` hold built-in items (`clock`, `keepAwake`, `keyboardLayout`, `battery`) and plugins, like waybar's modules. Inside a level, the header shows its title and state instead. Crowded, text shortens; icons and short values stay whole.
+`menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules; an entry's `header` is its level's, with the same slots, and a level without one is its body alone. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). An entry shows its status, else its icon, and in a bar may do nothing but show its status. An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all in `menu.picker`; `theme.monochromeTray` draws the icons in greys. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`). Crowded, text shortens; icons and short values stay whole.
 
-The clock takes `clock.format` (strftime as waybar's, plus `%o` for the English ordinal), else the locale's long date. `clock.locale` names days and months.
+```nix
+menu.header.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } ];
+menu.header.right = [ "battery" { desc = "Tray"; list = "tray"; limit = 5; } ];
+```
+
+The `clock` status takes `clock.format` (strftime as waybar's, plus `%o` for the English ordinal), else the locale's long date. `clock.locale` names days and months.
 
 ## Mouse
 
-The mouse reaches what the keys do: a click runs a row, a right click opens a tray app's menu, the wheel steps a pair (volume, brightness) or the calendar's month, and the title goes back. At the top, the clock opens the calendar.
+The mouse reaches what the keys do: a click runs a row or a bar item, a right click opens a tray app's menu, and the wheel steps a pair (volume, brightness) or the calendar's month.
 
 ## Built-in names
 
-Each field takes one of its column's names, or a plugin's.
+Each field takes one of its column's names, or a plugin's. A plugin's status gives `format` its `text`, `detail` and fields of its own.
 
-| | `status` | `list` | `action` | `activeWhen` | `menu.header` |
+| | `status` | its fields | `list` | `action` | `activeWhen` |
 |---|---|---|---|---|---|
-| Audio output | `sink` | `sinks` | `sinkVolume`, `sinkMute` | `sinkMuted` | |
-| Audio input | `source` | `sources` | `sourceVolume`, `sourceMute` | `sourceMuted` | |
-| Network | `network` | `wifi` | `wifi` | `wifi` | |
-| Bluetooth | `bluetooth` | `bluetooth` | `bluetooth` | `bluetooth` | |
-| Backlight | `brightness` | | `brightness` | | |
-| Music | `music` | | `playPause`, `track`, `repeat`, `shuffle` | `repeat`, `shuffle` | |
-| Tray | `tray` | `tray` | | | |
-| Calendar | `calendar` | | | | |
-| Battery | `battery` | | | | `battery` |
-| Keyboard layout | `keyboardLayout` | | `keyboardLayout` | | `keyboardLayout` |
-| Keep awake | `keepAwake` | | `keepAwake` | `keepAwake` | `keepAwake` |
-| Clock | | | | | `clock` |
-| Any list | | | `pick` | | |
+| Audio output | `sink` | `device`, `volume` | `sinks` | `sinkVolume`, `sinkMute` | `sinkMuted` |
+| Audio input | `source` | `device`, `volume` | `sources` | `sourceVolume`, `sourceMute` | `sourceMuted` |
+| Network | `network` | `name`, `wifi` | `wifi` | `wifi` | `wifi` |
+| Bluetooth | `bluetooth` | `device`, `battery`, `state` | `bluetooth` | `bluetooth` | `bluetooth` |
+| Backlight | `brightness` | `level` | | `brightness` | |
+| Music | `music` | `song`, `title`, `artist`, `state` | | `playPause`, `track`, `repeat`, `shuffle` | `repeat`, `shuffle` |
+| Tray | | | `tray` | | |
+| Calendar | `calendar` | `title`, `when`, `updated` | | | |
+| Clock | `clock` | `date` | | | |
+| Battery | `battery` | `level` | | | |
+| Keyboard layout | `keyboardLayout` | `layout` | | `keyboardLayout` | |
+| Keep awake | `keepAwake` | | | `keepAwake` | `keepAwake` |
+| Any list | | | | `pick` | |
 
 Volume steps by `audio.step` up to `audio.max`. `brightness` and `pick` are the actions that run a tool: `brightness.adjust`, and `menu.picker`, a dmenu-like command such as `fuzzel --dmenu`.
 

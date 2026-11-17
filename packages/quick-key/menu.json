@@ -100,19 +100,6 @@
         ]
       },
       {
-        "key": "c",
-        "desc": "Calendar",
-        "status": "calendar",
-        "view": "calendar"
-      },
-      {
-        "key": "t",
-        "desc": "Tray",
-        "width": 640,
-        "status": "tray",
-        "list": "tray"
-      },
-      {
         "key": "q",
         "desc": "Session",
         "width": 640,

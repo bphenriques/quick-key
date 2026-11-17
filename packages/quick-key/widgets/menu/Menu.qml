@@ -62,18 +62,52 @@ Scope {
       anchors.right: true
       WlrLayershell.namespace: "menu"
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-      // Clicks beside the card reach the dismiss area below.
+      // Clicks beside the bar and the card reach the dismiss area below.
       mask: Region {
         item: card
+        Region {
+          item: bar.visible ? bar : null
+        }
       }
       BackgroundEffect.blurRegion: Region {
         item: card
         radius: Config.theme.radius
+        Region {
+          item: bar.visible ? bar : null
+          radius: Config.theme.radius
+        }
       }
 
       Shadow {
         anchors.fill: card
         radius: card.radius
+      }
+
+      Shadow {
+        anchors.fill: bar
+        visible: bar.visible
+        radius: bar.radius
+      }
+
+      // The level's bar, floating over its body.
+      Surface {
+        id: bar
+        visible: root.menu.barItems.length > 0
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: card.top
+        anchors.bottomMargin: Config.theme.spacing / 2
+        width: card.width
+        height: header.implicitHeight + Config.theme.padding / 2
+
+        MenuHeader {
+          id: header
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.leftMargin: Config.theme.padding
+          anchors.rightMargin: Config.theme.padding
+          menu: root.menu
+        }
       }
 
       Surface {
@@ -84,25 +118,32 @@ Scope {
         width: root.menu.width
         height: content.implicitHeight + 2 * Config.theme.padding
 
-        function isSuper(event) {
-          return event.key === Qt.Key_Super_L || event.key === Qt.Key_Super_R || event.key === Qt.Key_Meta;
+        // The modifier whose keys show when held: Ctrl the bar's, Super the compositor's.
+        function modifier(event) {
+          if (event.key === Qt.Key_Control) return "Ctrl";
+          if (event.key === Qt.Key_Super_L || event.key === Qt.Key_Super_R || event.key === Qt.Key_Meta) return "Super";
+          return "";
         }
 
         focus: true
         Keys.onPressed: event => {
-          if (isSuper(event) && !event.isAutoRepeat) superHeld.start();
+          if (modifier(event) && !event.isAutoRepeat) {
+            held.modifier = modifier(event);
+            held.restart();
+          }
           event.accepted = root.menu.handleKey(event);
         }
         Keys.onReleased: event => {
-          if (!isSuper(event)) return;
-          superHeld.stop();
-          root.menu.shortcutsShown = false;
+          if (!modifier(event)) return;
+          held.stop();
+          root.menu.held = "";
         }
 
         Timer {
-          id: superHeld
+          id: held
+          property string modifier
           interval: 1000
-          onTriggered: root.menu.shortcutsShown = true
+          onTriggered: root.menu.held = modifier
         }
 
         ColumnLayout {
@@ -112,11 +153,6 @@ Scope {
           anchors.right: parent.right
           anchors.margins: Config.theme.padding
           spacing: Config.theme.padding
-
-          MenuHeader {
-            Layout.fillWidth: true
-            menu: root.menu
-          }
 
           // A level's legend shares its line with its actions, the keys on the left and the actions on the right.
           RowLayout {
@@ -131,7 +167,8 @@ Scope {
             }
 
             Item {
-              Layout.fillWidth: root.menu.legend.length > 0
+              visible: root.menu.legend.length > 0
+              Layout.fillWidth: true
             }
 
             // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
@@ -147,11 +184,13 @@ Scope {
               Repeater {
                 model: root.menu.actions
 
+                // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
                 MenuRow {
                   required property int index
+                  hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
                   menu: root.menu
-                  Layout.fillWidth: true
-                  Layout.preferredWidth: 1
+                  Layout.fillWidth: !hugs
+                  Layout.preferredWidth: hugs ? -1 : 1
                   chars: root.menu.columnChars(index, actionsGrid.columns)
                 }
               }
@@ -209,6 +248,7 @@ Scope {
               Layout.fillWidth: true
               Layout.preferredWidth: 2
               Layout.alignment: Qt.AlignTop
+              title: root.menu.calendar.title
               selected: root.menu.calendar.selected
               onStepped: months => root.menu.calendar.moveSelected(0, months, 0)
               onPicked: day => root.menu.calendar.select(day)
@@ -216,7 +256,6 @@ Scope {
 
             Divider {
               Layout.fillHeight: true
-              implicitWidth: Config.theme.borderWidth / 2
               visible: events.visible
             }
 

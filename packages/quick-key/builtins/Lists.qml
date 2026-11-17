@@ -9,22 +9,22 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: items() as { id, desc, select, closes, ... }, the icon a pin shows while absent, why it is empty, extra keys.
+  // Each: items() as { id, desc, select, closes, detail, meter, ... }, the icon a pin shows while absent, why it is empty, extra keys.
   readonly property var builtin: ({
     tray: {
       icon: Glyphs.tray,
       empty: () => "No apps in the tray",
-      legend: [{ key: "Ctrl+digit", what: "app menu" }],
+      legend: [{ key: "Alt+digit", what: "app menu" }],
       items: () => Tray.items.map(app => ({ id: app.id, desc: app.title || app.id, image: app.icon, app, closes: true, select: () => app.activate() }))
     },
     wifi: {
       icon: Glyphs.wifi,
-      empty: () => Network.wifiEnabled ? "No saved networks in range" : "",
+      empty: () => Network.wifiEnabled ? "No saved networks in range" : "Wi-Fi is off",
       items: () => Network.known.map(network => ({ id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, select: () => root.toggle(network) }))
     },
     bluetooth: {
       icon: Glyphs.bluetooth,
-      empty: () => !Bluez.present ? "No Bluetooth adapter" : Bluez.enabled ? "No paired devices" : "",
+      empty: () => !Bluez.present ? "No Bluetooth adapter" : Bluez.enabled ? "No paired devices" : "Bluetooth is off",
       items: () => !Bluez.enabled ? [] : Bluez.paired.map(device => ({
         id: device.address,
         desc: device.name,
@@ -46,14 +46,20 @@ Singleton {
     }
   })
 
+  // Each device with its own volume and meter.
   function audio(devices, current) {
-    return devices.map(device => ({
-      id: device.name,
-      desc: device.label,
-      icon: Glyphs.audioDevice(device.type),
-      active: device.name === current,
-      select: () => Audio.select(device)
-    }));
+    return devices.map(device => {
+      const audio = device.node.audio;
+      return {
+        id: device.name,
+        desc: device.label,
+        icon: Glyphs.audioDevice(device.type),
+        active: device.name === current,
+        detail: audio?.muted ? "muted" : Math.round((audio?.volume ?? 0) * 100) + "%",
+        meter: audio?.volume ?? 0,
+        select: () => Audio.select(device)
+      };
+    });
   }
 
   // A device or network: connects it, or disconnects it when connected.

@@ -25,13 +25,15 @@ Scope {
   property bool active: state.active ?? false
   // The status's tone when it needs one (alert for do-not-disturb); unset, lit by active.
   property string tone: state.tone ?? ""
-  // Its compositor key, shown in the header while Super is held.
+  // What an entry's `format` reads by name, beside `text` and `detail`.
+  property var fields: state.fields ?? ({})
+  // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
 
   // What a menu entry with `list` set to its name shows, each { id, label, icon, detail, active, enabled, done, tone }.
   property var items: state.items ?? []
 
-  // What a click on its header item, or `<name> activate` over IPC, does.
+  // What a click on it in a bar, or `<name> activate` over IPC, does.
   function activate() {}
 
   // What choosing one of its items does, given the item's id.

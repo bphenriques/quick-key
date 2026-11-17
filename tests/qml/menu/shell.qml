@@ -1,10 +1,11 @@
 import QtQuick
 import Quickshell
+import qs.builtins
 import qs.services
 import qs.ui
 import qs.widgets.menu
 
-// What the menu makes of its entries: a list's digits, key names and hints, and what an action brings.
+// What the menu makes of its entries: a list's digits, key names and hints, what an action brings, the bar's keys and an entry's format.
 ShellRoot {
   Suite {
     cases: [
@@ -45,6 +46,25 @@ ShellRoot {
           menu.activate(menu.items.find(item => item.key === "space"), "space");
         },
         until: () => Plugins.get("picked")?.text === "b-2"
+      },
+      {
+        name: "Ctrl reaches the bar: its entry by its key",
+        start: () => menu.handleKey({ key: Qt.Key_X, modifiers: Qt.ControlModifier, text: "" }),
+        until: () => Plugins.get("picked")?.text === "bar"
+      },
+      {
+        name: "a digit with Ctrl picks from the bar's list",
+        start: () => menu.handleKey({ key: Qt.Key_1, modifiers: Qt.ControlModifier, text: "" }),
+        until: () => Plugins.get("picked")?.text === "a-1"
+      },
+      {
+        name: "past its limit, a bar's list shows the whole list in the picker on 0",
+        start: () => menu.handleKey({ key: Qt.Key_0, modifiers: Qt.ControlModifier, text: "" }),
+        until: () => Plugins.get("picked")?.text === "b-2"
+      },
+      {
+        name: "a format fills its fields, and a field without a value leaves nothing",
+        until: () => Statuses.formatted("{title} · {when}", { title: "Lunch", when: "13:00" }) === "Lunch · 13:00" && Statuses.formatted("{none} x", {}) === "x"
       }
     ]
   }

@@ -10,7 +10,7 @@ Most plugins need no QML: `type = "command"`, under any name. A source gives a v
 plugins.doNotDisturb = {
   type = "command";
   watch = "dnd-status --follow";             # prints true or false on every change
-  activate = "dnd-toggle";                   # a click on its header item
+  activate = "dnd-toggle";                   # a click on it in a bar
   show = {
     "true"  = { glyph = "󰂛"; tone = "alert"; active = true; };
     "false" = { glyph = "󰂚"; };
@@ -123,9 +123,9 @@ What it gets:
 
 What it gives:
 
-- `glyph`, `text`, `detail`, `active` and `tone`, shown wherever its name is a `status` or a header item.
-- `activate()` for a click on its header item, and `refresh()`, called as the menu opens.
-- `items` and `select(id)` for an entry whose `list` is its name.
+- `glyph`, `text`, `detail`, `active` and `tone`, shown wherever its name is a `status`, and `fields` by name for an entry's `format`.
+- `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
+- `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `shortcut`, its compositor key.
 
 Every plugin answers `<name> activate` and `<name> refresh` over IPC.

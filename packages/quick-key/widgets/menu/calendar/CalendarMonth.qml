@@ -11,6 +11,8 @@ Item {
   id: root
 
   required property var selected
+  // Its month and year, over the grid.
+  property string title
 
   signal stepped(int months)
   signal picked(var day)
@@ -32,10 +34,19 @@ Item {
     return Array.from({ length: 42 }, (_, i) => new Date(first.getFullYear(), first.getMonth(), 1 - lead + i));
   }
 
-  implicitHeight: grid.implicitHeight
+  implicitHeight: titleLabel.implicitHeight + Config.theme.itemPaddingY + grid.implicitHeight
+
+  Label {
+    id: titleLabel
+    x: Config.theme.itemPaddingX
+    font.bold: true
+    text: root.title
+  }
 
   GridLayout {
     id: grid
+    anchors.top: titleLabel.bottom
+    anchors.topMargin: Config.theme.itemPaddingY
     anchors.left: parent.left
     anchors.right: parent.right
     columns: 7

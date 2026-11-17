@@ -111,14 +111,14 @@ plugins.backup = {
 
 The script writes `running` to the file as it starts and empties it as it ends; the shell reads it on every change, with nothing running in between.
 
-## In the header
+## In the bar
 
 ```nix
 plugins.dunst = { };
-menu.header.right = [ "dunst" "keepAwake" "keyboardLayout" "battery" ];
+menu.header.right = [ "dunst" "battery" ];
 ```
 
-A plugin in the header shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same.
+A plugin in a bar shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same. For a key, make it an entry: `{ key = "d"; desc = "Do not disturb"; status = "dunst"; cmd = "dunstctl set-paused toggle"; }` runs on `C-d`.
 
 ## Keep a device on its digit
 

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import qs
 
 // A rounded capsule around a row of content, outlined in its tone's colour.
@@ -13,7 +14,7 @@ Surface {
   implicitHeight: row.implicitHeight + padding
   radius: height / 2
   border.color: Tone.color(tone)
-  border.width: Config.theme.borderWidth
+  border.width: Config.theme.borderWidth / Screen.devicePixelRatio
 
   Row {
     id: row
