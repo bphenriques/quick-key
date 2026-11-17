@@ -34,5 +34,6 @@ pkgs.runCommand "quick-key-calendar-sync"
     grep -q '^STATUS:NEEDS-ACTION' state/vdirs/personal/bills.ics || fail "reopen marks the file as needing action"
     ! grep -qE '^(COMPLETED|PERCENT-COMPLETE)' state/vdirs/personal/bills.ics || fail "reopen drops the record of completion"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "reopen keeps the reminder"
+    [ ! -e state/__pycache__ ] || fail "todoman leaves no bytecode beside its config"
     touch $out
   ''

@@ -63,8 +63,7 @@ def vdirsyncer-config [calendars: list, state: path]: nothing -> string {
 [pair ($c.name)]
 a = \"($c.name)_remote\"
 b = \"($c.name)_local\"
-collections = null
-conflict_resolution = \"a wins\"
+collections = null(if $c.tasks? == true { (char nl) + 'conflict_resolution = "a wins"' } else { '' })
 
 [storage ($c.name)_remote]
 type = \"(if $c.tasks? == true { 'caldav' } else { 'http' })\"
