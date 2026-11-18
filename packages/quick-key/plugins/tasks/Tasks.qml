@@ -77,10 +77,10 @@ Plugin {
   }
 
   // An added task shows at once, dim until the file has it; its command waits its turn as a tick does.
-  function submit(text) {
+  function submit(text, background, after) {
     failure = "";
     adding = adding.concat([text]);
-    queue = queue.concat([{ verb: "add", arg: text }]);
+    queue = queue.concat([{ verb: "add", arg: text, after: after }]);
     next();
   }
 
@@ -134,11 +134,12 @@ Plugin {
   // Each tick and add is written to the file in turn; a failed one shows the file's state again. The sync after the last takes them to the server.
   Process {
     id: toggler
-    // { verb, arg }: done or reopen and an id, or add and a title.
+    // { verb, arg, after }: done or reopen and an id, or add and a title, then what runs once it is added.
     property var job: null
     onExited: code => {
       // An add is over as its command is, whatever title the file gave it (a command may read a date out of it).
       if (job.verb === "add") root.adding = root.adding.filter(title => title !== job.arg);
+      if (code === 0) root.exec(job.after);
       if (code !== 0 && job.verb === "add") {
         root.failure = "Could not add " + job.arg;
       } else if (code !== 0) {

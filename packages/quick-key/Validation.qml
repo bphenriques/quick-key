@@ -17,6 +17,8 @@ Singleton {
 
   readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
   readonly property var views: ["calendar"]
+  // The letters a view takes for itself (CalendarModel.keys), so no input takes them.
+  readonly property var viewLetters: ({ calendar: ["t"] })
   // Esc closes the menu, Backspace goes back a level and ? lists the keys no row shows.
   readonly property var reservedKeys: ["Escape", "BackSpace", "?"]
 
@@ -41,6 +43,7 @@ Singleton {
       if (builtin.includes(name)) found.push(at + " takes a built-in name");
       if (["watch", "read", "file"].filter(source => plugin[source] != null).length > 1) found.push(at + " sets more than one of watch, read and file");
       if (plugin.every != null && plugin.read == null) found.push(at + " sets every without read");
+      if (plugin.type === "ask" && !plugin.ask) found.push(at + " needs ask, the command it asks");
     }
     return found;
   }
@@ -72,16 +75,19 @@ Singleton {
     return found;
   }
 
-  // An input takes a letter its level leaves free, and gives its text to its cmd or else to a plugin the level lists.
-  function inputProblems(entry, plugins, inBar) {
+  // An input takes a letter its level leaves free, and gives its text to its cmd, its plugin or else to a plugin the level lists.
+  function inputProblems(entry, plugins) {
     const input = entry.input;
     const found = [];
-    const unknown = Object.keys(input).filter(key => !["key", "desc", "cmd"].includes(key));
+    const unknown = Object.keys(input).filter(key => !["key", "desc", "cmd", "plugin", "format", "after"].includes(key));
     if (unknown.length) found.push("sets input." + unknown.join(", input.") + ", which no input takes");
-    if (inBar || entry.submenu == null && entry.list == null) found.push("can only set input on a level with submenu or list");
+    if (entry.submenu == null && entry.list == null && entry.view == null) found.push("can only set input on a level with submenu, list or view");
     if (typeof input.desc !== "string" || !/^[A-Za-z]$/.test(input.key ?? "")) found.push("needs an input with a letter for its key and a desc");
-    if ((entry.submenu ?? []).some(row => [].concat(row.key ?? []).includes(input.key))) found.push("binds its input's key twice");
-    if (input.cmd == null && !plugins.includes(entry.list)) found.push("gives its input's text to nothing: needs input.cmd, or a list that is a plugin");
+    if ((entry.submenu ?? []).some(row => [].concat(row.key ?? []).includes(input.key)) || (viewLetters[entry.view] ?? []).includes(input.key)) found.push("binds its input's key twice");
+    if (input.cmd != null && input.plugin != null) found.push("gives its input's text to both input.cmd and input.plugin");
+    if (input.plugin != null && !plugins.includes(input.plugin)) found.push("gives its input's text to plugin '" + input.plugin + "', which is not one");
+    if (input.cmd == null && input.plugin == null && !plugins.includes(entry.list)) found.push("gives its input's text to nothing: needs input.cmd, input.plugin, or a list that is a plugin");
+    if (input.format != null && !String(input.format).includes("{text}")) found.push("sets input.format without {text}, where the text goes");
     return found;
   }
 
@@ -119,7 +125,7 @@ Singleton {
     if (entry.list != null && (entry.submenu ?? []).some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
-    if (entry.input != null) found.push(...inputProblems(entry, plugins, inBar));
+    if (entry.input != null) found.push(...inputProblems(entry, plugins));
     return found;
   }
 }

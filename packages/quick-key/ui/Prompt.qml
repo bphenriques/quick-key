@@ -2,12 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A line of text to send: its key while it waits (a level's), else a glyph, then the text growing to `maxLines`. Keys reach `keyPressed` first; Escape the owner leaves clears it, then gives the keys back (`unfocused`, `stepBack`).
+// A line of text to send: its key while it waits (a level's), else a glyph, a spinner in their place while what it sends to is busy, then the text growing to `maxLines`. Keys reach `keyPressed` first; Escape the owner leaves clears it, then gives the keys back (`unfocused`, `stepBack`).
 RowLayout {
   id: root
 
   // Whether it has the keys; a click asks for them through `tapped`.
   property bool active: true
+  property bool busy: false
   property var key: ""
   property string glyph: Glyphs.prompt
   property alias text: area.text
@@ -51,16 +52,23 @@ RowLayout {
     implicitWidth: Metrics.line
     implicitHeight: Metrics.line
 
+    Spinner {
+      anchors.centerIn: parent
+      visible: root.busy
+      tone: "dim"
+      size: Metrics.line
+    }
+
     KeyHint {
       anchors.centerIn: parent
-      visible: !root.active && root.key !== ""
+      visible: !root.busy && !root.active && root.key !== ""
       key: root.key
       chars: MenuKeys.label(root.key).length
     }
 
     Icon {
       anchors.centerIn: parent
-      visible: root.active || root.key === ""
+      visible: !root.busy && (root.active || root.key === "")
       tone: root.active ? "primary" : "dim"
       glyph: root.glyph
       size: Metrics.line

@@ -9,6 +9,15 @@
       "type": "command",
       "file": "picked"
     },
+    "followed": {
+      "type": "command",
+      "file": "followed"
+    },
+    "agent": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/agent.sh\" \"$1\"",
+      "notify": ""
+    },
     "nothing": {
       "type": "command",
       "read": "echo '{\"items\": [], \"empty\": \"Nothing found\"}'"

@@ -74,6 +74,10 @@
       "remind": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" remind",
       "add": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" add"
     },
+    "added": {
+      "type": "command",
+      "file": "added"
+    },
     "synced": {
       "type": "command",
       "file": "synced"

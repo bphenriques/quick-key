@@ -37,6 +37,8 @@ Scope {
   property var fieldTones: state.fieldTones ?? ({})
   // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
+  // Whether it takes no text now; an input giving it text shows a spinner meanwhile and sends nothing.
+  property bool busy: false
 
   // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, busy, tone }.
   property var items: state.items ?? []
@@ -47,8 +49,11 @@ Scope {
   // What choosing one of its items does, given the item's id.
   function select(id) {}
 
-  // What a level's input does with its text, for an entry whose `input` sets no `cmd`.
-  function submit(text) {}
+  // A level's input's text, when it sets no `cmd`: `background` from C-S-RET, `after` to run once done with it; false if not taken, the input keeping it.
+  function submit(text, background, after) {
+    console.warn(name + ": takes no text, so the input keeps it");
+    return false;
+  }
 
   // Called as the menu opens, and by `<name> refresh` over IPC, to read what has no events.
   function refresh() {

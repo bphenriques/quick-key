@@ -14,6 +14,39 @@
       "type": "command",
       "file": "trapped"
     },
+    "answered": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/answered.sh\" \"$1\"",
+      "notify": ""
+    },
+    "followed": {
+      "type": "command",
+      "file": "followed"
+    },
+    "retried": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/answered.sh\" \"$1\"",
+      "notify": ""
+    },
+    "refollowed": {
+      "type": "command",
+      "file": "refollowed"
+    },
+    "cleared": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/answered.sh\" \"$1\"",
+      "notify": ""
+    },
+    "kept": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/answered.sh\" \"$1\"",
+      "notify": ""
+    },
+    "renewed": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/stopped.sh\"",
+      "notify": ""
+    },
     "idle": {
       "type": "ask",
       "ask": "true",

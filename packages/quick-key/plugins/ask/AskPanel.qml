@@ -16,8 +16,8 @@ Scope {
 
   // Page Up and Down, for the conversation.
   signal paged(bool down)
-  // Escape clicked in the legend for a step that is the prompt's.
-  signal escaped
+  // A key of the prompt's clicked in the legend: Escape's step, or sending in the background.
+  signal promptPicked(var key)
 
   // A key for the panel, from the prompt or, while it waits, the panel; whether it was the panel's.
   function handle(event) {
@@ -176,14 +176,14 @@ Scope {
       KeyLegend {
         // Typing, its letters take Ctrl; waiting, they are plain.
         readonly property string chord: panel.plugin.typing ? "Ctrl+" : ""
-        keys: (panel.plugin.typing ? [{ key: "Shift+Return", what: "newline" }] : [])
+        keys: (panel.plugin.typing ? [{ key: "Shift+Return", what: "newline" }, { key: "Ctrl+Shift+Return", what: "background", clickable: true }] : [])
           .concat(panel.plugin.approval ? [{ key: chord + "y", what: "allow", clickable: true }] : [])
           .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: "new", clickable: true }] : [])
           .concat(panel.plugin.canMove ? [{ key: chord + "o", what: "terminal...", clickable: true }] : [])
           // Last, so its changing word moves nothing.
           .concat([{ key: "Escape", what: panel.plugin.escapeAction, clickable: true }])
         onPicked: key => {
-          if (!panel.plugin.act(key) && key === "Escape") panel.escaped();
+          if (!panel.plugin.act(key)) panel.promptPicked(key);
         }
       }
 
@@ -263,30 +263,35 @@ Scope {
         onTextChanged: panel.plugin.draft = text
         Component.onCompleted: set(panel.plugin.draft)
 
-        // Return sends and Shift+Return breaks the line; the rest go to the panel, as the legend's clicks do.
+        // Return sends, Ctrl+Shift+Return sends in the background and Shift+Return breaks the line; the rest go to the panel, as the legend's clicks do.
         onKeyPressed: event => {
-          const plain = !(event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier));
-          if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && plain) {
-            if (panel.plugin.send(text)) clear();
-          } else if (!panel.handle(event)) {
-            return;
-          }
+          const send = MenuKeys.sends(event);
+          if (send) prompt.send(send === "background");
+          else if (!panel.handle(event)) return;
           event.accepted = true;
+        }
+
+        function send(background) {
+          if (!panel.plugin.send(text)) return;
+          clear();
+          if (background) panel.plugin.shown = false;
         }
 
         Connections {
           target: panel
 
-          function onEscaped() {
-            prompt.stepBack();
+          function onPromptPicked(key) {
+            if (key === "Escape") prompt.stepBack();
+            else if (key === "Ctrl+Shift+Return") prompt.send(true);
           }
         }
 
         Connections {
           target: panel.plugin
 
-          function onRestore(text) {
-            if (prompt.text === "") prompt.set(text);
+          // The draft as Ask changes it: a failed prompt put back, or dropped with its conversation.
+          function onDraftChanged() {
+            if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft);
           }
 
 

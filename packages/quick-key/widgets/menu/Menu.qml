@@ -18,6 +18,9 @@ Scope {
   // While a held modifier lists keys in place of the body.
   readonly property bool hinting: menu.hints.length > 0
 
+  // A key of the input's clicked in the legend, for the prompt, which lives in the panel's input.
+  signal inputPicked(var key)
+
   // The modifier whose keys show when held: Ctrl the bar's, Super the compositor's.
   function modifier(event) {
     if (event.key === Qt.Key_Control) return "Ctrl";
@@ -78,20 +81,42 @@ Scope {
     inputShown: root.menu.input !== null
     inputFocused: root.menu.inputFocused
 
-    // One line: Return sends it and keeps the focus for the next.
+    // One line: Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background.
     input: Prompt {
       id: prompt
       active: root.menu.inputFocused
+      busy: root.menu.inputBusy
       key: root.menu.input?.key ?? ""
       placeholder: root.menu.input?.desc ?? ""
       maxLines: 1
       onTapped: root.menu.inputFocused = true
       onUnfocused: root.menu.inputFocused = false
+      // The level's own unsent text, as it opens or moves to another input.
+      readonly property var owner: root.menu.input
+      onOwnerChanged: set(root.menu.draftOf(owner))
+      Component.onCompleted: set(root.menu.draftOf(owner))
+      onTextChanged: root.menu.keepDraft(text)
       onKeyPressed: event => {
-        if (MenuKeys.name(event) !== "Return") return;
-        root.menu.submit(prompt.text);
-        prompt.clear();
+        const send = MenuKeys.sends(event);
+        if (!send) return;
+        prompt.send(send === "background");
         event.accepted = true;
+      }
+
+      function send(background) {
+        // Cleared first: sending may close the menu, and the prompt with it.
+        const text = prompt.text;
+        prompt.clear();
+        if (!root.menu.submit(text, background)) prompt.set(text);
+      }
+
+      Connections {
+        target: root
+
+        function onInputPicked(key) {
+          if (key === "Escape") prompt.stepBack();
+          else prompt.send(true);
+        }
       }
     }
 
@@ -141,7 +166,7 @@ Scope {
         KeyLegend {
           visible: root.menu.legend.length > 0
           keys: root.menu.legend
-          onPicked: key => root.menu.calendar.handleKey(key)
+          onPicked: key => root.menu.inputFocused ? root.inputPicked(key) : root.menu.calendar.handleKey(key)
         }
 
         Item {

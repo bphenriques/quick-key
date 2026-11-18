@@ -102,11 +102,11 @@ Other settings: `open` (given the session, opens it in a terminal), `title`, `gl
 
 Keys:
 
-- `RET` sends, `S-RET` breaks the line, `C-v` attaches the clipboard's image.
+- `RET` sends, `C-S-RET` sends and hides the panel, the answer arriving as a notification, `S-RET` breaks the line, `C-v` attaches the clipboard's image.
 - The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else leaves it, dim, else hides, as does a click beside it; the conversation is kept, and an empty one says so.
 - `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `y`, `l` and `o` do, and `a` (`key`) gives it the keys again.
 
-Two agents are two plugins with `type = "ask"`.
+Two agents are two plugins with `type = "ask"`. A level's `input` may hand one its text (see [Input](menu.md#input)).
 
 ## Writing one in QML
 
@@ -129,7 +129,7 @@ What it gives:
 - `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it under its keys.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
-- `submit(text)` for the text of an `input` on such an entry that sets no `cmd`.
+- `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.
 

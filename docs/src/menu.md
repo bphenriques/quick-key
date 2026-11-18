@@ -24,7 +24,7 @@ The menu is a list of levels. Each is an optional bar floating over its body: th
 - Two keys with a command or action each (`[ "Down" "Up" ]`) share a row; the first steps down or back, so a pair reads lesser or earlier side first: `↓↑` is less then more, `←→` and `↑↓` are back then forward, up going back in time as on a scrolled page.
 - `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`) where its bar does not take it. Hints show keys Emacs-style: `C-←`, `M-k`, `RET`, `DEL`.
 - Holding `Super` for a second lists each bar entry's `shortcut` the same way, the compositor key bound to it.
-- `?` lists the keys no row shows: the holds, `M-1` for an item's own menu, `DEL` and `ESC`; any key closes it.
+- `?` lists the keys no row shows: the holds, `M-1` for an item's own menu, `DEL`, `ESC` and, on a level with an input, `C-S-RET`; any key closes it.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
 
 ## What an entry does
@@ -50,10 +50,22 @@ The `clock` status takes `clock.format` (strftime as waybar's, plus `%o` for the
 
 ## Input
 
-An entry's `input` floats a line of text under its level's body, as Ask's prompt sits under its conversation. Dim, it shows its key and what it does; its key or a click gives it the keys, `RET` sends the text and keeps them for the next, and `ESC` clears it, then gives the keys back. The text goes to `cmd` as `$1`, else to the plugin the level lists: the tasks plugin adds it as a task.
+An entry's `input` floats a line of text under its level's body, a bar entry's too. Its key or a click focuses it: `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, `ESC` clears it, then leaves it; unsent text stays until sent or cleared. Focused, its keys show in the level's legend. The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task).
 
 ```nix
 { key = "k"; desc = "Tasks"; list = "tasks"; input = { key = "a"; desc = "Add a task"; }; }
+```
+
+`format` wraps the text (`{text}`), and `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`). Given to [Ask](plugins.md#ask), the text starts a new conversation: `RET` opens Ask on it, `C-S-RET` leaves the answer to a notification, and while the turn runs the input shows a spinner and takes no text. An input writes, never filters; put an agent's only on a level showing what it changes:
+
+```nix
+{
+  key = "c"; desc = "Calendar"; status = "clock"; view = "calendar";
+  input = {
+    key = "a"; desc = "Add an event"; plugin = "assistant"; after = "calendar-sync";
+    format = "Add this event to my calendar, or nothing if it has no day: {text}";
+  };
+}
 ```
 
 ## Mouse

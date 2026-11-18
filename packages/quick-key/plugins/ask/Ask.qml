@@ -22,7 +22,6 @@ Plugin {
   property bool shown: false
   // Whether the prompt has the keys; it does as the panel opens, and Escape gives them back.
   property bool typing: true
-  property bool busy: false
   property bool unread: false
   // What the agent waits to be allowed to run, and what it is doing.
   property string approval: ""
@@ -36,8 +35,6 @@ Plugin {
   readonly property string escapeAction: approval ? "deny" : busy ? "stop" : !typing ? "hide" : draft || image ? "clear" : "back"
   readonly property bool canMove: !busy && exchanges.length > 0
 
-  // For the prompt, which lives in the panel's window: put a failed prompt back (Return retries it).
-  signal restore(string prompt)
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText
 
@@ -51,29 +48,42 @@ Plugin {
   }
 
   function toggle() {
-    shown = !shown;
-    if (shown) {
-      unread = false;
-      typing = true;
-    }
+    if (shown) shown = false;
+    else show();
   }
 
-  function send(prompt) {
+  function show() {
+    shown = true;
+    unread = false;
+    typing = true;
+  }
+
+  // An input's text starts a new conversation, opened on its turn or answered in the background, as a notification.
+  function submit(text, background, after) {
+    if (busy || request.running || !settings.ask) return false;
+    reset();
+    if (!send(text, "", after)) return false;
+    if (!background) show();
+    return true;
+  }
+
+  // `after` runs once the turn is answered.
+  function send(prompt, image = root.image, after = "") {
     prompt = prompt.trim();
     // A stopped command may still be ending, when it traps its end.
     if ((!prompt && !image) || busy || request.running || !settings.ask) return false;
-    // Asking again what failed or was stopped replaces that exchange, so the thread keeps one of each.
+    // Asking again what failed or was stopped replaces that exchange, so the thread keeps one of each, and its `after`.
     const last = exchanges[exchanges.length - 1];
-    const kept = last && last.error && last.prompt === prompt && last.image === image ? exchanges.slice(0, -1) : exchanges;
-    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false }]);
-    const sent = image;
-    image = "";
+    const retried = last && last.error && last.prompt === prompt && last.image === image;
+    const kept = retried ? exchanges.slice(0, -1) : exchanges;
+    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : "") }]);
+    if (image === root.image) root.image = "";
     busy = true;
     approval = "";
     activity = "";
     sentAt = now = Math.floor(Date.now() / 1000);
     request.complaint = "";
-    request.command = commandLine(settings.ask, prompt, session, sent);
+    request.command = commandLine(settings.ask, prompt, session, image);
     request.running = true;
     return true;
   }
@@ -106,11 +116,11 @@ Plugin {
     busy = false;
     approval = "";
     notify(last.error || last.reply);
+    if (last.reply) exec(last.after);
     if (!shown) unread = true;
     if (last.error && draft === "" && !image) {
       draft = last.prompt;
       image = last.image;
-      restore(last.prompt);
     }
   }
 
@@ -143,9 +153,14 @@ Plugin {
     request.running = false;
   }
 
-  // A new conversation; the unsent prompt stays.
+  // A new conversation; the unsent prompt stays, but not a failed one put back for a retry, which goes with its conversation.
   function reset() {
     stop();
+    const last = exchanges[exchanges.length - 1];
+    if (last?.error && draft === last.prompt && image === last.image) {
+      draft = "";
+      image = "";
+    }
     exchanges = [];
     session = "";
     unread = false;
@@ -231,10 +246,7 @@ Plugin {
 
     stdout: SplitParser {
       onRead: line => {
-        if (line.trim() !== "default") return;
-        root.shown = true;
-        root.unread = false;
-        root.typing = true;
+        if (line.trim() === "default") root.show();
       }
     }
   }

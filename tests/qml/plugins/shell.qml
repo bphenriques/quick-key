@@ -110,20 +110,21 @@ ShellRoot {
           && Object.keys(Plugins.get("tasks").pending).length === 0 && Plugins.get("tasks").error === "Could not tick off Undated"
       },
       {
-        name: "an added task shows at once, dim with a spinner, before its command has written the file",
-        start: () => Plugins.get("tasks").submit("New"),
+        name: "an added task shows at once, dim with a spinner, before its command has written the file, its after waiting for it",
+        start: () => Plugins.get("tasks").submit("New", false, "echo added > \"$XDG_RUNTIME_DIR/added\""),
         until: () => Plugins.get("tasks").items.some(item => item.label === "New" && item.enabled === false && item.busy)
           && !Array.from(Plugins.get("tasks").state.tasks).some(task => task.title === "New")
+          && Plugins.get("added")?.text !== "added"
       },
       {
-        name: "once the file has it, it runs like the rest",
-        until: () => Plugins.get("tasks").items.some(item => item.label === "New" && item.enabled) && Plugins.get("tasks").adding.length === 0
+        name: "once the file has it, it runs like the rest, and its after has run",
+        until: () => Plugins.get("tasks").items.some(item => item.label === "New" && item.enabled) && Plugins.get("tasks").adding.length === 0 && Plugins.get("added")?.text === "added"
       },
       {
-        name: "an add whose command fails drops it, and says so",
-        start: () => Plugins.get("tasks").submit("Fail"),
+        name: "an add whose command fails drops it, says so, and skips its after",
+        start: () => Plugins.get("tasks").submit("Fail", false, "echo wrong > \"$XDG_RUNTIME_DIR/added\""),
         until: () => !Plugins.get("tasks").items.some(item => item.label === "Fail") && Plugins.get("tasks").queue.length === 0
-          && Plugins.get("tasks").error === "Could not add Fail"
+          && Plugins.get("tasks").error === "Could not add Fail" && Plugins.get("added")?.text === "added"
       },
       {
         name: "a timed task reminds as it falls due",

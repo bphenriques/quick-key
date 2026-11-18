@@ -17,13 +17,19 @@ Scope {
   property string held: ""
   // Whether the level's input has the keys, else its body.
   property bool inputFocused: false
+  // Each input's unsent text, by the input, kept as the menu closes, as Ask keeps its draft.
+  property var drafts: ({})
+  readonly property string draft: draftOf(input)
   readonly property CalendarModel calendar: CalendarModel {}
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property bool inCalendar: level?.entry?.view === "calendar"
-  // The text a level takes under its body (an entry's `input`): { key, desc, cmd }.
+  // The text a level takes under its body (an entry's `input`): { key, desc, cmd, plugin, format, after }.
   readonly property var input: level?.kind === "entry" ? level.entry.input ?? null : null
+  // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
+  readonly property var inputPlugin: input && !input.cmd ? Plugins.get(input.plugin ?? level.entry.list ?? "") : null
+  readonly property bool inputBusy: inputPlugin?.busy ?? false
   // What the level lists, read once for every entry that acts on it.
   readonly property var levelList: listed(level?.entry?.list)
   readonly property var items: itemsOf(level)
@@ -43,15 +49,17 @@ Scope {
   readonly property var help: [
     { key: "Ctrl+", desc: "Hold: the bar's keys" },
     { key: "Super+", desc: "Hold: compositor shortcuts" },
-    { key: "Alt+1", desc: "An item's own menu" },
+    { key: "Alt+1", desc: "An item's own menu" }
+  ].concat(input ? [{ key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], [
     { key: "BackSpace", desc: "Back" },
     { key: "Escape", desc: "Close" }
-  ]
+  ])
   // The keys listed in place of the body: the help, the bar's while Ctrl is held, the compositor's while Super is.
   readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
-  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }.
-  readonly property var legend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
+  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }; while its input has the keys, the input's, in a level that has a legend.
+  readonly property var levelLegend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
+  readonly property var legend: inputFocused && levelLegend.length > 0 ? [{ key: "Ctrl+Shift+Return", what: "background", clickable: true }, { key: "Escape", what: draft ? "clear" : "back", clickable: true }] : levelLegend
   // Why a level's source failed, under its keys: the calendar's sync, or the plugin it lists.
   readonly property string error: inCalendar ? (Calendar.syncing ? "" : Calendar.error) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
 
@@ -249,12 +257,24 @@ Scope {
     Commands.run(cmd);
   }
 
-  // The input's text, to its command as $1 or else to the plugin the level lists.
-  function submit(text) {
+  // The input's text, in its format, to its command as $1, else its plugin; whether it was taken, so the input keeps it if not.
+  function submit(text, background) {
     text = text.trim();
-    if (!text || !input) return;
-    if (input.cmd) Commands.run(input.cmd, text);
-    else Plugins.get(level.entry.list)?.submit(text);
+    if (!text || !input || inputBusy) return false;
+    const sent = input.format ? input.format.replace(/\{text\}/g, () => text) : text;
+    if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
+    // A plugin that failed to load takes nothing.
+    else if (!inputPlugin || inputPlugin.submit(sent, background, input.after ?? "") === false) return false;
+    if (background) hide();
+    return true;
+  }
+
+  function draftOf(of) {
+    return of ? drafts[JSON.stringify(of)] ?? "" : "";
+  }
+
+  function keepDraft(text) {
+    if (input && text !== draft) drafts = Object.assign({}, drafts, { [JSON.stringify(input)]: text });
   }
 
   // A listed item does what it says; an entry with a level below opens it, any other runs; a plugin's name in a bar activates it.

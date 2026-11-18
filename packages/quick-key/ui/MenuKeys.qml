@@ -14,6 +14,13 @@ Singleton {
     return (event.modifiers & Qt.ControlModifier ? "Ctrl+" : "") + (event.modifiers & Qt.AltModifier ? "Alt+" : "") + key;
   }
 
+  // How Return sends an input's text: "foreground" plain, "background" with Ctrl+Shift; "" for any other key, Shift+Return breaking the line.
+  function sends(event) {
+    if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter) return "";
+    const modifiers = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier);
+    return modifiers === 0 ? "foreground" : modifiers === (Qt.ShiftModifier | Qt.ControlModifier) ? "background" : "";
+  }
+
   function keyName(event) {
     switch (event.key) {
     case Qt.Key_Up: return "Up";
