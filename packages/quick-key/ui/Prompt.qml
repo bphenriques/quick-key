@@ -50,7 +50,6 @@ RowLayout {
     id: area
     Layout.fillWidth: true
     Layout.preferredHeight: implicitHeight
-    focus: true
     activeFocusOnPress: root.active
     onKeyPressed: event => root.keyPressed(event)
 

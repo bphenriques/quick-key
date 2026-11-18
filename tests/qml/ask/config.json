@@ -13,6 +13,11 @@
     "trapped": {
       "type": "command",
       "file": "trapped"
+    },
+    "idle": {
+      "type": "ask",
+      "ask": "true",
+      "notify": ""
     }
   }
 }

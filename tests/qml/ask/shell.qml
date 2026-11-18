@@ -25,6 +25,23 @@ ShellRoot {
         })
       },
       {
+        name: "Escape leaves the prompt, then hides; waiting, a letter acts and its key gives the prompt the keys again",
+        until: () => {
+          const ask = Plugins.get("idle");
+          if (!ask) return false;
+          ask.toggle();
+          ask.act("Escape");
+          const left = ask.shown && !ask.typing;
+          ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
+          const letter = ask.act("l") && ask.exchanges.length === 0;
+          const typing = ask.act("a") && ask.typing && !ask.act("l");
+          ask.typing = false;
+          ask.lastEscape = 0;
+          ask.act("Escape");
+          return left && letter && typing && !ask.shown;
+        }
+      },
+      {
         name: "stopping ends the command, which may trap its end",
         until: () => root.asked("stopped", ask => {
           if (ask.activity === "thinking") ask.stop();

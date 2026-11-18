@@ -16,4 +16,6 @@ PluginSettings {
   property string glyph
   // What the empty prompt says, {title} for the title.
   property string placeholder: "Ask {title}"
+  // What gives the prompt the keys again once Escape has taken them.
+  property string key: "a"
 }

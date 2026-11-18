@@ -103,8 +103,8 @@ Other settings: `open` (given the session, opens it in a terminal), `title`, `gl
 Keys:
 
 - `RET` sends, `S-RET` breaks the line, `C-v` attaches the clipboard's image.
-- `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else hides. Twice quickly hides from anywhere, as does a click beside it; the conversation is kept.
-- `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal.
+- The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else leaves it, dim, else hides. Twice quickly hides from anywhere, as does a click beside it; the conversation is kept.
+- `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `y`, `l` and `o` do, and `a` (`key`) gives it the keys again.
 
 Two agents are two plugins with `type = "ask"`.
 

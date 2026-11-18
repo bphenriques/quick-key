@@ -21,6 +21,8 @@ Plugin {
   // An image pasted for the next prompt, as a file under $XDG_RUNTIME_DIR.
   property string image: ""
   property bool shown: false
+  // Whether the prompt has the keys; it does as the panel opens, and Escape gives them back.
+  property bool typing: true
   property bool busy: false
   property bool unread: false
   // What the agent waits to be allowed to run, and what it is doing.
@@ -31,8 +33,8 @@ Plugin {
   property int now: 0
   readonly property int waited: Math.max(0, now - sentAt)
 
-  // Escape steps back without losing the conversation, as in a chat app; twice quickly hides.
-  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : draft || image ? "clear" : "hide"
+  // Escape steps back without losing the conversation, as in a chat app: what needs it first, then the prompt, then the panel; twice quickly hides.
+  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : !typing ? "hide" : draft || image ? "clear" : "leave"
   readonly property bool canMove: !busy && exchanges.length > 0
   property real lastEscape: 0
 
@@ -53,7 +55,10 @@ Plugin {
 
   function toggle() {
     shown = !shown;
-    if (shown) unread = false;
+    if (shown) {
+      unread = false;
+      typing = true;
+    }
   }
 
   function send(prompt) {
@@ -157,9 +162,13 @@ Plugin {
     shown = false;
   }
 
-  // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt.
+  // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt. Waiting, its letters do what their Ctrl chords do.
   function act(key) {
-    switch (key) {
+    if (!typing && key === settings.key) {
+      typing = true;
+      return true;
+    }
+    switch (!typing && /^[a-z]$/.test(key) ? "Ctrl+" + key : key) {
     case "Escape": stepBack(); return true;
     case "Ctrl+y": answerApproval(true); return true;
     case "Ctrl+l": reset(); return true;
@@ -183,6 +192,7 @@ Plugin {
       clearPrompt();
       image = "";
       break;
+    case "leave": typing = false; break;
     default: shown = false;
     }
   }
@@ -236,6 +246,7 @@ Plugin {
         if (line.trim() !== "default") return;
         root.shown = true;
         root.unread = false;
+        root.typing = true;
       }
     }
   }

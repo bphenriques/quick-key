@@ -14,8 +14,17 @@ Scope {
   // How much taller than a line the prompt is, which the conversation gives up.
   property real inputExtra: 0
 
-  // Page Up and Down in the prompt, for the conversation.
+  // Page Up and Down, for the conversation.
   signal paged(bool down)
+
+  // A key for the panel, from the prompt or, while it waits, the panel; whether it was the panel's.
+  function handle(event) {
+    if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
+      paged(event.key === Qt.Key_PageDown);
+      return true;
+    }
+    return plugin.act(MenuKeys.name(event));
+  }
 
   // The web links in a reply, each once, without the punctuation that ends a sentence.
   function links(text) {
@@ -152,7 +161,9 @@ Scope {
     shown: panel.plugin.shown
     namespace: panel.plugin.name
     inputShown: true
-    inputFocused: true
+    inputFocused: panel.plugin.typing
+    // Waiting, the panel's own keys.
+    onKeyPressed: event => event.accepted = panel.handle(event)
     // Hidden, the conversation is kept.
     onDismissed: panel.plugin.shown = false
 
@@ -161,10 +172,12 @@ Scope {
 
       // Only the keys no one would guess (Return sends, as in any chat), each while it applies.
       KeyLegend {
-        keys: [{ key: "Shift+Return", what: "newline" }]
-          .concat(panel.plugin.approval ? [{ key: "Ctrl+y", what: "allow", clickable: true }] : [])
-          .concat(panel.plugin.exchanges.length > 0 ? [{ key: "Ctrl+l", what: "new", clickable: true }] : [])
-          .concat(panel.plugin.canMove ? [{ key: "Ctrl+o", what: "Move to terminal...", clickable: true }] : [])
+        // Typing, its letters take Ctrl; waiting, they are plain.
+        readonly property string chord: panel.plugin.typing ? "Ctrl+" : ""
+        keys: (panel.plugin.typing ? [{ key: "Shift+Return", what: "newline" }] : [])
+          .concat(panel.plugin.approval ? [{ key: chord + "y", what: "allow", clickable: true }] : [])
+          .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: "new", clickable: true }] : [])
+          .concat(panel.plugin.canMove ? [{ key: chord + "o", what: "Move to terminal...", clickable: true }] : [])
           // Last, so its changing word moves nothing; twice quickly hides (docs/src/plugins.md).
           .concat([{ key: "Escape", what: panel.plugin.escapeAction, clickable: true }])
         onPicked: key => panel.plugin.act(key)
@@ -230,17 +243,18 @@ Scope {
         Layout.fillWidth: true
         glyph: panel.plugin.glyph || Glyphs.submenu
         placeholder: panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
+        active: panel.plugin.typing
+        key: panel.plugin.settings.key
+        onTapped: panel.plugin.typing = true
         onTextChanged: panel.plugin.draft = text
         Component.onCompleted: set(panel.plugin.draft)
 
-        // Return sends and Shift+Return breaks the line; the rest go to panel.plugin.act, as the legend's clicks do.
+        // Return sends and Shift+Return breaks the line; the rest go to the panel, as the legend's clicks do.
         onKeyPressed: event => {
           const plain = !(event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier));
           if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && plain) {
             if (panel.plugin.send(text)) clear();
-          } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
-            panel.paged(event.key === Qt.Key_PageDown);
-          } else if (!panel.plugin.act(MenuKeys.name(event))) {
+          } else if (!panel.handle(event)) {
             return;
           }
           event.accepted = true;
