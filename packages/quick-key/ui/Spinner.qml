@@ -1,7 +1,7 @@
 import QtQuick
 import qs
 
-// A one-cell wait: `working` spins, `attention` knocks; its own tempo, still when animations are off.
+// A one-cell wait: `working` circles a quarter block (never a box, which a still frame of a checkbox slot would read as), `attention` knocks; its own tempo, still when animations are off.
 Item {
   id: root
 
@@ -11,8 +11,8 @@ Item {
 
   // Each sequence is frames of [text, milliseconds it holds].
   readonly property var sequences: ({
-      working: [["▀", 250], ["▐", 250], ["▄", 250], ["▌", 250]],
-      attention: [["█", 150], ["▄", 150], ["█", 150], ["▄", 1200]]
+      working: [["▖", 250], ["▘", 250], ["▝", 250], ["▗", 250]],
+      attention: [["▚", 150], ["▞", 150], ["▚", 150], ["▞", 1200]]
     })
 
   readonly property var frames: sequences[mood]

@@ -15,7 +15,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `TextField` | text typed in, plain and wrapped, coloured by `tone`; a dim `placeholder` while empty, and `copyOnSelect` to copy what the mouse selects |
 | `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
 | `Prompt` | a line of text to send: its `key` dim while it waits (a level's input), else a glyph, then a `TextArea`; a click while waiting reaches `tapped` |
-| `Spinner` | a wait in one block cell, its `mood` saying whose turn it is: `working` spins, `attention` knocks; its own tempo, still when animations are off |
+| `Spinner` | a wait in one block cell, its `mood` saying whose turn it is: `working` circles a quarter block, `attention` knocks; its own tempo, still when animations are off |
 | `Divider` | a line between two groups of rows, in the theme's `border` |
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
