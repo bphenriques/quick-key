@@ -12,6 +12,8 @@ ShellRoot {
   property bool refused: false
   property bool renewed: false
   property bool wasReset: false
+  property int visitStep: 0
+  property bool failedSent: false
 
   // Sends a prompt once the plugin has loaded, then whether `done` holds for it.
   function asked(name, done) {
@@ -95,6 +97,38 @@ ShellRoot {
             root.wasReset = true;
           }
           return root.wasReset && !ask.busy && ask.exchanges.length === 0 && ask.draft === "";
+        }
+      },
+      {
+        name: "while the menu shows its input, the answer shows there, unread stays off, and the next send continues the conversation; a new visit starts fresh",
+        until: () => {
+          const ask = Plugins.get("visitor");
+          if (!ask) return false;
+          if (root.visitStep === 0) {
+            Plugins.watching = "visitor\n{}";
+            root.visitStep = ask.submit("one", false, "") ? 1 : 0;
+          } else if (root.visitStep === 1 && ask.reply?.text === "one") {
+            root.visitStep = ask.submit("two", false, "") ? 2 : 1;
+          } else if (root.visitStep === 2 && ask.reply?.text === "two") {
+            root.visitStep = ask.exchanges.length === 2 && !ask.unread ? 3 : -1;
+            Plugins.watching = "";
+            root.visitStep = ask.reply === null && ask.submit("three", true, "") ? root.visitStep + 1 : -1;
+          }
+          return root.visitStep === 4 && !ask.busy && ask.exchanges.length === 1 && ask.unread;
+        }
+      },
+      {
+        name: "a failed answer shows in alert where the menu shows it, and stays out of the panel's prompt",
+        until: () => {
+          const ask = Plugins.get("unanswered");
+          if (!ask) return false;
+          if (!root.failedSent) {
+            Plugins.watching = "unanswered\n{}";
+            root.failedSent = ask.submit("lost", false, "");
+          }
+          const done = ask.reply?.tone === "alert" && ask.draft === "";
+          if (done) Plugins.watching = "";
+          return done;
         }
       },
       {

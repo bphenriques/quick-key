@@ -34,6 +34,12 @@ Scope {
     value: root.menu.open
   }
 
+  Binding {
+    target: Plugins
+    property: "watching"
+    value: root.menu.watching
+  }
+
   IpcHandler {
     target: "menu"
 
@@ -89,6 +95,11 @@ Scope {
       key: root.menu.input?.key ?? ""
       placeholder: root.menu.input?.desc ?? ""
       maxLines: 1
+      // What its plugin said about the text, while the menu shows it; a click opens the plugin (Ask, on the whole conversation).
+      note: root.menu.inputPlugin?.reply?.text ?? ""
+      noteTone: root.menu.inputPlugin?.reply?.tone || "dim"
+      noteGlyph: root.menu.inputPlugin?.glyph ?? ""
+      onNoteTapped: root.menu.inputPlugin?.activate()
       onTapped: root.menu.inputFocused = true
       onUnfocused: root.menu.inputFocused = false
       // The level's own unsent text, as it opens or moves to another input.
@@ -116,6 +127,15 @@ Scope {
         function onInputPicked(key) {
           if (key === "Escape") prompt.stepBack();
           else prompt.send(true);
+        }
+      }
+
+      // A failed answer gives back what was sent, so Return retries it.
+      Connections {
+        target: root.menu.inputPlugin
+
+        function onReplyChanged() {
+          if (root.menu.inputPlugin.reply?.tone === "alert" && prompt.text === "") prompt.set(root.menu.lastSent);
         }
       }
     }

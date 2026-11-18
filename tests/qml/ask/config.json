@@ -47,6 +47,16 @@
       "ask": "sh \"$XDG_CONFIG_HOME/quick-key/stopped.sh\"",
       "notify": ""
     },
+    "visitor": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/answered.sh\" \"$1\"",
+      "notify": ""
+    },
+    "unanswered": {
+      "type": "ask",
+      "ask": "true",
+      "notify": ""
+    },
     "idle": {
       "type": "ask",
       "ask": "true",

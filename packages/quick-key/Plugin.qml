@@ -37,6 +37,9 @@ Scope {
   property var fieldTones: state.fieldTones ?? ({})
   // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
+  // Whether the menu shows an input giving it text, and what it said about that text there, { text, tone } (alert: it failed, and the input gets the text back).
+  readonly property bool watched: Plugins.watching.startsWith(name + "\n")
+  property var reply: null
   // Whether it takes no text now; an input giving it text shows a spinner meanwhile and sends nothing.
   property bool busy: false
 

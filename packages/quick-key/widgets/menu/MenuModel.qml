@@ -30,6 +30,10 @@ Scope {
   // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
   readonly property var inputPlugin: input && !input.cmd ? Plugins.get(input.plugin ?? level.entry.list ?? "") : null
   readonly property bool inputBusy: inputPlugin?.busy ?? false
+  // What Plugins.watching is set to: the plugin and the input on show, so an answer shows there; a change of either ends a visit.
+  readonly property string watching: open && inputPlugin ? inputPlugin.name + "\n" + JSON.stringify(input) : ""
+  // The text last sent, which a failed answer gives back to the input.
+  property string lastSent: ""
   // What the level lists, read once for every entry that acts on it.
   readonly property var levelList: listed(level?.entry?.list)
   readonly property var items: itemsOf(level)
@@ -265,6 +269,7 @@ Scope {
     if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
     // A plugin that failed to load takes nothing.
     else if (!inputPlugin || inputPlugin.submit(sent, background, input.after ?? "") === false) return false;
+    lastSent = text;
     if (background) hide();
     return true;
   }

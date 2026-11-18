@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs
+import qs.services
 import qs.ui
 
 // Quick turns with an agent in a panel; its settings and line protocol are in docs/src/plugins.md.
@@ -13,7 +14,7 @@ Plugin {
   readonly property int lines: settings.lines
   readonly property string title: settings.title || name
 
-  // [{ prompt, image, reply, error, stopped }], the last one waiting while busy.
+  // [{ prompt, image, reply, error, stopped, after, input }], the last one waiting while busy; `input` when a level's input sent it.
   property var exchanges: []
   property string session: ""
   property string draft: ""
@@ -23,6 +24,8 @@ Plugin {
   // Whether the prompt has the keys; it does as the panel opens, and Escape gives them back.
   property bool typing: true
   property bool unread: false
+  // Whether this visit (the menu showing its input) sent it a turn, so the next send continues that conversation.
+  property bool visited: false
   // What the agent waits to be allowed to run, and what it is doing.
   property string approval: ""
   property string activity: ""
@@ -58,17 +61,23 @@ Plugin {
     typing = true;
   }
 
-  // An input's text starts a new conversation, opened on its turn or answered in the background, as a notification.
+  // An input's text, answered above it while the menu shows it, else as a notification; one conversation per visit.
   function submit(text, background, after) {
     if (busy || request.running || !settings.ask) return false;
-    reset();
-    if (!send(text, "", after)) return false;
-    if (!background) show();
+    if (!visited) reset();
+    if (!send(text, "", after, true)) return false;
+    visited = watched;
+    reply = null;
     return true;
   }
 
+  // Whether the menu shows this turn's answer, above the input that sent it.
+  function seen(exchange) {
+    return !!exchange?.input && watched;
+  }
+
   // `after` runs once the turn is answered.
-  function send(prompt, image = root.image, after = "") {
+  function send(prompt, image = root.image, after = "", input = false) {
     prompt = prompt.trim();
     // A stopped command may still be ending, when it traps its end.
     if ((!prompt && !image) || busy || request.running || !settings.ask) return false;
@@ -76,7 +85,7 @@ Plugin {
     const last = exchanges[exchanges.length - 1];
     const retried = last && last.error && last.prompt === prompt && last.image === image;
     const kept = retried ? exchanges.slice(0, -1) : exchanges;
-    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : "") }]);
+    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input }]);
     if (image === root.image) root.image = "";
     busy = true;
     approval = "";
@@ -102,7 +111,8 @@ Plugin {
     if (answer.session) session = answer.session;
     if (answer.approval) {
       approval = answer.approval;
-      notify("Allow " + approval + "?");
+      if (seen(exchanges[exchanges.length - 1])) reply = { text: "Allow " + approval + "? Answer in Ask.", tone: "warning" };
+      else notify("Allow " + approval + "?");
     } else if (answer.status) {
       activity = answer.status;
     } else if (answer.reply !== undefined || answer.error !== undefined) {
@@ -115,10 +125,11 @@ Plugin {
     exchanges = exchanges.slice(0, -1).concat([last]);
     busy = false;
     approval = "";
-    notify(last.error || last.reply);
+    if (seen(last)) reply = { text: last.error || last.reply, tone: last.error ? "alert" : "" };
+    else notify(last.error || last.reply);
     if (last.reply) exec(last.after);
-    if (!shown) unread = true;
-    if (last.error && draft === "" && !image) {
+    if (!shown && !seen(last)) unread = true;
+    if (last.error && !seen(last) && draft === "" && !image) {
       draft = last.prompt;
       image = last.image;
     }
@@ -198,6 +209,16 @@ Plugin {
     case "hide": shown = false; return true;
     }
     return false;
+  }
+
+  // The menu left the input, or closed: the visit ends, and its answer with it.
+  Connections {
+    target: Plugins
+
+    function onWatchingChanged() {
+      root.visited = false;
+      root.reply = null;
+    }
   }
 
   Timer {
