@@ -20,7 +20,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined in its tone |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
-| `Shadow` | a shadow like niri's default, for a surface inside a larger window |
+| `Shadow` | a shadow like niri's default, for a surface inside a larger window, drawn only outside it so its background blur shows through |
 | `OverlayWindow`, `DismissArea` | a popup above everything; the click-outside catcher under it |
 | `CornerPill` | a pill top right on every screen while `shown`, fading in and out; `slot` stacks it under the ones above, `hovered` and `clicked` for its pointer |
 | `Transient` | shown for a moment on `show()`, held while `held`, ignoring startup's replayed state until `armed` |
