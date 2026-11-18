@@ -19,7 +19,7 @@ Singleton {
     readonly property color primary: adapter.theme.primary || userTheme.palette.primary || shippedTheme.palette.primary || "#61afef"
     readonly property color alert: adapter.theme.alert || userTheme.palette.alert || shippedTheme.palette.alert || "#cc6666"
     readonly property color warning: adapter.theme.warning || userTheme.palette.warning || shippedTheme.palette.warning || "#f0c674"
-    readonly property color border: adapter.theme.border || userTheme.palette.border || shippedTheme.palette.border || Qt.alpha(foreground, adapter.theme.dimOpacity)
+    readonly property color border: adapter.theme.border || userTheme.palette.border || shippedTheme.palette.border || Qt.alpha(foreground, adapter.theme.disabledOpacity)
   }
 
   readonly property alias theme: adapter.theme
@@ -122,11 +122,14 @@ Singleton {
         property string primary
         property string alert
         property string warning
-        // Outlines and dividers; unset, the dim text colour, so tint is left to state.
+        // Outlines and dividers; unset, the foreground at disabledOpacity, so tint is left to state.
         property string border
         property real surfaceOpacity: 0.92
         property real highlightOpacity: 0.25
-        property real dimOpacity: 0.5
+        // Secondary text (values, legend words, dim glyphs) over the panel: 0.8 keeps it near WCAG AA's 4.5:1 on a dark theme.
+        property real dimOpacity: 0.8
+        // A row that cannot run now, faded whole, and the default outline.
+        property real disabledOpacity: 0.5
         // Milliseconds a fade or colour change takes; 0 for none.
         property int animationDuration: 100
         property string monospaceFont: "monospace"

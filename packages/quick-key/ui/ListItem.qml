@@ -25,7 +25,7 @@ Rectangle {
   implicitHeight: row.implicitHeight + 2 * verticalPadding
   radius: Config.theme.itemRadius
   // Disabled rows dim whole, images included.
-  opacity: enabled || !dimsWhenDisabled ? 1 : Config.theme.dimOpacity
+  opacity: enabled || !dimsWhenDisabled ? 1 : Config.theme.disabledOpacity
   // Highlighted under the pointer or while current, more so while pressed, so a click is felt; at once, as easing trails a moving pointer.
   color: mouse.pressed ? Tone.wash("primary", 2) : current || mouse.containsMouse ? Tone.wash("primary") : "transparent"
 

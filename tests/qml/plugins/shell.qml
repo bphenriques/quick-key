@@ -77,12 +77,12 @@ ShellRoot {
         until: () => Number(Plugins.get("ticker")?.text) >= Number(root.ticked) + 2
       },
       {
-        name: "tasks list by due, undated last, done ones in place, a late one in warning with an alarm; the status counts the open ones due by today, warning when one is late, and names the most urgent as a field",
+        name: "tasks list by due, undated last, done ones in place, a late one in warning with an alarm; the status counts the late ones when there are any, else the open ones due by today, and names the most urgent as a field",
         start: () => root.tasks("write"),
         until: () => {
           const tasks = Plugins.get("tasks");
           const ticked = (tasks?.items ?? []).find(item => item.id === "e");
-          return tasks.items.map(item => item.id).join() === "a,e,f,b,c,d" && tasks.text === "" && tasks.fields.title === "Late" && tasks.detail === "3"
+          return tasks.items.map(item => item.id).join() === "a,e,f,b,c,d" && tasks.text === "" && tasks.fields.title === "Late" && tasks.detail === "1"
             && tasks.tone === "warning" && ticked.done && ticked.icon === Glyphs.checkboxChecked
             && tasks.items.map(item => item.tone).join() === "warning,,,,," && tasks.items[0].glyphs[0] === Glyphs.late && tasks.items[1].glyphs.length === 0;
         }

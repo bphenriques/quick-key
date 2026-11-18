@@ -43,7 +43,8 @@ StatusLine {
   detail: status ? value.detail : fallbackDetail
   detailGlyphs: status ? value.glyphs ?? [] : fallbackGlyphs
   struck: done
-  strong: !!builtin?.strong
+  // The one to find first: the bar's anchor (the clock), or on a row what is in use, so colour is not all that says so.
+  strong: !!builtin?.strong || (!status && active)
   meter: listedMeter !== undefined ? listedMeter : inLevel && builtin?.meter ? builtin.meter() : -1
   // A listed item's meter is lit while it is in use, like its value.
   meterTone: listedMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"

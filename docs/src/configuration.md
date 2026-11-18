@@ -16,7 +16,7 @@ Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you 
 
 ## Themes
 
-`theme.name` picks a theme: a file in `$XDG_CONFIG_HOME/quick-key/themes/`, else a shipped preset (`catppuccin-mocha`, `catppuccin-latte`, `gruvbox-dark`, `nord`, `tokyo-night`). A theme holds five colours, and optionally `border` for outlines and dividers, which is otherwise the dim text colour so that tint is left to state:
+`theme.name` picks a theme: a file in `$XDG_CONFIG_HOME/quick-key/themes/`, else a shipped preset (`catppuccin-mocha`, `catppuccin-latte`, `gruvbox-dark`, `nord`, `tokyo-night`). A theme holds five colours, and optionally `border` for outlines and dividers, which is otherwise the foreground at `disabledOpacity` so that tint is left to state:
 
 ```json
 { "background": "#2e3440", "foreground": "#d8dee9", "primary": "#88c0d0", "alert": "#bf616a", "warning": "#ebcb8b" }

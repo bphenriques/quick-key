@@ -1,6 +1,6 @@
 # Tasks
 
-The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A level's `input` adds a task by its title, raw, to the first list (see [Input](menu.md#input)). A tick shows at once, and an added task at once with a spinner until its command is done, so a command that reads a date out of the text (an agent) shows it is working; its command runs after the ones before it, and one that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
+The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A level's `input` adds a task by its title, raw, to the first list (see [Input](menu.md#input)). A tick shows at once, and an added task at once with a spinner until its command is done, so a command that reads a date out of the text (an agent) shows it is working; its command runs after the ones before it, and one that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens. Its status counts the late tasks beside an alarm, in the warning tone, when there are any, else the open tasks due by today, up to `9+`; its fields are `title` (the most urgent), `count` and `updated`.
 
 ```nix
 plugins.tasks = {

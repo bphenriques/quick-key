@@ -8,7 +8,7 @@ PluginSettings {
   // Pauses or resumes notifications.
   property string activate: "dunstctl set-paused toggle"
   show: ({
-    "true": { glyph: Glyphs.notificationsPaused, tone: "alert", active: true },
+    "true": { glyph: Glyphs.notificationsPaused, active: true },
     "false": { glyph: Glyphs.notifications }
   })
 }

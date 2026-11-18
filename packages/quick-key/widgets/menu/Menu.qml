@@ -96,10 +96,15 @@ Scope {
     }
 
     body: ColumnLayout {
+      id: body
+      // Its height before a held modifier listed its keys, which it keeps while they show, so the panel holds still.
+      property real restHeight: 0
+      onImplicitHeightChanged: if (!root.hinting) restHeight = implicitHeight
       spacing: Config.theme.padding
 
       // The keys a held modifier reaches, in the body's own columns; each still runs on a click.
       GridLayout {
+        id: hints
         Layout.fillWidth: true
         visible: root.hinting
         flow: GridLayout.LeftToRight
@@ -119,6 +124,12 @@ Scope {
             chars: root.menu.keyChars(root.menu.hints)
           }
         }
+      }
+
+      // Fewer keys than rows leave the rest of the body empty rather than shrink it.
+      Item {
+        visible: root.hinting && body.restHeight > hints.implicitHeight + body.spacing
+        Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
       }
 
       // A level's legend shares its line with its actions, the keys on the left and the actions on the right.

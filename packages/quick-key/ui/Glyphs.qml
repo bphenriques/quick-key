@@ -41,6 +41,8 @@ Singleton {
   readonly property string check: Config.glyphs.check ?? "\u{F012C}" // md-check
   readonly property string search: Config.glyphs.search ?? "\u{F0349}" // md-magnify
   readonly property string submenu: Config.glyphs.submenu ?? "\u{F0142}" // md-chevron_right
+  // What marks a prompt: an input with the keys, and what was asked in Ask.
+  readonly property string prompt: Config.glyphs.prompt ?? "\u{F0142}" // md-chevron_right
   readonly property string link: Config.glyphs.link ?? "\u{F0337}" // md-link
   readonly property var audioDevices: Object.assign({
     headphones: "\u{F02CB}", // md-headphones

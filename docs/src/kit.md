@@ -10,7 +10,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Icon` | a glyph or an image in the same square; `monochrome` draws an image in greys |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports |
 | `KeyHint` | a key in its gutter |
-| `KeyLegend` | keys a level takes beyond its rows, on one line in its body: each key as `KeyHint` shows it, then what it does |
+| `KeyLegend` | keys a level takes beyond its rows, on one line in its body: each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
 | `Meter` | a thin level bar |
 | `TextField` | text typed in, plain and wrapped, coloured by `tone`; a dim `placeholder` while empty, and `copyOnSelect` to copy what the mouse selects |
 | `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
@@ -30,5 +30,5 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `MenuKeys` | key names as entries declare them (`Ctrl+Left`), their hints, and keys for an app's own menu |
 | `Glyphs` | the icon set, Material Design from Nerd Fonts, each an escape (`"\u{F05A9}"`) named after its entry; `glyphs` in the config overrides any by that name (`wifi`, `audioDevices`, `batteryLevels`) |
 
-`alert` is only for what needs attention: critical battery, recording, do-not-disturb, a failed sync or reply. Outlines stay calm in `border`; tint is for state.
+`alert` is only for what needs attention: critical battery, recording, a failed sync or reply; a state you chose (keep awake, do-not-disturb) is `primary`. Outlines stay calm in `border`; tint is for state.
 

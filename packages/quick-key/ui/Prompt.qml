@@ -9,7 +9,7 @@ RowLayout {
   // Whether it has the keys; a click asks for them through `tapped`.
   property bool active: true
   property var key: ""
-  property string glyph: Glyphs.submenu
+  property string glyph: Glyphs.prompt
   property alias text: area.text
   property alias placeholder: area.placeholder
   property alias maxLines: area.maxLines

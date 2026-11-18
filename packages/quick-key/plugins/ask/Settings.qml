@@ -12,8 +12,10 @@ PluginSettings {
   property string open
   // Its name, in the prompt and notifications; unset, the plugin's.
   property string title
-  // The prompt's glyph; unset, a chevron.
+  // Its glyph in the bar and notifications.
   property string glyph
+  // The prompt's glyph, its own (the agent's face) over the one every input shares (glyphs.prompt).
+  property string promptGlyph
   // What the empty prompt says, {title} for the title.
   property string placeholder: "Ask {title}"
   // What gives the prompt the keys again once Escape has taken them.

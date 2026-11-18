@@ -9,10 +9,10 @@ Plugin {
   id: root
 
   readonly property string today: Clock.dayKey(Clock.date)
-  // By due, undated last, never by whether done: a tick keeps its digit, so the same key unticks it. A tick or an added task shows before the file has it.
+  // By due, undated last, never by whether done: a tick keeps its digit, so the same key unticks it. A tick shows before the file has it, and an added task last, so no digit moves until the file places it.
   readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
-    .concat(adding.map(title => ({ id: "", title, adding: true })))
     .sort((a, b) => root.order(a.due ?? "~", b.due ?? "~") || a.title.localeCompare(b.title))
+    .concat(adding.map(title => ({ id: "", title, adding: true })))
   // Ticks not in the file yet, by id: done or not; titles added and not in it yet; and their commands, run one at a time.
   property var pending: ({})
   property var adding: []
@@ -21,16 +21,20 @@ Plugin {
   property string failure: ""
   // Open and due by today, late first.
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
+  readonly property var late: due.filter(task => task.due.slice(0, 10) < today)
   // The tasks reminded of, by id and due, so each is once.
   property var reminded: ({})
 
   glyph: settings.glyph
   text: ""
   empty: "No tasks"
-  // Two characters at most, so the row holds still.
-  detail: due.length > 9 ? "9+" : due.length > 0 ? String(due.length) : ""
-  tone: due.length > 0 && due[0].due.slice(0, 10) < today ? "warning" : ""
-  glyphs: tone === "warning" ? [Glyphs.late] : []
+  // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.
+  detail: {
+    const count = late.length || due.length;
+    return count > 9 ? "9+" : count > 0 ? String(count) : "";
+  }
+  tone: late.length > 0 ? "warning" : ""
+  glyphs: late.length > 0 ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
   fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.stamp(Clock.parse(state.updated)) : "" })
   items: tasks.map(task => {

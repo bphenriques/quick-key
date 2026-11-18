@@ -59,7 +59,7 @@ A line that is not a JSON object is logged and skipped. The shell ignores fields
 List one by name to use it: `plugins.dunst = { };`.
 
 - **`command`:** the state its source gives, as above, under any name.
-- **`dunst`:** do-not-disturb for dunst. A bell, red while notifications are paused; a click pauses or resumes them. Needs `dunstctl` and `dbus-monitor` on `PATH` (with Nix, add dunst to `extraPackages`).
+- **`dunst`:** do-not-disturb for dunst. A bell, struck and lit while notifications are paused; a click pauses or resumes them. Needs `dunstctl` and `dbus-monitor` on `PATH` (with Nix, add dunst to `extraPackages`).
 - **`wallpaper`:** the wallpaper's name, from a source whose value is its path.
 - **`recording`:** a pill on every screen while recording, and the elapsed time as a status. Its source gives `{"active": true, "since": <epoch seconds>}` while recording; `stop` ends it.
 - **`dictation`:** a pill while dictating, a spinner while transcribing. Its source gives `recording`, `transcribing` or anything else for idle; `stop` ends it.
@@ -69,7 +69,7 @@ List one by name to use it: `plugins.dunst = { };`.
 
 ## Ask
 
-A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation saying who it asks (`placeholder`, by default "Ask {title}", after its `glyph`), and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden.
+A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation saying who it asks (`placeholder`, by default "Ask {title}", after the prompt glyph every input shares, or its own `promptGlyph`), and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden.
 
 The one required setting is `ask`: a command given the prompt, the session (empty for a new one) and an image (empty for none). Its smallest form prints one line, `{"session", "reply"}` or `{"error"}`. Claude Code, carrying on in its session:
 
@@ -98,7 +98,7 @@ More lines it may print, one JSON object each:
 
 Stopping ends the command with SIGTERM. One whose run lives elsewhere traps it to stop the run there.
 
-Other settings: `open` (given the session, opens it in a terminal), `title`, `glyph`, `placeholder`, `key` (`a`), `lines` (the conversation's height, 14), and `notify` and `pasteImage`, which default to `notify-send` and `wl-paste`.
+Other settings: `open` (given the session, opens it in a terminal), `title`, `glyph`, `promptGlyph`, `placeholder`, `key` (`a`), `lines` (the conversation's height, 14), and `notify` and `pasteImage`, which default to `notify-send` and `wl-paste`.
 
 Keys:
 

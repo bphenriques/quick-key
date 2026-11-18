@@ -98,7 +98,7 @@ Scope {
       Icon {
         Layout.alignment: Qt.AlignTop
         tone: "dim"
-        glyph: Glyphs.submenu
+        glyph: Glyphs.prompt
         size: Metrics.line
       }
 
@@ -179,7 +179,7 @@ Scope {
         keys: (panel.plugin.typing ? [{ key: "Shift+Return", what: "newline" }] : [])
           .concat(panel.plugin.approval ? [{ key: chord + "y", what: "allow", clickable: true }] : [])
           .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: "new", clickable: true }] : [])
-          .concat(panel.plugin.canMove ? [{ key: chord + "o", what: "Move to terminal...", clickable: true }] : [])
+          .concat(panel.plugin.canMove ? [{ key: chord + "o", what: "terminal...", clickable: true }] : [])
           // Last, so its changing word moves nothing.
           .concat([{ key: "Escape", what: panel.plugin.escapeAction, clickable: true }])
         onPicked: key => {
@@ -252,7 +252,7 @@ Scope {
       Prompt {
         id: prompt
         Layout.fillWidth: true
-        glyph: panel.plugin.glyph || Glyphs.submenu
+        glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
         placeholder: panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
         active: panel.plugin.typing
         key: panel.plugin.settings.key
