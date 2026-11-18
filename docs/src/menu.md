@@ -21,7 +21,7 @@ The menu is a list of levels. Each is an optional bar floating over its body: th
 - A letter runs its entry or opens its level. `Esc` closes the menu, `Backspace` goes back.
 - Digits pick from a level's list; `Alt+digit` opens an item's own menu (a tray app's).
 - `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second lists the bar's keys in place of the body, each with its name.
-- Two keys with a command or action each (`[ "Down" "Up" ]`) share a row; the first steps down or back.
+- Two keys with a command or action each (`[ "Down" "Up" ]`) share a row; the first steps down or back, so a pair reads lesser or earlier side first: `↓↑` is less then more, `←→` and `↑↓` are back then forward, up going back in time as on a scrolled page.
 - `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`) where its bar does not take it. Hints show keys Emacs-style: `C-←`, `M-k`, `RET`, `DEL`.
 - Holding `Super` for a second lists each bar entry's `shortcut` the same way, the compositor key bound to it.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
