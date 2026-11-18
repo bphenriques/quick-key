@@ -16,6 +16,8 @@ Scope {
 
   // Page Up and Down, for the conversation.
   signal paged(bool down)
+  // Escape clicked in the legend for a step that is the prompt's.
+  signal escaped
 
   // A key for the panel, from the prompt or, while it waits, the panel; whether it was the panel's.
   function handle(event) {
@@ -178,9 +180,11 @@ Scope {
           .concat(panel.plugin.approval ? [{ key: chord + "y", what: "allow", clickable: true }] : [])
           .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: "new", clickable: true }] : [])
           .concat(panel.plugin.canMove ? [{ key: chord + "o", what: "Move to terminal...", clickable: true }] : [])
-          // Last, so its changing word moves nothing; twice quickly hides (docs/src/plugins.md).
+          // Last, so its changing word moves nothing.
           .concat([{ key: "Escape", what: panel.plugin.escapeAction, clickable: true }])
-        onPicked: key => panel.plugin.act(key)
+        onPicked: key => {
+          if (!panel.plugin.act(key) && key === "Escape") panel.escaped();
+        }
       }
 
       Divider {
@@ -218,6 +222,13 @@ Scope {
           // Wider between exchanges than within one, so each reads as a unit.
           spacing: Config.theme.padding
 
+          // An empty conversation says so, as an empty list does.
+          Label {
+            visible: panel.plugin.exchanges.length === 0
+            tone: "dim"
+            text: "New conversation"
+          }
+
           Repeater {
             model: panel.plugin.exchanges.length
 
@@ -246,6 +257,9 @@ Scope {
         active: panel.plugin.typing
         key: panel.plugin.settings.key
         onTapped: panel.plugin.typing = true
+        onUnfocused: panel.plugin.typing = false
+        empty: text === "" && !panel.plugin.image
+        onCleared: panel.plugin.image = ""
         onTextChanged: panel.plugin.draft = text
         Component.onCompleted: set(panel.plugin.draft)
 
@@ -261,15 +275,20 @@ Scope {
         }
 
         Connections {
+          target: panel
+
+          function onEscaped() {
+            prompt.stepBack();
+          }
+        }
+
+        Connections {
           target: panel.plugin
 
           function onRestore(text) {
             if (prompt.text === "") prompt.set(text);
           }
 
-          function onClearPrompt() {
-            prompt.clear();
-          }
 
           function onPasteText() {
             prompt.paste();

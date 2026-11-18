@@ -30,6 +30,7 @@ Plugin {
   // Two characters at most, so the row holds still.
   detail: due.length > 9 ? "9+" : due.length > 0 ? String(due.length) : ""
   tone: due.length > 0 && due[0].due.slice(0, 10) < today ? "warning" : ""
+  glyphs: tone === "warning" ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
   fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.stamp(Clock.parse(state.updated)) : "" })
   items: tasks.map(task => {
@@ -97,10 +98,10 @@ Plugin {
     return Object.keys(pending).reduce((kept, id) => test(id, pending[id]) ? Object.assign(kept, { [id]: pending[id] }) : kept, {});
   }
 
-  // As the menu opens, a sync when the file is five minutes old: one on every opening would keep the calendar syncing too. A failed tick is old news by then.
+  // As the menu opens, a sync when the file is old (syncAfter); a failed tick is old news by then.
   function refresh() {
     failure = "";
-    if (!state.updated || Clock.date - Clock.parse(state.updated) >= 5 * 60000) exec(settings.sync);
+    if (!state.updated || Clock.date - Clock.parse(state.updated) >= settings.syncAfter * 60000) exec(settings.sync);
   }
 
   // Each timed task once, as its time comes, on the clock's own minute.

@@ -75,6 +75,11 @@ for file in $(grep -rlE '\?\.\(|\.flatMap\(|Object\.fromEntries\(' --include='*.
   fail "$file: an optional call, flatMap or Object.fromEntries, which Qt's JavaScript cannot run"
 done
 
+# QML takes escape for a global, so a method by that name fails the whole file at load.
+for file in $(grep -rlE 'function (escape|unescape)\(' --include='*.qml' .); do
+  fail "$file: a method named escape, which QML rejects"
+done
+
 # Plugins: Plugin holds the one source and IPC target; none declares its own.
 for file in $(grep -rlE '^\s*(CommandState|CommandWatcher|CommandReader|FileView|IpcHandler) \{' --include='*.qml' plugins); do
   fail "$file: declares a source or IPC target past Plugin"

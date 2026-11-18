@@ -12,7 +12,7 @@ menu.entries = [ { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; 
 
 Tasks sort by due date, undated last, a late one in the warning tone with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it; the file drops it the next day. With none, the level says so.
 
-The file is read on every change. Opening the menu syncs when it is five minutes old, and every tick syncs after it.
+The file is read on every change. Opening the menu syncs when it is `syncAfter` minutes old (5), and every tick syncs after it.
 
 ## The tasks file
 

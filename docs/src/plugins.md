@@ -64,7 +64,7 @@ List one by name to use it: `plugins.dunst = { };`.
 - **`recording`:** a pill on every screen while recording, and the elapsed time as a status. Its source gives `{"active": true, "since": <epoch seconds>}` while recording; `stop` ends it.
 - **`dictation`:** a pill while dictating, a spinner while transcribing. Its source gives `recording`, `transcribing` or anything else for idle; `stop` ends it.
 - **`niriMinimap`:** a minimap of niri's workspaces as you move between them. Sized by `height`, `maxWidth`, `opacity` and `borderWidth`.
-- **`tasks`:** tasks to tick off, from the tasks file its `file` names (see [Tasks](tasks.md)). `done` and `reopen` are given a task's id and `add` a title, each writing the file again; `sync` runs as the menu opens on a file five minutes old, and after a tick; `remind`, unset by default, is given a title and a time as a timed task falls due.
+- **`tasks`:** tasks to tick off, from the tasks file its `file` names (see [Tasks](tasks.md)). `done` and `reopen` are given a task's id and `add` a title, each writing the file again; `sync` runs as the menu opens on a file `syncAfter` minutes old (5), and after a tick; `remind`, unset by default, is given a title and a time as a timed task falls due.
 - **`ask`:** a panel for quick turns with an agent, below.
 
 ## Ask
@@ -98,12 +98,12 @@ More lines it may print, one JSON object each:
 
 Stopping ends the command with SIGTERM. One whose run lives elsewhere traps it to stop the run there.
 
-Other settings: `open` (given the session, opens it in a terminal), `title`, `glyph`, `placeholder`, and `notify` and `pasteImage`, which default to `notify-send` and `wl-paste`.
+Other settings: `open` (given the session, opens it in a terminal), `title`, `glyph`, `placeholder`, `key` (`a`), `lines` (the conversation's height, 14), and `notify` and `pasteImage`, which default to `notify-send` and `wl-paste`.
 
 Keys:
 
 - `RET` sends, `S-RET` breaks the line, `C-v` attaches the clipboard's image.
-- The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else leaves it, dim, else hides. Twice quickly hides from anywhere, as does a click beside it; the conversation is kept.
+- The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else leaves it, dim, else hides, as does a click beside it; the conversation is kept, and an empty one says so.
 - `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `y`, `l` and `o` do, and `a` (`key`) gives it the keys again.
 
 Two agents are two plugins with `type = "ask"`.
@@ -124,7 +124,7 @@ What it gets:
 
 What it gives:
 
-- `glyph`, `text`, `detail`, `active` and `tone`, shown wherever its name is a `status`, and `fields` by name for an entry's `format`.
+- `glyph`, `text`, `detail`, `glyphs` (before the detail, in its tone), `active` and `tone`, shown wherever its name is a `status`, and `fields` by name for an entry's `format`.
 - `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it under its keys.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).

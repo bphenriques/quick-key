@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A line of text to send: its key while it waits (a level's), else a glyph, then the text growing to `maxLines`; keys reach `keyPressed` first.
+// A line of text to send: its key while it waits (a level's), else a glyph, then the text growing to `maxLines`. Keys reach `keyPressed` first; Escape the owner leaves clears it, then gives the keys back (`unfocused`, `stepBack`).
 RowLayout {
   id: root
 
@@ -13,9 +13,23 @@ RowLayout {
   property alias text: area.text
   property alias placeholder: area.placeholder
   property alias maxLines: area.maxLines
+  // Nothing to clear; an owner with more to clear than the text (a pasted image) says when.
+  property bool empty: text === ""
 
   signal keyPressed(var event)
   signal tapped
+  signal cleared
+  signal unfocused
+
+  // Escape's own steps: clear, then give the keys back.
+  function stepBack() {
+    if (empty) {
+      unfocused();
+      return;
+    }
+    area.clear();
+    cleared();
+  }
 
   function clear() {
     area.clear();
@@ -58,7 +72,13 @@ RowLayout {
     Layout.fillWidth: true
     Layout.preferredHeight: implicitHeight
     activeFocusOnPress: root.active
-    onKeyPressed: event => root.keyPressed(event)
+    onKeyPressed: event => {
+      root.keyPressed(event);
+      if (!event.accepted && event.key === Qt.Key_Escape) {
+        root.stepBack();
+        event.accepted = true;
+      }
+    }
 
     TapHandler {
       enabled: !root.active

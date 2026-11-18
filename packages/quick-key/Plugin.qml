@@ -29,6 +29,8 @@ Scope {
   property string error: state.error ?? ""
   // Why its list is empty, shown in its place (No tasks); by default, its state's own `empty`.
   property string empty: state.empty ?? ""
+  // Glyphs before its detail, in its tone: a state colour alone should not carry (a late task's alarm).
+  property var glyphs: state.glyphs ?? []
   // What an entry's `format` reads by name, beside `text` and `detail`.
   property var fields: state.fields ?? ({})
   // Its compositor key, shown beside it while Super is held.

@@ -55,6 +55,14 @@ in
       description = "Command that syncs now, for a menu entry";
     };
 
+    exec.syncAndWait = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = "${lib.getExe' pkgs.systemd "systemctl"} --user start quick-key-calendar-sync.service";
+      defaultText = lib.literalExpression ''"''${lib.getExe' pkgs.systemd "systemctl"} --user start quick-key-calendar-sync.service"'';
+      description = "Command that syncs and returns once done, for a script that reads the files after";
+    };
+
     exec.done = lib.mkOption {
       type = lib.types.str;
       readOnly = true;

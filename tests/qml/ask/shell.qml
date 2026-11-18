@@ -25,20 +25,19 @@ ShellRoot {
         })
       },
       {
-        name: "Escape leaves the prompt, then hides; waiting, a letter acts and its key gives the prompt the keys again",
+        name: "typing, Escape leaves clearing and leaving to the prompt; waiting, it hides, a letter acts and its key gives the prompt the keys again",
         until: () => {
           const ask = Plugins.get("idle");
           if (!ask) return false;
           ask.toggle();
-          ask.act("Escape");
-          const left = ask.shown && !ask.typing;
+          const promptsOwn = ask.typing && !ask.act("Escape") && ask.escapeAction === "back" && ask.shown;
+          ask.typing = false;
           ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
           const letter = ask.act("l") && ask.exchanges.length === 0;
           const typing = ask.act("a") && ask.typing && !ask.act("l");
           ask.typing = false;
-          ask.lastEscape = 0;
-          ask.act("Escape");
-          return left && letter && typing && !ask.shown;
+          const hidden = ask.act("Escape") && !ask.shown;
+          return promptsOwn && letter && typing && hidden;
         }
       },
       {

@@ -10,6 +10,8 @@ PluginSettings {
   property string add
   // Syncs, as the menu opens and after a tick.
   property string sync
+  // Minutes old the file may be as the menu opens before a sync; one on every opening would keep the calendar syncing.
+  property int syncAfter: 5
   // Given a title and a time, as a timed task falls due; unset, no reminders.
   property string remind
   property string glyph

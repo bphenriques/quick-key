@@ -10,8 +10,7 @@ import qs.ui
 Plugin {
   id: root
 
-  // In lines, like the menu's width in pixels: declared, so the panel holds still (rule 4).
-  readonly property int lines: 14
+  readonly property int lines: settings.lines
   readonly property string title: settings.title || name
 
   // [{ prompt, image, reply, error, stopped }], the last one waiting while busy.
@@ -33,14 +32,12 @@ Plugin {
   property int now: 0
   readonly property int waited: Math.max(0, now - sentAt)
 
-  // Escape steps back without losing the conversation, as in a chat app: what needs it first, then the prompt, then the panel; twice quickly hides.
-  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : !typing ? "hide" : draft || image ? "clear" : "leave"
+  // Escape steps back without losing the conversation, as in a chat app: what needs it first, then the prompt (clear, back), then the panel.
+  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : !typing ? "hide" : draft || image ? "clear" : "back"
   readonly property bool canMove: !busy && exchanges.length > 0
-  property real lastEscape: 0
 
-  // For the prompt, which lives in the panel's window: put a failed prompt back (Return retries it), or clear it.
+  // For the prompt, which lives in the panel's window: put a failed prompt back (Return retries it).
   signal restore(string prompt)
-  signal clearPrompt
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText
 
@@ -169,7 +166,7 @@ Plugin {
       return true;
     }
     switch (!typing && /^[a-z]$/.test(key) ? "Ctrl+" + key : key) {
-    case "Escape": stepBack(); return true;
+    case "Escape": return stepBack();
     case "Ctrl+y": answerApproval(true); return true;
     case "Ctrl+l": reset(); return true;
     case "Ctrl+o": moveToTerminal(); return true;
@@ -178,23 +175,14 @@ Plugin {
     return false;
   }
 
+  // Its own steps; clearing and giving the keys back are the prompt's (Prompt.stepBack), so false leaves them to it.
   function stepBack() {
-    const twice = Date.now() - lastEscape < 400;
-    lastEscape = Date.now();
-    if (twice) {
-      shown = false;
-      return;
-    }
     switch (escapeAction) {
-    case "deny": answerApproval(false); break;
-    case "stop": stop(); break;
-    case "clear":
-      clearPrompt();
-      image = "";
-      break;
-    case "leave": typing = false; break;
-    default: shown = false;
+    case "deny": answerApproval(false); return true;
+    case "stop": stop(); return true;
+    case "hide": shown = false; return true;
     }
+    return false;
   }
 
   Timer {

@@ -1,5 +1,5 @@
-# Runs a working tree of the shell in a nested niri, then opens a shell inside it to drive it.
-dir=$(realpath "${1:?usage: quick-key-preview <shell dir> [config.json]}")
+# Runs a working tree of the shell in a nested niri, then opens a shell inside it to drive it, or runs a steps file and exits.
+dir=$(realpath "${1:?usage: quick-key-preview <shell dir> [config.json] [steps.sh]}")
 config_home=${XDG_CONFIG_HOME:-$HOME/.config}
 config=$(realpath "${2:-$config_home/quick-key/config.json}")
 : "${WAYLAND_DISPLAY:?run inside a Wayland session}"
@@ -27,6 +27,23 @@ fi
 export WAYLAND_DISPLAY=$display NIRI_SOCKET=$socket
 
 XDG_CONFIG_HOME=$work/config quickshell -p "$dir" > "$work/quickshell.log" 2>&1 &
+shell_pid=$!
+
+# shellcheck disable=SC2329 # a steps file calls these, then the preview ends; shots land in the working directory
+if [ -n "${3:-}" ]; then
+  ipc() { quickshell ipc --pid "$shell_pid" call "$@"; }
+  key() { wtype "$@"; sleep 0.3; }
+  shot() { sleep "${2:-0.8}"; grim "$1.png"; }
+  sleep 5
+  kill -0 "$shell_pid" 2>/dev/null || { cat "$work/quickshell.log" >&2; exit 1; }
+  # wtype drops the first key it sends.
+  wtype -k Shift_L
+  # shellcheck source=/dev/null
+  . "$(realpath "$3")"
+  grep -E "WARN (scene|qml)|TypeError" "$work/quickshell.log" >&2 || true
+  exit
+fi
+
 
 cat <<HELP
 Shell running in the nested niri; its log: $work/quickshell.log. Exit this shell to stop both.
