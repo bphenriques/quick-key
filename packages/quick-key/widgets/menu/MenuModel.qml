@@ -142,6 +142,8 @@ Scope {
       active: item.active ?? false,
       enabled: item.enabled ?? true,
       done: item.done ?? false,
+      busy: item.busy ?? false,
+      glyphs: Array.from(item.glyphs ?? []),
       tone: item.tone ?? "",
       select: () => plugin.select(item.id)
     }));

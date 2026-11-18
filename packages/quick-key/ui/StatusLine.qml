@@ -14,7 +14,7 @@ RowLayout {
   property string title
   property string text
   property string detail
-  // Glyphs on the right before the detail (a mode, a submenu), drawn as icons the height of its text.
+  // Glyphs on the right before the detail (a mode, a submenu, a late task's alarm), drawn as icons the height of its text, in the detail's tone.
   property var detailGlyphs: []
   // The icon's, the title's and, without a title, the text's.
   property string tone: "normal"
@@ -29,13 +29,21 @@ RowLayout {
   property bool struck: false
   // Its text bold, the one to find first (the clock).
   property bool strong: false
+  // Still being made: a spinner in place of its icon.
+  property bool busy: false
   readonly property bool titled: title !== ""
 
   spacing: Config.theme.spacing
 
   Icon {
+    visible: !root.busy && (glyph !== "" || source !== "")
     glyph: root.glyph
     source: root.image
+    tone: root.tone
+  }
+
+  Spinner {
+    visible: root.busy
     tone: root.tone
   }
 
@@ -67,7 +75,7 @@ RowLayout {
     Icon {
       required property string modelData
       size: detailLabel.implicitHeight
-      tone: "dim"
+      tone: root.valueTone
       glyph: modelData
     }
   }

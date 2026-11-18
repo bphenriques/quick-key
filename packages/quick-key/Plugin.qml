@@ -34,7 +34,7 @@ Scope {
   // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
 
-  // What a menu entry with `list` set to its name shows, each { id, label, icon, detail, active, enabled, done, tone }.
+  // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, busy, tone }.
   property var items: state.items ?? []
 
   // What a click on it in a bar, or `<name> activate` over IPC, does.

@@ -34,6 +34,7 @@ ListItem {
     icon: row.item.icon ?? ""
     active: row.item.active ?? false
     done: row.item.done ?? false
+    busy: row.item.busy ?? false
     itemTone: row.item.tone ?? ""
     pins: row.item.entry?.pins ?? []
     inLevel: row.item.inLevel ?? false

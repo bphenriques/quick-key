@@ -77,14 +77,14 @@ ShellRoot {
         until: () => Number(Plugins.get("ticker")?.text) >= Number(root.ticked) + 2
       },
       {
-        name: "tasks list by due, undated last, done ones in place, a late one in warning; the status counts the open ones due by today, warning when one is late, and names the most urgent as a field",
+        name: "tasks list by due, undated last, done ones in place, a late one in warning with an alarm; the status counts the open ones due by today, warning when one is late, and names the most urgent as a field",
         start: () => root.tasks("write"),
         until: () => {
           const tasks = Plugins.get("tasks");
           const ticked = (tasks?.items ?? []).find(item => item.id === "e");
           return tasks.items.map(item => item.id).join() === "a,e,f,b,c,d" && tasks.text === "" && tasks.fields.title === "Late" && tasks.detail === "3"
             && tasks.tone === "warning" && ticked.done && ticked.icon === Glyphs.checkboxChecked
-            && tasks.items.map(item => item.tone).join() === "warning,,,,,";
+            && tasks.items.map(item => item.tone).join() === "warning,,,,," && tasks.items[0].glyphs[0] === Glyphs.late && tasks.items[1].glyphs.length === 0;
         }
       },
       {
@@ -110,9 +110,9 @@ ShellRoot {
           && Object.keys(Plugins.get("tasks").pending).length === 0 && Plugins.get("tasks").error === "Could not tick off Undated"
       },
       {
-        name: "an added task shows at once, dim, before its command has written the file",
+        name: "an added task shows at once, dim with a spinner, before its command has written the file",
         start: () => Plugins.get("tasks").submit("New"),
-        until: () => Plugins.get("tasks").items.some(item => item.label === "New" && item.enabled === false)
+        until: () => Plugins.get("tasks").items.some(item => item.label === "New" && item.enabled === false && item.busy)
           && !Array.from(Plugins.get("tasks").state.tasks).some(task => task.title === "New")
       },
       {

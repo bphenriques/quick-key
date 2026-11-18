@@ -32,7 +32,20 @@ Plugin {
   tone: due.length > 0 && due[0].due.slice(0, 10) < today ? "warning" : ""
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
   fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.stamp(Clock.parse(state.updated)) : "" })
-  items: tasks.map(task => ({ id: task.id, label: task.title, icon: task.done ? Glyphs.checkboxChecked : Glyphs.checkbox, detail: when(task.due), done: !!task.done, enabled: !task.adding, tone: !task.done && task.due && task.due.slice(0, 10) < today ? "warning" : "" }))
+  items: tasks.map(task => {
+    const late = !task.done && !!task.due && task.due.slice(0, 10) < today;
+    return {
+      id: task.id,
+      label: task.title,
+      icon: task.done ? Glyphs.checkboxChecked : Glyphs.checkbox,
+      glyphs: late ? [Glyphs.late] : [],
+      detail: when(task.due),
+      done: !!task.done,
+      busy: !!task.adding,
+      enabled: !task.adding,
+      tone: late ? "warning" : ""
+    };
+  })
 
   // Dates by code point: a locale may sort the undated mark (~) before digits.
   function order(a, b) {
@@ -118,8 +131,9 @@ Plugin {
     // { verb, arg }: done or reopen and an id, or add and a title.
     property var job: null
     onExited: code => {
+      // An add is over as its command is, whatever title the file gave it (a command may read a date out of it).
+      if (job.verb === "add") root.adding = root.adding.filter(title => title !== job.arg);
       if (code !== 0 && job.verb === "add") {
-        root.adding = root.adding.filter(title => title !== job.arg);
         root.failure = "Could not add " + job.arg;
       } else if (code !== 0) {
         root.pending = root.kept(id => id !== job.arg);

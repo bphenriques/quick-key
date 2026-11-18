@@ -49,7 +49,7 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 - `value`: what `show` and `items` look up; a plain line is its value.
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
 - `enabled`: the ids of `items` that can be picked; unset, all.
-- `items`: items that change, each `{ id, label, icon, detail, active, enabled, done, tone }`, when the settings list none. A `done` item dims, struck through, and can still be picked; `tone` (`warning`) marks one that needs attention.
+- `items`: items that change, each `{ id, label, icon, glyphs, detail, active, enabled, done, busy, tone }`, when the settings list none. A `done` item dims, struck through, and can still be picked; `tone` (`warning`) marks one that needs attention, with `glyphs` before its detail so colour is not all that says so; a `busy` one, still being made, shows a spinner for its icon.
 - `empty`: why `items` is empty, shown in its place (`No devices paired`).
 
 A line that is not a JSON object is logged and skipped. The shell ignores fields it does not know, and a plugin may read its own (`recording`'s `since`).

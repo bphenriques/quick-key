@@ -36,6 +36,7 @@ Singleton {
   readonly property string calendar: Config.glyphs.calendar ?? "\u{F00ED}" // md-calendar
   readonly property string checkbox: Config.glyphs.checkbox ?? "\u{F0131}" // md-checkbox_blank_outline
   readonly property string checkboxChecked: Config.glyphs.checkboxChecked ?? "\u{F0132}" // md-checkbox_marked
+  readonly property string late: Config.glyphs.late ?? "\u{F0020}" // md-alarm
   readonly property var brightnessLevels: Config.glyphs.brightnessLevels ?? ["\u{F00DE}", "\u{F00DF}", "\u{F00E0}"] // md-brightness_5, _6, _7
   readonly property string check: Config.glyphs.check ?? "\u{F012C}" // md-check
   readonly property string search: Config.glyphs.search ?? "\u{F0349}" // md-magnify

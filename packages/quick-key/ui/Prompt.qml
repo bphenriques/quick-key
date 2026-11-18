@@ -31,19 +31,26 @@ RowLayout {
 
   spacing: Config.theme.spacing
 
-  KeyHint {
+  // Its key and its glyph share one square, so the text holds still as it takes the keys.
+  Item {
     Layout.alignment: Qt.AlignTop
-    visible: !root.active && root.key !== ""
-    key: root.key
-    chars: MenuKeys.label(root.key).length
-  }
+    implicitWidth: Metrics.line
+    implicitHeight: Metrics.line
 
-  Icon {
-    Layout.alignment: Qt.AlignTop
-    visible: root.active || root.key === ""
-    tone: root.active ? "primary" : "dim"
-    glyph: root.glyph
-    size: Metrics.line
+    KeyHint {
+      anchors.centerIn: parent
+      visible: !root.active && root.key !== ""
+      key: root.key
+      chars: MenuKeys.label(root.key).length
+    }
+
+    Icon {
+      anchors.centerIn: parent
+      visible: root.active || root.key === ""
+      tone: root.active ? "primary" : "dim"
+      glyph: root.glyph
+      size: Metrics.line
+    }
   }
 
   TextArea {
