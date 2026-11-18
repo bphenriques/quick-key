@@ -34,7 +34,8 @@ Item {
     return Array.from({ length: 42 }, (_, i) => new Date(first.getFullYear(), first.getMonth(), 1 - lead + i));
   }
 
-  implicitHeight: titleLabel.implicitHeight + Config.theme.itemPaddingY + grid.implicitHeight
+  // The last week ends on a menu row's padding, the half its cells give up added back.
+  implicitHeight: titleLabel.implicitHeight + Config.theme.itemPaddingY + grid.implicitHeight + cellPadding
 
   Label {
     id: titleLabel
@@ -87,8 +88,10 @@ Item {
           Layout.fillWidth: true
           spacing: root.dotGap
 
+          // Filling the cell lets the column fill it too (a layout grows no wider than its children), so number, dots and highlight share one centre.
           Label {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
             tone: cell.isToday ? "primary" : cell.inMonth ? "normal" : "dim"
             strong: cell.isToday
             text: cell.modelData.getDate()
