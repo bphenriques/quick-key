@@ -15,7 +15,7 @@ Plugin {
   // Ticks not in the file yet, by id: done or not; and their commands, run one at a time.
   property var pending: ({})
   property var queue: []
-  // The last tick that failed, until the next tick: it shows above the file's own error.
+  // The last tick that failed, until the next tick or opening: it shows above the file's own error.
   property string failure: ""
   // Open and due by today, late first.
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
@@ -24,6 +24,7 @@ Plugin {
 
   glyph: settings.glyph
   text: ""
+  empty: "No tasks"
   // Two characters at most, so the row holds still.
   detail: due.length > 9 ? "9+" : due.length > 0 ? String(due.length) : ""
   tone: due.length > 0 && due[0].due.slice(0, 10) < today ? "warning" : ""
@@ -70,8 +71,9 @@ Plugin {
     return Object.keys(pending).reduce((kept, id) => test(id, pending[id]) ? Object.assign(kept, { [id]: pending[id] }) : kept, {});
   }
 
-  // As the menu opens, a sync when the file is five minutes old: one on every opening would keep the calendar syncing too.
+  // As the menu opens, a sync when the file is five minutes old: one on every opening would keep the calendar syncing too. A failed tick is old news by then.
   function refresh() {
+    failure = "";
     if (!state.updated || Clock.date - Clock.parse(state.updated) >= 5 * 60000) exec(settings.sync);
   }
 

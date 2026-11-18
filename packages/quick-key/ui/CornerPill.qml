@@ -11,7 +11,7 @@ Scope {
 
   property bool shown: false
   property int slot: 0
-  property string tone: "primary"
+  property string tone: ""
   property string namespace
   default property Component content
   readonly property bool hovered: internal.hovered

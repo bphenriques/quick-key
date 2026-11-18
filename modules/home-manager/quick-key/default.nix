@@ -22,7 +22,9 @@ let
         qs -p ${cfg.package}/share/quick-key/check.qml
         cp $settings $out
       '';
-  themeFiles = lib.mapAttrs (name: colors: json.generate "quick-key-theme-${name}.json" colors) cfg.themes;
+  themeFiles = lib.mapAttrs (
+    name: colors: json.generate "quick-key-theme-${name}.json" (lib.filterAttrs (_: color: color != null) colors)
+  ) cfg.themes;
   presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quick-key/themes")));
   themeName = cfg.settings.theme.name or null;
 
@@ -50,7 +52,10 @@ let
     };
 in
 {
-  imports = [ (import ./calendar-sync.nix self) ];
+  imports = [
+    (import ./calendar-sync.nix self)
+    ./stylix.nix
+  ];
 
   options.programs.quick-key = {
     enable = lib.mkEnableOption "quick-key, a keyboard-driven Quickshell menu with live status";
@@ -78,6 +83,11 @@ in
             primary = color "Colour of what is on or in use";
             alert = color "Colour of what needs attention";
             warning = color "Colour of what may soon need attention";
+            border = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Colour of outlines and dividers; unset, the dim text colour";
+            };
           };
         }
       );

@@ -22,7 +22,7 @@ CornerPill {
       anchors.verticalCenter: parent.verticalCenter
       width: Config.theme.iconSize / 3
       height: width
-      radius: pill.hovered ? Config.theme.borderWidth * 2 : width / 2
+      radius: pill.hovered ? width / 4 : width / 2
       color: Tone.color("alert")
     }
 

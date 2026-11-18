@@ -39,7 +39,7 @@ Item {
   Label {
     id: titleLabel
     x: Config.theme.itemPaddingX
-    font.bold: true
+    strong: true
     text: root.title
   }
 
@@ -90,7 +90,7 @@ Item {
           Label {
             Layout.alignment: Qt.AlignHCenter
             tone: cell.isToday ? "primary" : cell.inMonth ? "normal" : "dim"
-            font.bold: cell.isToday
+            strong: cell.isToday
             text: cell.modelData.getDate()
           }
 

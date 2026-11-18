@@ -20,14 +20,17 @@ Scope {
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property bool inCalendar: level?.entry?.view === "calendar"
+  // What the level lists, read once for every entry that acts on it.
+  readonly property var levelList: listed(level?.entry?.list)
   readonly property var items: itemsOf(level)
   readonly property var actions: items.filter(item => !item.listed)
   readonly property var rows: items.filter(item => item.listed)
   readonly property int width: level?.width ?? Config.menu.width
   // Why a level's list is empty, in its place; "" while it lists something.
-  readonly property string emptyText: level?.entry?.list && rows.length === 0 ? Lists.builtin[level.entry.list]?.empty() ?? "" : ""
+  readonly property string emptyText: level?.entry?.list && rows.length === 0 ? Lists.builtin[level.entry.list]?.empty() ?? Plugins.get(level.entry.list)?.empty ?? "" : ""
+  readonly property var topBar: ({ left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") })
   // The level's bar by slot: the top level's is menu.header, else the starter's, an entry's its own `header`, an app's menu the app and the way into it (blueman › Plugins).
-  readonly property var bar: level === null ? { left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") }
+  readonly property var bar: level === null ? topBar
     : level.kind === "entry" ? level.entry.header ?? {} : {}
   readonly property var barSlots: level?.kind === "menu" ? { left: [appOf(stack.filter(level => level.kind === "menu"))], center: [], right: [] }
     : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
@@ -104,21 +107,21 @@ Scope {
   // A list in a bar: its `limit` (at most nine) on digits, then 0 for the whole list in the picker when there are more.
   function barList(entry) {
     const all = listed(entry.list);
-    const shown = numbered(entry.list, entry.pins).slice(0, entry.limit ?? 9);
+    const shown = numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
     const more = all.length - shown.length;
     return more > 0 ? shown.concat({ key: "0", desc: "+" + more, enabled: Config.menu.picker !== "", closes: true, select: () => Picker.pick(all) }) : shown;
   }
 
   // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order.
-  function numbered(list, pins) {
-    const rest = listed(list);
+  function numbered(list, pins, items = listed(list)) {
+    const rest = Array.from(items);
     const pinned = Array.from(pins ?? []).map(pin => {
       const index = rest.findIndex(item => MenuKeys.glob(pin.match, item.id));
       if (index < 0) return { desc: pin.label, icon: pin.icon ?? Lists.builtin[list]?.icon ?? Glyphs.tray, enabled: false };
       const item = rest.splice(index, 1)[0];
-      return Object.assign(item, { desc: pin.label, icon: pin.icon ?? item.icon });
+      return Object.assign({}, item, { desc: pin.label, icon: pin.icon ?? item.icon });
     });
-    return pinned.concat(rest).slice(0, 9).map((item, i) => Object.assign(item, { key: String(i + 1), listed: true }));
+    return pinned.concat(rest).slice(0, 9).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
   }
 
   // What a runtime list holds, without keys; each item's id is what pins match.
@@ -152,7 +155,7 @@ Scope {
 
   // Whether an entry can run now: a command always, an action when it has something to act on.
   function available(entry) {
-    return Actions.builtin[entry.action]?.available(listed(level?.entry?.list)) ?? true;
+    return Actions.builtin[entry.action]?.available(levelList) ?? true;
   }
 
   // A pair runs one command or action per key, shown as one row (Down and Up).
@@ -179,8 +182,7 @@ Scope {
 
   // A top-level entry by its key, in the body or the bar, as a compositor shortcut opens it.
   function toggleEntry(key) {
-    const header = { left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") };
-    const item = find(itemsOf(null).concat(barOf(header.left), barOf(header.center), barOf(header.right)), key);
+    const item = find(itemsOf(null).concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
     if (!item) return;
     if (level?.entry === item.entry) {
       hide();
@@ -219,7 +221,7 @@ Scope {
       const second = MenuKeys.names(entry.key).indexOf(name);
       if (action.pair && second < 0) return;
       // Read before hide(), which leaves the level.
-      const list = listed(level?.entry?.list);
+      const list = levelList;
       if (entry.keepOpen === false || action.closes) hide();
       action.run(second === 1, list);
       return;

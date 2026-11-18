@@ -9,8 +9,6 @@ import qs.ui
 Singleton {
   id: root
 
-  readonly property var none: ({ text: "", detail: "" })
-
   // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted().
   readonly property var builtin: ({
     sink: {
@@ -90,7 +88,7 @@ Singleton {
     keepAwake: {
       glyph: () => Glyphs.keepAwake,
       fields: () => ({}),
-      value: () => root.none,
+      value: () => ({ text: "", detail: "" }),
       tone: () => IdleInhibit.enabled ? "primary" : ""
     }
   })

@@ -70,6 +70,11 @@ ShellRoot {
       {
         name: "a format fills its fields, and a field without a value leaves nothing",
         until: () => Statuses.formatted("{title} · {when}", { title: "Lunch", when: "13:00" }) === "Lunch · 13:00" && Statuses.formatted("{none} x", {}) === "x"
+      },
+      {
+        name: "a plugin's empty list says why, in its words",
+        start: () => menu.push({ kind: "entry", entry: { list: "nothing" } }),
+        until: () => menu.emptyText === "Nothing found"
       }
     ]
   }

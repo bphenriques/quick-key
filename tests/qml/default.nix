@@ -1,4 +1,4 @@
-# The shell's logic in a real Quickshell, headless, one check per folder: its shell.qml replaces the shipped one and runs its cases through Suite.qml.
+# The shell's logic in a real Quickshell, headless, one check per folder: its shell.qml replaces the shipped one and runs its cases through Suite.qml; a TypeError fails it too, as does a view not created for any reason but its window, which needs a session.
 { pkgs, self }:
 let
   # The folder is the shell's config and state at once, so its config.json, plugins, scripts and events.json are found by name.
@@ -15,7 +15,7 @@ let
       cp ${./. + "/${name}/shell.qml"} shell/shell.qml
       timeout 60 qs -p shell 2>&1 | tee log
       grep -q '# done' log
-      if grep -q 'not ok' log; then exit 1; fi
+      if grep -qE 'not ok|TypeError' log || grep 'not created' log | grep -vq 'unavailable$'; then exit 1; fi
       touch $out
     '';
 in

@@ -27,10 +27,6 @@ case "$1" in
     echo "{\"updated\":\"$(date +%Y-%m-%dT%H:%M)\",\"error\":\"personal: could not sync\",\"tasks\":[]}" > "$file.tmp"
     mv "$file.tmp" "$file"
     ;;
-  broken)
-    echo "{\"updated\":\"$(date +%Y-%m-%dT%H:%M)\",\"error\":\"personal: could not sync\",\"tasks\":[]}" > "$file.tmp"
-    mv "$file.tmp" "$file"
-    ;;
   sync) echo synced > "$XDG_RUNTIME_DIR/synced" ;;
   unsync) rm -f "$XDG_RUNTIME_DIR/synced" ;;
   remind) echo "$2 $3" > "$XDG_RUNTIME_DIR/reminded" ;;

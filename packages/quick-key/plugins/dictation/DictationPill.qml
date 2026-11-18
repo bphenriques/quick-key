@@ -3,7 +3,7 @@ import qs
 import qs.services
 import qs.ui
 
-// The dim pill on every screen while dictating, under the recording one: its icon while it listens, a spinner while it transcribes.
+// The pill on every screen while dictating, under the recording one: its icon while it listens, a spinner while it transcribes.
 CornerPill {
   id: pill
 
@@ -11,8 +11,6 @@ CornerPill {
 
   shown: pill.plugin.active
   slot: 1
-  // Status, not an alert: it was just started and stops when told.
-  tone: "dim"
   namespace: "dictation-indicator"
   onClicked: pill.plugin.exec(pill.plugin.settings.stop)
 

@@ -8,6 +8,10 @@
     "picked": {
       "type": "command",
       "file": "picked"
+    },
+    "nothing": {
+      "type": "command",
+      "read": "echo '{\"items\": [], \"empty\": \"Nothing found\"}'"
     }
   },
   "menu": {

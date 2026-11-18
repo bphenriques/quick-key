@@ -1,20 +1,18 @@
 import QtQuick
-import QtQuick.Window
 import qs
 
-// A rounded capsule around a row of content, outlined in its tone's colour.
+// A rounded capsule around a row of content, outlined like a panel, or in its tone for a state (recording).
 Surface {
   id: root
 
-  property string tone: "primary"
+  property string tone: ""
   property real padding: Config.theme.spacing
   default property alias content: row.data
 
   implicitWidth: row.implicitWidth + 2 * padding
   implicitHeight: row.implicitHeight + padding
   radius: height / 2
-  border.color: Tone.color(tone)
-  border.width: Config.theme.borderWidth / Screen.devicePixelRatio
+  border.color: tone ? Tone.color(tone) : Config.colors.border
 
   Row {
     id: row

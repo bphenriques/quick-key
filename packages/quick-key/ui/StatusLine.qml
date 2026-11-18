@@ -56,7 +56,7 @@ RowLayout {
     horizontalAlignment: root.titled && !root.packed ? Text.AlignRight : Text.AlignLeft
     elide: Text.ElideRight
     font.strikeout: root.struck
-    font.bold: root.strong
+    strong: root.strong
     tone: root.titled ? root.valueTone : root.tone
     text: root.text
   }

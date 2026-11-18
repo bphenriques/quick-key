@@ -11,6 +11,8 @@ ShellRoot {
   property var watched: []
   // The ticker's value a second into the case that waits with the menu closed.
   property string ticked: ""
+  // How often the plugin whose watch repeats its line changed state.
+  property int repeats: 0
 
   Suite {
     id: suite
@@ -23,6 +25,10 @@ ShellRoot {
       {
         name: "a watch's state clears when it exits",
         until: () => root.watched.slice(0, 2).join() === "up,"
+      },
+      {
+        name: "a line the same as the last changes nothing",
+        until: () => suite.waited >= 1000 && Plugins.get("repeated")?.text === "same" && root.repeats === 1
       },
       {
         name: "a file is read once it appears",
@@ -145,6 +151,13 @@ ShellRoot {
     target: Plugins.get("watcher")
     function onTextChanged() {
       root.watched = root.watched.concat([target.text]);
+    }
+  }
+
+  Connections {
+    target: Plugins.get("repeated")
+    function onStateChanged() {
+      root.repeats++;
     }
   }
 }

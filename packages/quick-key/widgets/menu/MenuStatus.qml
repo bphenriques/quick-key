@@ -47,10 +47,15 @@ StatusLine {
   meter: listedMeter !== undefined ? listedMeter : inLevel && builtin?.meter ? builtin.meter() : -1
   // A listed item's meter is lit while it is in use, like its value.
   meterTone: listedMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
-  // A row's label and icon stay plain, its value takes the tone; a listed item in use is lit whole; a bar dims what is not lit.
-  tone: done ? "dim" : quiet ? statusTone || (active || plugin?.active ? "primary" : strong ? "normal" : "dim") : !status && active ? "primary" : "normal"
-  // A status's tone is its own value's: a format shows other fields.
-  valueTone: done ? "dim" : itemTone || !format && statusTone || (active ? "primary" : "dim")
+  // In a bar: its own tone, else lit while on; what is not lit dims, but for the strong one.
+  readonly property string barTone: statusTone || (active || plugin?.active ? "primary" : strong ? "normal" : "dim")
+  // On a row: a listed item in use is lit whole; a status leaves its label and icon plain, its value taking the tone.
+  readonly property string rowTone: !status && active ? "primary" : "normal"
+  // A status's tone is its own value's, but not over a format, which shows other fields.
+  readonly property string ownValueTone: itemTone || (format ? "" : statusTone)
+
+  tone: done ? "dim" : quiet ? barTone : rowTone
+  valueTone: done ? "dim" : ownValueTone || (active ? "primary" : "dim")
 
   function pinned(id, name) {
     return Array.from(pins).find(pin => MenuKeys.glob(pin.match, id))?.label ?? name;

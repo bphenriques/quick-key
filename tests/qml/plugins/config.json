@@ -80,6 +80,10 @@
     "reminded": {
       "type": "command",
       "file": "reminded"
+    },
+    "repeated": {
+      "type": "command",
+      "watch": "echo same; echo same; echo same; sleep 60"
     }
   }
 }

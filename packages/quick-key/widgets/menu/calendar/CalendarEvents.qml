@@ -35,6 +35,8 @@ ListView {
 
   // Keeps the focused event, else the selected day, in view, with room above it for its day's heading.
   function follow() {
+    // Its height can be set before its rows exist.
+    if (!rows) return;
     const at = rows.findIndex(row => focused ? row.id === focused : row.key === selectedKey);
     if (at < 0) return;
     positionViewAtIndex(at, focused ? ListView.Contain : ListView.Beginning);
@@ -104,7 +106,7 @@ ListView {
         leftPadding: Config.theme.itemPaddingX
         topPadding: root.headingPadding
         tone: "dim"
-        font.bold: true
+        strong: true
         text: root.heading(Clock.parse(day.section))
       }
     }

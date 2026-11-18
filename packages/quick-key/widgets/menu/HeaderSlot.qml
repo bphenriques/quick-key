@@ -35,9 +35,11 @@ Item {
     spacing: 0
 
     Repeater {
-      model: slot.items
+      model: slot.items.length
 
       HeaderItem {
+        required property int index
+        item: slot.items[index] ?? ({})
         menu: slot.menu
       }
     }

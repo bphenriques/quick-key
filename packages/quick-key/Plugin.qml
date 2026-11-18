@@ -27,6 +27,8 @@ Scope {
   property string tone: state.tone ?? ""
   // Why it failed, its source's `error` or its own; a level listing it shows it under its keys.
   property string error: state.error ?? ""
+  // Why its list is empty, shown in its place (No tasks); by default, its state's own `empty`.
+  property string empty: state.empty ?? ""
   // What an entry's `format` reads by name, beside `text` and `detail`.
   property var fields: state.fields ?? ({})
   // Its compositor key, shown beside it while Super is held.
@@ -68,7 +70,6 @@ Scope {
   }
 
   Component.onCompleted: {
-    if ([settings.watch, settings.read, settings.file].filter(value => value).length > 1) console.warn("plugin", name, "sets more than one of watch, read and file; set one");
     for (const file of views) {
       const component = Qt.createComponent(folder + file);
       if (!component.createObject(root, { plugin: root })) console.warn("plugin", name + ":", file, "not created:", component.errorString());

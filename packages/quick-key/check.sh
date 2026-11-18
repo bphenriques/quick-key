@@ -45,6 +45,11 @@ for file in $(grep -rlE 'Config\.(theme|colors)\.(primary|foreground|background|
   fail "$file: picks a theme colour itself"
 done
 
+# Rule 11: emphasis is Label's strong.
+for file in $(grep -rlE 'font\.bold:' --include='*.qml' . | grep -v '^\./ui/Label\.qml$'); do
+  fail "$file: sets bold itself; Label's strong does"
+done
+
 # Rule 11: sizes in characters or lines come from Metrics.
 for file in $(grep -rlE '^\s*(TextMetrics|FontMetrics) \{' --include='*.qml' . | grep -v '^\./ui/Metrics\.qml$'); do
   fail "$file: measures the font itself"

@@ -50,6 +50,7 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
 - `enabled`: the ids of `items` that can be picked; unset, all.
 - `items`: items that change, each `{ id, label, icon, detail, active, enabled, done, tone }`, when the settings list none. A `done` item dims, struck through, and can still be picked; `tone` (`warning`) marks one that needs attention.
+- `empty`: why `items` is empty, shown in its place (`No devices paired`).
 
 A line that is not a JSON object is logged and skipped. The shell ignores fields it does not know, and a plugin may read its own (`recording`'s `since`).
 
@@ -68,7 +69,7 @@ List one by name to use it: `plugins.dunst = { };`.
 
 ## Ask
 
-A panel to ask an agent something without leaving what you are doing. Its links show as rows, and a notification arrives when it answers while hidden.
+A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its name in its bar, and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden.
 
 The one required setting is `ask`: a command given the prompt, the session (empty for a new one) and an image (empty for none). Its smallest form prints one line, `{"session", "reply"}` or `{"error"}`. Claude Code, carrying on in its session:
 
@@ -102,7 +103,7 @@ Other settings: `open` (given the session, opens it in a terminal), `title`, `gl
 Keys:
 
 - `RET` sends, `S-RET` breaks the line, `C-v` attaches the clipboard's image.
-- `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else hides. Twice quickly hides from anywhere; the conversation is kept.
+- `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else hides. Twice quickly hides from anywhere, as does a click beside it; the conversation is kept.
 - `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal.
 
 Two agents are two plugins with `type = "ask"`.
@@ -127,6 +128,7 @@ What it gives:
 - `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it under its keys.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
+- `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.
 
 Every plugin answers `<name> activate` and `<name> refresh` over IPC.

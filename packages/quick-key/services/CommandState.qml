@@ -13,11 +13,19 @@ Scope {
   // The last good state: glyph, text, detail, active, tone and items, each optional.
   property var state: ({})
 
+  QtObject {
+    id: internal
+    property string line: ""
+  }
+
   function refresh() {
     reader.refresh();
   }
 
+  // A line the same as the last changes nothing: watchers repeat themselves, and a new state rebuilds what lists it.
   function apply(line) {
+    if (line === internal.line) return;
+    internal.line = line;
     if (!line) {
       state = {};
       return;
@@ -43,7 +51,7 @@ Scope {
   CommandWatcher {
     shell: root.watch
     onRead: line => root.apply(line.trim())
-    onRunningChanged: if (!running && root.watch) root.state = {}
+    onRunningChanged: if (!running && root.watch) root.apply("")
   }
 
   CommandReader {
@@ -59,6 +67,6 @@ Scope {
     printErrors: false
     onFileChanged: reload()
     onLoaded: root.apply(root.lastLine(text()))
-    onLoadFailed: root.state = {}
+    onLoadFailed: root.apply("")
   }
 }

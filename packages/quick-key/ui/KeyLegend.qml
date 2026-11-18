@@ -16,27 +16,28 @@ RowLayout {
   spacing: 0
 
   Repeater {
-    model: root.keys
+    model: root.keys.length
 
     // A click does what the key does, where that is one thing (`clickable`): a pair names no one key.
     ListItem {
       id: entry
-      required property var modelData
-      readonly property string label: MenuKeys.label(modelData.key, true)
+      required property int index
+      readonly property var hint: root.keys[index] ?? ({})
+      readonly property string label: MenuKeys.label(hint.key ?? "", true)
 
-      enabled: !!modelData.clickable
+      enabled: !!hint.clickable
       dimsWhenDisabled: false
-      onActivated: root.picked(modelData.key)
+      onActivated: root.picked(entry.hint.key)
 
       KeyHint {
-        key: entry.modelData.key
+        key: entry.hint.key ?? ""
         paired: true
         chars: entry.label.length
       }
 
       Label {
         tone: "dim"
-        text: entry.modelData.what
+        text: entry.hint.what ?? ""
       }
     }
   }

@@ -1,6 +1,6 @@
 # Tasks
 
-The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A tick shows at once; its command runs after the ones before it, and one that fails shows the file's state again and says so in the level, as a failed sync does. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
+The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A tick shows at once; its command runs after the ones before it, and one that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
 
 ```nix
 plugins.tasks = {
@@ -10,7 +10,7 @@ plugins.tasks = {
 menu.entries = [ { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; } ];
 ```
 
-Tasks sort by due date, undated last, a late one in the warning tone. A ticked task keeps its digit, dim and struck through, so the same key unticks it; the file drops it the next day. A pick while the last one still runs is dropped, as the file shows its outcome first.
+Tasks sort by due date, undated last, a late one in the warning tone. A ticked task keeps its digit, dim and struck through, so the same key unticks it; the file drops it the next day. With none, the level says so.
 
 The file is read on every change. Opening the menu syncs when it is five minutes old, and every tick syncs after it.
 
