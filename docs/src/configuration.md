@@ -26,6 +26,8 @@ A colour set in `theme` itself wins over the theme's. Anything that writes the f
 
 With [stylix](https://github.com/nix-community/stylix), the module themes the shell like one of stylix's own targets: on whenever stylix themes every target (`stylix.autoEnable`), else with `stylix.targets.quick-key.enable = true`. It sets the colours (`border` from `base03`), the monospace font, and the popups' font size and opacity, each as a default your own `theme` settings override. Stylix's popups are opaque by default, which hides the background blur; `stylix.opacity.popups = 0.92` keeps it.
 
+`glyphs` overrides any icon by its name in the kit's `Glyphs` (`{ "wifi": "…", "audioDevices": { "headset": "…" } }`): one glyph, a list of them (`batteryLevels`, one per 10%), or a map; the check names one that does not exist.
+
 ## Defaults
 
 Unset, the menu is a starter one (audio, network, Bluetooth, music), with the calendar on the clock, the tray and the session in its bar; a bar slot left unset is the starter's. Volume, mute, Wi-Fi and Bluetooth power, and playback are built-in actions (see [Menu](menu.md)), no tool needed; the rest use standard tools from `PATH`, which the Nix module puts first on the shell's `PATH` so they resolve the same on every machine:

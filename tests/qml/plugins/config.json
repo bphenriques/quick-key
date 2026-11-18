@@ -71,7 +71,8 @@
       "done": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" done",
       "reopen": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" reopen",
       "sync": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" sync",
-      "remind": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" remind"
+      "remind": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" remind",
+      "add": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" add"
     },
     "synced": {
       "type": "command",

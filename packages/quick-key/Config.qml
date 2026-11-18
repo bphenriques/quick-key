@@ -35,6 +35,7 @@ Singleton {
   readonly property alias battery: adapter.battery
   readonly property alias music: adapter.music
   readonly property alias plugins: adapter.plugins
+  readonly property alias glyphs: adapter.glyphs
 
   // config.json as written: {} without one, null until read, and why it could not be parsed.
   property var written: null
@@ -193,8 +194,6 @@ Singleton {
         // Percent a volume key or the wheel moves the volume, and the most it reaches.
         property int step: 5
         property int max: 100
-        // By device type (headphones, headset, internal, external, microphone), and microphoneOff.
-        property var glyphs: ({})
       }
 
       property JsonObject bluetooth: JsonObject {
@@ -224,19 +223,18 @@ Singleton {
       property JsonObject battery: JsonObject {
         property int low: 20
         property int critical: 5
-        // One per 10%, empty to full.
-        property var glyphs: ({ discharging: [], charging: [] })
       }
 
       property JsonObject music: JsonObject {
         // The MPRIS identity of the player the Music status follows; unset, the one playing, else any.
         property string player
-        // music, paused, off (nothing playing), shuffle and repeat.
-        property var glyphs: ({})
       }
 
       // Optional parts by name, each its settings and `type`: see docs/src/plugins.md.
       property var plugins: ({})
+
+      // Any icon by its name in ui/Glyphs.qml (wifi, audioDevices, batteryLevels), over its default.
+      property var glyphs: ({})
     }
   }
 }

@@ -126,6 +126,8 @@ def write-todoman-config [calendars: list, relative: path] {
     $"default_list = ($calendars | first | get name | to json --raw)"
     'date_format = "%Y-%m-%d"'
     'time_format = "%H:%M"'
+    # A task added here has no due date, where todoman's default is a day later.
+    'default_due = 0'
   ] | str join "\n" | save -f (todoman-config $state)
 }
 
@@ -273,5 +275,17 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: int] 
     | save -f $"($file).tmp"
     mv -f $"($file).tmp" $file
   }
+  write-tasks (task-lists $calendars_file) $state
+}
+
+# Adds a task to the first list by its title, and writes the tasks file again; the next sync takes it to its server.
+def "main add" [calendars_file: path, events_file: path, title: string] {
+  locked $events_file create $calendars_file $events_file $title
+}
+
+# What add runs under the lock; todoman's default list is the first.
+def "main create" [calendars_file: path, events_file: path, title: string] {
+  let state = $events_file | path dirname
+  ^todo --config (todoman-config $state) new -- $title | ignore
   write-tasks (task-lists $calendars_file) $state
 }

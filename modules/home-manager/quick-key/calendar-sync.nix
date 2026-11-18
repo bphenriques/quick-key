@@ -80,6 +80,19 @@ in
       defaultText = lib.literalMD "calendar-sync's `reopen`, given a task's id";
       description = "Command that unticks a task, given its id, for the tasks plugin";
     };
+
+    exec.add = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = lib.escapeShellArgs [
+        (lib.getExe cfg.package)
+        "add"
+        cfg.calendars
+        cfg.eventsFile
+      ];
+      defaultText = lib.literalMD "calendar-sync's `add`, given a task's title";
+      description = "Command that adds a task to the first list, given its title, for the tasks plugin";
+    };
   };
 
   config = lib.mkIf (config.programs.quick-key.enable && cfg.enable) {

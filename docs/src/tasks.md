@@ -1,6 +1,6 @@
 # Tasks
 
-The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A tick shows at once; its command runs after the ones before it, and one that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
+The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A level's `input` adds a task by its title, raw, to the first list (see [Input](menu.md#input)). A tick or an added task shows at once; its command runs after the ones before it, and one that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
 
 ```nix
 plugins.tasks = {
@@ -30,4 +30,4 @@ One line, so the plugin reads it as its state:
 
 ## calendarSync
 
-A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick reaches its server; the others are only read. calendarSync writes its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks and ids. A tick and a sync's rewrite of the file take turns, and a tick never waits on the network.
+A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick or an added task reaches its server; the others are only read, and new tasks go to the first. `exec.done`, `exec.reopen` and `exec.add` are the tasks plugin's commands. calendarSync writes its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks and ids. A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.

@@ -64,12 +64,12 @@ List one by name to use it: `plugins.dunst = { };`.
 - **`recording`:** a pill on every screen while recording, and the elapsed time as a status. Its source gives `{"active": true, "since": <epoch seconds>}` while recording; `stop` ends it.
 - **`dictation`:** a pill while dictating, a spinner while transcribing. Its source gives `recording`, `transcribing` or anything else for idle; `stop` ends it.
 - **`niriMinimap`:** a minimap of niri's workspaces as you move between them. Sized by `height`, `maxWidth`, `opacity` and `borderWidth`.
-- **`tasks`:** tasks to tick off, from the tasks file its `file` names (see [Tasks](tasks.md)). `done` and `reopen` are given a task's id and write the file again; `sync` runs as the menu opens on a file five minutes old, and after a tick; `remind`, unset by default, is given a title and a time as a timed task falls due.
+- **`tasks`:** tasks to tick off, from the tasks file its `file` names (see [Tasks](tasks.md)). `done` and `reopen` are given a task's id and `add` a title, each writing the file again; `sync` runs as the menu opens on a file five minutes old, and after a tick; `remind`, unset by default, is given a title and a time as a timed task falls due.
 - **`ask`:** a panel for quick turns with an agent, below.
 
 ## Ask
 
-A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its name in its bar, and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden.
+A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation saying who it asks (`placeholder`, by default "Ask {title}", after its `glyph`), and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden.
 
 The one required setting is `ask`: a command given the prompt, the session (empty for a new one) and an image (empty for none). Its smallest form prints one line, `{"session", "reply"}` or `{"error"}`. Claude Code, carrying on in its session:
 
@@ -98,7 +98,7 @@ More lines it may print, one JSON object each:
 
 Stopping ends the command with SIGTERM. One whose run lives elsewhere traps it to stop the run there.
 
-Other settings: `open` (given the session, opens it in a terminal), `title`, `glyph`, and `notify` and `pasteImage`, which default to `notify-send` and `wl-paste`.
+Other settings: `open` (given the session, opens it in a terminal), `title`, `glyph`, `placeholder`, and `notify` and `pasteImage`, which default to `notify-send` and `wl-paste`.
 
 Keys:
 
@@ -128,6 +128,7 @@ What it gives:
 - `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it under its keys.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
+- `submit(text)` for the text of an `input` on such an entry that sets no `cmd`.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.
 

@@ -18,7 +18,7 @@ Singleton {
   // A step down or up, by Config.brightness.adjust.
   function adjust(up) {
     const command = Config.brightness.adjust[up ? 1 : 0];
-    if (command) Quickshell.execDetached(["sh", "-c", command]);
+    Commands.run(command);
   }
 
   QtObject {

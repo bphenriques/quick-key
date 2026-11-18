@@ -1,4 +1,4 @@
-# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks, `broken` one whose sync failed, `done` and `reopen` flip a task after a moment (task d fails), `sync` and `remind` leave a trace.
+# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks, `broken` one whose sync failed, `done` and `reopen` flip a task after a moment (task d fails), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
 file="$XDG_RUNTIME_DIR/tasks"
 case "$1" in
   write)
@@ -14,6 +14,12 @@ case "$1" in
   many)
     tasks=$(seq 10 | sed "s/.*/{\"id\":\"&\",\"done\":false,\"title\":\"Late &\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}/" | paste -sd,)
     echo "{\"updated\":\"$(date +%Y-%m-%dT%H:%M)\",\"tasks\":[$tasks]}" > "$file.tmp"
+    mv "$file.tmp" "$file"
+    ;;
+  add)
+    sleep 0.5
+    [ "$2" = Fail ] && exit 1
+    sed "s/\"tasks\":\[/\"tasks\":[{\"id\":\"n\",\"done\":false,\"title\":\"$2\"},/" "$file" > "$file.tmp"
     mv "$file.tmp" "$file"
     ;;
   done | reopen)

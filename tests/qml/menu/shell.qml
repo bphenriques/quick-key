@@ -75,6 +75,15 @@ ShellRoot {
         name: "a plugin's empty list says why, in its words",
         start: () => menu.push({ kind: "entry", entry: { list: "nothing" } }),
         until: () => menu.emptyText === "Nothing found"
+      },
+      {
+        name: "an input's key gives it the keys, and its text reaches its command",
+        start: () => {
+          menu.push({ kind: "entry", entry: { submenu: [], input: { key: "a", desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"" } } });
+          menu.handleKey({ key: Qt.Key_A, modifiers: Qt.NoModifier, text: "a" });
+          menu.submit("  typed  ");
+        },
+        until: () => menu.inputFocused && Plugins.get("picked")?.text === "typed"
       }
     ]
   }

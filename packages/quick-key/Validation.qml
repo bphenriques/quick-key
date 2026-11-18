@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.builtins
+import qs.ui
 
 // What is wrong with config.json: the shell logs it as it starts, and check.qml fails on it (docs/src/configuration.md).
 Singleton {
@@ -14,7 +15,7 @@ Singleton {
     for (const problem of problems ?? []) console.warn("config.json:", problem);
   }
 
-  readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit"]
+  readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
   readonly property var views: ["calendar"]
   // Esc closes the menu and Backspace goes back a level.
   readonly property var reservedKeys: ["Escape", "BackSpace"]
@@ -23,7 +24,13 @@ Singleton {
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
-    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins));
+    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins));
+  }
+
+  // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices).
+  function glyphProblems(glyphs) {
+    return Object.keys(glyphs).map(name => !(name in Glyphs) || typeof Glyphs[name] === "function" ? "glyphs." + name + " is not a glyph"
+      : typeof glyphs[name] !== typeof Glyphs[name] ? "glyphs." + name + " takes a " + (typeof Glyphs[name] === "string" ? "glyph" : Array.isArray(Glyphs[name]) ? "list of glyphs" : "map of glyphs") : "").filter(problem => problem);
   }
 
   function pluginProblems(plugins) {
@@ -65,6 +72,19 @@ Singleton {
     return found;
   }
 
+  // An input takes a letter its level leaves free, and gives its text to its cmd or else to a plugin the level lists.
+  function inputProblems(entry, plugins, inBar) {
+    const input = entry.input;
+    const found = [];
+    const unknown = Object.keys(input).filter(key => !["key", "desc", "cmd"].includes(key));
+    if (unknown.length) found.push("sets input." + unknown.join(", input.") + ", which no input takes");
+    if (inBar || entry.submenu == null && entry.list == null) found.push("can only set input on a level with submenu or list");
+    if (typeof input.desc !== "string" || !/^[A-Za-z]$/.test(input.key ?? "")) found.push("needs an input with a letter for its key and a desc");
+    if ((entry.submenu ?? []).some(row => [].concat(row.key ?? []).includes(input.key))) found.push("binds its input's key twice");
+    if (input.cmd == null && !plugins.includes(entry.list)) found.push("gives its input's text to nothing: needs input.cmd, or a list that is a plugin");
+    return found;
+  }
+
   // In a bar an entry needs no key, and may only show its status.
   function entryProblems(entry, plugins, inBar) {
     const found = [];
@@ -99,6 +119,7 @@ Singleton {
     if (entry.list != null && (entry.submenu ?? []).some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
+    if (entry.input != null) found.push(...inputProblems(entry, plugins, inBar));
     return found;
   }
 }

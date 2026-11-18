@@ -15,11 +15,15 @@ Scope {
   property var stack: []
   // The modifier held a second, whose keys show: "Ctrl" the bar's, "Super" the compositor's; not at once, so a chord does not flash them.
   property string held: ""
+  // Whether the level's input has the keys, else its body.
+  property bool inputFocused: false
   readonly property CalendarModel calendar: CalendarModel {}
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property bool inCalendar: level?.entry?.view === "calendar"
+  // The text a level takes under its body (an entry's `input`): { key, desc, cmd }.
+  readonly property var input: level?.kind === "entry" ? level.entry.input ?? null : null
   // What the level lists, read once for every entry that acts on it.
   readonly property var levelList: listed(level?.entry?.list)
   readonly property var items: itemsOf(level)
@@ -197,16 +201,19 @@ Scope {
     open = false;
     stack = [];
     held = "";
+    inputFocused = false;
   }
 
   // A level starts with no event in focus, coming back to it too.
   function back() {
     stack = stack.slice(0, -1);
+    inputFocused = false;
     calendar.focused = "";
   }
 
   function push(next) {
     stack = stack.concat([next]);
+    inputFocused = false;
     calendar.focused = "";
   }
 
@@ -229,7 +236,15 @@ Scope {
     const cmd = MenuKeys.isPair(entry) ? Array.from(entry.cmd)[MenuKeys.names(entry.key).indexOf(name)] : entry.cmd;
     if (!cmd) return;
     if (!entry.keepOpen) hide();
-    Quickshell.execDetached(["sh", "-c", cmd]);
+    Commands.run(cmd);
+  }
+
+  // The input's text, to its command as $1 or else to the plugin the level lists.
+  function submit(text) {
+    text = text.trim();
+    if (!text || !input) return;
+    if (input.cmd) Commands.run(input.cmd, text);
+    else Plugins.get(level.entry.list)?.submit(text);
   }
 
   // A listed item does what it says; an entry with a level below opens it, any other runs; a plugin's name in a bar activates it.
@@ -271,6 +286,7 @@ Scope {
     if (name === "Escape") hide();
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (name === "BackSpace" && level) back();
+    else if (input && MenuKeys.matches(input.key, name)) inputFocused = true;
     else if (own) activate(own, name);
     else if (target) openMenu(target);
     else if (barred) activate(barred, key);

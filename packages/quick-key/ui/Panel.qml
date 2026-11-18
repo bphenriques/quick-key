@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A surface the keyboard opens (the menu, a plugin's panel): a card at the bottom centre with an optional bar floating over it, one open at a time; a click anywhere else dismisses it.
+// A surface the keyboard opens (the menu, a plugin's panel): a card at the bottom centre, an optional bar floating over it and an input under it, one open at a time; a click anywhere else dismisses it.
 Scope {
   id: root
 
@@ -15,6 +15,10 @@ Scope {
   property bool barShown: false
   property Component bar
   property Component body
+  property bool inputShown: false
+  // Whether the input has the keys, else the body.
+  property bool inputFocused: false
+  property Component input
 
   signal dismissed
   // The keys the body's own focus leaves, to accept or not.
@@ -66,6 +70,9 @@ Scope {
         Region {
           item: bar.visible ? bar : null
         }
+        Region {
+          item: inputSurface.visible ? inputSurface : null
+        }
       }
       BackgroundEffect.blurRegion: Region {
         item: card
@@ -74,47 +81,52 @@ Scope {
           item: bar.visible ? bar : null
           radius: Config.theme.radius
         }
-      }
-
-      Surface {
-        id: bar
-        visible: root.barShown
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: card.top
-        anchors.bottomMargin: Config.theme.spacing / 2
-        width: card.width
-        height: barContent.implicitHeight + Config.theme.padding / 2
-
-        Loader {
-          id: barContent
-          anchors.verticalCenter: parent.verticalCenter
-          anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.leftMargin: Config.theme.padding
-          anchors.rightMargin: Config.theme.padding
-          sourceComponent: root.bar
+        Region {
+          item: inputSurface.visible ? inputSurface : null
+          radius: Config.theme.radius
         }
       }
 
-      Surface {
-        id: card
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Config.theme.edgeMargin
-        width: root.width
-        height: body.implicitHeight + 2 * Config.theme.padding
+      // Keys the body or the input leave reach the owner.
+      FocusScope {
+        anchors.fill: parent
+        focus: true
+        Keys.onPressed: event => root.keyPressed(event)
+        Keys.onReleased: event => root.keyReleased(event)
 
-        MouseArea {
-          anchors.fill: parent
-          acceptedButtons: Qt.RightButton
-          onClicked: root.secondaryClicked()
+        Surface {
+          id: bar
+          visible: root.barShown
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: card.top
+          anchors.bottomMargin: Config.theme.spacing / 2
+          width: card.width
+          height: barContent.implicitHeight + Config.theme.padding / 2
+
+          Loader {
+            id: barContent
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: Config.theme.padding
+            anchors.rightMargin: Config.theme.padding
+            sourceComponent: root.bar
+          }
         }
 
-        FocusScope {
-          anchors.fill: parent
-          focus: true
-          Keys.onPressed: event => root.keyPressed(event)
-          Keys.onReleased: event => root.keyReleased(event)
+        Surface {
+          id: card
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: inputSurface.visible ? inputSurface.top : parent.bottom
+          anchors.bottomMargin: inputSurface.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
+          width: root.width
+          height: body.implicitHeight + 2 * Config.theme.padding
+
+          MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            onClicked: root.secondaryClicked()
+          }
 
           Loader {
             id: body
@@ -122,8 +134,31 @@ Scope {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.margins: Config.theme.padding
-            focus: true
+            focus: !root.inputFocused
             sourceComponent: root.body
+          }
+        }
+
+        // As the bar floats over the card, the input floats under it.
+        Surface {
+          id: inputSurface
+          visible: root.inputShown
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: Config.theme.edgeMargin
+          width: card.width
+          height: inputContent.implicitHeight + Config.theme.padding
+
+          Loader {
+            id: inputContent
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: Config.theme.padding
+            anchors.rightMargin: Config.theme.padding
+            active: root.inputShown
+            focus: root.inputFocused
+            sourceComponent: root.input
           }
         }
       }

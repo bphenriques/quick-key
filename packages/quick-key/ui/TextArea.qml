@@ -7,6 +7,7 @@ Flickable {
   property alias text: field.text
   property alias placeholder: field.placeholder
   property int maxLines: 4
+  property alias activeFocusOnPress: field.activeFocusOnPress
 
   signal keyPressed(var event)
 

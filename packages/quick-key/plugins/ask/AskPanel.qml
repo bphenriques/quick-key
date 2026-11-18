@@ -11,6 +11,11 @@ Scope {
   id: panel
 
   required property var plugin
+  // How much taller than a line the prompt is, which the conversation gives up.
+  property real inputExtra: 0
+
+  // Page Up and Down in the prompt, for the conversation.
+  signal paged(bool down)
 
   // The web links in a reply, each once, without the punctuation that ends a sentence.
   function links(text) {
@@ -146,26 +151,10 @@ Scope {
   Panel {
     shown: panel.plugin.shown
     namespace: panel.plugin.name
-    barShown: true
+    inputShown: true
+    inputFocused: true
     // Hidden, the conversation is kept.
     onDismissed: panel.plugin.shown = false
-
-    // Named like an app's menu: no entry names it.
-    bar: ListItem {
-      enabled: false
-      dimsWhenDisabled: false
-
-      Icon {
-        tone: panel.plugin.active ? "primary" : "dim"
-        glyph: panel.plugin.glyph
-      }
-
-      Label {
-        Layout.fillWidth: true
-        tone: "dim"
-        text: panel.plugin.title
-      }
-    }
 
     body: ColumnLayout {
       spacing: Config.theme.padding
@@ -185,100 +174,91 @@ Scope {
         Layout.fillWidth: true
       }
 
-      ColumnLayout {
+      // The conversation, kept scrolled to its end.
+      Flickable {
+        id: thread
         Layout.fillWidth: true
-        Layout.preferredHeight: panel.plugin.lines * Metrics.line
+        Layout.preferredHeight: panel.plugin.lines * Metrics.line - panel.inputExtra
         Layout.leftMargin: Config.theme.itemPaddingX
         Layout.rightMargin: Config.theme.itemPaddingX
-        // History and prompt as far apart as two exchanges.
-        spacing: Config.theme.padding
+        clip: true
+        contentHeight: exchangeList.implicitHeight
+        boundsBehavior: Flickable.StopAtBounds
+        onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
+        onHeightChanged: contentY = Math.max(0, contentHeight - height)
 
-        // The conversation, kept scrolled to its end.
-        Flickable {
-          id: thread
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          clip: true
-          contentHeight: exchangeList.implicitHeight
-          boundsBehavior: Flickable.StopAtBounds
-          onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
-          onHeightChanged: contentY = Math.max(0, contentHeight - height)
+        function page(down) {
+          contentY = Math.max(0, Math.min(contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
+        }
 
-          function page(down) {
-            contentY = Math.max(0, Math.min(contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
-          }
+        Connections {
+          target: panel
 
-          ColumnLayout {
-            id: exchangeList
-            width: thread.width
-            // Wider between exchanges than within one, so each reads as a unit.
-            spacing: Config.theme.padding
-
-            Repeater {
-              model: panel.plugin.exchanges.length
-
-              Exchange {}
-            }
+          function onPaged(down) {
+            thread.page(down);
           }
         }
 
-        Divider {
-          Layout.fillWidth: true
+        ColumnLayout {
+          id: exchangeList
+          width: thread.width
+          // Wider between exchanges than within one, so each reads as a unit.
+          spacing: Config.theme.padding
+
+          Repeater {
+            model: panel.plugin.exchanges.length
+
+            Exchange {}
+          }
+        }
+      }
+    }
+
+    input: ColumnLayout {
+      spacing: Config.theme.spacing
+      // A prompt taller than a line takes its height from the conversation, so the panel holds still.
+      onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
+
+      // Pasted for the next prompt; Escape clears it with the text.
+      Thumbnail {
+        Layout.leftMargin: Metrics.line + Config.theme.spacing
+        path: panel.plugin.image
+      }
+
+      Prompt {
+        id: prompt
+        Layout.fillWidth: true
+        glyph: panel.plugin.glyph || Glyphs.submenu
+        placeholder: panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
+        onTextChanged: panel.plugin.draft = text
+        Component.onCompleted: set(panel.plugin.draft)
+
+        // Return sends and Shift+Return breaks the line; the rest go to panel.plugin.act, as the legend's clicks do.
+        onKeyPressed: event => {
+          const plain = !(event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier));
+          if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && plain) {
+            if (panel.plugin.send(text)) clear();
+          } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
+            panel.paged(event.key === Qt.Key_PageDown);
+          } else if (!panel.plugin.act(MenuKeys.name(event))) {
+            return;
+          }
+          event.accepted = true;
         }
 
-        // Pasted for the next prompt; Escape clears it with the text.
-        Thumbnail {
-          Layout.leftMargin: Metrics.line + Config.theme.spacing
-          path: panel.plugin.image
-        }
+        Connections {
+          target: panel.plugin
 
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Config.theme.spacing
-
-          Icon {
-            Layout.alignment: Qt.AlignTop
-            tone: "primary"
-            glyph: Glyphs.submenu
-            size: Metrics.line
+          function onRestore(text) {
+            if (prompt.text === "") prompt.set(text);
           }
 
-          TextArea {
-            id: prompt
-            Layout.fillWidth: true
-            Layout.preferredHeight: implicitHeight
-            placeholder: "Ask " + panel.plugin.title
-            onTextChanged: panel.plugin.draft = text
-            Component.onCompleted: set(panel.plugin.draft)
+          function onClearPrompt() {
+            prompt.clear();
+          }
 
-            // Return sends and Shift+Return breaks the line; the rest go to panel.plugin.act, as the legend's clicks do.
-            onKeyPressed: event => {
-              const plain = !(event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier));
-              if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && plain) {
-                if (panel.plugin.send(text)) clear();
-              } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
-                thread.page(event.key === Qt.Key_PageDown);
-              } else if (!panel.plugin.act(MenuKeys.name(event))) {
-                return;
-              }
-              event.accepted = true;
-            }
-
-            Connections {
-              target: panel.plugin
-
-              function onRestore(text) {
-                if (prompt.text === "") prompt.set(text);
-              }
-
-              function onClearPrompt() {
-                prompt.clear();
-              }
-
-              function onPasteText() {
-                prompt.paste();
-              }
-            }
+          function onPasteText() {
+            prompt.paste();
           }
         }
       }

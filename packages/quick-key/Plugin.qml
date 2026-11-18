@@ -43,6 +43,9 @@ Scope {
   // What choosing one of its items does, given the item's id.
   function select(id) {}
 
+  // What a level's input does with its text, for an entry whose `input` sets no `cmd`.
+  function submit(text) {}
+
   // Called as the menu opens, and by `<name> refresh` over IPC, to read what has no events.
   function refresh() {
     source.refresh();
@@ -61,12 +64,12 @@ Scope {
 
   // A command from its settings as a Process takes it, the arguments passed as $1, $2... so none is parsed by the shell.
   function commandLine(shell, ...args) {
-    return ["sh", "-c", shell + args.map((_, i) => ' "$' + (i + 1) + '"').join(""), "sh", ...args];
+    return Commands.line(shell, ...args);
   }
 
   // Runs a command from its settings and forgets it; nothing when unset.
   function exec(shell, ...args) {
-    if (shell) Quickshell.execDetached(commandLine(shell, ...args));
+    Commands.run(shell, ...args);
   }
 
   Component.onCompleted: {

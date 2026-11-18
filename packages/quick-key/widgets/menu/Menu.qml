@@ -75,6 +75,32 @@ Scope {
       menu: root.menu
     }
 
+    inputShown: root.menu.input !== null
+    inputFocused: root.menu.inputFocused
+
+    // One line: Return sends it and keeps the focus for the next, Escape clears it, then gives the keys back.
+    input: Prompt {
+      id: prompt
+      active: root.menu.inputFocused
+      key: root.menu.input?.key ?? ""
+      placeholder: root.menu.input?.desc ?? ""
+      maxLines: 1
+      onTapped: root.menu.inputFocused = true
+      onKeyPressed: event => {
+        const name = MenuKeys.name(event);
+        if (name === "Return") {
+          root.menu.submit(prompt.text);
+          prompt.clear();
+        } else if (name === "Escape") {
+          if (prompt.text) prompt.clear();
+          else root.menu.inputFocused = false;
+        } else {
+          return;
+        }
+        event.accepted = true;
+      }
+    }
+
     body: ColumnLayout {
       spacing: Config.theme.padding
 

@@ -6,6 +6,8 @@ PluginSettings {
   property string done
   // Given a task's id, unticks it and writes the file again.
   property string reopen
+  // Given a title, adds a task to the first list and writes the file again.
+  property string add
   // Syncs, as the menu opens and after a tick.
   property string sync
   // Given a title and a time, as a timed task falls due; unset, no reminders.

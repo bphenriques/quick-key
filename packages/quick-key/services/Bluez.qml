@@ -16,7 +16,7 @@ Singleton {
 
   // Powers the adapter off, or on; a blocked one is unblocked (Config.bluetooth.unblock), and BlueZ powers it on.
   function toggle() {
-    if (blocked) Quickshell.execDetached(["sh", "-c", Config.bluetooth.unblock]);
+    if (blocked) Commands.run(Config.bluetooth.unblock);
     else if (Bluetooth.defaultAdapter) Bluetooth.defaultAdapter.enabled = !enabled;
   }
 }

@@ -1,4 +1,4 @@
-# calendar-sync's tasks, offline: the tasks file from a synced folder written as the iPhone writes, then a tick and an untick there.
+# calendar-sync's tasks, offline: the tasks file from a synced folder written as the iPhone writes, then a tick, an untick and an added task there.
 { pkgs, self }:
 pkgs.runCommand "quick-key-calendar-sync"
   {
@@ -34,6 +34,10 @@ pkgs.runCommand "quick-key-calendar-sync"
     grep -q '^STATUS:NEEDS-ACTION' state/vdirs/personal/bills.ics || fail "reopen marks the file as needing action"
     ! grep -qE '^(COMPLETED|PERCENT-COMPLETE)' state/vdirs/personal/bills.ics || fail "reopen drops the record of completion"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "reopen keeps the reminder"
+
+    quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
+    [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"
+    grep -lq '^SUMMARY:-Call the plumber' state/vdirs/personal/*.ics || fail "add writes it to the first list"
     [ ! -e state/__pycache__ ] || fail "todoman leaves no bytecode beside its config"
     touch $out
   ''

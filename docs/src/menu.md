@@ -47,6 +47,14 @@ menu.header.right = [ "battery" { desc = "Tray"; list = "tray"; limit = 5; } ];
 
 The `clock` status takes `clock.format` (strftime as waybar's, plus `%o` for the English ordinal), else the locale's long date. `clock.locale` names days and months.
 
+## Input
+
+An entry's `input` floats a line of text under its level's body, as Ask's prompt sits under its conversation. Dim, it shows its key and what it does; its key or a click gives it the keys, `RET` sends the text and keeps them for the next, and `ESC` clears it, then gives the keys back. The text goes to `cmd` as `$1`, else to the plugin the level lists: the tasks plugin adds it as a task.
+
+```nix
+{ key = "k"; desc = "Tasks"; list = "tasks"; input = { key = "a"; desc = "Add a task"; }; }
+```
+
 ## Mouse
 
 The mouse reaches what the keys do: a click runs a row or a bar item, a right click opens a tray app's menu or, beside the rows, goes back a level, and the wheel steps a pair (volume, brightness) or the calendar's month. Resting on an icon in a bar names it.

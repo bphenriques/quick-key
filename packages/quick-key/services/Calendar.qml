@@ -106,7 +106,7 @@ Singleton {
       if (event.allDay || event.start <= now || event.start > until || store.reminded[event.id]) continue;
       store.reminded[event.id] = true;
       const when = Clock.format(event.start, "%H:%M") + (event.location ? " · " + event.location : "");
-      Quickshell.execDetached(["sh", "-c", Config.calendar.remind + ' "$1" "$2"', "sh", event.title, when]);
+      Commands.run(Config.calendar.remind, event.title, when);
     }
   }
 

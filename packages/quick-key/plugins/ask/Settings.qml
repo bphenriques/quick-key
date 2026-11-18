@@ -10,7 +10,10 @@ PluginSettings {
   property string pasteImage: "sh -c 'for type in $(wl-paste --list-types); do case $type in image/*) exec wl-paste --type \"$type\" > \"$1\" ;; esac; done; exit 1' sh"
   // Given the session, opens it in a terminal.
   property string open
-  // The header; unset, the plugin's name and no glyph.
+  // Its name, in the prompt and notifications; unset, the plugin's.
   property string title
+  // The prompt's glyph; unset, a chevron.
   property string glyph
+  // What the empty prompt says, {title} for the title.
+  property string placeholder: "Ask {title}"
 }

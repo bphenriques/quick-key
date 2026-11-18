@@ -30,7 +30,13 @@ ShellRoot {
     ["a reserved key", menu([{ key: "Escape", desc: "X", cmd: "true" }]), "keys reserved for the menu in the top level: Escape"],
     ["a key bound twice", menu([{ key: "x", desc: "X", cmd: "true" }, { key: "x", desc: "Y", cmd: "true" }]), "keys bound twice in the top level: x"],
     ["a digit beside a list", menu([{ key: "x", desc: "X", list: "tray", submenu: [{ key: "1", desc: "One", icon: "i", cmd: "true" }] }]), "binds a digit"],
-    ["a wrong entry in a level below", menu([{ key: "x", desc: "X", submenu: [{ key: "y", desc: "Y", cmd: "true" }] }]), "'X' in the top level holds an action without an icon"]
+    ["a wrong entry in a level below", menu([{ key: "x", desc: "X", submenu: [{ key: "y", desc: "Y", cmd: "true" }] }]), "'X' in the top level holds an action without an icon"],
+    ["an input on an entry without a level", menu([{ key: "x", desc: "X", cmd: "true", input: { key: "a", desc: "Add", cmd: "true" } }]), "can only set input on a level with submenu or list"],
+    ["an input whose key is not a letter", menu([{ key: "x", desc: "X", list: "tray", input: { key: "1", desc: "Add", cmd: "true" } }]), "needs an input with a letter for its key"],
+    ["an input on a key its level binds", menu([{ key: "x", desc: "X", submenu: [{ key: "a", desc: "A", icon: "i", cmd: "true" }], input: { key: "a", desc: "Add", cmd: "true" } }]), "binds its input's key twice"],
+    ["an input with nowhere for its text", menu([{ key: "x", desc: "X", list: "tray", input: { key: "a", desc: "Add" } }]), "gives its input's text to nothing"],
+    ["a glyph that does not exist", { glyphs: { wifii: "x" } }, "glyphs.wifii is not a glyph"],
+    ["a glyph of another kind", { glyphs: { batteryLevels: "x" } }, "glyphs.batteryLevels takes a list of glyphs"]
   ]
 
   Suite {
