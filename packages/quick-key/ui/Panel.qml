@@ -27,7 +27,20 @@ Scope {
   // A right click on the card, beside what takes its own clicks.
   signal secondaryClicked
 
-  onShownChanged: if (shown) Panels.current = root
+  // Hidden at once and then unloaded: torn down while still on screen, it would show its blur over nothing for a frame.
+  onShownChanged: {
+    if (shown) {
+      Panels.current = root;
+      internal.loaded = true;
+    } else {
+      Qt.callLater(() => internal.loaded = root.shown);
+    }
+  }
+
+  QtObject {
+    id: internal
+    property bool loaded: false
+  }
 
   Connections {
     target: Panels
@@ -39,7 +52,7 @@ Scope {
 
   LazyLoader {
     id: dismiss
-    active: root.shown
+    active: internal.loaded
 
     Variants {
       model: Quickshell.screens
@@ -47,6 +60,7 @@ Scope {
       DismissArea {
         required property var modelData
         screen: modelData
+        visible: root.shown
         onDismissed: root.dismissed()
       }
     }
@@ -54,9 +68,10 @@ Scope {
 
   // Created after the dismiss areas, so it stacks above them on the same layer.
   LazyLoader {
-    active: root.shown && dismiss.item !== null
+    active: internal.loaded && dismiss.item !== null
 
     OverlayWindow {
+      visible: root.shown
       // The whole screen, so bodies of different sizes never resize the window: a resize shows the old size for a frame.
       anchors.top: true
       anchors.bottom: true
