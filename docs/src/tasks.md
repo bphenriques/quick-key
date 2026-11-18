@@ -1,6 +1,6 @@
 # Tasks
 
-The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A tick shows at once; its command runs after the ones before it, and one that fails shows the file's state again. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
+The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A tick shows at once; its command runs after the ones before it, and one that fails shows the file's state again and says so in the level, as a failed sync does. Its status counts the open tasks due by today, up to `9+`, in the warning tone when one is late; its fields are `title` (the most urgent), `count` and `updated`.
 
 ```nix
 plugins.tasks = {

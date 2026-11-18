@@ -221,11 +221,11 @@ Scope {
             Layout.fillWidth: true
             Layout.leftMargin: Config.theme.itemPaddingX
             Layout.rightMargin: Config.theme.itemPaddingX
-            visible: !root.hinting && !!root.menu.level?.entry?.view && Calendar.error !== "" && !Calendar.syncing
+            visible: !root.hinting && root.menu.error !== ""
             // Alert, not warning: the warning hue sits too close to calendar colours to read as a fault.
             tone: "alert"
             wrapMode: Text.Wrap
-            text: Calendar.error
+            text: root.menu.error
           }
 
           Divider {

@@ -37,6 +37,8 @@ Scope {
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
   // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }.
   readonly property var legend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
+  // Why a level's source failed, under its keys: the calendar's sync, or the plugin it lists.
+  readonly property string error: inCalendar ? (Calendar.syncing ? "" : Calendar.error) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
 
   // An entry as a row or a bar item shows it.
   function itemOf(entry) {

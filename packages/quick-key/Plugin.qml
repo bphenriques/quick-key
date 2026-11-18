@@ -25,6 +25,8 @@ Scope {
   property bool active: state.active ?? false
   // The status's tone when it needs one (alert for do-not-disturb); unset, lit by active.
   property string tone: state.tone ?? ""
+  // Why it failed, its source's `error` or its own; a level listing it shows it under its keys.
+  property string error: state.error ?? ""
   // What an entry's `format` reads by name, beside `text` and `detail`.
   property var fields: state.fields ?? ({})
   // Its compositor key, shown beside it while Super is held.

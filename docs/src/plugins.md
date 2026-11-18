@@ -124,6 +124,7 @@ What it gets:
 What it gives:
 
 - `glyph`, `text`, `detail`, `active` and `tone`, shown wherever its name is a `status`, and `fields` by name for an entry's `format`.
+- `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it under its keys.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `shortcut`, its compositor key.

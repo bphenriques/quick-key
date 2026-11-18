@@ -15,6 +15,8 @@ Plugin {
   // Ticks not in the file yet, by id: done or not; and their commands, run one at a time.
   property var pending: ({})
   property var queue: []
+  // The last tick that failed, until the next tick: it shows above the file's own error.
+  property string failure: ""
   // Open and due by today, late first.
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
   // The tasks reminded of, by id and due, so each is once.
@@ -25,6 +27,7 @@ Plugin {
   // Two characters at most, so the row holds still.
   detail: due.length > 9 ? "9+" : due.length > 0 ? String(due.length) : ""
   tone: due.length > 0 && due[0].due.slice(0, 10) < today ? "warning" : ""
+  error: [failure, state.error ?? ""].filter(line => line).join("\n")
   fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.stamp(Clock.parse(state.updated)) : "" })
   items: tasks.map(task => ({ id: task.id, label: task.title, icon: task.done ? Glyphs.checkboxChecked : Glyphs.checkbox, detail: when(task.due), done: !!task.done, tone: !task.done && task.due && task.due.slice(0, 10) < today ? "warning" : "" }))
 
@@ -45,6 +48,7 @@ Plugin {
   function select(id) {
     const task = tasks.find(task => task.id === id);
     if (!task) return;
+    failure = "";
     pending = Object.assign({}, pending, { [id]: !task.done });
     queue = queue.concat([{ id, done: !task.done }]);
     next();
@@ -98,7 +102,10 @@ Plugin {
     id: toggler
     property var tick: null
     onExited: code => {
-      if (code !== 0) root.pending = root.kept(id => id !== tick.id);
+      if (code !== 0) {
+        root.pending = root.kept(id => id !== tick.id);
+        root.failure = (tick.done ? "Could not tick off " : "Could not reopen ") + (Array.from(root.state.tasks ?? []).find(task => task.id === tick.id)?.title ?? tick.id);
+      }
       if (root.queue.length > 0) root.next();
       else root.exec(root.settings.sync);
     }

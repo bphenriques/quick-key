@@ -16,7 +16,7 @@ Singleton {
   readonly property QtObject colors: QtObject {
     readonly property color background: adapter.theme.background || userTheme.palette.background || shippedTheme.palette.background || "#1d1f21"
     readonly property color foreground: adapter.theme.foreground || userTheme.palette.foreground || shippedTheme.palette.foreground || "#c5c8c6"
-    readonly property color primary: adapter.theme.primary || userTheme.palette.primary || shippedTheme.palette.primary || "#81a2be"
+    readonly property color primary: adapter.theme.primary || userTheme.palette.primary || shippedTheme.palette.primary || "#61afef"
     readonly property color alert: adapter.theme.alert || userTheme.palette.alert || shippedTheme.palette.alert || "#cc6666"
     readonly property color warning: adapter.theme.warning || userTheme.palette.warning || shippedTheme.palette.warning || "#f0c674"
     readonly property color border: adapter.theme.border || userTheme.palette.border || shippedTheme.palette.border || primary

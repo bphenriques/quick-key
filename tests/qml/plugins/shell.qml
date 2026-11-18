@@ -98,10 +98,10 @@ ShellRoot {
           && !Array.from(Plugins.get("tasks").state.tasks).find(task => task.id === "f").done
       },
       {
-        name: "a tick whose command fails shows the file's state again",
+        name: "a tick whose command fails shows the file's state again, and says which failed",
         start: () => Plugins.get("tasks").select("d"),
         until: () => !Plugins.get("tasks").items.find(item => item.id === "d").done && Plugins.get("tasks").queue.length === 0
-          && Object.keys(Plugins.get("tasks").pending).length === 0
+          && Object.keys(Plugins.get("tasks").pending).length === 0 && Plugins.get("tasks").error === "Could not tick off Undated"
       },
       {
         name: "a timed task reminds as it falls due",
@@ -128,6 +128,11 @@ ShellRoot {
         name: "the count stops at 9+",
         start: () => root.tasks("many"),
         until: () => Plugins.get("tasks").detail === "9+"
+      },
+      {
+        name: "a sync that failed is the plugin's error, for its level to show",
+        start: () => root.tasks("broken"),
+        until: () => Plugins.get("tasks").error.endsWith("personal: could not sync")
       }
     ]
   }
