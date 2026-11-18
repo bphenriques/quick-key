@@ -26,11 +26,15 @@ Scope {
   readonly property int width: level?.width ?? Config.menu.width
   // Why a level's list is empty, in its place; "" while it lists something.
   readonly property string emptyText: level?.entry?.list && rows.length === 0 ? Lists.builtin[level.entry.list]?.empty() ?? "" : ""
-  // The level's bar by slot: the top level's is Config.menu.header, an entry's its own `header`, an app's menu the app and the way into it (blueman › Plugins).
-  readonly property var bar: level === null ? Config.menu.header : level.kind === "entry" ? level.entry.header ?? {} : {}
+  // The level's bar by slot: the top level's is menu.header, else the starter's, an entry's its own `header`, an app's menu the app and the way into it (blueman › Plugins).
+  readonly property var bar: level === null ? { left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") }
+    : level.kind === "entry" ? level.entry.header ?? {} : {}
   readonly property var barSlots: level?.kind === "menu" ? { left: [appOf(stack.filter(level => level.kind === "menu"))], center: [], right: [] }
     : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
+  // While Ctrl is held a second, the bar's keys in place of the body, each named; while Super is, the compositor's.
+  readonly property var hints: held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
+    : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
   // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }.
   readonly property var legend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
 
@@ -77,6 +81,17 @@ Scope {
   function barOf(slot) {
     return Array.from(slot ?? []).reduce((items, part) => items.concat(typeof part === "string" ? [{ key: "", desc: part, status: part }]
       : part.list ? barList(part) : [itemOf(part)]), []);
+  }
+
+  // A bar item's compositor key: its entry's `shortcut`, or a plugin's.
+  function shortcutOf(item) {
+    return item.entry ? item.entry.shortcut ?? "" : Plugins.get(item.status)?.shortcut ?? "";
+  }
+
+  // A bar item as a line of the legend: its key, its icon (its status's glyph when it shows a status) and its name.
+  function hint(item, key) {
+    const glyph = Statuses.builtin[item.status]?.glyph() ?? Plugins.get(item.status)?.glyph ?? "";
+    return Object.assign({}, item, { key, status: "", format: "", paired: false, icon: item.icon || (item.image ? "" : glyph) });
   }
 
   // An app's menu as its bar shows it: the app's icon, and its name with the submenus opened since.
@@ -162,7 +177,7 @@ Scope {
 
   // A top-level entry by its key, in the body or the bar, as a compositor shortcut opens it.
   function toggleEntry(key) {
-    const header = Config.menu.header;
+    const header = { left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") };
     const item = find(itemsOf(null).concat(barOf(header.left), barOf(header.center), barOf(header.right)), key);
     if (!item) return;
     if (level?.entry === item.entry) {

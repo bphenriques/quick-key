@@ -8,7 +8,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Tone` | the colour of each tone, `dim` being the normal colour at reduced alpha; a panel's background; a tone washed behind something (a highlight, a track) |
 | `Metrics` | the font's character width and line height, for sizes given in characters or lines |
 | `Icon` | a glyph or an image in the same square; `monochrome` draws an image in greys |
-| `StatusLine` | icon, an optional title that never changes, text, and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports |
+| `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports |
 | `KeyHint` | a key in its gutter |
 | `KeyLegend` | keys a level takes beyond its rows, on one line in its body: each key as `KeyHint` shows it, then what it does |
 | `Meter` | a thin level bar |
@@ -19,6 +19,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined in its tone |
+| `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
 | `OverlayWindow`, `DismissArea` | a popup above everything; the click-outside catcher under it |
 | `CornerPill` | a pill top right on every screen while `shown`, fading in and out; `slot` stacks it under the ones above, `hovered` and `clicked` for its pointer |

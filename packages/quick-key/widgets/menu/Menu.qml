@@ -16,6 +16,8 @@ Scope {
   id: root
 
   readonly property MenuModel menu: MenuModel {}
+  // While a held modifier lists keys in place of the body.
+  readonly property bool hinting: menu.hints.length > 0
 
   Binding {
     target: Plugins
@@ -107,6 +109,13 @@ Scope {
         width: root.menu.width
         height: content.implicitHeight + 2 * Config.theme.padding
 
+        // A right click beside the rows goes back, as Backspace does; the rows take their own clicks first.
+        MouseArea {
+          anchors.fill: parent
+          acceptedButtons: Qt.RightButton
+          onClicked: if (root.menu.level) root.menu.back()
+        }
+
         // The modifier whose keys show when held: Ctrl the bar's, Super the compositor's.
         function modifier(event) {
           if (event.key === Qt.Key_Control) return "Ctrl";
@@ -143,10 +152,32 @@ Scope {
           anchors.margins: Config.theme.padding
           spacing: Config.theme.padding
 
+          // The keys a held modifier reaches, in the body's own columns; each still runs on a click.
+          GridLayout {
+            id: hintGrid
+            Layout.fillWidth: true
+            visible: root.hinting
+            flow: GridLayout.LeftToRight
+            columns: Config.menu.columns
+            columnSpacing: Config.theme.padding
+            rowSpacing: Config.theme.listSpacing
+
+            Repeater {
+              model: root.menu.hints
+
+              MenuRow {
+                menu: root.menu
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                chars: root.menu.keyChars(root.menu.hints)
+              }
+            }
+          }
+
           // A level's legend shares its line with its actions, the keys on the left and the actions on the right.
           RowLayout {
             Layout.fillWidth: true
-            visible: root.menu.legend.length > 0 || root.menu.actions.length > 0
+            visible: !root.hinting && (root.menu.legend.length > 0 || root.menu.actions.length > 0)
             spacing: Config.theme.padding
 
             KeyLegend {
@@ -190,7 +221,7 @@ Scope {
             Layout.fillWidth: true
             Layout.leftMargin: Config.theme.itemPaddingX
             Layout.rightMargin: Config.theme.itemPaddingX
-            visible: !!root.menu.level?.entry?.view && Calendar.error !== "" && !Calendar.syncing
+            visible: !root.hinting && !!root.menu.level?.entry?.view && Calendar.error !== "" && !Calendar.syncing
             // Alert, not warning: the warning hue sits too close to calendar colours to read as a fault.
             tone: "alert"
             wrapMode: Text.Wrap
@@ -199,12 +230,12 @@ Scope {
 
           Divider {
             Layout.fillWidth: true
-            visible: root.menu.actions.length > 0 && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || !!root.menu.level?.entry?.view)
+            visible: !root.hinting && root.menu.actions.length > 0 && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || !!root.menu.level?.entry?.view)
           }
 
           // An empty list says why, in its place.
           Label {
-            visible: root.menu.emptyText !== ""
+            visible: !root.hinting && root.menu.emptyText !== ""
             Layout.leftMargin: Config.theme.itemPaddingX
             tone: "dim"
             text: root.menu.emptyText
@@ -213,7 +244,7 @@ Scope {
           // What a level lists, apart from its actions and across the full width.
           ColumnLayout {
             Layout.fillWidth: true
-            visible: root.menu.rows.length > 0
+            visible: !root.hinting && root.menu.rows.length > 0
             spacing: Config.theme.listSpacing
 
             Repeater {
@@ -230,7 +261,7 @@ Scope {
           // The month, and the events from its selected day beside it as tall as the month, 2 to 3.
           RowLayout {
             Layout.fillWidth: true
-            visible: root.menu.inCalendar
+            visible: !root.hinting && root.menu.inCalendar
             spacing: Config.theme.padding
 
             CalendarMonth {

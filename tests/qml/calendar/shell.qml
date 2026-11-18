@@ -22,6 +22,11 @@ ShellRoot {
           "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call"
       },
       {
+        name: "a day gives its events and their colours, each once, for the month's dots",
+        until: () => Calendar.eventsOn(new Date(2026, 10, 12)).map(event => event.title).join() === "Holiday,Night shift"
+          && Calendar.colorsOn(new Date(2026, 10, 12)).join() === "#33b679,#4285f4" && Calendar.colorsOn(new Date(2026, 10, 15)).length === 0
+      },
+      {
         name: "the events follow the selected day from one day with events to another",
         start: () => events.selected = new Date(2026, 10, 25),
         until: () => events.contentY > 0

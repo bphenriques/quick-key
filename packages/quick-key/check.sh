@@ -65,9 +65,9 @@ for file in $(grep -rlE 'case "|\b(list|status|state|modelData)\)? ?[!=]== "' --
   fail "$file: names a built-in outside its table"
 done
 
-# Qt 6.12's JavaScript: an optional call (`f?.()`) crashes the QML compiler at load, and arrays have no flatMap.
-for file in $(grep -rlE '\?\.\(|\.flatMap\(' --include='*.qml' .); do
-  fail "$file: an optional call or flatMap, which Qt's JavaScript cannot run"
+# Qt 6.12's JavaScript: an optional call (`f?.()`) crashes the QML compiler at load, arrays have no flatMap, and Object no fromEntries.
+for file in $(grep -rlE '\?\.\(|\.flatMap\(|Object\.fromEntries\(' --include='*.qml' .); do
+  fail "$file: an optional call, flatMap or Object.fromEntries, which Qt's JavaScript cannot run"
 done
 
 # Plugins: Plugin holds the one source and IPC target; none declares its own.

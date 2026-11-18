@@ -20,10 +20,10 @@ The menu is a list of levels. Each is an optional bar floating over its body: th
 
 - A letter runs its entry or opens its level. `Esc` closes the menu, `Backspace` goes back.
 - Digits pick from a level's list; `Alt+digit` opens an item's own menu (a tray app's).
-- `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second shows the bar's keys.
+- `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second lists the bar's keys in place of the body, each with its name.
 - Two keys with a command or action each (`[ "Down" "Up" ]`) share a row; the first steps down or back.
 - `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`) where its bar does not take it. Hints show keys Emacs-style: `C-←`, `M-k`, `RET`, `DEL`.
-- Holding `Super` for a second shows each bar entry's `shortcut`, the compositor key bound to it.
+- Holding `Super` for a second lists each bar entry's `shortcut` the same way, the compositor key bound to it.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
 
 ## What an entry does
@@ -38,7 +38,7 @@ The label is `desc`, and never changes. `status` shows live state on the right o
 
 ## Bars
 
-`menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules; an entry's `header` is its level's, with the same slots, and a level without one is its body alone. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). An entry shows its status, else its icon, and in a bar may do nothing but show its status. An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all in `menu.picker`; `theme.monochromeTray` draws the icons in greys. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`). Crowded, text shortens; icons and short values stay whole.
+`menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules, each unset slot the starter's (`menu.json`); an entry's `header` is its level's, with the same slots, and a level without one is its body alone. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). An entry shows its status, else its icon, and in a bar may do nothing but show its status. An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all in `menu.picker`; `theme.monochromeTray` draws the icons in greys. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`). Crowded, text shortens; icons and short values stay whole.
 
 ```nix
 menu.header.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } ];
@@ -49,7 +49,7 @@ The `clock` status takes `clock.format` (strftime as waybar's, plus `%o` for the
 
 ## Mouse
 
-The mouse reaches what the keys do: a click runs a row or a bar item, a right click opens a tray app's menu, and the wheel steps a pair (volume, brightness) or the calendar's month.
+The mouse reaches what the keys do: a click runs a row or a bar item, a right click opens a tray app's menu or, beside the rows, goes back a level, and the wheel steps a pair (volume, brightness) or the calendar's month. Resting on an icon in a bar names it.
 
 ## Built-in names
 

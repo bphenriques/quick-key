@@ -98,39 +98,68 @@
             "action": "shuffle"
           }
         ]
-      },
-      {
-        "key": "q",
-        "desc": "Session",
-        "width": 640,
-        "icon": "󰐥",
-        "submenu": [
-          {
-            "key": "l",
-            "desc": "Lock",
-            "icon": "󰌾",
-            "cmd": "loginctl lock-session"
-          },
-          {
-            "key": "s",
-            "desc": "Suspend",
-            "icon": "󰤄",
-            "cmd": "systemctl suspend"
-          },
-          {
-            "key": "S",
-            "desc": "Shutdown",
-            "icon": "󰐥",
-            "cmd": "systemctl poweroff"
-          },
-          {
-            "key": "R",
-            "desc": "Reboot",
-            "icon": "󰜉",
-            "cmd": "systemctl reboot"
-          }
-        ]
       }
-    ]
+    ],
+    "header": {
+      "left": [
+        {
+          "key": "c",
+          "desc": "Calendar",
+          "status": "clock",
+          "view": "calendar"
+        }
+      ],
+      "right": [
+        {
+          "key": "i",
+          "desc": "Keep awake",
+          "action": "keepAwake"
+        },
+        {
+          "key": "k",
+          "desc": "Keyboard layout",
+          "status": "keyboardLayout",
+          "action": "keyboardLayout"
+        },
+        "battery",
+        {
+          "desc": "Tray",
+          "list": "tray",
+          "limit": 5
+        },
+        {
+          "key": "q",
+          "desc": "Session",
+          "width": 640,
+          "icon": "󰐥",
+          "submenu": [
+            {
+              "key": "l",
+              "desc": "Lock",
+              "icon": "󰌾",
+              "cmd": "loginctl lock-session"
+            },
+            {
+              "key": "s",
+              "desc": "Suspend",
+              "icon": "󰤄",
+              "cmd": "systemctl suspend"
+            },
+            {
+              "key": "S",
+              "desc": "Shutdown",
+              "icon": "󰐥",
+              "cmd": "systemctl poweroff"
+            },
+            {
+              "key": "R",
+              "desc": "Reboot",
+              "icon": "󰜉",
+              "cmd": "systemctl reboot"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

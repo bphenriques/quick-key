@@ -64,8 +64,14 @@ Singleton {
     path: adapter.theme.name ? Quickshell.shellDir + "/themes/" + adapter.theme.name + ".json" : ""
   }
 
-  // Not bound as the adapter's default: menu.json loading after config.json would then replace the user's entries.
+  // Not bound as the adapter's defaults: menu.json loading after config.json would then replace the user's entries.
   readonly property var starterEntries: starter.entries
+  readonly property var starterHeader: starter.header
+
+  // A slot of the top level's bar: as set, else the starter's.
+  function headerSlot(slot) {
+    return adapter.menu.header[slot] ?? starter.header[slot] ?? [];
+  }
 
   FileView {
     path: Quickshell.shellDir + "/menu.json"
@@ -74,6 +80,11 @@ Singleton {
       property JsonObject menu: JsonObject {
         id: starter
         property var entries: []
+        property JsonObject header: JsonObject {
+          property var left: []
+          property var center: []
+          property var right: []
+        }
       }
     }
   }
@@ -141,11 +152,11 @@ Singleton {
       property JsonObject menu: JsonObject {
         // Unset (null), the starter menu in menu.json (Config.starterEntries); setting entries replaces it whole.
         property var entries: null
-        // The top level's bar, like waybar's modules-left, -center and -right: entries, and statuses and plugins by name (docs/src/menu.md).
+        // The top level's bar, like waybar's modules-left, -center and -right: entries, and statuses and plugins by name (docs/src/menu.md); a slot unset (null) is the starter's.
         property JsonObject header: JsonObject {
-          property var left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar" }]
-          property var center: []
-          property var right: [{ key: "i", desc: "Keep awake", action: "keepAwake" }, { key: "k", desc: "Keyboard layout", status: "keyboardLayout", action: "keyboardLayout" }, "battery", { desc: "Tray", list: "tray" }]
+          property var left: null
+          property var center: null
+          property var right: null
         }
         property int width: 960
         property int columns: 2

@@ -21,8 +21,8 @@ Singleton {
 
   function check(json) {
     const plugins = Object.keys(json.plugins ?? {});
-    // The top level's bar as it will be, defaults included.
-    const header = { left: json.menu?.header?.left ?? Config.menu.header.left, center: json.menu?.header?.center ?? Config.menu.header.center, right: json.menu?.header?.right ?? Config.menu.header.right };
+    // The top level's bar as it will be, the starter's slots included.
+    const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
     return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins));
   }
 

@@ -33,7 +33,7 @@ ListView {
   spacing: Config.theme.spacing / 2
   boundsBehavior: Flickable.StopAtBounds
 
-  // Keeps the focused event, else the selected day, in view, below the sticky day heading that would cover it.
+  // Keeps the focused event, else the selected day, in view, with room above it for its day's heading.
   function follow() {
     const at = rows.findIndex(row => focused ? row.id === focused : row.key === selectedKey);
     if (at < 0) return;
@@ -84,8 +84,8 @@ ListView {
   readonly property real headingHeight: Metrics.line + headingPadding
 
   section.property: "key"
-  // The day of the rows shown stays on top, over them: the first row shown always has its heading.
-  section.labelPositioning: ViewSection.InlineLabels | ViewSection.CurrentLabelAtStart
+  // Each day's heading scrolls with its rows: pinned on top, it would need a fill of its own over a translucent panel.
+  section.labelPositioning: ViewSection.InlineLabels
   // ListView reuses a heading and shows it again itself, so what hides it is inside, not the heading's own `visible`.
   section.delegate: Item {
     id: day
@@ -94,12 +94,10 @@ ListView {
     width: root.width
     implicitHeight: heading.implicitHeight
 
-    Rectangle {
+    Item {
       anchors.fill: parent
       // Only with room for its first event under it: a heading alone at the bottom says nothing.
       visible: root.fits(day.y, day.height + root.firstRowHeight(day.section))
-      // Opaque only while it stays on top, so rows scrolling under it are hidden, not shown through.
-      color: day.y - root.contentY < 1 ? Tone.surface(1) : "transparent"
 
       Label {
         id: heading

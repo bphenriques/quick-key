@@ -12,6 +12,9 @@ Rectangle {
   property bool current: false
   property real verticalPadding: Config.theme.itemPaddingY
 
+  // The pointer is on it.
+  readonly property bool hovered: mouse.containsMouse
+
   signal activated
   signal secondaryActivated
   signal scrolled(bool up)
@@ -23,13 +26,8 @@ Rectangle {
   radius: Config.theme.itemRadius
   // Disabled rows dim whole, images included.
   opacity: enabled || !dimsWhenDisabled ? 1 : Config.theme.dimOpacity
-  // Highlighted under the pointer or while current, more so while pressed, so a click is felt.
+  // Highlighted under the pointer or while current, more so while pressed, so a click is felt; at once, as easing trails a moving pointer.
   color: mouse.pressed ? Tone.wash("primary", 2) : current || mouse.containsMouse ? Tone.wash("primary") : "transparent"
-  Behavior on color {
-    ColorAnimation {
-      duration: Config.theme.animationDuration
-    }
-  }
 
   RowLayout {
     id: row

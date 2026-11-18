@@ -43,11 +43,12 @@ StatusLine {
   detail: status ? value.detail : fallbackDetail
   detailGlyphs: status ? value.glyphs ?? [] : fallbackGlyphs
   struck: done
+  strong: !!builtin?.strong
   meter: listedMeter !== undefined ? listedMeter : inLevel && builtin?.meter ? builtin.meter() : -1
   // A listed item's meter is lit while it is in use, like its value.
   meterTone: listedMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
   // A row's label and icon stay plain, its value takes the tone; a listed item in use is lit whole; a bar dims what is not lit.
-  tone: done ? "dim" : quiet ? statusTone || (active || plugin?.active ? "primary" : "dim") : !status && active ? "primary" : "normal"
+  tone: done ? "dim" : quiet ? statusTone || (active || plugin?.active ? "primary" : strong ? "normal" : "dim") : !status && active ? "primary" : "normal"
   // A status's tone is its own value's: a format shows other fields.
   valueTone: done ? "dim" : itemTone || !format && statusTone || (active ? "primary" : "dim")
 

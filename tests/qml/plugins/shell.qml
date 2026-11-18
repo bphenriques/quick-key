@@ -92,6 +92,18 @@ ShellRoot {
         until: () => !Plugins.get("tasks").items.find(item => item.id === "e").done
       },
       {
+        name: "a tick shows at once, before its command has written the file",
+        start: () => Plugins.get("tasks").select("f"),
+        until: () => Plugins.get("tasks").items.find(item => item.id === "f").done
+          && !Array.from(Plugins.get("tasks").state.tasks).find(task => task.id === "f").done
+      },
+      {
+        name: "a tick whose command fails shows the file's state again",
+        start: () => Plugins.get("tasks").select("d"),
+        until: () => !Plugins.get("tasks").items.find(item => item.id === "d").done && Plugins.get("tasks").queue.length === 0
+          && Object.keys(Plugins.get("tasks").pending).length === 0
+      },
+      {
         name: "a timed task reminds as it falls due",
         start: () => Plugins.get("tasks").remind(),
         until: () => (Plugins.get("reminded")?.text ?? "").startsWith("Now ")

@@ -11,7 +11,7 @@ Singleton {
 
   readonly property var none: ({ text: "", detail: "" })
 
-  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), and a meter() for its level, dim while muted().
+  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted().
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -59,9 +59,10 @@ Singleton {
     },
     brightness: {
       glyph: () => Glyphs.brightness(Brightness.percentage),
-      fields: () => !Brightness.present ? {} : { level: Brightness.lit ? Brightness.percentage + "%" : "off" },
+      // Unlit, no backlight to report: the row dims for that, and "off" would read as the screen being off.
+      fields: () => !Brightness.lit ? {} : { level: Brightness.percentage + "%" },
       value: fields => ({ text: "", detail: fields.level ?? "" }),
-      meter: () => Brightness.lit ? Brightness.percentage / 100 : 0
+      meter: () => Brightness.lit ? Brightness.percentage / 100 : -1
     },
     calendar: {
       glyph: () => Glyphs.calendar,
@@ -71,6 +72,8 @@ Singleton {
     clock: {
       glyph: () => Glyphs.calendar,
       fields: () => ({ date: Clock.text }),
+      // The bar's anchor: bold, and not dimmed with the rest.
+      strong: true,
       value: fields => ({ text: fields.date, detail: "" })
     },
     battery: {

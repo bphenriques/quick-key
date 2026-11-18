@@ -63,6 +63,11 @@ ShellRoot {
         until: () => Plugins.get("picked")?.text === "b-2"
       },
       {
+        name: "Ctrl held lists the bar's keys, each named",
+        start: () => menu.held = "Ctrl",
+        until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key), hint.desc])) === '[["C-x","X"],["C-1","a-1"],["C-0","+1"]]'
+      },
+      {
         name: "a format fills its fields, and a field without a value leaves nothing",
         until: () => Statuses.formatted("{title} · {when}", { title: "Lunch", when: "13:00" }) === "Lunch · 13:00" && Statuses.formatted("{none} x", {}) === "x"
       }

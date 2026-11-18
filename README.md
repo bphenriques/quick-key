@@ -11,7 +11,7 @@ It is a menu first: it sits beside the bar or shell you have and replaces neithe
 
 | Menu | Audio output |
 |---|---|
-| ![The top level: each entry's live status](docs/src/images/menu.png) | ![Audio output: volume, mute and the devices by digit](docs/src/images/speakers.png) |
+| ![The top level: the bar over fixed labels, each with its status on the right](docs/src/images/menu.png) | ![Audio output: volume, mute and the devices by digit, each with its volume](docs/src/images/speakers.png) |
 | **Calendar** | **Ask** |
 | ![The month and its events](docs/src/images/calendar.png) | ![A quick turn with an agent](docs/src/images/ask.png) |
 

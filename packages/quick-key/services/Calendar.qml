@@ -24,7 +24,7 @@ Singleton {
 
   // The events on a day, all-day first, then by start.
   function eventsOn(day) {
-    return store.days[key(day)] ?? [];
+    return store.days[Clock.dayKey(day)] ?? [];
   }
 
   // The colours of a day's events, each once, in the order eventsOn gives.

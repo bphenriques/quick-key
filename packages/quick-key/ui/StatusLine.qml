@@ -27,6 +27,8 @@ RowLayout {
   property string meterTone: "primary"
   // Its text struck through, for what is done.
   property bool struck: false
+  // Its text bold, the one to find first (the clock).
+  property bool strong: false
   readonly property bool titled: title !== ""
 
   spacing: Config.theme.spacing
@@ -54,6 +56,7 @@ RowLayout {
     horizontalAlignment: root.titled && !root.packed ? Text.AlignRight : Text.AlignLeft
     elide: Text.ElideRight
     font.strikeout: root.struck
+    font.bold: root.strong
     tone: root.titled ? root.valueTone : root.tone
     text: root.text
   }

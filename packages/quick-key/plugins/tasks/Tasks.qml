@@ -9,8 +9,12 @@ Plugin {
   id: root
 
   readonly property string today: Clock.dayKey(Clock.date)
-  // By due, undated last, never by whether done: a tick keeps its digit, so the same key unticks it.
-  readonly property var tasks: Array.from(state.tasks ?? []).sort((a, b) => root.order(a.due ?? "~", b.due ?? "~") || a.title.localeCompare(b.title))
+  // By due, undated last, never by whether done: a tick keeps its digit, so the same key unticks it. A tick shows before the file has it.
+  readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
+    .sort((a, b) => root.order(a.due ?? "~", b.due ?? "~") || a.title.localeCompare(b.title))
+  // Ticks not in the file yet, by id: done or not; and their commands, run one at a time.
+  property var pending: ({})
+  property var queue: []
   // Open and due by today, late first.
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
   // The tasks reminded of, by id and due, so each is once.
@@ -37,12 +41,29 @@ Plugin {
     return Clock.format(Clock.parse(due), time ? "%-d %b %H:%M" : "%-d %b");
   }
 
-  // A pick while the last one runs is dropped: the file shows the outcome before another makes sense.
+  // A tick shows at once; its command waits its turn, as each holds the calendar's lock and a sync may hold it too.
   function select(id) {
     const task = tasks.find(task => task.id === id);
-    if (!task || toggler.running) return;
-    toggler.command = commandLine(task.done ? settings.reopen : settings.done, id);
+    if (!task) return;
+    pending = Object.assign({}, pending, { [id]: !task.done });
+    queue = queue.concat([{ id, done: !task.done }]);
+    next();
+  }
+
+  function next() {
+    if (toggler.running || queue.length === 0) return;
+    toggler.tick = queue[0];
+    queue = queue.slice(1);
+    toggler.command = commandLine(toggler.tick.done ? settings.done : settings.reopen, toggler.tick.id);
     toggler.running = true;
+  }
+
+  // The file has a tick once it says the same: it no longer needs showing on its own.
+  onStateChanged: pending = kept((id, done) => Array.from(state.tasks ?? []).find(task => task.id === id)?.done !== done)
+
+  // The pending ticks that pass a test, by id and done.
+  function kept(test) {
+    return Object.keys(pending).reduce((kept, id) => test(id, pending[id]) ? Object.assign(kept, { [id]: pending[id] }) : kept, {});
   }
 
   // As the menu opens, a sync when the file is five minutes old: one on every opening would keep the calendar syncing too.
@@ -72,9 +93,14 @@ Plugin {
     }
   }
 
-  // The tick is written to the file at once; the sync after takes it to the server.
+  // Each tick is written to the file in turn; a failed one shows the file's state again. The sync after the last takes them to the server.
   Process {
     id: toggler
-    onExited: root.exec(root.settings.sync)
+    property var tick: null
+    onExited: code => {
+      if (code !== 0) root.pending = root.kept(id => id !== tick.id);
+      if (root.queue.length > 0) root.next();
+      else root.exec(root.settings.sync);
+    }
   }
 }
