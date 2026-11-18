@@ -78,17 +78,6 @@ Scope {
         }
       }
 
-      Shadow {
-        anchors.fill: card
-        radius: card.radius
-      }
-
-      Shadow {
-        anchors.fill: bar
-        visible: bar.visible
-        radius: bar.radius
-      }
-
       // The level's bar, floating over its body.
       Surface {
         id: bar

@@ -8,7 +8,7 @@ Add the flake:
 
 ```nix
 {
-  inputs.quick-key.url = "github:bphenriques/quick-key/v0.5.0";
+  inputs.quick-key.url = "github:bphenriques/quick-key/v0.5.1";
   inputs.quick-key.inputs.nixpkgs.follows = "nixpkgs";
   inputs.quick-key.inputs.home-manager.follows = "home-manager";
 }

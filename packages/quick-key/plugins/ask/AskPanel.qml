@@ -165,11 +165,6 @@ Scope {
         onClicked: panel.plugin.shown = false
       }
 
-      Shadow {
-        anchors.fill: card
-        radius: card.radius
-      }
-
       Surface {
         id: card
         anchors.centerIn: parent
