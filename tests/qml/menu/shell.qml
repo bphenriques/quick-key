@@ -77,6 +77,18 @@ ShellRoot {
         until: () => menu.emptyText === "Nothing found"
       },
       {
+        name: "? lists the keys no row shows, and any key closes the list",
+        start: () => {
+          menu.held = "";
+          menu.handleKey({ key: Qt.Key_Question, modifiers: Qt.ShiftModifier, text: "?" });
+        },
+        until: () => {
+          if (menu.hints.length === 0 || MenuKeys.label(menu.hints[0].key) !== "C-") return false;
+          menu.handleKey({ key: Qt.Key_X, modifiers: Qt.NoModifier, text: "x" });
+          return menu.held === "";
+        }
+      },
+      {
         name: "an input's key gives it the keys, and its text reaches its command",
         start: () => {
           menu.push({ kind: "entry", entry: { submenu: [], input: { key: "a", desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"" } } });

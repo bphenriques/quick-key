@@ -37,6 +37,7 @@ Plugin {
   glyphs: late.length > 0 ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
   fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.stamp(Clock.parse(state.updated)) : "" })
+  fieldTones: ({ updated: state.updated && Clock.date - Clock.parse(state.updated) >= settings.staleAfter * 60000 ? "warning" : "" })
   items: tasks.map(task => {
     const late = !task.done && !!task.due && task.due.slice(0, 10) < today;
     return {

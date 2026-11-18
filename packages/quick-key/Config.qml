@@ -184,6 +184,8 @@ Singleton {
         property string remind: "notify-send --app-name=Calendar --icon=x-office-calendar"
         // How many minutes before a timed event starts.
         property int remindBefore: 10
+        // Minutes after which the last sync shows in warning.
+        property int staleAfter: 120
       }
 
       property JsonObject popups: JsonObject {

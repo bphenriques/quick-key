@@ -53,7 +53,10 @@ StatusLine {
   // On a row: a listed item in use is lit whole; a status leaves its label and icon plain, its value taking the tone.
   readonly property string rowTone: !status && active ? "primary" : "normal"
   // A status's tone is its own value's, but not over a format, which shows other fields.
-  readonly property string ownValueTone: itemTone || (format ? "" : statusTone)
+  readonly property string ownValueTone: itemTone || (format ? formatTone : statusTone)
+  // Under a format, the tone of a field it shows, when one has its own.
+  readonly property var fieldTones: builtin?.fieldTones ? builtin.fieldTones() : plugin?.fieldTones ?? {}
+  readonly property string formatTone: format ? (format.match(/\{\w+\}/g) ?? []).map(field => fieldTones[field.slice(1, -1)]).find(tone => tone) ?? "" : ""
 
   tone: done ? "dim" : quiet ? barTone : rowTone
   valueTone: done ? "dim" : ownValueTone || (active ? "primary" : "dim")

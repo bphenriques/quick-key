@@ -12,6 +12,8 @@ PluginSettings {
   property string sync
   // Minutes old the file may be as the menu opens before a sync; one on every opening would keep the calendar syncing.
   property int syncAfter: 5
+  // Minutes after which the last sync shows in warning.
+  property int staleAfter: 120
   // Given a title and a time, as a timed task falls due; unset, no reminders.
   property string remind
   property string glyph

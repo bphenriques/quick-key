@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import qs
 import qs.services
 import qs.ui
 
@@ -65,6 +66,8 @@ Singleton {
     calendar: {
       glyph: () => Glyphs.calendar,
       fields: () => root.calendar(),
+      // A sync older than calendar.staleAfter warns, a format showing it or not.
+      fieldTones: () => ({ updated: !Calendar.syncing && Calendar.updated && Clock.date - Calendar.updated >= Config.calendar.staleAfter * 60000 ? "warning" : "" }),
       value: fields => ({ text: "", detail: fields.when ?? "" })
     },
     clock: {

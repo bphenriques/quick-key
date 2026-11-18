@@ -33,6 +33,8 @@ Scope {
   property var glyphs: state.glyphs ?? []
   // What an entry's `format` reads by name, beside `text` and `detail`.
   property var fields: state.fields ?? ({})
+  // A tone per field, kept when a `format` shows it (warning on an old sync).
+  property var fieldTones: state.fieldTones ?? ({})
   // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
 

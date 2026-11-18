@@ -24,6 +24,7 @@ The menu is a list of levels. Each is an optional bar floating over its body: th
 - Two keys with a command or action each (`[ "Down" "Up" ]`) share a row; the first steps down or back, so a pair reads lesser or earlier side first: `↓↑` is less then more, `←→` and `↑↓` are back then forward, up going back in time as on a scrolled page.
 - `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`) where its bar does not take it. Hints show keys Emacs-style: `C-←`, `M-k`, `RET`, `DEL`.
 - Holding `Super` for a second lists each bar entry's `shortcut` the same way, the compositor key bound to it.
+- `?` lists the keys no row shows: the holds, `M-1` for an item's own menu, `DEL` and `ESC`; any key closes it.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
 
 ## What an entry does

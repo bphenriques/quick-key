@@ -13,7 +13,7 @@ Scope {
   property bool open: false
   // Levels opened below the top one, the last is shown: an entry's (kind "entry") or an app's own menu (kind "menu").
   property var stack: []
-  // The modifier held a second, whose keys show: "Ctrl" the bar's, "Super" the compositor's; not at once, so a chord does not flash them.
+  // What lists keys in place of the body: "Ctrl" or "Super" held a second (not at once, so a chord does not flash them), or "Help" after `?`.
   property string held: ""
   // Whether the level's input has the keys, else its body.
   property bool inputFocused: false
@@ -39,8 +39,16 @@ Scope {
   readonly property var barSlots: level?.kind === "menu" ? { left: [appOf(stack.filter(level => level.kind === "menu"))], center: [], right: [] }
     : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
-  // While Ctrl is held a second, the bar's keys in place of the body, each named; while Super is, the compositor's.
-  readonly property var hints: held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
+  // The keys no row shows, listed on `?`: holds, an item's own menu, back and close.
+  readonly property var help: [
+    { key: "Ctrl+", desc: "Hold: the bar's keys" },
+    { key: "Super+", desc: "Hold: compositor shortcuts" },
+    { key: "Alt+1", desc: "An item's own menu" },
+    { key: "BackSpace", desc: "Back" },
+    { key: "Escape", desc: "Close" }
+  ]
+  // The keys listed in place of the body: the help, the bar's while Ctrl is held, the compositor's while Super is.
+  readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
   // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }.
   readonly property var legend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
@@ -285,7 +293,10 @@ Scope {
     const own = find(items, name);
     const target = alt && /^[0-9]$/.test(key) ? find(ctrl ? barItems : rows, key) : null;
     const barred = ctrl && !alt ? find(barItems, key) : null;
-    if (name === "Escape") hide();
+    // Any key closes the help, which only lists keys.
+    if (held === "Help") held = "";
+    else if (name === "?") held = "Help";
+    else if (name === "Escape") hide();
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (name === "BackSpace" && level) back();
     else if (input && MenuKeys.matches(input.key, name)) inputFocused = true;
