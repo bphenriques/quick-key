@@ -100,7 +100,7 @@ ShellRoot {
         }
       },
       {
-        name: "while the menu shows its input, the answer shows there, unread stays off, and the next send continues the conversation; a new visit starts fresh",
+        name: "while the menu shows its input, the answer shows there and stays while the next send runs, unread stays off, and the next send continues the conversation; a new visit starts fresh",
         until: () => {
           const ask = Plugins.get("visitor");
           if (!ask) return false;
@@ -108,7 +108,7 @@ ShellRoot {
             Plugins.watching = "visitor\n{}";
             root.visitStep = ask.submit("one", false, "") ? 1 : 0;
           } else if (root.visitStep === 1 && ask.reply?.text === "one") {
-            root.visitStep = ask.submit("two", false, "") ? 2 : 1;
+            root.visitStep = ask.submit("two", false, "") && ask.busy && ask.reply?.text === "one" ? 2 : -1;
           } else if (root.visitStep === 2 && ask.reply?.text === "two") {
             root.visitStep = ask.exchanges.length === 2 && !ask.unread ? 3 : -1;
             Plugins.watching = "";

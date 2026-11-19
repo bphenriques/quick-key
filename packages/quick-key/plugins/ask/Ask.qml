@@ -61,13 +61,12 @@ Plugin {
     typing = true;
   }
 
-  // An input's text, answered above it while the menu shows it, else as a notification; one conversation per visit.
+  // An input's text, answered above it while the menu shows it (the last answer staying until the next), else as a notification; one conversation per visit.
   function submit(text, background, after) {
     if (busy || request.running || !settings.ask) return false;
     if (!visited) reset();
     if (!send(text, "", after, true)) return false;
     visited = watched;
-    reply = null;
     return true;
   }
 
