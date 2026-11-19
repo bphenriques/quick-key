@@ -20,6 +20,8 @@ ColumnLayout {
   property string note: ""
   property string noteGlyph: ""
   property string noteTone: "dim"
+  // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys.
+  readonly property real slot: Math.max(Metrics.line, keyHint.implicitWidth)
 
   signal keyPressed(var event)
   signal tapped
@@ -61,7 +63,7 @@ ColumnLayout {
     onActivated: root.noteTapped()
 
     Item {
-      implicitWidth: Metrics.line
+      implicitWidth: root.slot
       implicitHeight: Metrics.line
 
       Icon {
@@ -85,10 +87,10 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Config.theme.spacing
 
-    // Its key and its glyph share one square, so the text holds still as it takes the keys.
+    // Its key and its glyph share one column (`slot`).
     Item {
       Layout.alignment: Qt.AlignTop
-      implicitWidth: Metrics.line
+      implicitWidth: root.slot
       implicitHeight: Metrics.line
 
       Spinner {
@@ -99,6 +101,7 @@ ColumnLayout {
       }
 
       KeyHint {
+        id: keyHint
         anchors.centerIn: parent
         visible: !root.busy && !root.active && root.key !== ""
         key: root.key

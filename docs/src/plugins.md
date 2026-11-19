@@ -104,7 +104,7 @@ Keys:
 
 - `RET` sends, `C-S-RET` sends and hides the panel, the answer arriving as a notification, `S-RET` breaks the line, `C-v` attaches the clipboard's image.
 - The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else leaves it, dim, else hides, as does a click beside it; the conversation is kept, and an empty one says so.
-- `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `y`, `l` and `o` do, and `a` (`key`) gives it the keys again.
+- `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `y`, `l` and `o` do; `TAB` moves the keys between the prompt and the panel, as in a level.
 
 Two agents are two plugins with `type = "ask"`. A level's `input` may hand one its text (see [Input](menu.md#input)).
 

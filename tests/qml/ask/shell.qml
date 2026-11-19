@@ -42,10 +42,11 @@ ShellRoot {
           ask.typing = false;
           ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
           const letter = ask.act("l") && ask.exchanges.length === 0;
-          const typing = ask.act("a") && ask.typing && !ask.act("l");
+          const typing = ask.act("Tab") && ask.typing && !ask.act("l");
+          const backtab = ask.act("Backtab") && !ask.typing && !ask.act("Backtab") && ask.act("Tab") && ask.typing;
           ask.typing = false;
           const hidden = ask.act("Escape") && !ask.shown;
-          return promptsOwn && letter && typing && hidden;
+          return promptsOwn && letter && typing && backtab && hidden;
         }
       },
       {

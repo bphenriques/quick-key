@@ -28,6 +28,9 @@ Singleton {
     case Qt.Key_Left: return "Left";
     case Qt.Key_Right: return "Right";
     case Qt.Key_Space: return "space";
+    // Shift+Tab arrives as Backtab from a keyboard, or as Tab with Shift from some virtual ones.
+    case Qt.Key_Tab: return event.modifiers & Qt.ShiftModifier ? "Backtab" : "Tab";
+    case Qt.Key_Backtab: return "Backtab";
     case Qt.Key_Return:
     case Qt.Key_Enter: return "Return";
     case Qt.Key_Escape: return "Escape";
@@ -65,7 +68,7 @@ Singleton {
   }
 
   function shortName(name) {
-    const symbols = { Up: "↑", Down: "↓", Left: "←", Right: "→", space: "SPC", Space: "SPC", Return: "RET", BackSpace: "DEL", Escape: "ESC" };
+    const symbols = { Up: "↑", Down: "↓", Left: "←", Right: "→", space: "SPC", Space: "SPC", Tab: "TAB", Backtab: "S-TAB", Return: "RET", BackSpace: "DEL", Escape: "ESC" };
     const [, chord, base] = name.match(/^((?:(?:Ctrl|Alt|Mod|Super|Shift)\+)*)(.*)$/);
     const modifiers = chord.split("+");
     const shift = modifiers.includes("Shift");

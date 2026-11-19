@@ -18,8 +18,6 @@ PluginSettings {
   property string promptGlyph
   // What the empty prompt says, {title} for the title.
   property string placeholder: "Ask {title}"
-  // What gives the prompt the keys again once Escape has taken them.
-  property string key: "a"
   // How many lines tall the conversation is, like a level's width: declared, so the panel holds still (rule 4).
   property int lines: 14
 }

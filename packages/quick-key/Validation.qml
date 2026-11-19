@@ -17,16 +17,16 @@ Singleton {
 
   readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
   readonly property var views: ["calendar"]
-  // The letters a view takes for itself (CalendarModel.keys), so no input takes them.
-  readonly property var viewLetters: ({ calendar: ["t"] })
-  // Esc closes the menu, Backspace goes back a level and ? lists the keys no row shows.
-  readonly property var reservedKeys: ["Escape", "BackSpace", "?"]
+  // Esc closes the menu, Backspace goes back a level, ? lists the keys no row shows, Tab moves to the input and Shift+Tab back.
+  readonly property var reservedKeys: ["Escape", "BackSpace", "?", "Tab", "Backtab"]
 
   function check(json) {
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
-    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins));
+    // The top level's input is checked as an entry's would be.
+    const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
+    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins), input);
   }
 
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices).
@@ -79,11 +79,10 @@ Singleton {
   function inputProblems(entry, plugins) {
     const input = entry.input;
     const found = [];
-    const unknown = Object.keys(input).filter(key => !["key", "desc", "cmd", "plugin", "format", "after"].includes(key));
+    const unknown = Object.keys(input).filter(key => !["desc", "cmd", "plugin", "format", "after"].includes(key));
     if (unknown.length) found.push("sets input." + unknown.join(", input.") + ", which no input takes");
     if (entry.submenu == null && entry.list == null && entry.view == null) found.push("can only set input on a level with submenu, list or view");
-    if (typeof input.desc !== "string" || !/^[A-Za-z]$/.test(input.key ?? "")) found.push("needs an input with a letter for its key and a desc");
-    if ((entry.submenu ?? []).some(row => [].concat(row.key ?? []).includes(input.key)) || (viewLetters[entry.view] ?? []).includes(input.key)) found.push("binds its input's key twice");
+    if (typeof input.desc !== "string") found.push("needs an input with a desc");
     if (input.cmd != null && input.plugin != null) found.push("gives its input's text to both input.cmd and input.plugin");
     if (input.plugin != null && !plugins.includes(input.plugin)) found.push("gives its input's text to plugin '" + input.plugin + "', which is not one");
     if (input.cmd == null && input.plugin == null && !plugins.includes(entry.list)) found.push("gives its input's text to nothing: needs input.cmd, input.plugin, or a list that is a plugin");

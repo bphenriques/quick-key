@@ -186,8 +186,9 @@ Plugin {
 
   // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt. Waiting, its letters do what their Ctrl chords do.
   function act(key) {
-    if (!typing && key === settings.key) {
-      typing = true;
+    // Tab moves the keys between the prompt and the panel, as in a level; Shift+Tab back to the panel, and from the panel it is Qt's.
+    if (key === "Tab" || (typing && key === "Backtab")) {
+      typing = !typing;
       return true;
     }
     switch (!typing && /^[a-z]$/.test(key) ? "Ctrl+" + key : key) {

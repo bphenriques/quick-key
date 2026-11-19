@@ -96,8 +96,8 @@ ShellRoot {
       {
         name: "an input's key gives it the keys, its text reaches its command, and its after runs, given nothing, once the command succeeds",
         start: () => {
-          menu.push({ kind: "entry", entry: { submenu: [], input: { key: "a", desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"", after: "echo \"done $#\" > \"$XDG_RUNTIME_DIR/followed\"" } } });
-          menu.handleKey({ key: Qt.Key_A, modifiers: Qt.NoModifier, text: "a" });
+          menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"", after: "echo \"done $#\" > \"$XDG_RUNTIME_DIR/followed\"" } } });
+          menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
           menu.submit("  typed  ", false);
         },
         until: () => menu.inputFocused && Plugins.get("picked")?.text === "typed" && Plugins.get("followed")?.text === "done 0"
@@ -106,8 +106,8 @@ ShellRoot {
         name: "an input naming a plugin gives it its text in its format, the legend showing the input's keys; in the background the menu closes",
         start: () => {
           menu.stack = [];
-          menu.push({ kind: "entry", entry: { view: "calendar", input: { key: "a", desc: "Add an event", plugin: "agent", format: "Add: {text}." } } });
-          menu.handleKey({ key: Qt.Key_A, modifiers: Qt.NoModifier, text: "a" });
+          menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}." } } });
+          menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
           root.typingLegend = menu.legend.map(key => MenuKeys.label(key.key));
           menu.submit("typed", true);
         },
@@ -117,7 +117,7 @@ ShellRoot {
         name: "an input whose plugin did not load takes nothing, so the menu stays and the input keeps its text",
         until: () => {
           menu.stack = [];
-          menu.push({ kind: "entry", entry: { submenu: [], input: { key: "a", desc: "Add", plugin: "gone" } } });
+          menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "gone" } } });
           return menu.submit("kept", true) === false && menu.stack.length === 1;
         }
       },
@@ -125,17 +125,27 @@ ShellRoot {
         name: "an input on a list whose plugin takes no text keeps its text, and the menu stays",
         until: () => {
           menu.stack = [];
-          menu.push({ kind: "entry", entry: { list: "devices", input: { key: "a", desc: "Add" } } });
+          menu.push({ kind: "entry", entry: { list: "devices", input: { desc: "Add" } } });
           return Plugins.get("devices") !== null && menu.submit("kept", true) === false && menu.stack.length === 1;
+        }
+      },
+      {
+        name: "in the body Tab moves to the input, and Shift+Tab is left to Qt",
+        until: () => {
+          menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "true" } } }];
+          menu.inputFocused = false;
+          const backtab = menu.handleKey({ key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, text: "" });
+          const tab = menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
+          return !backtab && tab && menu.inputFocused;
         }
       },
       {
         name: "each input keeps its own unsent text",
         until: () => {
-          const first = { kind: "entry", entry: { submenu: [], input: { key: "a", desc: "First", cmd: "true" } } };
+          const first = { kind: "entry", entry: { submenu: [], input: { desc: "First", cmd: "true" } } };
           menu.stack = [first];
           menu.keepDraft("one");
-          menu.push({ kind: "entry", entry: { submenu: [], input: { key: "a", desc: "Second", cmd: "true" } } });
+          menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Second", cmd: "true" } } });
           const second = menu.draft;
           menu.stack = [first];
           return second === "" && menu.draft === "one";

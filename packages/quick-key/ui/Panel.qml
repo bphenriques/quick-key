@@ -169,8 +169,9 @@ Scope {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: Config.theme.padding
-            anchors.rightMargin: Config.theme.padding
+            // Inset as a row's content is, so its key column lines up with the body's keys.
+            anchors.leftMargin: Config.theme.padding + Config.theme.itemPaddingX
+            anchors.rightMargin: Config.theme.padding + Config.theme.itemPaddingX
             active: root.inputShown
             focus: root.inputFocused
             sourceComponent: root.input

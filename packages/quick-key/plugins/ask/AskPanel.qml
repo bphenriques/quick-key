@@ -255,7 +255,7 @@ Scope {
         glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
         placeholder: panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
         active: panel.plugin.typing
-        key: panel.plugin.settings.key
+        key: "Tab"
         onTapped: panel.plugin.typing = true
         onUnfocused: panel.plugin.typing = false
         empty: text === "" && !panel.plugin.image

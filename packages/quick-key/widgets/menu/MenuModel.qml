@@ -25,10 +25,10 @@ Scope {
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property bool inCalendar: level?.entry?.view === "calendar"
-  // The text a level takes under its body (an entry's `input`): { key, desc, cmd, plugin, format, after }.
-  readonly property var input: level?.kind === "entry" ? level.entry.input ?? null : null
+  // The text a level takes under its body (an entry's `input`, or `menu.input` at the top level): { desc, cmd, plugin, format, after }.
+  readonly property var input: level === null ? Config.menu.input ?? null : level.kind === "entry" ? level.entry.input ?? null : null
   // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
-  readonly property var inputPlugin: input && !input.cmd ? Plugins.get(input.plugin ?? level.entry.list ?? "") : null
+  readonly property var inputPlugin: input && !input.cmd ? Plugins.get(input.plugin ?? level?.entry?.list ?? "") : null
   readonly property bool inputBusy: inputPlugin?.busy ?? false
   // What Plugins.watching is set to: the plugin and the input on show, so an answer shows there; a change of either ends a visit.
   readonly property string watching: open && inputPlugin ? inputPlugin.name + "\n" + JSON.stringify(input) : ""
@@ -54,7 +54,7 @@ Scope {
     { key: "Ctrl+", desc: "Hold: the bar's keys" },
     { key: "Super+", desc: "Hold: compositor shortcuts" },
     { key: "Alt+1", desc: "An item's own menu" }
-  ].concat(input ? [{ key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], [
+  ].concat(input ? [{ key: "Tab", desc: "The input, and back" }, { key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], [
     { key: "BackSpace", desc: "Back" },
     { key: "Escape", desc: "Close" }
   ])
@@ -324,7 +324,7 @@ Scope {
     else if (name === "Escape") hide();
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (name === "BackSpace" && level) back();
-    else if (input && MenuKeys.matches(input.key, name)) inputFocused = true;
+    else if (input && name === "Tab") inputFocused = true;
     else if (own) activate(own, name);
     else if (target) openMenu(target);
     else if (barred) activate(barred, key);

@@ -92,7 +92,7 @@ Scope {
       id: prompt
       active: root.menu.inputFocused
       busy: root.menu.inputBusy
-      key: root.menu.input?.key ?? ""
+      key: "Tab"
       placeholder: root.menu.input?.desc ?? ""
       maxLines: 1
       // What its plugin said about the text, while the menu shows it; a click opens the plugin (Ask, on the whole conversation).
@@ -107,10 +107,12 @@ Scope {
       onOwnerChanged: set(root.menu.draftOf(owner))
       Component.onCompleted: set(root.menu.draftOf(owner))
       onTextChanged: root.menu.keepDraft(text)
+      // Tab or Shift+Tab gives the keys back to the body, the text kept.
       onKeyPressed: event => {
         const send = MenuKeys.sends(event);
-        if (!send) return;
-        prompt.send(send === "background");
+        if (send) prompt.send(send === "background");
+        else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) root.menu.inputFocused = false;
+        else return;
         event.accepted = true;
       }
 
