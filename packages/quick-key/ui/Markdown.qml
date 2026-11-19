@@ -2,15 +2,15 @@ import QtQuick
 import Quickshell
 import qs
 
-// An agent's answer as its Markdown says (ACP's text format): tables, lists, emphasis, code; a selection is copied, as a terminal does. Rendered safe (Markup.safe): an image or a link shows its text (links are rows of their own, and Qt draws them in a blue no theme reaches), so nothing is fetched and no HTML runs.
+// An agent's answer as its Markdown says (ACP's text format): tables, lists, emphasis, code, quotes; a selection is copied, as a terminal does. Rendered by Markup.html, so nothing is fetched and no HTML runs; links are rows of their own.
 TextEdit {
   id: root
 
   property string markdown
   property string tone: "normal"
 
-  text: Markup.safe(markdown)
-  textFormat: TextEdit.MarkdownText
+  text: Markup.html(markdown)
+  textFormat: TextEdit.RichText
   readOnly: true
   selectByMouse: true
   persistentSelection: true

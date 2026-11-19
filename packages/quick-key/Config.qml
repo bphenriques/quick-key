@@ -140,6 +140,8 @@ Singleton {
         property int animationDuration: 100
         property string monospaceFont: "monospace"
         property int fontSize: 11
+        // Wrapped prose (an answer) at this multiple of a line; rows keep their own padding.
+        property real lineHeight: 1.3
         property int radius: 10
         property int itemRadius: 6
         property int iconSize: 24

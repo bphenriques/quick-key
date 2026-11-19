@@ -1,6 +1,6 @@
 # Menu
 
-The menu is a list of levels. Each is an optional bar floating over its body: the body lists entries, each with a key and a label, that either do something or open a level of their own; the bar holds what you glance at.
+The menu is a list of levels. Each is its body over an optional bar at the screen's edge: the body lists entries, each with a key and a label, that either do something or open a level of their own; the bar holds what you glance at.
 
 ```nix
 {
@@ -50,7 +50,7 @@ The `clock` status takes `clock.format` (strftime as waybar's, plus `%o` for the
 
 ## Input
 
-An entry's `input` floats a line of text under its level's body, a bar entry's too, and `menu.input` under the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask"; plugin = "assistant"; }`). `TAB` moves the keys from the body to the input on every level, as Tab moves between areas anywhere, `TAB` or `S-TAB` back, and a click focuses it too: `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, `ESC` clears it, then leaves it; unsent text stays until sent or cleared. Focused, its keys show in the level's legend. The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task).
+An entry's `input` floats a line of text over its level's body, a bar entry's too, and `menu.input` over the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask"; plugin = "assistant"; }`). `TAB` moves the keys from the body to the input on every level, as Tab moves between areas anywhere, `TAB` or `S-TAB` back, and a click focuses it too: `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, `ESC` clears it, then leaves it; unsent text stays until sent or cleared. Focused, its keys show in the level's legend. The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task).
 
 ```nix
 { key = "k"; desc = "Tasks"; list = "tasks"; input = { desc = "Add a task"; }; }

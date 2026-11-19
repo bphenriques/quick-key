@@ -149,9 +149,9 @@ Scope {
     return more > 0 ? shown.concat({ key: "0", desc: "+" + more, enabled: Config.menu.picker !== "", closes: true, select: () => Picker.pick(all) }) : shown;
   }
 
-  // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order.
+  // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order, a hidden one only in the picker.
   function numbered(list, pins, items = listed(list)) {
-    const rest = Array.from(items);
+    const rest = Array.from(items).filter(item => !item.hidden);
     const pinned = Array.from(pins ?? []).map(pin => {
       const index = rest.findIndex(item => MenuKeys.glob(pin.match, item.id));
       if (index < 0) return { desc: pin.label, icon: pin.icon ?? Lists.builtin[list]?.icon ?? Glyphs.tray, enabled: false };
@@ -175,6 +175,7 @@ Scope {
       active: item.active ?? false,
       enabled: item.enabled ?? true,
       done: item.done ?? false,
+      hidden: item.hidden ?? false,
       busy: item.busy ?? false,
       glyphs: Array.from(item.glyphs ?? []),
       tone: item.tone ?? "",

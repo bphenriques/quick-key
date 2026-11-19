@@ -14,7 +14,6 @@ Item {
   Label {
     id: label
     tone: "primary"
-    strong: true
     text: MenuKeys.label(root.key, root.paired)
   }
 }

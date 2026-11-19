@@ -44,7 +44,7 @@ Scope {
   // Whether it takes no text now; an input giving it text shows a spinner meanwhile and sends nothing.
   property bool busy: false
 
-  // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, busy, tone }.
+  // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone }.
   property var items: state.items ?? []
 
   // What a click on it in a bar, or `<name> activate` over IPC, does.

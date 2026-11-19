@@ -40,6 +40,23 @@ Scope {
     value: root.menu.watching
   }
 
+  Component {
+    id: statuses
+
+    HeaderSlot {
+      implicitWidth: Layout.preferredWidth
+      menu: root.menu
+      alignment: Qt.AlignRight
+      items: root.menu.barOf(root.menu.topBar.right)
+    }
+  }
+
+  Binding {
+    target: Panels
+    property: "statuses"
+    value: statuses
+  }
+
   IpcHandler {
     target: "menu"
 
@@ -64,6 +81,7 @@ Scope {
     namespace: "menu"
     width: root.menu.width
     barShown: root.menu.barItems.length > 0
+    inputOver: true
     onDismissed: root.menu.hide()
     // As Backspace does.
     onSecondaryClicked: if (root.menu.level) root.menu.back()
@@ -214,6 +232,12 @@ Scope {
       onImplicitHeightChanged: if (!root.hinting) restHeight = implicitHeight
       spacing: Config.theme.padding
 
+      // Fewer keys than rows leave the top of the body empty rather than shrink it, the keys next to the bar.
+      Item {
+        visible: root.hinting && body.restHeight > hints.implicitHeight + body.spacing
+        Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
+      }
+
       // The keys a held modifier reaches, in the body's own columns; each still runs on a click.
       GridLayout {
         id: hints
@@ -236,72 +260,6 @@ Scope {
             chars: root.menu.keyChars(root.menu.hints)
           }
         }
-      }
-
-      // Fewer keys than rows leave the rest of the body empty rather than shrink it.
-      Item {
-        visible: root.hinting && body.restHeight > hints.implicitHeight + body.spacing
-        Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
-      }
-
-      // A level's legend shares its line with its actions, the keys on the left and the actions on the right.
-      RowLayout {
-        Layout.fillWidth: true
-        visible: !root.hinting && (root.menu.legend.length > 0 || root.menu.actions.length > 0)
-        spacing: Config.theme.padding
-
-        KeyLegend {
-          visible: root.menu.legend.length > 0
-          keys: root.menu.legend
-          onPicked: key => root.menu.inputFocused ? root.inputPicked(key) : root.menu.calendar.handleKey(key)
-        }
-
-        Item {
-          visible: root.menu.legend.length > 0
-          Layout.fillWidth: true
-        }
-
-        // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
-        GridLayout {
-          id: actionsGrid
-          Layout.fillWidth: root.menu.legend.length === 0
-          visible: root.menu.actions.length > 0
-          flow: GridLayout.LeftToRight
-          columns: Config.menu.columns
-          columnSpacing: Config.theme.padding
-          rowSpacing: Config.theme.listSpacing
-
-          Repeater {
-            model: root.menu.actions.length
-
-            // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
-            MenuRow {
-              required property int index
-              item: root.menu.actions[index] ?? ({})
-              hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
-              menu: root.menu
-              Layout.fillWidth: !hugs
-              Layout.preferredWidth: hugs ? -1 : 1
-              chars: root.menu.columnChars(index, actionsGrid.columns)
-            }
-          }
-        }
-      }
-
-      Label {
-        Layout.fillWidth: true
-        Layout.leftMargin: Config.theme.itemPaddingX
-        Layout.rightMargin: Config.theme.itemPaddingX
-        visible: !root.hinting && root.menu.error !== ""
-        // Alert, not warning: the warning hue sits too close to calendar colours to read as a fault.
-        tone: "alert"
-        wrapMode: Text.Wrap
-        text: root.menu.error
-      }
-
-      Divider {
-        Layout.fillWidth: true
-        visible: !root.hinting && root.menu.actions.length > 0 && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || !!root.menu.level?.entry?.view)
       }
 
       // An empty list says why, in its place.
@@ -365,6 +323,66 @@ Scope {
             selected: root.menu.calendar.selected
             focused: root.menu.calendar.focused
             onPicked: row => root.menu.calendar.focus(row)
+          }
+        }
+      }
+
+      Divider {
+        Layout.fillWidth: true
+        visible: !root.hinting && root.menu.actions.length > 0 && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || !!root.menu.level?.entry?.view)
+      }
+
+      Label {
+        Layout.fillWidth: true
+        Layout.leftMargin: Config.theme.itemPaddingX
+        Layout.rightMargin: Config.theme.itemPaddingX
+        visible: !root.hinting && root.menu.error !== ""
+        // Alert, not warning: the warning hue sits too close to calendar colours to read as a fault.
+        tone: "alert"
+        wrapMode: Text.Wrap
+        text: root.menu.error
+      }
+
+      // A level's legend shares its line with its actions, the keys on the left and the actions on the right; last, at the edge side, so a list that grows moves neither.
+      RowLayout {
+        Layout.fillWidth: true
+        visible: !root.hinting && (root.menu.legend.length > 0 || root.menu.actions.length > 0)
+        spacing: Config.theme.padding
+
+        KeyLegend {
+          visible: root.menu.legend.length > 0
+          keys: root.menu.legend
+          onPicked: key => root.menu.inputFocused ? root.inputPicked(key) : root.menu.calendar.handleKey(key)
+        }
+
+        Item {
+          visible: root.menu.legend.length > 0
+          Layout.fillWidth: true
+        }
+
+        // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
+        GridLayout {
+          id: actionsGrid
+          Layout.fillWidth: root.menu.legend.length === 0
+          visible: root.menu.actions.length > 0
+          flow: GridLayout.LeftToRight
+          columns: Config.menu.columns
+          columnSpacing: Config.theme.padding
+          rowSpacing: Config.theme.listSpacing
+
+          Repeater {
+            model: root.menu.actions.length
+
+            // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
+            MenuRow {
+              required property int index
+              item: root.menu.actions[index] ?? ({})
+              hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
+              menu: root.menu
+              Layout.fillWidth: !hugs
+              Layout.preferredWidth: hugs ? -1 : 1
+              chars: root.menu.columnChars(index, actionsGrid.columns)
+            }
           }
         }
       }

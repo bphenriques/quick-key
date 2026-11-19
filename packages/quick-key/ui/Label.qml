@@ -1,7 +1,7 @@
 import QtQuick
 import qs
 
-// Text in the theme font, coloured by `tone` (see Tone); `strong` for the one to find first (a key, the clock, a heading).
+// Text in the theme font, coloured by `tone` (see Tone); `strong` for the one to find first (a heading, the clock, the item in use).
 Text {
   property string tone: "normal"
   property bool strong: false

@@ -17,7 +17,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 
 | Component | Use |
 |---|---|
-| `Label` | all text, coloured by `tone`: `normal`, `dim`, `primary`, `warning` or `alert`; bold when `strong`, the one to find first (a key, the clock, a heading) |
+| `Label` | all text, coloured by `tone`: `normal`, `dim`, `primary`, `warning` or `alert`; bold when `strong`, the one to find first (a heading, the clock, the item in use) |
 | `Tone` | the colour of each tone, `dim` being the normal colour at reduced alpha; a panel's background; a tone washed behind something (a highlight, a track) |
 | `Metrics` | the font's character width (`cell`) and line height (`line`), for sizes given in characters or lines |
 | `Icon` | a glyph or an image in the same square; `monochrome` draws an image in greys |
@@ -28,18 +28,18 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `KeyList` | keys and what each does, a row each across the menu's columns, as `?` lists them; a click is `picked` |
 | `Meter` | a thin level bar |
 | `TextField` | text typed in, plain and wrapped, coloured by `tone`; a dim `placeholder` while empty, and `copyOnSelect` to copy what the mouse selects |
-| `Markdown` | an agent's answer rendered from its Markdown (`markdown`): tables, lists, emphasis, code, selectable and copied on selection; an image or a link shows its text (links are rows of their own) and `<` itself, so nothing is fetched and no HTML runs |
-| `Markup` | what the kit reads in an agent's Markdown, in one place: its `plain` lines (compact), its `safe` form (`Markdown`), its closing `options` and whether it `hasTable` |
+| `Markdown` | an agent's answer rendered from its Markdown (`markdown`) by `Markup`, selectable and copied on selection |
+| `Markup` | what the kit reads in an agent's Markdown, in one place: its `plain` lines (compact), its `html` (`Markdown`: rich text of the kit's own making, the text escaped and an image or a link by its text, so nothing is fetched and no HTML runs; a table's header bold over one divider, code on a faint wash, a quote dim behind a rule, a heading bold at the body size, prose at `theme.lineHeight`), its closing `options` and whether it `hasTable` |
 | `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
 | `Prompt` | a line of text to send: its `key` dim while it waits (`TAB` for a level's input), else a glyph, in one column as wide as the key's name, a spinner in their place while `busy` (what it sends to takes no text), then a `TextArea`; a click while waiting reaches `tapped`; its glyph on the column's left edge, where keys start; `keys` a legend on its right (`picked`) |
-| `Exchange` | one turn of a conversation, the `question` a `Bubble` on the right and the answer plain on the left, its `text` Markdown, drawn by its `phase` (working with a spinner and `activity` until the answer streams in, answered, choosing with `options` as digit keys while `picking`, waiting, failed in alert with the question faded, stopped); `context` the answer it follows, dim over the question; `steps` dim lines over the answer; with `lines` it is compact, the answer cut there and `overflows` saying what it cannot hold, else it all shows as `Markdown`, with a copy button (`copyable`) and options as rows (`picked`); `next` is what Return does after it, for the prompt under it |
+| `Exchange` | one turn of a conversation, the `question` a `Bubble` on the right and the answer plain on the left, its `text` Markdown, drawn by its `phase` (working with a spinner and `activity` until the answer streams in, then a spinner where its copy button goes until it is done, answered, choosing with `options` as digit keys while `picking`, waiting, failed in alert with the question faded, stopped); `context` the answer it follows, dim over the question; `steps` dim lines over the answer; with `lines` it is compact, the answer cut there and `overflows` saying what it cannot hold, else it all shows as `Markdown`, with a copy button (`copyable`) and options as rows (`picked`); `next` is what Return does after it, for the prompt under it |
 | `Bubble` | a message in a conversation, yours (`mine`) on the right in the theme's `bubble` colour with `bubbleText`, the other's plain on the left, its text on the keys' edge, as wide as its content up to `maximumWidth`, or all of it when `full` (text cut at a line count cannot size it); `faded` for one that did not go through |
 | `Spinner` | a wait in one cell, its `mood` saying whose turn it is: `working` turns the braille dots terminals use, `attention` knocks; its own tempo, still when animations are off |
 | `Divider` | a line between two groups of rows, in the theme's `border` |
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined the same, or in its `tone` for a state (recording) |
-| `Panel` | a surface the keyboard opens, the menu or a plugin's: a card at the bottom centre, its `bar` floating over its `body` and its `input` under it (with the keys while `inputFocused`), one open at a time, dismissed by a click anywhere else; keys its body leaves reach `keyPressed` |
+| `Panel` | a surface the keyboard opens, the menu or a plugin's: at the bottom centre, its `bar` at the edge (with the top level's right slot on its right when `statuses`), its `body` over it and its `input` over the body (`inputOver`, a level's island) or between the body and the bar (with the keys while `inputFocused`), one open at a time, dismissed by a click anywhere else; keys its body leaves reach `keyPressed` |
 | `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
 | `OverlayWindow`, `DismissArea` | a popup above everything; the click-outside catcher under it, one per screen |

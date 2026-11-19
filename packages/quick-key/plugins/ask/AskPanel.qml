@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs
@@ -150,9 +151,10 @@ Scope {
     // Hidden, the conversation is kept.
     onDismissed: panel.plugin.shown = false
 
-    body: ColumnLayout {
-      spacing: Config.theme.padding
-
+    barShown: true
+    statuses: true
+    // Its keys on the left, the statuses Panel adds on the right.
+    bar: RowLayout {
       // Only what the state changes, each while it applies; the fixed keys are `?`'s.
       KeyLegend {
         // Typing, its letters take Ctrl; waiting, they are plain.
@@ -170,9 +172,13 @@ Scope {
         }
       }
 
-      Divider {
+      Item {
         Layout.fillWidth: true
       }
+    }
+
+    body: ColumnLayout {
+      spacing: Config.theme.padding
 
       // The conversation, kept scrolled to its end.
       Flickable {
@@ -185,6 +191,14 @@ Scope {
         Layout.leftMargin: Config.theme.itemPaddingX
         Layout.rightMargin: Config.theme.itemPaddingX
         clip: true
+        // What scrolled away above fades out, so a cut bubble shows no edge; only while something is cut.
+        layer.enabled: contentY > 0
+        layer.effect: MultiEffect {
+          maskEnabled: true
+          maskSource: fadeMask
+          maskThresholdMin: 0.5
+          maskSpreadAtMin: 1
+        }
         contentHeight: exchangeList.implicitHeight
         boundsBehavior: Flickable.StopAtBounds
         onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
@@ -219,6 +233,25 @@ Scope {
             model: panel.plugin.exchanges.length
 
             Turn {}
+          }
+        }
+      }
+
+      // The conversation's alpha while scrolled: clear at the top, opaque a line down.
+      Rectangle {
+        id: fadeMask
+        visible: false
+        layer.enabled: true
+        width: thread.width
+        height: thread.height
+        gradient: Gradient {
+          GradientStop {
+            position: 0
+            color: "transparent"
+          }
+          GradientStop {
+            position: Math.min(1, Metrics.line / Math.max(1, thread.height))
+            color: "black"
           }
         }
       }

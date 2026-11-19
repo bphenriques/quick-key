@@ -49,7 +49,7 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 - `value`: what `show` and `items` look up; a plain line is its value.
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
 - `enabled`: the ids of `items` that can be picked; unset, all.
-- `items`: items that change, each `{ id, label, icon, glyphs, detail, active, enabled, done, busy, tone }`, when the settings list none. A `done` item dims, struck through, and can still be picked; `tone` (`warning`) marks one that needs attention, with `glyphs` before its detail so colour is not all that says so; a `busy` one, still being made, shows a spinner for its icon.
+- `items`: items that change, each `{ id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone }`, when the settings list none. A `done` item dims, struck through, and can still be picked; a `hidden` one leaves the rows and stays in the level's picker; `tone` (`warning`) marks one that needs attention, with `glyphs` before its detail so colour is not all that says so; a `busy` one, still being made, shows a spinner for its icon.
 - `empty`: why `items` is empty, shown in its place (`No devices paired`).
 
 A line that is not a JSON object is logged and skipped. The shell ignores fields it does not know, and a plugin may read its own (`recording`'s `since`).
@@ -69,7 +69,7 @@ List one by name to use it: `plugins.dunst = { };`.
 
 ## Ask
 
-A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation saying who it asks (`placeholder`, by default "Ask {title}", after the prompt glyph every input shares, or its own `promptGlyph`) until a turn says what Return does next, and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden, unless the menu shows the answer above the input that sent it.
+A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation and its keys in the bar beside the top level's statuses, the prompt saying who it asks (`placeholder`, by default "Ask {title}", after the prompt glyph every input shares, or its own `promptGlyph`) until a turn says what Return does next, and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden, unless the menu shows the answer above the input that sent it.
 
 The one required setting is `ask`: an agent speaking [ACP](https://agentclientprotocol.com) on its stdio. It starts with the first turn and stays for the next ones, so a turn skips its start and its session's loading; after `idle` minutes without one (10) it stops, and the next turn starts it again and loads the session. Its answer streams in as it writes it, in Markdown, ACP's text format: the conversation renders it (an image as its alt text, `<` as itself, so nothing is fetched), the menu's island shows it plain. A closing numbered list is the options a digit picks.
 
@@ -118,7 +118,7 @@ What it gives:
 
 - `glyph`, `text`, `detail`, `glyphs` (before the detail, in its tone), `active` and `tone`, shown wherever its name is a `status`, and `fields` by name for an entry's `format`.
 - `fieldTones`: a tone per field, kept when a `format` shows it (`{ updated: "warning" }` on an old sync).
-- `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it under its keys.
+- `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it beside its keys.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.

@@ -1,11 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A surface the keyboard opens (the menu, a plugin's panel): a card at the bottom centre, an optional bar floating over it and an input under it, one open at a time; a click anywhere else dismisses it.
+// A surface the keyboard opens (the menu, a plugin's panel) at the bottom centre: an optional bar at the edge, the card over it and an optional input, over the card (`inputOver`, a level's island) or between it and the bar; one open at a time, a click anywhere else dismisses it.
 Scope {
   id: root
 
@@ -14,8 +15,11 @@ Scope {
   property real width: Config.menu.width
   property bool barShown: false
   property Component bar
+  // The top level's right slot on the bar's right (Panels.statuses), for a plugin's panel.
+  property bool statuses: false
   property Component body
   property bool inputShown: false
+  property bool inputOver: false
   // Whether the input has the keys, else the body.
   property bool inputFocused: false
   property Component input
@@ -109,31 +113,50 @@ Scope {
         Keys.onPressed: event => root.keyPressed(event)
         Keys.onReleased: event => root.keyReleased(event)
 
+        // Where the card and the input stack from: over the bar, else the edge.
+        Item {
+          id: base
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.bottom: bar.visible ? bar.top : parent.bottom
+          anchors.bottomMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
+        }
+
         Surface {
           id: bar
           visible: root.barShown
           anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: card.top
-          anchors.bottomMargin: Config.theme.spacing / 2
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: Config.theme.edgeMargin
           width: card.width
-          height: barContent.implicitHeight + Config.theme.padding / 2
+          height: barRow.implicitHeight + Config.theme.padding / 2
 
-          Loader {
-            id: barContent
+          RowLayout {
+            id: barRow
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: Config.theme.padding
             anchors.rightMargin: Config.theme.padding
-            sourceComponent: root.bar
+            spacing: Config.theme.spacing
+
+            Loader {
+              Layout.fillWidth: true
+              sourceComponent: root.bar
+            }
+
+            Loader {
+              active: root.statuses
+              sourceComponent: Panels.statuses
+            }
           }
         }
 
         Surface {
           id: card
           anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: inputSurface.visible ? inputSurface.top : parent.bottom
-          anchors.bottomMargin: inputSurface.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
+          anchors.bottom: inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
+          anchors.bottomMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
           width: root.width
           height: body.implicitHeight + 2 * Config.theme.padding
 
@@ -154,13 +177,12 @@ Scope {
           }
         }
 
-        // As the bar floats over the card, the input floats under it.
         Surface {
           id: inputSurface
           visible: root.inputShown
           anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: parent.bottom
-          anchors.bottomMargin: Config.theme.edgeMargin
+          anchors.bottom: root.inputOver ? card.top : base.bottom
+          anchors.bottomMargin: root.inputOver ? Config.theme.spacing / 2 : 0
           width: card.width
           height: inputContent.implicitHeight + Config.theme.padding
 

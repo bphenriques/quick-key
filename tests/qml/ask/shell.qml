@@ -32,6 +32,13 @@ ShellRoot {
   Suite {
     cases: [
       {
+        name: "an answer renders as rich text of the kit's own: its HTML escaped, a link and an image by their text, a table's header bold",
+        until: () => {
+          const html = Markup.html("<img src=x onerror=y> [site](https://example.com) ![pic](https://example.com/a.png)\n\n| A | B |\n|---|---|\n| 1 | 2 |");
+          return html.includes("&lt;img src=x onerror=y&gt;") && html.includes("site") && html.includes("pic") && !/<a |<img|href|src=["h]/.test(html) && html.includes("<b>A</b>");
+        }
+      },
+      {
         name: "the session it opens is kept, and an approval is answered by the user, never by a bare y, and stays as a step",
         until: () => root.asked("approved", ask => {
           if (ask.approval === "rm") {

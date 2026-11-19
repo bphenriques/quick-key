@@ -90,9 +90,14 @@ ShellRoot {
         }
       },
       {
-        name: "picking an open task ticks it off, then syncs",
+        name: "a task done as the menu opens is hidden for the visit, off the rows and still in the list",
+        start: () => Plugins.get("tasks").refresh(),
+        until: () => Plugins.get("tasks").items.find(item => item.id === "e").hidden && !Plugins.get("tasks").items.find(item => item.id === "a").hidden
+      },
+      {
+        name: "picking an open task ticks it off, then syncs, and it stays to untick",
         start: () => Plugins.get("tasks").select("c"),
-        until: () => Plugins.get("tasks").items.find(item => item.id === "c").done && Plugins.get("synced")?.text === "synced"
+        until: () => Plugins.get("tasks").items.find(item => item.id === "c").done && !Plugins.get("tasks").items.find(item => item.id === "c").hidden && Plugins.get("synced")?.text === "synced"
       },
       {
         name: "picking a done task unticks it",

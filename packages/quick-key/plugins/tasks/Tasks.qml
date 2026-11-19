@@ -22,6 +22,8 @@ Plugin {
   // Open and due by today, late first.
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
   readonly property var late: due.filter(task => task.due.slice(0, 10) < today)
+  // Done as the menu opened: hidden for the visit, so a tick made in it stays to untick.
+  property var settled: []
   // The tasks reminded of, by id and due, so each is once.
   property var reminded: ({})
 
@@ -47,6 +49,7 @@ Plugin {
       glyphs: late ? [Glyphs.late] : [],
       detail: when(task.due),
       done: !!task.done,
+      hidden: !!task.done && root.settled.includes(task.id),
       busy: !!task.adding,
       enabled: !task.adding,
       tone: late ? "warning" : ""
@@ -103,9 +106,10 @@ Plugin {
     return Object.keys(pending).reduce((kept, id) => test(id, pending[id]) ? Object.assign(kept, { [id]: pending[id] }) : kept, {});
   }
 
-  // As the menu opens, a sync when the file is old (syncAfter); a failed tick is old news by then.
+  // As the menu opens, a sync when the file is old (syncAfter), and what is done by then hides; a failed tick is old news by then.
   function refresh() {
     failure = "";
+    settled = tasks.filter(task => task.done).map(task => task.id);
     if (!state.updated || Clock.date - Clock.parse(state.updated) >= settings.syncAfter * 60000) exec(settings.sync);
   }
 
