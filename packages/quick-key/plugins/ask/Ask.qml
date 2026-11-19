@@ -14,7 +14,7 @@ Plugin {
   readonly property int lines: settings.lines
   readonly property string title: settings.title || name
 
-  // [{ prompt, image, reply, error, stopped, after, input }], the last one waiting while busy; `input` when a level's input sent it.
+  // [{ prompt, image, reply, error, stopped, after, input, options, table }], the last one waiting while busy; `input` when a level's input sent it, or its panel while expanded from one.
   property var exchanges: []
   property string session: ""
   property string draft: ""
@@ -26,6 +26,12 @@ Plugin {
   property bool unread: false
   // Whether this visit (the menu showing its input) sent it a turn, so the next send continues that conversation.
   property bool visited: false
+  // How its panel was opened from an input's answer, to say how it is left (Plugin.expand); null otherwise.
+  property var backTo: null
+  // Escape set the last answer's options aside: digits type again.
+  property bool aside: false
+  // What a digit picks: the last answer's options, once it is in.
+  readonly property var choices: busy || aside ? [] : exchanges[exchanges.length - 1]?.options ?? []
   // What the agent waits to be allowed to run, and what it is doing.
   property string approval: ""
   property string activity: ""
@@ -35,7 +41,7 @@ Plugin {
   readonly property int waited: Math.max(0, now - sentAt)
 
   // Escape steps back without losing the conversation, as in a chat app: what needs it first, then the prompt (clear, back), then the panel.
-  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : !typing ? "hide" : draft || image ? "clear" : "back"
+  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : choices.length > 0 && !draft && !image ? "aside" : !typing ? (backTo ? "menu" : "hide") : draft || image ? "clear" : "back"
   readonly property bool canMove: !busy && exchanges.length > 0
 
   // Ctrl+V found no image, so it pastes text as usual.
@@ -61,6 +67,31 @@ Plugin {
     typing = true;
   }
 
+  // The whole conversation, for what the answer over an input cannot fit (Plugin.expand).
+  function expand(back) {
+    backTo = back;
+    show();
+    return true;
+  }
+
+  // Hidden, saying so to the menu that expanded it: `returning` when stepped back from.
+  function leave(returning) {
+    const back = backTo;
+    backTo = null;
+    shown = false;
+    if (back) back(returning);
+  }
+
+  // An option of the last answer, sent as the next message.
+  function pick(index) {
+    const option = choices[index];
+    if (option === undefined) return false;
+    return send(option, "");
+  }
+
+  // Left any other way (sent in the background, dismissed, a link opened): not back to the menu.
+  onShownChanged: if (!shown && backTo) leave(false)
+
   // An input's text, answered above it while the menu shows it (the last answer staying until the next), else as a notification; one conversation per visit.
   function submit(text, background, after) {
     if (busy || request.running || !settings.ask) return false;
@@ -84,9 +115,10 @@ Plugin {
     const last = exchanges[exchanges.length - 1];
     const retried = last && last.error && last.prompt === prompt && last.image === image;
     const kept = retried ? exchanges.slice(0, -1) : exchanges;
-    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input }]);
+    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || backTo !== null }]);
     if (image === root.image) root.image = "";
     busy = true;
+    aside = false;
     approval = "";
     activity = "";
     sentAt = now = Math.floor(Date.now() / 1000);
@@ -110,7 +142,7 @@ Plugin {
     if (answer.session) session = answer.session;
     if (answer.approval) {
       approval = answer.approval;
-      if (seen(exchanges[exchanges.length - 1])) reply = { text: "Allow " + approval + "? Answer in Ask.", tone: "warning" };
+      if (seen(exchanges[exchanges.length - 1])) reply = { question: exchanges[exchanges.length - 1].prompt, text: "Allow " + approval + "?", tone: "warning" };
       else notify("Allow " + approval + "?");
     } else if (answer.status) {
       activity = answer.status;
@@ -120,12 +152,12 @@ Plugin {
   }
 
   function finish(answer) {
-    const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? "No answer", stopped: !!answer.stopped });
+    const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? "No answer", stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
     exchanges = exchanges.slice(0, -1).concat([last]);
     busy = false;
     approval = "";
-    if (seen(last)) reply = { text: last.error || last.reply, tone: last.error ? "alert" : "" };
-    else notify(last.error || last.reply);
+    if (seen(last)) reply = { question: last.prompt, text: last.error || last.reply, tone: last.error ? "alert" : "", table: last.table, options: last.options };
+    else notify(last.error || [last.reply].concat(last.options).join(" · "));
     if (last.reply) exec(last.after);
     if (!shown && !seen(last)) unread = true;
     if (last.error && !seen(last) && draft === "" && !image) {
@@ -191,6 +223,8 @@ Plugin {
       typing = !typing;
       return true;
     }
+    // A waiting choice takes the digits while the prompt is empty, a digit picking and never typing.
+    if (/^[1-9]$/.test(key) && !draft && !image && Number(key) <= choices.length) return pick(Number(key) - 1);
     switch (!typing && /^[a-z]$/.test(key) ? "Ctrl+" + key : key) {
     case "Escape": return stepBack();
     case "Ctrl+y": answerApproval(true); return true;
@@ -206,7 +240,9 @@ Plugin {
     switch (escapeAction) {
     case "deny": answerApproval(false); return true;
     case "stop": stop(); return true;
-    case "hide": shown = false; return true;
+    case "aside": aside = true; return true;
+    case "menu":
+    case "hide": leave(true); return true;
     }
     return false;
   }

@@ -14,6 +14,8 @@ ShellRoot {
   property bool wasReset: false
   property int visitStep: 0
   property bool failedSent: false
+  property int chooseStep: 0
+  property var backs: []
 
   // Sends a prompt once the plugin has loaded, then whether `done` holds for it.
   function asked(name, done) {
@@ -130,6 +132,46 @@ ShellRoot {
           const done = ask.reply?.tone === "alert" && ask.draft === "";
           if (done) Plugins.watching = "";
           return done;
+        }
+      },
+      {
+        name: "an answer's options are the choices: Escape sets them aside, a send brings them back, a digit picks one as the next message; a table stays marked",
+        until: () => {
+          const ask = Plugins.get("chooser");
+          if (!ask || ask.busy) return false;
+          switch (root.chooseStep) {
+          case 0:
+            Plugins.watching = "chooser\n{}";
+            root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
+            return false;
+          case 1:
+            root.chooseStep = ask.reply?.options?.length === 2 && ask.choices.length === 2 && ask.escapeAction === "aside" && ask.act("Escape") && ask.aside
+              && ask.choices.length === 0 && !ask.act("1") && ask.submit("pick again", false, "") ? 2 : -1;
+            return false;
+          case 2:
+            root.chooseStep = !ask.aside && ask.choices.length === 2 && ask.act("2") ? 3 : -1;
+            return false;
+          case 3:
+            root.chooseStep = ask.exchanges[ask.exchanges.length - 1].prompt === "b" && ask.exchanges[ask.exchanges.length - 1].reply === "b" && ask.submit("a table", false, "") ? 4 : -1;
+            return false;
+          }
+          const done = root.chooseStep === 4 && ask.reply?.table === true && ask.reply.options.length === 0;
+          if (done) Plugins.watching = "";
+          return done;
+        }
+      },
+      {
+        name: "expanded from a menu, stepping back says so; leaving any other way says not",
+        until: () => {
+          const ask = Plugins.get("expander");
+          if (!ask) return false;
+          ask.expand(returning => root.backs = root.backs.concat([returning]));
+          const shown = ask.shown;
+          ask.typing = false;
+          const stepped = ask.escapeAction === "menu" && ask.act("Escape") && !ask.shown;
+          ask.expand(returning => root.backs = root.backs.concat([returning]));
+          ask.shown = false;
+          return shown && stepped && root.backs.join() === "true,false" && ask.backTo === null;
         }
       },
       {

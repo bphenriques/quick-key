@@ -44,6 +44,8 @@ Singleton {
   // What marks a prompt: an input with the keys, and what was asked in Ask.
   readonly property string prompt: Config.glyphs.prompt ?? "\u{F0142}" // md-chevron_right
   readonly property string link: Config.glyphs.link ?? "\u{F0337}" // md-link
+  readonly property string copy: Config.glyphs.copy ?? "\u{F0C5}" // fa-copy
+  readonly property string failed: Config.glyphs.failed ?? "\u{F05D6}" // md-alert_circle_outline
   readonly property var audioDevices: Object.assign({
     headphones: "\u{F02CB}", // md-headphones
     headset: "\u{F02CE}", // md-headset

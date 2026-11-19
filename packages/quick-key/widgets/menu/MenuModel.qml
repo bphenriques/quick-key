@@ -17,6 +17,8 @@ Scope {
   property string held: ""
   // Whether the level's input has the keys, else its body.
   property bool inputFocused: false
+  // Whether Tab moved the keys on to the answer over the input, where Return opens the plugin's panel.
+  property bool answerFocused: false
   // Each input's unsent text, by the input, kept as the menu closes, as Ask keeps its draft.
   property var drafts: ({})
   readonly property string draft: draftOf(input)
@@ -30,9 +32,20 @@ Scope {
   // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
   readonly property var inputPlugin: input && !input.cmd ? Plugins.get(input.plugin ?? level?.entry?.list ?? "") : null
   readonly property bool inputBusy: inputPlugin?.busy ?? false
-  // What Plugins.watching is set to: the plugin and the input on show, so an answer shows there; a change of either ends a visit.
-  readonly property string watching: open && inputPlugin ? inputPlugin.name + "\n" + JSON.stringify(input) : ""
-  // The text last sent, which a failed answer gives back to the input.
+  // The plugin and the input on show, so an answer shows there; a change of either ends a visit. Expanded into the plugin's panel, the visit holds.
+  readonly property string inputToken: inputPlugin ? inputPlugin.name + "\n" + JSON.stringify(input) : ""
+  property string expandedWatching: ""
+  // What Plugins.watching is set to.
+  readonly property string watching: open ? inputToken : expandedWatching
+  // What the input's plugin said about the text (Plugin.reply), its options a digit picks until Escape sets them aside.
+  readonly property var reply: inputPlugin?.reply ?? null
+  readonly property var choices: reply?.options ?? []
+  property bool choicesAside: false
+  onReplyChanged: {
+    choicesAside = false;
+    if (!reply) answerFocused = false;
+  }
+  // The text last sent: the answer's question, and what a failed answer gives back to the input.
   property string lastSent: ""
   // What the level lists, read once for every entry that acts on it.
   readonly property var levelList: listed(level?.entry?.list)
@@ -224,18 +237,21 @@ Scope {
     stack = [];
     held = "";
     inputFocused = false;
+    answerFocused = false;
   }
 
   // A level starts with no event in focus, coming back to it too.
   function back() {
     stack = stack.slice(0, -1);
     inputFocused = false;
+    answerFocused = false;
     calendar.focused = "";
   }
 
   function push(next) {
     stack = stack.concat([next]);
     inputFocused = false;
+    answerFocused = false;
     calendar.focused = "";
   }
 
@@ -261,16 +277,49 @@ Scope {
     Commands.run(cmd);
   }
 
-  // The input's text, in its format, to its command as $1, else its plugin; whether it was taken, so the input keeps it if not.
+  // The input's text, to its command as $1, else its plugin; whether it was taken, so the input keeps it if not.
   function submit(text, background) {
     text = text.trim();
     if (!text || !input || inputBusy) return false;
-    const sent = input.format ? input.format.replace(/\{text\}/g, () => text) : text;
+    // The format wraps what starts a conversation; once the plugin has answered, the next send answers it as typed.
+    const sent = input.format && (!reply || reply.tone === "alert") ? input.format.replace(/\{text\}/g, () => text) : text;
     if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
     // A plugin that failed to load takes nothing.
     else if (!inputPlugin || inputPlugin.submit(sent, background, input.after ?? "") === false) return false;
     lastSent = text;
     if (background) hide();
+    return true;
+  }
+
+  // An option of the answer, sent as the next message.
+  function pick(index) {
+    const option = choices[index];
+    return option !== undefined && !choicesAside && submit(option, false);
+  }
+
+  // The plugin's own panel on the conversation; stepping back from it shows this level again, the visit going on, and leaving it otherwise ends the visit.
+  function expand() {
+    const saved = stack.slice();
+    expandedWatching = inputToken;
+    const opened = inputPlugin?.expand(returning => {
+      if (returning) {
+        stack = saved;
+        show();
+        inputFocused = true;
+      }
+      expandedWatching = "";
+    });
+    if (!opened) expandedWatching = "";
+  }
+
+  // Keys while the answer has them: Return opens the plugin's panel, Tab and Escape give them to the body, Shift+Tab back to the input.
+  function answerKey(name) {
+    if (name === "Return") expand();
+    else if (name === "Tab" || name === "Escape") answerFocused = false;
+    else if (name === "Backtab") {
+      answerFocused = false;
+      inputFocused = true;
+    } else return false;
     return true;
   }
 
@@ -321,6 +370,7 @@ Scope {
     // Any key closes the help, which only lists keys.
     if (held === "Help") held = "";
     else if (name === "?") held = "Help";
+    else if (answerFocused && answerKey(name)) return true;
     else if (name === "Escape") hide();
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (name === "BackSpace" && level) back();

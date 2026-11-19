@@ -11,6 +11,7 @@ ShellRoot {
 
   // The legend's keys while an input has the keys.
   property var typingLegend: []
+  property int visitStep: 0
 
   Suite {
     cases: [
@@ -137,6 +138,39 @@ ShellRoot {
           const backtab = menu.handleKey({ key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, text: "" });
           const tab = menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
           return !backtab && tab && menu.inputFocused;
+        }
+      },
+      {
+        name: "a visit's first message takes the input's format, the answer to it as typed; expanding holds the visit, and stepping back returns to the level with the input focused",
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent || agent.busy) return false;
+          switch (root.visitStep) {
+          case 0:
+            menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", format: "Add: {text}." } } }];
+            menu.open = true;
+            Plugins.watching = menu.watching;
+            root.visitStep = menu.submit("one", false) ? 1 : -1;
+            return false;
+          case 1:
+            root.visitStep = agent.reply?.text === "Add: one." && menu.submit("two", false) ? 2 : -1;
+            return false;
+          case 2:
+            if (agent.reply?.text !== "two") return false;
+            const token = menu.watching;
+            menu.answerFocused = true;
+            menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r" });
+            const held = agent.shown && menu.expandedWatching === token;
+            menu.hide();
+            const holding = Plugins.watching === menu.watching && menu.watching === token;
+            agent.typing = false;
+            agent.act("Escape");
+            root.visitStep = held && holding && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.expandedWatching === "" && agent.reply?.text === "two" ? 3 : -1;
+            return false;
+          }
+          menu.hide();
+          Plugins.watching = "";
+          return root.visitStep === 3;
         }
       },
       {

@@ -57,6 +57,16 @@
       "ask": "true",
       "notify": ""
     },
+    "chooser": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/choices.sh\" \"$1\"",
+      "notify": ""
+    },
+    "expander": {
+      "type": "ask",
+      "ask": "sh \"$XDG_CONFIG_HOME/quick-key/answered.sh\" \"$1\"",
+      "notify": ""
+    },
     "idle": {
       "type": "ask",
       "ask": "true",

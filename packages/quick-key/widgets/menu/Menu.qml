@@ -86,58 +86,82 @@ Scope {
 
     inputShown: root.menu.input !== null
     inputFocused: root.menu.inputFocused
+    // What the input's plugin said, over the line to send: Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background.
+    input: ColumnLayout {
+      spacing: Config.theme.spacing / 2
 
-    // One line: Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background.
-    input: Prompt {
-      id: prompt
-      active: root.menu.inputFocused
-      busy: root.menu.inputBusy
-      key: "Tab"
-      placeholder: root.menu.input?.desc ?? ""
-      maxLines: 1
-      // What its plugin said about the text, while the menu shows it; a click opens the plugin (Ask, on the whole conversation).
-      note: root.menu.inputPlugin?.reply?.text ?? ""
-      noteTone: root.menu.inputPlugin?.reply?.tone || "dim"
-      noteGlyph: root.menu.inputPlugin?.glyph ?? ""
-      onNoteTapped: root.menu.inputPlugin?.activate()
-      onTapped: root.menu.inputFocused = true
-      onUnfocused: root.menu.inputFocused = false
-      // The level's own unsent text, as it opens or moves to another input.
-      readonly property var owner: root.menu.input
-      onOwnerChanged: set(root.menu.draftOf(owner))
-      Component.onCompleted: set(root.menu.draftOf(owner))
-      onTextChanged: root.menu.keepDraft(text)
-      // Tab or Shift+Tab gives the keys back to the body, the text kept.
-      onKeyPressed: event => {
-        const send = MenuKeys.sends(event);
-        if (send) prompt.send(send === "background");
-        else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) root.menu.inputFocused = false;
-        else return;
-        event.accepted = true;
+      Answer {
+        id: answer
+        visible: root.menu.reply !== null
+        question: root.menu.reply?.question ?? root.menu.lastSent
+        text: root.menu.reply?.text ?? ""
+        tone: root.menu.reply?.tone ?? ""
+        table: !!root.menu.reply?.table
+        options: root.menu.choices
+        // Running, the options wait as text: nothing to pick until the answer is in.
+        aside: root.menu.choicesAside || root.menu.inputBusy
+        glyph: root.menu.inputPlugin?.glyph ?? ""
+        slot: prompt.slot
+        current: root.menu.answerFocused
+        onActivated: root.menu.expand()
       }
 
-      function send(background) {
-        // Cleared first: sending may close the menu, and the prompt with it.
-        const text = prompt.text;
-        prompt.clear();
-        if (!root.menu.submit(text, background)) prompt.set(text);
-      }
-
-      Connections {
-        target: root
-
-        function onInputPicked(key) {
-          if (key === "Escape") prompt.stepBack();
-          else prompt.send(true);
+      Prompt {
+        id: prompt
+        Layout.fillWidth: true
+        active: root.menu.inputFocused
+        busy: root.menu.inputBusy
+        key: "Tab"
+        placeholder: root.menu.input?.desc ?? ""
+        maxLines: 1
+        onTapped: root.menu.inputFocused = true
+        onUnfocused: root.menu.inputFocused = false
+        // The level's own unsent text, as it opens or moves to another input.
+        readonly property var owner: root.menu.input
+        onOwnerChanged: set(root.menu.draftOf(owner))
+        Component.onCompleted: set(root.menu.draftOf(owner))
+        onTextChanged: root.menu.keepDraft(text)
+        // Tab moves on to the answer, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits and Escape.
+        onKeyPressed: event => {
+          const send = MenuKeys.sends(event);
+          const name = MenuKeys.name(event);
+          // A choice waiting takes the digits whether or not they all show here, so they never type.
+          const waiting = answer.visible && answer.options.length > 0 && !answer.aside && prompt.text === "";
+          if (send) prompt.send(send === "background");
+          else if (waiting && /^[1-9]$/.test(name)) {
+            if (answer.picking) root.menu.pick(Number(name) - 1);
+          } else if (waiting && name === "Escape") root.menu.choicesAside = true;
+          else if (name === "Tab" && answer.visible) {
+            root.menu.inputFocused = false;
+            root.menu.answerFocused = true;
+          } else if (name === "Tab" || name === "Backtab") root.menu.inputFocused = false;
+          else return;
+          event.accepted = true;
         }
-      }
 
-      // A failed answer gives back what was sent, so Return retries it.
-      Connections {
-        target: root.menu.inputPlugin
+        function send(background) {
+          // Cleared first: sending may close the menu, and the prompt with it.
+          const text = prompt.text;
+          prompt.clear();
+          if (!root.menu.submit(text, background)) prompt.set(text);
+        }
 
-        function onReplyChanged() {
-          if (root.menu.inputPlugin.reply?.tone === "alert" && prompt.text === "") prompt.set(root.menu.lastSent);
+        Connections {
+          target: root
+
+          function onInputPicked(key) {
+            if (key === "Escape") prompt.stepBack();
+            else prompt.send(true);
+          }
+        }
+
+        // A failed answer gives back what was sent, so Return retries it.
+        Connections {
+          target: root.menu.inputPlugin
+
+          function onReplyChanged() {
+            if (root.menu.inputPlugin.reply?.tone === "alert" && prompt.text === "") prompt.set(root.menu.lastSent);
+          }
         }
       }
     }

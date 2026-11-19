@@ -14,7 +14,9 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Meter` | a thin level bar |
 | `TextField` | text typed in, plain and wrapped, coloured by `tone`; a dim `placeholder` while empty, and `copyOnSelect` to copy what the mouse selects |
 | `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
-| `Prompt` | a line of text to send: its `key` dim while it waits (`TAB` for a level's input), else a glyph, in one column as wide as the key's name, a spinner in their place while `busy` (what it sends to takes no text), then a `TextArea`; over it, in the same place, a `note` (with `noteGlyph` and `noteTone`): what was said about what it sent, a click reaching `noteTapped`; a click while waiting reaches `tapped` |
+| `Prompt` | a line of text to send: its `key` dim while it waits (`TAB` for a level's input), else a glyph, in one column as wide as the key's name, a spinner in their place while `busy` (what it sends to takes no text), then a `TextArea`; a click while waiting reaches `tapped`; its `slot` is the column an `Answer` over it lines up with |
+| `Answer` | what was said about what a `Prompt` sent, over it: a `question` line and `lines` (3) reserved lines of text, a `table`'s rows unwrapped or `options` as digit keys (`picking` while they all show, unless set `aside`), the last line saying how to continue when the rest does not fit; `tone` alert or warning, lit while `current`, a click reaching `activated` |
+| `Bubble` | a message in a conversation, yours (`mine`) on the right in the primary wash, the other's on the left, as wide as its content up to `maximumWidth`; `tone` alert for one that failed |
 | `Spinner` | a wait in one block cell, its `mood` saying whose turn it is: `working` circles a quarter block, `attention` knocks; its own tempo, still when animations are off |
 | `Divider` | a line between two groups of rows, in the theme's `border` |
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |

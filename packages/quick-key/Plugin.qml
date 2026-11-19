@@ -37,7 +37,7 @@ Scope {
   property var fieldTones: state.fieldTones ?? ({})
   // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
-  // Whether the menu shows an input giving it text, and what it said about that text there, { text, tone } (alert: it failed, and the input gets the text back).
+  // Whether the menu shows an input giving it text, and what it said about that text there: { question, text, tone, table, options }, `question` what it answered, tone alert when it failed (the input gets the text back) or warning when it waits on you, `table` when the text is rows, `options` the choices a digit picks.
   readonly property bool watched: Plugins.watching.startsWith(name + "\n")
   property var reply: null
   // Whether it takes no text now; an input giving it text shows a spinner meanwhile and sends nothing.
@@ -55,6 +55,11 @@ Scope {
   // A level's input's text, when it sets no `cmd`: `background` from C-S-RET, `after` to run once done with it; false if not taken, the input keeping it.
   function submit(text, background, after) {
     console.warn(name + ": takes no text, so the input keeps it");
+    return false;
+  }
+
+  // Its own panel on the conversation an input's text started, for what an answer cannot fit: `back(true)` when it is left by stepping back (Escape), so the menu shows again where it was, `back(false)` when left any other way; false without a panel.
+  function expand(back) {
     return false;
   }
 

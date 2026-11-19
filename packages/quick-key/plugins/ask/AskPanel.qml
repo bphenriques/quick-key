@@ -13,6 +13,8 @@ Scope {
   required property var plugin
   // How much taller than a line the prompt is, which the conversation gives up.
   property real inputExtra: 0
+  // The conversation's width, which a bubble takes most of at most: read from the conversation, not the exchange, whose width its bubbles make.
+  property real threadWidth: 0
 
   // Page Up and Down, for the conversation.
   signal paged(bool down)
@@ -81,67 +83,123 @@ Scope {
     Layout.preferredWidth: implicitHeight > 0 ? Layout.preferredHeight * implicitWidth / implicitHeight : 0
   }
 
-  // A prompt and what came of it: the reply (selectable, copied as selected), its links, or the wait for it.
+  // A prompt and what came of it, as a conversation: yours on the right, his on the left with a button copying it, then its links, its options while they wait (a digit or a click picks one), or the wait for it.
   component Exchange: ColumnLayout {
     id: exchange
     required property int index
     readonly property var turn: panel.plugin.exchanges[index] ?? ({})
-    readonly property bool waiting: panel.plugin.busy && index === panel.plugin.exchanges.length - 1
-    readonly property real indent: Metrics.line + Config.theme.spacing
+    readonly property bool latest: index === panel.plugin.exchanges.length - 1
+    readonly property bool waiting: panel.plugin.busy && latest
+    readonly property bool failed: !!turn.error && !turn.stopped
+    // A line that is only a link shows once, as its row below.
+    readonly property string said: turn.error || (turn.reply ?? "").split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
+    readonly property real widest: panel.threadWidth * 0.85
     Layout.fillWidth: true
     spacing: Config.theme.spacing / 2
 
-    RowLayout {
-      Layout.fillWidth: true
-      spacing: Config.theme.spacing
+    Bubble {
+      mine: true
+      maximumWidth: exchange.widest
 
-      Icon {
-        Layout.alignment: Qt.AlignTop
-        tone: "dim"
-        glyph: Glyphs.prompt
-        size: Metrics.line
+      Thumbnail {
+        path: exchange.turn.image ?? ""
       }
 
       Label {
         Layout.fillWidth: true
-        tone: "dim"
         wrapMode: Text.Wrap
         text: exchange.turn.prompt ?? ""
       }
     }
 
-    Thumbnail {
-      Layout.leftMargin: exchange.indent
-      path: exchange.turn.image ?? ""
-    }
-
-    TextField {
+    RowLayout {
       Layout.fillWidth: true
-      Layout.leftMargin: exchange.indent
-      visible: text !== ""
-      // A stop was asked for, so it only reports; a failure needs attention.
-      tone: exchange.turn.stopped ? "dim" : exchange.turn.error ? "alert" : "normal"
-      // A line that is only a link shows once, as its row below.
-      text: exchange.turn.error || (exchange.turn.reply ?? "").split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
-      readOnly: true
-      selectByMouse: true
-      persistentSelection: true
-      activeFocusOnPress: false
-      copyOnSelect: true
+      visible: exchange.said !== ""
+      spacing: Config.theme.spacing / 2
+
+      Bubble {
+        Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+        tone: exchange.failed ? "alert" : ""
+        maximumWidth: exchange.widest
+        // A table's rows stay whole, so its columns line up; what is wider than the bubble is cut.
+        clip: true
+
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: Config.theme.spacing
+
+          Icon {
+            Layout.alignment: Qt.AlignTop
+            visible: exchange.failed
+            tone: "alert"
+            glyph: Glyphs.failed
+            size: Metrics.line
+          }
+
+          TextField {
+            Layout.fillWidth: true
+            // A stop was asked for, so it only reports; a failure needs attention.
+            tone: exchange.turn.stopped ? "dim" : exchange.failed ? "alert" : "normal"
+            wrapMode: exchange.turn.table ? TextEdit.NoWrap : TextEdit.Wrap
+            text: exchange.said
+            readOnly: true
+            selectByMouse: true
+            persistentSelection: true
+            activeFocusOnPress: false
+            copyOnSelect: true
+          }
+        }
+      }
+
+      // Copies the whole answer; a selection copies its part.
+      ListItem {
+        Layout.alignment: Qt.AlignTop
+        visible: !exchange.turn.error
+        onActivated: Quickshell.clipboardText = exchange.said
+
+        Icon {
+          tone: "dim"
+          glyph: Glyphs.copy
+          size: Metrics.line
+        }
+      }
+
+      // Fills the row, so the exchange is as wide as the conversation and yours sits on its right (a layout grows no wider than its children).
+      Item {
+        Layout.fillWidth: true
+      }
     }
 
     Repeater {
       model: panel.links(exchange.turn.reply ?? "")
 
-      LinkRow {
-        Layout.leftMargin: exchange.indent - Config.theme.itemPaddingX
+      LinkRow {}
+    }
+
+    Repeater {
+      model: exchange.latest ? panel.plugin.choices : []
+
+      ListItem {
+        id: choice
+        required property int index
+        required property string modelData
+        Layout.fillWidth: true
+        onActivated: panel.plugin.pick(choice.index)
+
+        KeyHint {
+          key: String(choice.index + 1)
+        }
+
+        Label {
+          Layout.fillWidth: true
+          text: choice.modelData
+        }
       }
     }
 
     // An approval needs attention; the rest only reports: the tool in use, and the time once the wait is noticeable.
     RowLayout {
       visible: exchange.waiting
-      Layout.leftMargin: exchange.indent
       spacing: Config.theme.spacing
 
       Spinner {
@@ -179,6 +237,7 @@ Scope {
         keys: (panel.plugin.typing ? [{ key: "Shift+Return", what: "newline" }, { key: "Ctrl+Shift+Return", what: "background", clickable: true }] : [])
           .concat(panel.plugin.approval ? [{ key: chord + "y", what: "allow", clickable: true }] : [])
           .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: "new", clickable: true }] : [])
+          .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: "choose" }] : [])
           .concat(panel.plugin.canMove ? [{ key: chord + "o", what: "terminal...", clickable: true }] : [])
           // Last, so its changing word moves nothing.
           .concat([{ key: "Escape", what: panel.plugin.escapeAction, clickable: true }])
@@ -194,6 +253,8 @@ Scope {
       // The conversation, kept scrolled to its end.
       Flickable {
         id: thread
+        onWidthChanged: panel.threadWidth = width
+        Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
         Layout.preferredHeight: panel.plugin.lines * Metrics.line - panel.inputExtra
         Layout.leftMargin: Config.theme.itemPaddingX
@@ -293,7 +354,6 @@ Scope {
           function onDraftChanged() {
             if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft);
           }
-
 
           function onPasteText() {
             prompt.paste();

@@ -95,6 +95,7 @@ More lines it may print, one JSON object each:
 - `{"session"}` as the turn starts, so a stopped turn keeps its conversation.
 - `{"status"}` for what it is doing, shown while waiting.
 - `{"approval"}` to ask before it acts. The answer, `allow` or `deny`, arrives as a line on its stdin, which stays open for the turn: a tool that reads its own stdin takes `</dev/null`.
+- `"options"` and `"table"` on the reply line: the choices a digit picks, taken out of the reply's text (`{"reply": "Quinta tens livre:", "options": ["09:00", "14:30"]}`), and `true` when the reply's text is a table's rows, kept whole. The command marks them from what it knows (a numbered list ending the reply, a table it converted), never guessing from the text.
 
 Stopping ends the command with SIGTERM. One whose run lives elsewhere traps it to stop the run there.
 
@@ -130,7 +131,8 @@ What it gives:
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.
-- `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `reply`, `{ text, tone }`, what it says about the text, shown above the input while watched (`alert` when it failed, the input getting the text back).
+- `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `reply`, `{ question, text, tone, table, options }`, what it says about the text (`question` what it answered), shown over the input while watched (`alert` when it failed, the input getting the text back; `warning` when it waits on you).
+- `expand(back)` to show the conversation in its own panel, when the answer over the input cannot fit it: `back(true)` when left by stepping back, so the menu shows again where it was, `back(false)` when left any other way; false without a panel.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.
 
