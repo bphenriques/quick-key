@@ -69,43 +69,34 @@ List one by name to use it: `plugins.dunst = { };`.
 
 ## Ask
 
-A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation saying who it asks (`placeholder`, by default "Ask {title}", after the prompt glyph every input shares, or its own `promptGlyph`), and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden, unless the menu shows the answer above the input that sent it.
+A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation saying who it asks (`placeholder`, by default "Ask {title}", after the prompt glyph every input shares, or its own `promptGlyph`) until a turn says what Return does next, and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden, unless the menu shows the answer above the input that sent it.
 
-The one required setting is `ask`: a command given the prompt, the session (empty for a new one) and an image (empty for none). Its smallest form prints one line, `{"session", "reply"}` or `{"error"}`. Claude Code, carrying on in its session:
+The one required setting is `ask`: an agent speaking [ACP](https://agentclientprotocol.com) on its stdio. It starts with the first turn and stays for the next ones, so a turn skips its start and its session's loading; after `idle` minutes without one (10) it stops, and the next turn starts it again and loads the session. Its answer streams in as it writes it, in Markdown, ACP's text format: the conversation renders it (an image as its alt text, `<` as itself, so nothing is fetched), the menu's island shows it plain. A closing numbered list is the options a digit picks.
 
 ```nix
-plugins.ask = {
-  title = "Claude";
-  ask = lib.getExe (pkgs.writeShellApplication {
-    name = "ask-claude";
-    runtimeInputs = [ pkgs.claude-code pkgs.jq ];
-    text = ''
-      resume=()
-      if [ -n "$2" ]; then resume=(--resume "$2"); fi
-      claude -p "$1" "''${resume[@]}" --output-format json </dev/null \
-        | jq -c 'if .is_error then {error: .result} else {session: .session_id, reply: .result} end'
-    '';
-  });
-  open = "foot claude --resume";
-};
+# Claude, through Zed's ACP adapter; `open` resumes its session in a terminal.
+plugins.ask = { title = "Claude"; ask = "claude-agent-acp"; open = "foot claude --resume"; };
+
+# An agent on another machine, its stdio over SSH; a sync after any tool that writes the agenda.
+plugins.ask = { ask = "ssh host hermes-acp"; cwd = "/srv/agent"; toolMatch = "^mcp__agenda__(?!list_)"; toolRun = "calendar-sync"; };
 ```
 
-More lines it may print, one JSON object each:
+A turn resumes the session, or starts one and says so when the old one is gone; approvals are the agent's permission requests, `C-y` allowing once; stopping cancels the turn, and an agent still answering two seconds later is stopped. A failure ends the turn in alert, saying why ("Sign in to … first", the agent's own error), and the agent's stderr goes to the journal.
 
-- `{"session"}` as the turn starts, so a stopped turn keeps its conversation.
-- `{"status"}` for what it is doing, shown while waiting.
-- `{"approval"}` to ask before it acts. The answer, `allow` or `deny`, arrives as a line on its stdin, which stays open for the turn: a tool that reads its own stdin takes `</dev/null`.
-- `"options"` and `"table"` on the reply line: the choices a digit picks, taken out of the reply's text (`{"reply": "Quinta tens livre:", "options": ["09:00", "14:30"]}`), and `true` when the reply's text is a table's rows, kept whole. The command marks them from what it knows (a numbered list ending the reply, a table it converted), never guessing from the text.
+| Tested with | Version |
+|---|---|
+| ACP | protocol v1 |
+| Hermes Agent (`hermes-acp`) | 0.22.7 |
 
-Stopping ends the command with SIGTERM. One whose run lives elsewhere traps it to stop the run there.
+Other ACP agents (Claude through `claude-agent-acp`, Codex through `codex-acp`, Gemini CLI, OpenCode, Goose) speak the same protocol and are untested here.
 
-Other settings: `open` (given the session, opens it in a terminal), `title`, `glyph`, `promptGlyph`, `placeholder`, `key` (`a`), `lines` (the conversation's height, 14), and `notify` and `pasteImage`, which default to `notify-send` and `wl-paste`.
+Other settings: `cwd` (where its sessions work, on the agent's machine; `$HOME`), `toolMatch` and `toolRun` (a command run once a turn that used a tool matching it ends), `open` (given the session, opens it in a terminal), `title`, `glyph`, `promptGlyph`, `placeholder`, `lines` (the conversation's height, 14), and `notify`, `pasteImage` and `encodeImage`, which default to `notify-send`, `wl-paste` and `base64`.
 
 Keys:
 
-- `RET` sends, `C-S-RET` sends and hides the panel, the answer arriving as a notification, `S-RET` breaks the line, `C-v` attaches the clipboard's image.
-- The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else clears the prompt, else leaves it, dim, else hides, as does a click beside it; the conversation is kept, and an empty one says so.
-- `C-y` allows an approval, `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `y`, `l` and `o` do; `TAB` moves the keys between the prompt and the panel, as in a level.
+- `RET` sends, `C-S-RET` sends and hides the panel, the answer arriving as a notification, `S-RET` breaks the line, `C-v` attaches the clipboard's image. The legend shows only what the state changes; with the prompt dim, `?` lists every key, any key closing the list.
+- The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else lets the digits type over waiting options, else clears the prompt, else leaves it, dim, else hides, as does a click beside it; the conversation is kept, and an empty one says so.
+- `C-y` allows an approval, which stays in the conversation as a dim line (and a denial too), `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `l` and `o` do and `y` copies the last answer (allowing takes `C-y` only, so `y` never approves); `TAB` moves the keys between the prompt and the panel, as in a level.
 
 Two agents are two plugins with `type = "ask"`. A level's `input` may hand one its text (see [Input](menu.md#input)).
 
@@ -131,7 +122,7 @@ What it gives:
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.
-- `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `turn`, `{ question, context, text, phase, activity, options, table }`, the conversation's turn as the menu draws it while watched, `phase` one of `working` (with `activity`, and `context` the answer it follows), `answered`, `choosing` (`options` a digit picks), `waiting` (on you), `failed` (the input getting the text back) or `stopped`; null before the first.
+- `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `turn`, `{ question, context, text, phase, activity, options, table, steps }`, the conversation's turn as the menu draws it while watched, `phase` one of `working` (with `activity`, and `context` the answer it follows), `answered`, `choosing` (`options` a digit picks), `waiting` (on you), `failed` (the input getting the text back) or `stopped`, and `steps` what you answered on the way (an approval); null before the first.
 - `expand(back)` to show the conversation in its own panel, when the answer over the input cannot fit it: `back(true)` when left by stepping back, so the menu shows again where it was, `back(false)` when left any other way; false without a panel.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.

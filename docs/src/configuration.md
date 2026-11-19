@@ -16,7 +16,7 @@ Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you 
 
 ## Themes
 
-`theme.name` picks a theme: a file in `$XDG_CONFIG_HOME/quick-key/themes/`, else a shipped preset (`catppuccin-mocha`, `catppuccin-latte`, `gruvbox-dark`, `nord`, `tokyo-night`). A theme holds five colours, and optionally `border` for outlines and dividers, which is otherwise the foreground at `disabledOpacity` so that tint is left to state:
+`theme.name` picks a theme: a file in `$XDG_CONFIG_HOME/quick-key/themes/`, else a shipped preset (`catppuccin-mocha`, `catppuccin-latte`, `gruvbox-dark`, `nord`, `tokyo-night`). A theme holds five colours, and optionally `border` for outlines and dividers, which is otherwise the foreground at `disabledOpacity` so that tint is left to state, and `bubble` and `bubbleText` for your messages in a conversation, otherwise a faint foreground and the text colour:
 
 ```json
 { "background": "#2e3440", "foreground": "#d8dee9", "primary": "#88c0d0", "alert": "#bf616a", "warning": "#ebcb8b" }
@@ -26,7 +26,7 @@ A colour set in `theme` itself wins over the theme's. Anything that writes the f
 
 With [stylix](https://github.com/nix-community/stylix), the module themes the shell like one of stylix's own targets: on whenever stylix themes every target (`stylix.autoEnable`), else with `stylix.targets.quick-key.enable = true`. It sets the colours (`border` from `base03`), the monospace font, and the popups' font size and opacity, each as a default your own `theme` settings override. Stylix's popups are opaque by default, which hides the background blur; `stylix.opacity.popups = 0.92` keeps it.
 
-`glyphs` overrides any icon by its name in the kit's `Glyphs` (`{ "wifi": "…", "audioDevices": { "headset": "…" } }`): one glyph, a list of them (`batteryLevels`, one per 10%), or a map; the check names one that does not exist.
+`glyphs` overrides any icon by its name in the kit's `Glyphs` (`{ "wifi": "<glyph>", "audioDevices": { "headset": "<glyph>" } }`): one glyph, a list of them (`batteryLevels`, one per 10%), or a map; the check names one that does not exist.
 
 ## Defaults
 

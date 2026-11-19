@@ -4,19 +4,29 @@ let
   # The folder is the shell's config and state at once, so its config.json, plugins, scripts and events.json are found by name.
   run =
     name:
-    pkgs.runCommand "quick-key-qml-${name}" { nativeBuildInputs = [ pkgs.quickshell ]; } ''
-      export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR/run XDG_CONFIG_HOME=$TMPDIR/home XDG_STATE_HOME=$TMPDIR/home
-      export QT_QPA_PLATFORM=offscreen NO_COLOR=1 LC_ALL=C.UTF-8
-      mkdir -p $XDG_RUNTIME_DIR $TMPDIR/home
-      cp -r ${./. + "/${name}"} $TMPDIR/home/quick-key
-      cp -r ${self.packages.${pkgs.stdenv.hostPlatform.system}.quick-key}/share/quick-key shell
-      chmod -R u+w shell
-      cp ${./Suite.qml} shell/Suite.qml
-      cp ${./. + "/${name}/shell.qml"} shell/shell.qml
-      timeout 60 qs -p shell 2>&1 | tee log
-      grep -q '# done' log
-      if grep -qE 'not ok|TypeError' log || grep 'not created' log | grep -vq 'unavailable$'; then exit 1; fi
-      touch $out
-    '';
+    pkgs.runCommand "quick-key-qml-${name}"
+      {
+        nativeBuildInputs = [
+          pkgs.quickshell
+          # The stand-in ACP agent (agent.py), in every suite's config.
+          (pkgs.python3.withPackages (ps: [ ps.agent-client-protocol ]))
+        ];
+      }
+      ''
+        export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR/run XDG_CONFIG_HOME=$TMPDIR/home XDG_STATE_HOME=$TMPDIR/home
+        export QT_QPA_PLATFORM=offscreen NO_COLOR=1 LC_ALL=C.UTF-8
+        mkdir -p $XDG_RUNTIME_DIR $TMPDIR/home
+        cp -r ${./. + "/${name}"} $TMPDIR/home/quick-key
+        chmod u+w $TMPDIR/home/quick-key
+        cp ${./agent.py} $TMPDIR/home/quick-key/agent.py
+        cp -r ${self.packages.${pkgs.stdenv.hostPlatform.system}.quick-key}/share/quick-key shell
+        chmod -R u+w shell
+        cp ${./Suite.qml} shell/Suite.qml
+        cp ${./. + "/${name}/shell.qml"} shell/shell.qml
+        timeout 60 qs -p shell 2>&1 | tee log
+        grep -q '# done' log
+        if grep -qE 'not ok|TypeError' log || grep 'not created' log | grep -vq 'unavailable$'; then exit 1; fi
+        touch $out
+      '';
 in
 pkgs.lib.genAttrs' [ "plugins" "menu" "calendar" "ask" "check" ] (name: pkgs.lib.nameValuePair "qml-${name}" (run name))

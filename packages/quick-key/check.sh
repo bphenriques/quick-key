@@ -60,6 +60,16 @@ for file in $(grep -rlE '"#[0-9a-fA-F]{6,8}"' --include='*.qml' . | grep -vE '^\
   fail "$file: a colour outside the theme"
 done
 
+# Rule 6: one ellipsis, Words'.
+for file in $(grep -rl '…' --include='*.qml' .); do
+  fail "$file: an ellipsis other than Words.ellipsis"
+done
+
+# Rule 11: a legend's words come from Words.
+for file in $(grep -rlE 'what: "' --include='*.qml' . | grep -v '^\./ui/Words\.qml$'); do
+  fail "$file: a legend word outside Words"
+done
+
 # Rule 2: commands come from the config, run with sh -c, never named in QML.
 for file in $(grep -rlE '(execDetached\(|command: |command = )\[ *"[^s"]|"sh", "-c", "' --include='*.qml' .); do
   fail "$file: runs a command named in QML"

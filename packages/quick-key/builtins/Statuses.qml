@@ -104,7 +104,7 @@ Singleton {
   // The next event and when, and how old the events are: their age even after a failed sync, the line under the legend saying why.
   function calendar() {
     if (!Calendar.enabled) return {};
-    const updated = Calendar.syncing ? "syncing…" : Calendar.updated ? "updated " + Clock.stamp(Calendar.updated) : "";
+    const updated = Calendar.syncing ? Words.syncing : Calendar.updated ? "updated " + Clock.stamp(Calendar.updated) : "";
     const next = Calendar.next;
     if (!next) return { updated };
     const today = next.start.toDateString() === Clock.date.toDateString() || next.start < Clock.date;

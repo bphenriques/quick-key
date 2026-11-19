@@ -11,11 +11,6 @@ Singleton {
   // A line's height, as a Label draws one.
   readonly property real line: fontMetrics.height
 
-  // A line of text's width in the theme font, whatever font draws it.
-  function width(text) {
-    return fontMetrics.advanceWidth(text);
-  }
-
   TextMetrics {
     id: cellMetrics
     font: fontMetrics.font

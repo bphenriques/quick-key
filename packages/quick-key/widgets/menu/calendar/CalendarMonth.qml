@@ -51,6 +51,8 @@ Item {
     anchors.left: parent.left
     anchors.right: parent.right
     columns: 7
+    // Every column as wide as the rest, whatever its day holds (today, its dots).
+    uniformCellWidths: true
     columnSpacing: 0
     rowSpacing: 0
 

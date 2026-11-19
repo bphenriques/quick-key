@@ -20,6 +20,9 @@ Singleton {
     readonly property color alert: adapter.theme.alert || userTheme.palette.alert || shippedTheme.palette.alert || "#cc6666"
     readonly property color warning: adapter.theme.warning || userTheme.palette.warning || shippedTheme.palette.warning || "#f0c674"
     readonly property color border: adapter.theme.border || userTheme.palette.border || shippedTheme.palette.border || Qt.alpha(foreground, adapter.theme.disabledOpacity)
+    // Your messages in a conversation; unset, the foreground at 0.15, which keeps its text near WCAG AA's 4.5:1.
+    readonly property color bubble: adapter.theme.bubble || userTheme.palette.bubble || shippedTheme.palette.bubble || Qt.alpha(foreground, 0.15)
+    readonly property color bubbleText: adapter.theme.bubbleText || userTheme.palette.bubbleText || shippedTheme.palette.bubbleText || foreground
   }
 
   readonly property alias theme: adapter.theme
@@ -124,6 +127,9 @@ Singleton {
         property string warning
         // Outlines and dividers; unset, the foreground at disabledOpacity, so tint is left to state.
         property string border
+        // Your messages in a conversation, and their text.
+        property string bubble
+        property string bubbleText
         property real surfaceOpacity: 0.92
         property real highlightOpacity: 0.25
         // Secondary text (values, legend words, dim glyphs) over the panel: 0.8 keeps it near WCAG AA's 4.5:1 on a dark theme.

@@ -74,9 +74,9 @@ Scope {
   // The keys listed in place of the body: the help, the bar's while Ctrl is held, the compositor's while Super is.
   readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
-  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }; while its input has the keys, the input's, in a level that has a legend.
+  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s); while its input has the keys, its Escape, in a level that has a legend.
   readonly property var levelLegend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
-  readonly property var legend: inputFocused && levelLegend.length > 0 ? [{ key: "Ctrl+Shift+Return", what: "background", clickable: true }, { key: "Escape", what: draft ? "clear" : "back", clickable: true }] : levelLegend
+  readonly property var legend: inputFocused && levelLegend.length > 0 ? [{ key: "Escape", what: draft ? Words.clear : Words.back, clickable: true }] : levelLegend
   // Why a level's source failed, under its keys: the calendar's sync, or the plugin it lists.
   readonly property string error: inCalendar ? (Calendar.syncing ? "" : Calendar.error) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
 
@@ -320,9 +320,10 @@ Scope {
     expand();
   }
 
-  // Keys while the answer has them: Return opens the plugin's panel, Tab and Escape give them to the body, Shift+Tab back to the input.
+  // Keys while the answer has them: Return opens the plugin's panel, y copies the answer, Tab and Escape give them to the body, Shift+Tab back to the input.
   function answerKey(name) {
     if (name === "Return") expand();
+    else if (name === "y") Quickshell.clipboardText = turn?.text ?? "";
     else if (name === "Tab" || name === "Escape") answerFocused = false;
     else if (name === "Backtab") {
       answerFocused = false;

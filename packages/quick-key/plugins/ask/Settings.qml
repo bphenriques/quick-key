@@ -1,9 +1,18 @@
 import qs
 
-// Ask's commands, each given its arguments as $1, $2... (the protocol is in docs/src/plugins.md).
+// Ask's agent and commands, each command given its arguments as $1, $2... (docs/src/plugins.md#ask).
 PluginSettings {
-  // Given a prompt, the session ("" for a new one) and an image ("" for none), prints a JSON object per line; approvals are answered on its stdin.
+  // The agent: a command speaking ACP on its stdio, kept running between turns.
   property string ask
+  // Where its sessions work, on the agent's machine; unset, $HOME.
+  property string cwd
+  // Minutes without a turn before the agent is stopped; the next turn starts it again.
+  property int idle: 10
+  // A tool name (a regular expression) that makes `toolRun` run once the turn that used it ends.
+  property string toolMatch
+  property string toolRun
+  // Given a file, prints it base64, as an image goes to the agent.
+  property string encodeImage: "base64 -w0"
   // Given a title and a text, while the panel is hidden; prints `default` when clicked.
   property string notify: "notify-send --action=default=Open"
   // Given a file, writes the clipboard's image there, failing when it holds none.

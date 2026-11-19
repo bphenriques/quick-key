@@ -7,16 +7,17 @@ import qs
 import qs.services
 import qs.ui
 
-// Quick turns with an agent in a panel; its settings and line protocol are in docs/src/plugins.md.
+// Quick turns with an ACP agent in a panel, the agent kept running between turns; its settings are in docs/src/plugins.md.
 Plugin {
   id: root
 
   readonly property int lines: settings.lines
   readonly property string title: settings.title || name
 
-  // [{ prompt, image, reply, error, stopped, after, input, options, table }], the last one waiting while busy; `input` when a level's input sent it, or its panel while expanded from one.
+  // [{ prompt, image, reply, error, stopped, after, input, options, table, steps }], the last one streaming in while busy; `input` when a level's input sent it, or its panel while expanded from one.
   property var exchanges: []
-  property string session: ""
+  // The conversation, as the agent knows it (Acp).
+  property alias session: agent.session
   property string draft: ""
   // An image pasted for the next prompt, as a file under $XDG_RUNTIME_DIR.
   property string image: ""
@@ -30,18 +31,23 @@ Plugin {
   property var backTo: null
   // Escape set the last answer's options aside: digits type again.
   property bool aside: false
+  // `?` with the prompt dim: the panel's keys in place of the conversation, until the next key.
+  property bool helping: false
   // What a digit picks: the last answer's options, once it is in.
   readonly property var choices: busy || aside ? [] : exchanges[exchanges.length - 1]?.options ?? []
   // What the agent waits to be allowed to run, and what it is doing.
   property string approval: ""
   property string activity: ""
+  // A tool `toolMatch` names ran this turn.
+  property bool touched: false
+  // The answer's pieces since the last flush: applied at most every 50 ms, so a fast stream costs a few redraws a second, not one a piece.
+  property string streamed: ""
   // Seconds the current run has taken, ticking only while it runs and the panel shows.
   property int sentAt: 0
   property int now: 0
   readonly property int waited: Math.max(0, now - sentAt)
-
   // Escape steps back without losing the conversation, as in a chat app: what needs it first, then the prompt (clear, back), then the panel.
-  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : choices.length > 0 && !draft && !image ? "aside" : !typing ? (backTo ? "menu" : "hide") : draft || image ? "clear" : "back"
+  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : choices.length > 0 && !draft && !image ? "type" : !typing ? (backTo ? "menu" : "hide") : draft || image ? "clear" : "back"
   readonly property bool canMove: !busy && exchanges.length > 0
 
   // Ctrl+V found no image, so it pastes text as usual.
@@ -90,11 +96,14 @@ Plugin {
   }
 
   // Left any other way (sent in the background, dismissed, a link opened): not back to the menu.
-  onShownChanged: if (!shown && backTo) leave(false)
+  onShownChanged: {
+    helping = false;
+    if (!shown && backTo) leave(false);
+  }
 
   // An input's text, answered above it while the menu shows it (the last answer staying until the next), else as a notification; one conversation per visit.
   function submit(text, background, after) {
-    if (busy || request.running || !settings.ask) return false;
+    if (busy || !settings.ask) return false;
     if (!visited) reset();
     if (!send(text, "", after, true)) return false;
     visited = watched;
@@ -106,6 +115,11 @@ Plugin {
     return !!exchange?.input && watched;
   }
 
+  // An answer with the options it gave, on one line: what a reply to it answers.
+  function followed(exchange) {
+    return exchange ? [exchange.reply, (exchange.options ?? []).join(" · ")].filter(part => part).join(" ") : "";
+  }
+
   // An exchange by its phase, as an Exchange draws it: the last one working, or waiting on you, while busy, and choosing while its options wait.
   function describe(exchange) {
     const latest = exchange === exchanges[exchanges.length - 1];
@@ -114,13 +128,14 @@ Plugin {
     return {
       question: exchange.prompt,
       image: exchange.image,
-      text: phase === "waiting" ? "Allow " + approval + "?" : exchange.error || exchange.reply,
+      text: phase === "waiting" ? Words.allowQuestion(approval) : exchange.error || exchange.reply,
       phase: phase,
       activity: phase === "working" ? activity : "",
-      // While it works, the answer it follows, so the question shows what it answers.
-      context: phase === "working" ? exchanges[exchanges.indexOf(exchange) - 1]?.reply ?? "" : "",
+      // While it works, the answer it follows with the options it gave, so the question shows what it answers.
+      context: phase === "working" ? followed(exchanges[exchanges.indexOf(exchange) - 1]) : "",
       options: phase === "choosing" ? choices : [],
-      table: !!exchange.table
+      table: !!exchange.table,
+      steps: exchange.steps ?? []
     };
   }
 
@@ -133,8 +148,7 @@ Plugin {
   // `after` runs once the turn is answered.
   function send(prompt, image = root.image, after = "", input = false) {
     prompt = prompt.trim();
-    // A stopped command may still be ending, when it traps its end.
-    if ((!prompt && !image) || busy || request.running || !settings.ask) return false;
+    if ((!prompt && !image) || busy || !settings.ask) return false;
     // Asking again what failed or was stopped replaces that exchange, so the thread keeps one of each, and its `after`.
     const last = exchanges[exchanges.length - 1];
     const retried = last && last.error && last.prompt === prompt && last.image === image;
@@ -145,36 +159,34 @@ Plugin {
     aside = false;
     approval = "";
     activity = "";
+    touched = false;
+    streamed = "";
     sentAt = now = Math.floor(Date.now() / 1000);
-    request.complaint = "";
-    request.command = commandLine(settings.ask, prompt, session, image);
-    request.running = true;
     report();
+    if (image) encode(image, data => agent.turn([{ type: "text", text: prompt }, { type: "image", data: data, mimeType: mimeOf(data) }].filter(block => block.type !== "text" || block.text)));
+    else agent.turn([{ type: "text", text: prompt }]);
     return true;
   }
 
-  function receive(line) {
-    let answer;
-    try {
-      answer = JSON.parse(line);
-    } catch (error) {
-      console.warn(name + ": not JSON, ignored:", line);
-      return;
-    }
-    // A stopped command, still ending.
-    if (!busy) return;
-    // Named as the turn starts, so asking again after a stop carries on in the same session.
-    if (answer.session) session = answer.session;
-    if (answer.approval) {
-      approval = answer.approval;
-      if (seen(exchanges[exchanges.length - 1])) report();
-      else notify("Allow " + approval + "?");
-    } else if (answer.status) {
-      activity = answer.status;
-      report();
-    } else if (answer.reply !== undefined || answer.error !== undefined) {
-      finish(answer);
-    }
+  // The turn's end, as the agent reports it: the answer it streamed, with its options and table, else why not.
+  function close(outcome) {
+    flush();
+    if (!outcome.answered) return finish({ error: outcome.error ?? "Stopped", stopped: !!outcome.stopped });
+    const text = exchanges[exchanges.length - 1].reply;
+    const shaped = Markup.options(text);
+    finish({ reply: shaped.text, options: shaped.options, table: Markup.hasTable(text) });
+  }
+
+  function flush() {
+    if (!streamed) return;
+    const last = exchanges[exchanges.length - 1];
+    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { reply: last.reply + streamed })]);
+    streamed = "";
+    report();
+  }
+
+  function fail(message) {
+    finish({ error: message });
   }
 
   function finish(answer) {
@@ -185,11 +197,23 @@ Plugin {
     if (seen(last)) report();
     else notify(last.error || [last.reply].concat(last.options).join(" · "));
     if (last.reply) exec(last.after);
+    if (touched) exec(settings.toolRun);
     if (!shown && !seen(last)) unread = true;
     if (last.error && !seen(last) && draft === "" && !image) {
       draft = last.prompt;
       image = last.image;
     }
+  }
+
+  // An image as the agent takes it: base64, its type read from its first bytes.
+  function encode(path, then) {
+    encoder.done = then;
+    encoder.command = commandLine(settings.encodeImage, path);
+    encoder.running = true;
+  }
+
+  function mimeOf(data) {
+    return data.startsWith("/9j/") ? "image/jpeg" : data.startsWith("R0lGOD") ? "image/gif" : data.startsWith("UklGR") ? "image/webp" : "image/png";
   }
 
   function notify(text) {
@@ -208,17 +232,26 @@ Plugin {
     return true;
   }
 
+  // Allow or deny once; an agent offering neither for the answer is told it was cancelled.
   function answerApproval(allowed) {
     if (!approval) return;
-    request.write((allowed ? "allow" : "deny") + "\n");
+    agent.answer(allowed);
+    const last = exchanges[exchanges.length - 1];
+    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { steps: (last.steps ?? []).concat([(allowed ? "Allowed: " : "Denied: ") + approval]) })]);
     approval = "";
   }
 
-  // Ends the command and puts its prompt back; a command whose run lives elsewhere traps its end to stop it there.
+  // The last answer, to the clipboard.
+  function copy() {
+    const reply = exchanges[exchanges.length - 1]?.reply ?? "";
+    if (!reply) return false;
+    Quickshell.clipboardText = reply;
+    return true;
+  }
+
+  // Cancels the turn and puts its prompt back; the agent stays for the next one (Acp.cancel).
   function stop() {
-    if (!busy) return;
-    finish({ error: "Stopped", stopped: true });
-    request.running = false;
+    if (busy) agent.cancel();
   }
 
   // A new conversation; the unsent prompt stays, but not a failed one put back for a retry, which goes with its conversation.
@@ -234,7 +267,7 @@ Plugin {
     unread = false;
   }
 
-  // Only between turns: a turn lives as long as its command here.
+  // Only between turns, so the terminal takes a settled conversation.
   function moveToTerminal() {
     if (!canMove) return;
     exec(settings.open, session);
@@ -242,8 +275,16 @@ Plugin {
     shown = false;
   }
 
-  // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt. Waiting, its letters do what their Ctrl chords do.
+  // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt. Waiting, `?` lists them (any key closing the list) and its letters do what their Ctrl chords do, but for `y`.
   function act(key) {
+    if (helping) {
+      helping = false;
+      return true;
+    }
+    if (!typing && key === "?") {
+      helping = true;
+      return true;
+    }
     // Tab moves the keys between the prompt and the panel, as in a level; Shift+Tab back to the panel, and from the panel it is Qt's.
     if (key === "Tab" || (typing && key === "Backtab")) {
       typing = !typing;
@@ -251,6 +292,8 @@ Plugin {
     }
     // A waiting choice takes the digits while the prompt is empty, a digit picking and never typing.
     if (/^[1-9]$/.test(key) && !draft && !image && Number(key) <= choices.length) return pick(Number(key) - 1);
+    // A bare `y` copies the last answer, as in the menu, and never allows: allowing takes its chord, so a key learned as harmless never approves.
+    if (!typing && key === "y") return copy();
     switch (!typing && /^[a-z]$/.test(key) ? "Ctrl+" + key : key) {
     case "Escape": return stepBack();
     case "Ctrl+y": answerApproval(true); return true;
@@ -266,7 +309,7 @@ Plugin {
     switch (escapeAction) {
     case "deny": answerApproval(false); return true;
     case "stop": stop(); return true;
-    case "aside": aside = true; return true;
+    case "type": aside = true; return true;
     case "menu":
     case "hide": leave(true); return true;
     }
@@ -290,28 +333,49 @@ Plugin {
     onTriggered: root.now = Math.floor(Date.now() / 1000)
   }
 
+  Acp {
+    id: agent
+    command: root.commandLine(root.settings.ask)
+    name: root.title
+    cwd: root.settings.cwd || Quickshell.env("HOME")
+    idle: root.settings.idle
+    onText: chunk => {
+      root.streamed += chunk;
+      if (!flushing.running) flushing.start();
+    }
+    onTool: title => {
+      // An MCP tool by its server (mcp__meals__plan_week: meals), the rest by name.
+      root.activity = title.startsWith("mcp__") ? title.split("__")[1] : title;
+      if (root.settings.toolMatch && new RegExp(root.settings.toolMatch).test(title)) root.touched = true;
+      root.report();
+    }
+    onRestarted: {
+      root.activity = Words.restarted;
+      root.report();
+    }
+    onPermission: title => {
+      root.approval = title;
+      if (root.seen(root.exchanges[root.exchanges.length - 1])) root.report();
+      else root.notify(Words.allowQuestion(title));
+    }
+    onEnded: outcome => root.close(outcome)
+  }
+
+  Timer {
+    id: flushing
+    interval: 50
+    onTriggered: root.flush()
+  }
+
   Process {
-    id: request
-    // Its last line on stderr, the error when it ends without an answer.
-    property string complaint: ""
+    id: encoder
+    property var done
 
-    // Open for the approvals' answers.
-    stdinEnabled: true
-
-    stdout: SplitParser {
-      onRead: line => root.receive(line)
+    stdout: StdioCollector {
+      id: encoded
     }
 
-    stderr: SplitParser {
-      onRead: line => {
-        if (line.trim()) request.complaint = line.trim();
-      }
-    }
-
-    // Ended without an answer: it crashed or was killed.
-    onExited: {
-      if (root.busy) root.finish({ error: complaint || "No answer" });
-    }
+    onExited: code => code === 0 ? done(encoded.text.trim()) : root.fail("Could not read the image")
   }
 
   Process {

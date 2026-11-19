@@ -15,6 +15,21 @@ Scope {
   property real inputExtra: 0
   // The conversation's width, which a bubble takes most of at most: read from the conversation, not the exchange, whose width its bubbles make.
   property real threadWidth: 0
+  // Every key the panel takes, for `?`.
+  readonly property var help: [
+    { key: "Tab", desc: "The prompt, and back" },
+    { key: "Shift+Return", desc: "A new line" },
+    { key: "Ctrl+Shift+Return", desc: "Send in the background" },
+    { key: "Ctrl+y", desc: "Allow what it asks" },
+    { key: "y", desc: "Copy the last answer" },
+    { key: "Ctrl+l", desc: "A new conversation" },
+    { key: "Ctrl+o", desc: "Move it to a terminal" },
+    { key: "Ctrl+v", desc: "Attach the clipboard's image" },
+    { key: "1-9", desc: "Pick an option" },
+    { key: "Escape", desc: "Step back one thing" }
+  ]
+  // What Return does next, as the last turn says.
+  property string next: ""
 
   // Page Up and Down, for the conversation.
   signal paged(bool down)
@@ -93,6 +108,7 @@ Scope {
     spacing: Config.theme.spacing / 2
 
     Exchange {
+      id: drawnExchange
       Layout.fillWidth: true
       maximumWidth: panel.threadWidth * 0.85
       question: turn.drawn.question ?? ""
@@ -104,9 +120,17 @@ Scope {
       activity: [turn.drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
       options: turn.drawn.options ?? []
       table: !!turn.drawn.table
+      steps: turn.drawn.steps ?? []
       picking: !panel.plugin.draft
       copyable: true
       onPicked: index => panel.plugin.pick(index)
+    }
+
+    Binding {
+      when: turn.index === panel.plugin.exchanges.length - 1
+      target: panel
+      property: "next"
+      value: drawnExchange.next
     }
 
     Repeater {
@@ -129,17 +153,18 @@ Scope {
     body: ColumnLayout {
       spacing: Config.theme.padding
 
-      // Only the keys no one would guess (Return sends, as in any chat), each while it applies.
+      // Only what the state changes, each while it applies; the fixed keys are `?`'s.
       KeyLegend {
         // Typing, its letters take Ctrl; waiting, they are plain.
         readonly property string chord: panel.plugin.typing ? "Ctrl+" : ""
-        keys: (panel.plugin.typing ? [{ key: "Shift+Return", what: "newline" }, { key: "Ctrl+Shift+Return", what: "background", clickable: true }] : [])
-          .concat(panel.plugin.approval ? [{ key: chord + "y", what: "allow", clickable: true }] : [])
-          .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: "new", clickable: true }] : [])
-          .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: "choose" }] : [])
-          .concat(panel.plugin.canMove ? [{ key: chord + "o", what: "terminal...", clickable: true }] : [])
+        keys: (panel.plugin.approval ? [{ key: "Ctrl+y", what: Words.allow, clickable: true }] : [])
+          .concat(!panel.plugin.typing && panel.plugin.exchanges[panel.plugin.exchanges.length - 1]?.reply ? [{ key: "y", what: Words.copy, clickable: true }] : [])
+          .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: Words.newChat, clickable: true }] : [])
+          .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: Words.choose }] : [])
+          .concat(panel.plugin.canMove ? [{ key: chord + "o", what: Words.terminal, clickable: true }] : [])
+          .concat(!panel.plugin.typing ? [{ key: "?", what: Words.help, clickable: true }] : [])
           // Last, so its changing word moves nothing.
-          .concat([{ key: "Escape", what: panel.plugin.escapeAction, clickable: true }])
+          .concat([{ key: "Escape", what: Words[panel.plugin.escapeAction], clickable: true }])
         onPicked: key => {
           if (!panel.plugin.act(key)) panel.promptPicked(key);
         }
@@ -152,6 +177,7 @@ Scope {
       // The conversation, kept scrolled to its end.
       Flickable {
         id: thread
+        visible: !panel.plugin.helping
         onWidthChanged: panel.threadWidth = width
         Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
@@ -196,6 +222,24 @@ Scope {
           }
         }
       }
+
+      // `?`: every key the panel takes, in the conversation's place and height, so the panel holds still.
+      Item {
+        visible: panel.plugin.helping
+        Layout.fillWidth: true
+        Layout.preferredHeight: thread.Layout.preferredHeight
+
+        KeyList {
+          anchors.left: parent.left
+          anchors.right: parent.right
+          keys: panel.help
+          // Runs as the key does, as the menu's list does.
+          onPicked: key => {
+            panel.plugin.helping = false;
+            panel.plugin.act(key);
+          }
+        }
+      }
     }
 
     input: ColumnLayout {
@@ -213,7 +257,8 @@ Scope {
         id: prompt
         Layout.fillWidth: true
         glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
-        placeholder: panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
+        // Who it asks until a turn says what Return does next, as the menu's input does.
+        placeholder: panel.plugin.exchanges.length > 0 ? panel.next : panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
         active: panel.plugin.typing
         key: "Tab"
         onTapped: panel.plugin.typing = true

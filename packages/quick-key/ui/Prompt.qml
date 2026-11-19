@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A line of text to send: its key while it waits (a level's), else a glyph, a spinner in their place while what it sends to is busy, then the text growing to `maxLines`. Keys reach `keyPressed` first; Escape the owner leaves clears it, then gives the keys back (`unfocused`, `stepBack`). What was said about it goes over it, in an Answer.
+// A line of text to send: its key while it waits (a level's), else a glyph, a spinner in their place while what it sends to is busy, then the text growing to `maxLines`. Keys reach `keyPressed` first; Escape the owner leaves clears it, then gives the keys back (`unfocused`, `stepBack`). The conversation it sends to goes over it, in an Exchange; `keys` on its right say what other keys do.
 RowLayout {
   id: root
 
@@ -14,15 +14,18 @@ RowLayout {
   property alias text: area.text
   property alias placeholder: area.placeholder
   property alias maxLines: area.maxLines
+  // A legend on its right, as KeyLegend takes it; a click is `picked`.
+  property var keys: []
   // Nothing to clear; an owner with more to clear than the text (a pasted image) says when.
   property bool empty: text === ""
-  // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys; an Answer over it takes the same.
+  // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys; the glyph on its left edge, where keys start.
   readonly property real slot: Math.max(Metrics.line, keyHint.implicitWidth)
 
   signal keyPressed(var event)
   signal tapped
   signal cleared
   signal unfocused
+  signal picked(var key)
 
   // Escape's own steps: clear, then give the keys back.
   function stepBack() {
@@ -55,7 +58,8 @@ RowLayout {
     implicitHeight: Metrics.line
 
     Spinner {
-      anchors.centerIn: parent
+      anchors.left: parent.left
+      anchors.verticalCenter: parent.verticalCenter
       visible: root.busy
       tone: "dim"
       size: Metrics.line
@@ -63,14 +67,16 @@ RowLayout {
 
     KeyHint {
       id: keyHint
-      anchors.centerIn: parent
+      anchors.left: parent.left
+      anchors.verticalCenter: parent.verticalCenter
       visible: !root.busy && !root.active && root.key !== ""
       key: root.key
       chars: MenuKeys.label(root.key).length
     }
 
     Icon {
-      anchors.centerIn: parent
+      anchors.left: parent.left
+      anchors.verticalCenter: parent.verticalCenter
       visible: !root.busy && (root.active || root.key === "")
       tone: root.active ? "primary" : "dim"
       glyph: root.glyph
@@ -95,5 +101,14 @@ RowLayout {
       enabled: !root.active
       onTapped: root.tapped()
     }
+  }
+
+  // On the text's line, unpadded, so showing it never grows the prompt.
+  KeyLegend {
+    Layout.alignment: Qt.AlignTop
+    verticalPadding: 0
+    visible: root.keys.length > 0
+    keys: root.keys
+    onPicked: key => root.picked(key)
   }
 }

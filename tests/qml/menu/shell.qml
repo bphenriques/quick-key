@@ -104,7 +104,7 @@ ShellRoot {
         until: () => menu.inputFocused && Plugins.get("picked")?.text === "typed" && Plugins.get("followed")?.text === "done 0"
       },
       {
-        name: "an input naming a plugin gives it its text in its format, the legend showing the input's keys; in the background the menu closes",
+        name: "an input naming a plugin gives it its text in its format, the legend showing only its Escape; in the background the menu closes",
         start: () => {
           menu.stack = [];
           menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}." } } });
@@ -112,7 +112,7 @@ ShellRoot {
           root.typingLegend = menu.legend.map(key => MenuKeys.label(key.key));
           menu.submit("typed", true);
         },
-        until: () => root.typingLegend[0] === "C-S-RET" && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.reply === "Add: typed."
+        until: () => root.typingLegend.length === 1 && root.typingLegend[0] === "ESC" && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.reply === "Add: typed."
       },
       {
         name: "an input whose plugin did not load takes nothing, so the menu stays and the input keeps its text",

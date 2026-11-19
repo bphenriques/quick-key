@@ -80,6 +80,11 @@ Singleton {
     return { prefix: prefix, key: key };
   }
 
+  // A key gutter for keys up to `chars` long: a character more past a letter, as a row's spacing alone reads as no gap between words.
+  function gutter(chars) {
+    return chars > 1 ? chars + 1 : chars;
+  }
+
   // Whether text matches a pattern where * stands for anything.
   function glob(pattern, text) {
     const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");

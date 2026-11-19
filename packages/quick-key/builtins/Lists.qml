@@ -14,7 +14,7 @@ Singleton {
     tray: {
       icon: Glyphs.tray,
       empty: () => "No apps in the tray",
-      legend: [{ key: "Alt+digit", what: "app menu" }],
+      legend: [{ key: "Alt+digit", what: Words.appMenu }],
       items: () => Tray.items.map(app => ({ id: app.id, desc: app.title || app.id, image: app.icon, app, closes: true, select: () => app.activate() }))
     },
     wifi: {

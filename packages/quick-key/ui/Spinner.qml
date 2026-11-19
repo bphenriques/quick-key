@@ -1,7 +1,7 @@
 import QtQuick
 import qs
 
-// A one-cell wait: `working` circles a quarter block (never a box, which a still frame of a checkbox slot would read as), `attention` knocks; its own tempo, still when animations are off.
+// A one-cell wait: `working` turns the braille dots terminals use, `attention` knocks; its own tempo, still when animations are off.
 Item {
   id: root
 
@@ -11,7 +11,7 @@ Item {
 
   // Each sequence is frames of [text, milliseconds it holds].
   readonly property var sequences: ({
-      working: [["▖", 250], ["▘", 250], ["▝", 250], ["▗", 250]],
+      working: [["⠋", 80], ["⠙", 80], ["⠹", 80], ["⠸", 80], ["⠼", 80], ["⠴", 80], ["⠦", 80], ["⠧", 80], ["⠇", 80], ["⠏", 80]],
       attention: [["▚", 150], ["▞", 150], ["▚", 150], ["▞", 1200]]
     })
 

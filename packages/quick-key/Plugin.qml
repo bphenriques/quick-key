@@ -39,7 +39,7 @@ Scope {
   property string shortcut: settings.shortcut
   // Whether the menu shows an input giving it text.
   readonly property bool watched: Plugins.watching.startsWith(name + "\n")
-  // The turn of the conversation that text started, as the menu draws it while watched (Exchange): { question, context, text, phase, activity, options, table }, `context` the answer a working turn follows, `phase` one of working, answered, choosing (`options` a digit picks), waiting (on you), failed (the input gets the text back) or stopped; null before the first.
+  // The turn of the conversation that text started, as the menu draws it while watched (Exchange): { question, context, text, phase, activity, options, table, steps }, `context` the answer a working turn follows, `steps` what you answered on the way, `phase` one of working, answered, choosing (`options` a digit picks), waiting (on you), failed (the input gets the text back) or stopped; null before the first.
   property var turn: null
   // Whether it takes no text now; an input giving it text shows a spinner meanwhile and sends nothing.
   property bool busy: false

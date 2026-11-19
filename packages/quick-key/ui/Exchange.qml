@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs
 
-// One turn of a conversation as bubbles, the question right and the answer left, drawn by its `phase` (working, answered, choosing, waiting, failed, stopped); with `lines` it is compact, `overflows` saying what it cannot hold.
+// One turn of a conversation, the question a bubble on the right and the answer on the left in Markdown, streaming in while it works, drawn by its `phase` (working, answered, choosing, waiting, failed, stopped); with `lines` it is compact, `overflows` saying what it cannot hold.
 ColumnLayout {
   id: root
 
@@ -14,6 +14,7 @@ ColumnLayout {
   property string context
   // A picture sent with the question, as a file path.
   property string image
+  // The answer in Markdown, as ACP sends text; compact, shown plain.
   property string text
   property string phase: "answered"
   property string activity
@@ -23,12 +24,16 @@ ColumnLayout {
   property bool picking: false
   property int lines: 0
   property bool copyable: false
+  // What you answered on the way (an approval), dim lines over the answer when not compact.
+  property var steps: []
   // How wide a bubble may grow; set from what holds the conversation, never from the exchange's own width.
   property real maximumWidth: Infinity
 
   readonly property bool compact: lines > 0
   readonly property bool fits: options.length <= 9 && choices.implicitWidth <= maximumWidth - 2 * Config.theme.itemPaddingX
-  readonly property bool overflows: compact && (phase === "waiting" || brief.width > 0 && brief.truncated || (options.length > 0 && !fits))
+  readonly property bool overflows: compact && (phase === "waiting" || table || brief.width > 0 && brief.truncated || (options.length > 0 && !fits))
+  // What Return does next, for the prompt under the exchange; nothing while it works, where the answer says so and typing ahead is free.
+  readonly property string next: phase === "working" ? "" : phase === "waiting" ? Words.approvePrompt : picking && options.length > 0 ? Words.pickPrompt : Words.replyPrompt
   readonly property string tone: phase === "failed" ? "alert" : phase === "waiting" ? "warning" : phase === "stopped" ? "dim" : ""
 
   signal picked(int index)
@@ -38,6 +43,7 @@ ColumnLayout {
   Bubble {
     visible: root.context !== ""
     maximumWidth: root.maximumWidth
+    full: root.compact
 
     Label {
       Layout.fillWidth: true
@@ -45,12 +51,14 @@ ColumnLayout {
       wrapMode: Text.Wrap
       maximumLineCount: root.compact ? root.lines : 1000
       elide: Text.ElideRight
-      text: root.context
+      text: Markup.plain(root.context)
     }
   }
 
   Bubble {
     mine: true
+    // Its text is back in the prompt, to send again.
+    faded: root.phase === "failed"
     maximumWidth: root.maximumWidth
 
     Image {
@@ -65,12 +73,23 @@ ColumnLayout {
     Label {
       id: asked
       Layout.fillWidth: true
-      // Its measured width: an elided line reports the width it was cut to, so a longer question would keep a shorter one's.
-      Layout.preferredWidth: Math.ceil(Metrics.width(root.question))
-      wrapMode: Text.Wrap
-      maximumLineCount: root.compact ? 1 : 1000
+      color: Config.colors.bubbleText
+      // Compact, one line unwrapped: a wrapped line cut short reports the width it was cut to, and the bubble would shrink to it.
+      wrapMode: root.compact ? Text.NoWrap : Text.Wrap
       elide: Text.ElideRight
       text: root.question
+    }
+  }
+
+  Repeater {
+    model: root.compact ? [] : root.steps
+
+    Label {
+      required property string modelData
+      Layout.fillWidth: true
+      tone: "dim"
+      wrapMode: Text.Wrap
+      text: modelData
     }
   }
 
@@ -80,29 +99,30 @@ ColumnLayout {
 
     Bubble {
       Layout.alignment: Qt.AlignTop | Qt.AlignLeft
-      tone: root.tone
       maximumWidth: root.maximumWidth
+      // Compact, its answer is cut at `lines`; the bubble is plain, so its width shows nowhere.
+      full: root.compact
       clip: true
 
+      // Working, until its answer starts streaming in.
       RowLayout {
-        visible: root.phase === "working"
+        visible: root.phase === "working" && root.text === ""
         spacing: Config.theme.spacing
 
         Spinner {
-          tone: "dim"
+          tone: "primary"
           size: Metrics.line
         }
 
         Label {
-          visible: root.activity !== ""
           tone: "dim"
-          text: root.activity
+          text: root.activity || Words.thinking
         }
       }
 
       RowLayout {
         Layout.fillWidth: true
-        visible: root.phase !== "working"
+        visible: root.phase !== "working" || root.text !== ""
         spacing: Config.theme.spacing
 
         Icon {
@@ -122,27 +142,24 @@ ColumnLayout {
           wrapMode: root.table ? Text.NoWrap : Text.Wrap
           maximumLineCount: Math.max(1, root.lines)
           elide: Text.ElideRight
-          text: root.text
+          text: Markup.plain(root.text)
         }
 
-        TextField {
+        Markdown {
           Layout.fillWidth: true
           visible: !root.compact
           tone: root.tone || "normal"
-          wrapMode: root.table ? TextEdit.NoWrap : TextEdit.Wrap
-          text: root.text
-          readOnly: true
-          selectByMouse: true
-          persistentSelection: true
-          activeFocusOnPress: false
-          copyOnSelect: true
+          markdown: root.text
         }
       }
 
       // Compact, the options on one line, as keys while a digit picks them.
       RowLayout {
         id: choices
-        visible: root.compact && root.options.length > 0 && root.fits
+        visible: root.compact && root.options.length > 0
+        // Flattened, not hidden, when they do not fit: a hidden layout stops measuring, and `fits` would keep its last answer.
+        Layout.maximumHeight: root.fits ? Infinity : 0
+        clip: true
         spacing: 2 * Config.theme.spacing
 
         Repeater {
@@ -168,9 +185,9 @@ ColumnLayout {
       }
     }
 
-    // Copies the whole answer; a selection copies its part.
+    // Copies the whole answer; a selection copies its part. At its end, so it reads as the answer's and not its first line's.
     ListItem {
-      Layout.alignment: Qt.AlignTop
+      Layout.alignment: Qt.AlignBottom
       visible: root.copyable && (root.phase === "answered" || root.phase === "choosing")
       onActivated: Quickshell.clipboardText = root.text
 
@@ -196,15 +213,21 @@ ColumnLayout {
       required property int index
       required property string modelData
       Layout.fillWidth: true
+      // Outset by its padding, so the digits start where the answer does.
+      Layout.leftMargin: -Config.theme.itemPaddingX
+      Layout.rightMargin: -Config.theme.itemPaddingX
       onActivated: root.picked(option.index)
 
+      // On a wrapped option's first line, as a row's key is.
       KeyHint {
+        Layout.alignment: Qt.AlignTop
         visible: root.picking
         key: String(option.index + 1)
       }
 
       Label {
         Layout.fillWidth: true
+        wrapMode: Text.Wrap
         text: option.modelData
       }
     }

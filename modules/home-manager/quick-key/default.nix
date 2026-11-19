@@ -88,6 +88,16 @@ in
               default = null;
               description = "Colour of outlines and dividers; unset, the dim text colour";
             };
+            bubble = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Colour of your messages in a conversation; unset, a faint foreground";
+            };
+            bubbleText = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Colour of your messages' text; unset, the text colour";
+            };
           };
         }
       );

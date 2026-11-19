@@ -95,15 +95,17 @@ Scope {
       ListItem {
         id: last
         // The tallest turn of the visit, which the island keeps so it grows and never shrinks within it.
-        property real held: 0
-        // A turn it cannot hold opens the plugin's panel by itself, once.
-        readonly property bool expands: visible && exchange.overflows && root.menu.turn !== root.menu.expandedTurn
+        property real tallest: 0
+        // A turn it cannot hold opens the plugin's panel by itself, once, as its answer ends: while it streams in, its size is not known.
+        readonly property bool expands: visible && exchange.overflows && root.menu.turn !== root.menu.expandedTurn && root.menu.turn?.phase !== "working"
         visible: root.menu.turn !== null
         Layout.fillWidth: true
-        // Outset by its padding, so the bubbles line up with the prompt.
+        // The height held sits above, outside what Tab lights, so the turn stays next to the prompt.
+        Layout.topMargin: Math.max(0, last.tallest - exchange.implicitHeight)
+        // Outset by its padding, so the turn lines up with the prompt.
         Layout.leftMargin: -Config.theme.itemPaddingX
         Layout.rightMargin: -Config.theme.itemPaddingX
-        onVisibleChanged: if (!visible) held = 0
+        onVisibleChanged: if (!visible) last.tallest = 0
         onExpandsChanged: if (expands) settle.restart()
         verticalPadding: Config.theme.itemPaddingY / 2
         current: root.menu.answerFocused
@@ -120,32 +122,24 @@ Scope {
         Timer {
           id: latch
           interval: 100
-          onTriggered: last.held = Math.max(last.held, exchange.implicitHeight)
+          onTriggered: last.tallest = Math.max(last.tallest, exchange.implicitHeight)
         }
 
-        // The turn at the bottom of the height held, next to the prompt, as a chat grows.
-        Item {
+        Exchange {
+          id: exchange
           Layout.fillWidth: true
-          implicitHeight: Math.max(exchange.implicitHeight, last.held)
-
-          Exchange {
-            id: exchange
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            onImplicitHeightChanged: latch.restart()
-            lines: 3
-            maximumWidth: island.width * 0.85
-            question: root.menu.turn?.question ?? ""
-            context: root.menu.turn?.context ?? ""
-            text: root.menu.turn?.text ?? ""
-            phase: root.menu.turn?.phase ?? "answered"
-            activity: root.menu.turn?.activity ?? ""
-            options: root.menu.choices
-            table: !!root.menu.turn?.table
-            // Set aside, the options wait as text and the digits type again.
-            picking: root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && fits
-          }
+          onImplicitHeightChanged: latch.restart()
+          lines: 3
+          maximumWidth: island.width * 0.85
+          question: root.menu.turn?.question ?? ""
+          context: root.menu.turn?.context ?? ""
+          text: root.menu.turn?.text ?? ""
+          phase: root.menu.turn?.phase ?? "answered"
+          activity: root.menu.turn?.activity ?? ""
+          options: root.menu.choices
+          table: !!root.menu.turn?.table
+          // Set aside, the options wait as text and the digits type again.
+          picking: root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && fits
         }
       }
 
@@ -156,8 +150,10 @@ Scope {
         // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
         busy: root.menu.inputBusy && root.menu.turn === null
         key: "Tab"
-        // What Return does next: ask, reply, or pick.
-        placeholder: !root.menu.turn ? root.menu.input?.desc ?? "" : root.menu.turn.phase === "working" ? "Answering…" : exchange.picking ? "A digit picks, or reply…" : "Reply…"
+        placeholder: root.menu.turn ? exchange.next : root.menu.input?.desc ?? ""
+        // The turn's own keys while Tab has it.
+        keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }] : []
+        onPicked: key => root.menu.answerKey(key)
         maxLines: 1
         onTapped: root.menu.inputFocused = true
         onUnfocused: root.menu.inputFocused = false

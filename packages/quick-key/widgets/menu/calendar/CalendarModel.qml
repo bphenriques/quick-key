@@ -13,14 +13,14 @@ QtObject {
   readonly property string title: Clock.locale.standaloneMonthName(selected.getMonth()) + " " + selected.getFullYear()
   // Each moves the selected day by [years, months, days], or back to today (null); the arrows go unlisted, the grid shows them.
   readonly property var keys: [
-    { key: ["Left", "Right"], what: "day", unlisted: true, moves: { Left: [0, 0, -1], Right: [0, 0, 1] } },
-    { key: ["Up", "Down"], what: "week", unlisted: true, moves: { Up: [0, 0, -7], Down: [0, 0, 7] } },
-    { key: ["Ctrl+Left", "Ctrl+Right"], what: "month", moves: { "Ctrl+Left": [0, -1, 0], "Ctrl+Right": [0, 1, 0] } },
-    { key: ["Ctrl+Up", "Ctrl+Down"], what: "year", moves: { "Ctrl+Up": [-1, 0, 0], "Ctrl+Down": [1, 0, 0] } },
-    { key: "t", what: "today", clickable: true, moves: { t: null } },
-    { key: "Return", what: "events", clickable: true }
+    { key: ["Left", "Right"], what: Words.day, unlisted: true, moves: { Left: [0, 0, -1], Right: [0, 0, 1] } },
+    { key: ["Up", "Down"], what: Words.week, unlisted: true, moves: { Up: [0, 0, -7], Down: [0, 0, 7] } },
+    { key: ["Ctrl+Left", "Ctrl+Right"], what: Words.month, moves: { "Ctrl+Left": [0, -1, 0], "Ctrl+Right": [0, 1, 0] } },
+    { key: ["Ctrl+Up", "Ctrl+Down"], what: Words.year, moves: { "Ctrl+Up": [-1, 0, 0], "Ctrl+Down": [1, 0, 0] } },
+    { key: "t", what: Words.today, clickable: true, moves: { t: null } },
+    { key: "Return", what: Words.events, clickable: true }
   ]
-  readonly property var eventKeys: [{ key: ["Up", "Down"], what: "event" }, { key: "BackSpace", what: "back", clickable: true }]
+  readonly property var eventKeys: [{ key: ["Up", "Down"], what: Words.event }, { key: "BackSpace", what: Words.back, clickable: true }]
   // Shown under the header (KeyLegend).
   readonly property var legend: focused ? eventKeys : keys.filter(entry => !entry.unlisted)
 

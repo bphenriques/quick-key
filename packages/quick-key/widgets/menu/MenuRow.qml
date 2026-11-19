@@ -20,7 +20,7 @@ ListItem {
   KeyHint {
     key: row.item.key ?? ""
     paired: row.item.paired ?? false
-    chars: row.chars
+    chars: MenuKeys.gutter(row.chars)
   }
 
   MenuStatus {

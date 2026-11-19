@@ -13,6 +13,8 @@ ShellRoot {
   property string ticked: ""
   // How often the plugin whose watch repeats its line changed state.
   property int repeats: 0
+  // The minute the timed task was last written as due.
+  property string dueMinute: ""
 
   Suite {
     id: suite
@@ -128,8 +130,17 @@ ShellRoot {
       },
       {
         name: "a timed task reminds as it falls due",
-        start: () => Plugins.get("tasks").remind(),
-        until: () => (Plugins.get("reminded")?.text ?? "").startsWith("Now ")
+        // Due this minute only for a minute: written again as the case starts, and again should the minute turn before it is read.
+        until: () => {
+          const minute = Qt.formatDateTime(Clock.date, "yyyy-MM-ddTHH:mm");
+          const tasks = Plugins.get("tasks");
+          if (tasks.tasks.some(task => task.id === "b" && task.due === minute)) tasks.remind();
+          else if (root.dueMinute !== minute) {
+            root.dueMinute = minute;
+            root.tasks("write");
+          }
+          return (Plugins.get("reminded")?.text ?? "").startsWith("Now ");
+        }
       },
       {
         name: "opening the menu leaves a fresh tasks file alone",

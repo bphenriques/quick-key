@@ -50,7 +50,7 @@ ListView {
   onFocusedChanged: follow()
   onHeightChanged: follow()
 
-  // The left column's lines on `day`: "All day" (with its last day when later), else start and end, `…` for another day.
+  // The left column's lines on `day`: "All day" (with its last day when later), else start and end, `...` for another day.
   function times(event, day) {
     const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
     // Ending at midnight, an event ends on the day before.
@@ -58,8 +58,8 @@ ListView {
     if (event.allDay || (event.start <= day && event.end >= dayEnd))
       return ["All day", event.end > dayEnd ? "to " + Clock.format(last, "%a %-d") : ""];
     return [
-      event.start < day ? "…" : Clock.format(event.start, "%H:%M"),
-      event.end > dayEnd ? "…" : event.end > event.start ? Clock.format(event.end, "%H:%M") : ""
+      event.start < day ? Words.ellipsis : Clock.format(event.start, "%H:%M"),
+      event.end > dayEnd ? Words.ellipsis : event.end > event.start ? Clock.format(event.end, "%H:%M") : ""
     ];
   }
 

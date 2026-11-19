@@ -3,19 +3,23 @@ import Quickshell
 import qs.services
 import qs.ui
 
-// The ask plugin's protocol with its command (docs/src/plugins.md), each case a plugin and a command of its own; qs.ui is imported for them.
+// The ask plugin over ACP with a stand-in agent (agent.py), each case a plugin and an agent of its own; qs.ui is imported for them.
 ShellRoot {
   id: root
 
   property bool submitted: false
   property bool retried: false
   property bool refused: false
+  // Whether a bare y, waiting on an approval, left it alone.
+  property string bareY: ""
   property bool renewed: false
   property bool wasReset: false
   property int visitStep: 0
   property bool failedSent: false
   property int chooseStep: 0
   property var backs: []
+  property int streamStep: 0
+  property real byeAt: 0
 
   // Sends a prompt once the plugin has loaded, then whether `done` holds for it.
   function asked(name, done) {
@@ -28,10 +32,14 @@ ShellRoot {
   Suite {
     cases: [
       {
-        name: "the session it names is kept, and an approval is answered on its stdin",
+        name: "the session it opens is kept, and an approval is answered by the user, never by a bare y, and stays as a step",
         until: () => root.asked("approved", ask => {
-          if (ask.approval === "rm") ask.answerApproval(true);
-          return ask.session === "s1" && ask.exchanges[0].reply === "allow";
+          if (ask.approval === "rm") {
+            ask.typing = false;
+            root.bareY = ask.act("y") || ask.approval !== "rm" ? "allowed" : "kept";
+            ask.answerApproval(true);
+          }
+          return root.bareY === "kept" && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";
         })
       },
       {
@@ -66,7 +74,7 @@ ShellRoot {
         }
       },
       {
-        name: "stopping ends the command, which may trap its end",
+        name: "stopping cancels the turn, which the agent hears",
         until: () => root.asked("stopped", ask => {
           if (ask.busy && ask.activity === "thinking") {
             root.refused = ask.submit("more", true, "") === false;
@@ -145,7 +153,7 @@ ShellRoot {
             root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
             return false;
           case 1:
-            root.chooseStep = ask.turn?.phase === "choosing" && ask.turn.options.length === 2 && ask.choices.length === 2 && ask.escapeAction === "aside" && ask.act("Escape") && ask.aside
+            root.chooseStep = ask.turn?.phase === "choosing" && ask.turn.options.length === 2 && ask.choices.length === 2 && ask.escapeAction === "type" && ask.act("Escape") && ask.aside
               && ask.choices.length === 0 && !ask.act("1") && ask.submit("pick again", false, "") ? 2 : -1;
             return false;
           case 2:
@@ -184,6 +192,33 @@ ShellRoot {
             root.retried = ask.send("again", "");
           }
           return ask.exchanges.length === 1 && ask.exchanges[0].reply === "again" && Plugins.get("refollowed")?.text === "done";
+        }
+      },
+      {
+        name: "an answer streams in; the agent stays between turns, and once it is gone the next turn loads the session; a tool toolMatch names runs toolRun",
+        until: () => {
+          const ask = Plugins.get("streamer");
+          if (!ask) return false;
+          const log = Plugins.get("s4log")?.text ?? "";
+          switch (root.streamStep) {
+          case 0:
+            root.streamStep = ask.send("stream", "") ? 1 : -1;
+            break;
+          case 1:
+            if (ask.busy && ask.exchanges[0].reply === "one ") root.streamStep = 2;
+            break;
+          case 2:
+            if (!ask.busy) root.streamStep = ask.exchanges[0].reply === "one two three" && ask.send("again", "") ? 3 : -1;
+            break;
+          case 3:
+            if (!ask.busy && log === "initialize" && ask.send("bye", "")) root.streamStep = 4;
+            break;
+          case 4:
+            if (!ask.busy && !root.byeAt) root.byeAt = Date.now();
+            if (root.byeAt && Date.now() - root.byeAt > 1000) root.streamStep = ask.send("tool", "") ? 5 : -1;
+            break;
+          }
+          return root.streamStep === 5 && !ask.busy && ask.exchanges[ask.exchanges.length - 1].reply === "added" && log === "load s4" && Plugins.get("synced")?.text === "synced";
         }
       }
     ]
