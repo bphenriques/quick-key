@@ -51,10 +51,14 @@ ColumnLayout {
 
   spacing: Config.theme.spacing
 
-  RowLayout {
+  // A row, lit under the pointer as anything clickable is; outset by its padding, so its glyph keeps the prompt's column.
+  ListItem {
     Layout.fillWidth: true
+    Layout.leftMargin: -Config.theme.itemPaddingX
+    Layout.rightMargin: -Config.theme.itemPaddingX
     visible: root.note !== ""
-    spacing: Config.theme.spacing
+    verticalPadding: Config.theme.itemPaddingY / 2
+    onActivated: root.noteTapped()
 
     Item {
       implicitWidth: Metrics.line
@@ -74,10 +78,6 @@ ColumnLayout {
       elide: Text.ElideRight
       maximumLineCount: 1
       text: root.note
-    }
-
-    TapHandler {
-      onTapped: root.noteTapped()
     }
   }
 
