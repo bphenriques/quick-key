@@ -83,137 +83,36 @@ Scope {
     Layout.preferredWidth: implicitHeight > 0 ? Layout.preferredHeight * implicitWidth / implicitHeight : 0
   }
 
-  // A prompt and what came of it, as a conversation: yours on the right, his on the left with a button copying it, then its links, its options while they wait (a digit or a click picks one), or the wait for it.
-  component Exchange: ColumnLayout {
-    id: exchange
+  // A prompt and what came of it, drawn by its state (Exchange), then its links as rows.
+  component Turn: ColumnLayout {
+    id: turn
     required property int index
-    readonly property var turn: panel.plugin.exchanges[index] ?? ({})
-    readonly property bool latest: index === panel.plugin.exchanges.length - 1
-    readonly property bool waiting: panel.plugin.busy && latest
-    readonly property bool failed: !!turn.error && !turn.stopped
-    // A line that is only a link shows once, as its row below.
-    readonly property string said: turn.error || (turn.reply ?? "").split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
-    readonly property real widest: panel.threadWidth * 0.85
+    readonly property var exchange: panel.plugin.exchanges[index] ?? ({})
+    readonly property var drawn: panel.plugin.describe(exchange)
     Layout.fillWidth: true
     spacing: Config.theme.spacing / 2
 
-    Bubble {
-      mine: true
-      maximumWidth: exchange.widest
-
-      Thumbnail {
-        path: exchange.turn.image ?? ""
-      }
-
-      Label {
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        text: exchange.turn.prompt ?? ""
-      }
-    }
-
-    RowLayout {
+    Exchange {
       Layout.fillWidth: true
-      visible: exchange.said !== ""
-      spacing: Config.theme.spacing / 2
-
-      Bubble {
-        Layout.alignment: Qt.AlignTop | Qt.AlignLeft
-        tone: exchange.failed ? "alert" : ""
-        maximumWidth: exchange.widest
-        // A table's rows stay whole, so its columns line up; what is wider than the bubble is cut.
-        clip: true
-
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Config.theme.spacing
-
-          Icon {
-            Layout.alignment: Qt.AlignTop
-            visible: exchange.failed
-            tone: "alert"
-            glyph: Glyphs.failed
-            size: Metrics.line
-          }
-
-          TextField {
-            Layout.fillWidth: true
-            // A stop was asked for, so it only reports; a failure needs attention.
-            tone: exchange.turn.stopped ? "dim" : exchange.failed ? "alert" : "normal"
-            wrapMode: exchange.turn.table ? TextEdit.NoWrap : TextEdit.Wrap
-            text: exchange.said
-            readOnly: true
-            selectByMouse: true
-            persistentSelection: true
-            activeFocusOnPress: false
-            copyOnSelect: true
-          }
-        }
-      }
-
-      // Copies the whole answer; a selection copies its part.
-      ListItem {
-        Layout.alignment: Qt.AlignTop
-        visible: !exchange.turn.error
-        onActivated: Quickshell.clipboardText = exchange.said
-
-        Icon {
-          tone: "dim"
-          glyph: Glyphs.copy
-          size: Metrics.line
-        }
-      }
-
-      // Fills the row, so the exchange is as wide as the conversation and yours sits on its right (a layout grows no wider than its children).
-      Item {
-        Layout.fillWidth: true
-      }
+      maximumWidth: panel.threadWidth * 0.85
+      question: turn.drawn.question ?? ""
+      image: turn.drawn.image ?? ""
+      // A line that is only a link shows once, as its row below.
+      text: (turn.drawn.text ?? "").split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
+      phase: turn.drawn.phase ?? "answered"
+      // The time too, once the wait is noticeable, which only the panel's clock counts.
+      activity: [turn.drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
+      options: turn.drawn.options ?? []
+      table: !!turn.drawn.table
+      picking: !panel.plugin.draft
+      copyable: true
+      onPicked: index => panel.plugin.pick(index)
     }
 
     Repeater {
-      model: panel.links(exchange.turn.reply ?? "")
+      model: panel.links(turn.exchange.reply ?? "")
 
       LinkRow {}
-    }
-
-    Repeater {
-      model: exchange.latest ? panel.plugin.choices : []
-
-      ListItem {
-        id: choice
-        required property int index
-        required property string modelData
-        Layout.fillWidth: true
-        onActivated: panel.plugin.pick(choice.index)
-
-        KeyHint {
-          key: String(choice.index + 1)
-        }
-
-        Label {
-          Layout.fillWidth: true
-          text: choice.modelData
-        }
-      }
-    }
-
-    // An approval needs attention; the rest only reports: the tool in use, and the time once the wait is noticeable.
-    RowLayout {
-      visible: exchange.waiting
-      spacing: Config.theme.spacing
-
-      Spinner {
-        tone: "dim"
-        size: Metrics.line
-        mood: panel.plugin.approval ? "attention" : "working"
-      }
-
-      Label {
-        Layout.fillWidth: true
-        tone: panel.plugin.approval ? "warning" : "dim"
-        wrapMode: Text.Wrap
-        text: panel.plugin.approval ? "Allow " + panel.plugin.approval + "?" : panel.plugin.activity ? panel.plugin.activity + " · " + panel.plugin.waited + "s" : panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""
-      }
     }
   }
 
@@ -293,7 +192,7 @@ Scope {
           Repeater {
             model: panel.plugin.exchanges.length
 
-            Exchange {}
+            Turn {}
           }
         }
       }

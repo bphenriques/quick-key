@@ -106,6 +106,30 @@ Plugin {
     return !!exchange?.input && watched;
   }
 
+  // An exchange by its phase, as an Exchange draws it: the last one working, or waiting on you, while busy, and choosing while its options wait.
+  function describe(exchange) {
+    const latest = exchange === exchanges[exchanges.length - 1];
+    const phase = latest && busy ? (approval ? "waiting" : "working")
+      : exchange.stopped ? "stopped" : exchange.error ? "failed" : latest && choices.length > 0 ? "choosing" : "answered";
+    return {
+      question: exchange.prompt,
+      image: exchange.image,
+      text: phase === "waiting" ? "Allow " + approval + "?" : exchange.error || exchange.reply,
+      phase: phase,
+      activity: phase === "working" ? activity : "",
+      // While it works, the answer it follows, so the question shows what it answers.
+      context: phase === "working" ? exchanges[exchanges.indexOf(exchange) - 1]?.reply ?? "" : "",
+      options: phase === "choosing" ? choices : [],
+      table: !!exchange.table
+    };
+  }
+
+  // The last exchange, for the menu, when it shows it (Plugin.turn).
+  function report() {
+    const last = exchanges[exchanges.length - 1];
+    if (seen(last)) turn = describe(last);
+  }
+
   // `after` runs once the turn is answered.
   function send(prompt, image = root.image, after = "", input = false) {
     prompt = prompt.trim();
@@ -125,6 +149,7 @@ Plugin {
     request.complaint = "";
     request.command = commandLine(settings.ask, prompt, session, image);
     request.running = true;
+    report();
     return true;
   }
 
@@ -142,10 +167,11 @@ Plugin {
     if (answer.session) session = answer.session;
     if (answer.approval) {
       approval = answer.approval;
-      if (seen(exchanges[exchanges.length - 1])) reply = { question: exchanges[exchanges.length - 1].prompt, text: "Allow " + approval + "?", tone: "warning" };
+      if (seen(exchanges[exchanges.length - 1])) report();
       else notify("Allow " + approval + "?");
     } else if (answer.status) {
       activity = answer.status;
+      report();
     } else if (answer.reply !== undefined || answer.error !== undefined) {
       finish(answer);
     }
@@ -156,7 +182,7 @@ Plugin {
     exchanges = exchanges.slice(0, -1).concat([last]);
     busy = false;
     approval = "";
-    if (seen(last)) reply = { question: last.prompt, text: last.error || last.reply, tone: last.error ? "alert" : "", table: last.table, options: last.options };
+    if (seen(last)) report();
     else notify(last.error || [last.reply].concat(last.options).join(" · "));
     if (last.reply) exec(last.after);
     if (!shown && !seen(last)) unread = true;
@@ -253,7 +279,7 @@ Plugin {
 
     function onWatchingChanged() {
       root.visited = false;
-      root.reply = null;
+      root.turn = null;
     }
   }
 

@@ -6,7 +6,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 |---|---|
 | `Label` | all text, coloured by `tone`: `normal`, `dim`, `primary`, `warning` or `alert`; bold when `strong`, the one to find first (a key, the clock, a heading) |
 | `Tone` | the colour of each tone, `dim` being the normal colour at reduced alpha; a panel's background; a tone washed behind something (a highlight, a track) |
-| `Metrics` | the font's character width and line height, for sizes given in characters or lines |
+| `Metrics` | the font's character width (`cell`) and line height (`line`), for sizes given in characters or lines, and a line of text's `width(text)` |
 | `Icon` | a glyph or an image in the same square; `monochrome` draws an image in greys |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports |
 | `KeyHint` | a key in its gutter |
@@ -15,7 +15,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `TextField` | text typed in, plain and wrapped, coloured by `tone`; a dim `placeholder` while empty, and `copyOnSelect` to copy what the mouse selects |
 | `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
 | `Prompt` | a line of text to send: its `key` dim while it waits (`TAB` for a level's input), else a glyph, in one column as wide as the key's name, a spinner in their place while `busy` (what it sends to takes no text), then a `TextArea`; a click while waiting reaches `tapped`; its `slot` is the column an `Answer` over it lines up with |
-| `Answer` | what was said about what a `Prompt` sent, over it: a `question` line and `lines` (3) reserved lines of text, a `table`'s rows unwrapped or `options` as digit keys (`picking` while they all show, unless set `aside`), the last line saying how to continue when the rest does not fit; `tone` alert or warning, lit while `current`, a click reaching `activated` |
+| `Exchange` | one turn of a conversation as `Bubble`s, the `question` on the right and the answer on the left, drawn by its `phase` (working with a spinner and `activity`, answered, choosing with `options` as digit keys while `picking`, waiting, failed in alert, stopped); `context` the answer it follows, dim over the question; with `lines` it is compact, the answer cut there and `overflows` saying what it cannot hold, else it all shows, selectable, with a copy button (`copyable`) and options as rows (`picked`) |
 | `Bubble` | a message in a conversation, yours (`mine`) on the right in the primary wash, the other's on the left, as wide as its content up to `maximumWidth`; `tone` alert for one that failed |
 | `Spinner` | a wait in one block cell, its `mood` saying whose turn it is: `working` circles a quarter block, `attention` knocks; its own tempo, still when animations are off |
 | `Divider` | a line between two groups of rows, in the theme's `border` |

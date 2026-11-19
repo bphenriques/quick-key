@@ -131,7 +131,7 @@ What it gives:
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.
-- `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `reply`, `{ question, text, tone, table, options }`, what it says about the text (`question` what it answered), shown over the input while watched (`alert` when it failed, the input getting the text back; `warning` when it waits on you).
+- `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `turn`, `{ question, context, text, phase, activity, options, table }`, the conversation's turn as the menu draws it while watched, `phase` one of `working` (with `activity`, and `context` the answer it follows), `answered`, `choosing` (`options` a digit picks), `waiting` (on you), `failed` (the input getting the text back) or `stopped`; null before the first.
 - `expand(back)` to show the conversation in its own panel, when the answer over the input cannot fit it: `back(true)` when left by stepping back, so the menu shows again where it was, `back(false)` when left any other way; false without a panel.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.

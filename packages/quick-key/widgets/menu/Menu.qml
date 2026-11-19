@@ -86,33 +86,78 @@ Scope {
 
     inputShown: root.menu.input !== null
     inputFocused: root.menu.inputFocused
-    // What the input's plugin said, over the line to send: Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background.
+    // The conversation's last turn (Exchange, drawn by its state) over the line to send: Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background.
     input: ColumnLayout {
+      id: island
       spacing: Config.theme.spacing / 2
 
-      Answer {
-        id: answer
-        visible: root.menu.reply !== null
-        question: root.menu.reply?.question ?? root.menu.lastSent
-        text: root.menu.reply?.text ?? ""
-        tone: root.menu.reply?.tone ?? ""
-        table: !!root.menu.reply?.table
-        options: root.menu.choices
-        // Running, the options wait as text: nothing to pick until the answer is in.
-        aside: root.menu.choicesAside || root.menu.inputBusy
-        glyph: root.menu.inputPlugin?.glyph ?? ""
-        slot: prompt.slot
+      // Lit while Tab has it; a click, or Return then, opens the plugin's panel on the whole conversation.
+      ListItem {
+        id: last
+        // The tallest turn of the visit, which the island keeps so it grows and never shrinks within it.
+        property real held: 0
+        // A turn it cannot hold opens the plugin's panel by itself, once.
+        readonly property bool expands: visible && exchange.overflows && root.menu.turn !== root.menu.expandedTurn
+        visible: root.menu.turn !== null
+        Layout.fillWidth: true
+        // Outset by its padding, so the bubbles line up with the prompt.
+        Layout.leftMargin: -Config.theme.itemPaddingX
+        Layout.rightMargin: -Config.theme.itemPaddingX
+        onVisibleChanged: if (!visible) held = 0
+        onExpandsChanged: if (expands) settle.restart()
+        verticalPadding: Config.theme.itemPaddingY / 2
         current: root.menu.answerFocused
         onActivated: root.menu.expand()
+
+        // Decided once the turn is laid out, so a line cut only for a moment opens nothing, and outside the binding that noticed it.
+        Timer {
+          id: settle
+          interval: 100
+          onTriggered: if (last.expands) root.menu.overflowed()
+        }
+
+        // Held once laid out, so a height the text has only for a moment, before it has its width, is not kept.
+        Timer {
+          id: latch
+          interval: 100
+          onTriggered: last.held = Math.max(last.held, exchange.implicitHeight)
+        }
+
+        // The turn at the bottom of the height held, next to the prompt, as a chat grows.
+        Item {
+          Layout.fillWidth: true
+          implicitHeight: Math.max(exchange.implicitHeight, last.held)
+
+          Exchange {
+            id: exchange
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            onImplicitHeightChanged: latch.restart()
+            lines: 3
+            maximumWidth: island.width * 0.85
+            question: root.menu.turn?.question ?? ""
+            context: root.menu.turn?.context ?? ""
+            text: root.menu.turn?.text ?? ""
+            phase: root.menu.turn?.phase ?? "answered"
+            activity: root.menu.turn?.activity ?? ""
+            options: root.menu.choices
+            table: !!root.menu.turn?.table
+            // Set aside, the options wait as text and the digits type again.
+            picking: root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && fits
+          }
+        }
       }
 
       Prompt {
         id: prompt
         Layout.fillWidth: true
         active: root.menu.inputFocused
-        busy: root.menu.inputBusy
+        // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
+        busy: root.menu.inputBusy && root.menu.turn === null
         key: "Tab"
-        placeholder: root.menu.input?.desc ?? ""
+        // What Return does next: ask, reply, or pick.
+        placeholder: !root.menu.turn ? root.menu.input?.desc ?? "" : root.menu.turn.phase === "working" ? "Answering…" : exchange.picking ? "A digit picks, or reply…" : "Reply…"
         maxLines: 1
         onTapped: root.menu.inputFocused = true
         onUnfocused: root.menu.inputFocused = false
@@ -121,17 +166,17 @@ Scope {
         onOwnerChanged: set(root.menu.draftOf(owner))
         Component.onCompleted: set(root.menu.draftOf(owner))
         onTextChanged: root.menu.keepDraft(text)
-        // Tab moves on to the answer, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits and Escape.
+        // Tab moves on to the turn, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits and Escape.
         onKeyPressed: event => {
           const send = MenuKeys.sends(event);
           const name = MenuKeys.name(event);
           // A choice waiting takes the digits whether or not they all show here, so they never type.
-          const waiting = answer.visible && answer.options.length > 0 && !answer.aside && prompt.text === "";
+          const waiting = root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && prompt.text === "";
           if (send) prompt.send(send === "background");
           else if (waiting && /^[1-9]$/.test(name)) {
-            if (answer.picking) root.menu.pick(Number(name) - 1);
+            if (exchange.picking) root.menu.pick(Number(name) - 1);
           } else if (waiting && name === "Escape") root.menu.choicesAside = true;
-          else if (name === "Tab" && answer.visible) {
+          else if (name === "Tab" && last.visible) {
             root.menu.inputFocused = false;
             root.menu.answerFocused = true;
           } else if (name === "Tab" || name === "Backtab") root.menu.inputFocused = false;
@@ -155,12 +200,12 @@ Scope {
           }
         }
 
-        // A failed answer gives back what was sent, so Return retries it.
+        // A failed turn gives back what was sent, so Return retries it.
         Connections {
           target: root.menu.inputPlugin
 
-          function onReplyChanged() {
-            if (root.menu.inputPlugin.reply?.tone === "alert" && prompt.text === "") prompt.set(root.menu.lastSent);
+          function onTurnChanged() {
+            if (root.menu.inputPlugin.turn?.phase === "failed" && prompt.text === "") prompt.set(root.menu.lastSent);
           }
         }
       }

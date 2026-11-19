@@ -153,10 +153,10 @@ ShellRoot {
             root.visitStep = menu.submit("one", false) ? 1 : -1;
             return false;
           case 1:
-            root.visitStep = agent.reply?.text === "Add: one." && menu.submit("two", false) ? 2 : -1;
+            root.visitStep = agent.turn?.text === "Add: one." && menu.submit("two", false) ? 2 : -1;
             return false;
           case 2:
-            if (agent.reply?.text !== "two") return false;
+            if (agent.turn?.text !== "two") return false;
             const token = menu.watching;
             menu.answerFocused = true;
             menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r" });
@@ -165,7 +165,7 @@ ShellRoot {
             const holding = Plugins.watching === menu.watching && menu.watching === token;
             agent.typing = false;
             agent.act("Escape");
-            root.visitStep = held && holding && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.expandedWatching === "" && agent.reply?.text === "two" ? 3 : -1;
+            root.visitStep = held && holding && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.expandedWatching === "" && agent.turn?.text === "two" ? 3 : -1;
             return false;
           }
           menu.hide();

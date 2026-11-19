@@ -37,15 +37,15 @@ Scope {
   property string expandedWatching: ""
   // What Plugins.watching is set to.
   readonly property string watching: open ? inputToken : expandedWatching
-  // What the input's plugin said about the text (Plugin.reply), its options a digit picks until Escape sets them aside.
-  readonly property var reply: inputPlugin?.reply ?? null
-  readonly property var choices: reply?.options ?? []
+  // The turn of the conversation the input started (Plugin.turn), its options a digit picks until Escape sets them aside.
+  readonly property var turn: inputPlugin?.turn ?? null
+  readonly property var choices: turn?.options ?? []
   property bool choicesAside: false
-  onReplyChanged: {
+  onTurnChanged: {
     choicesAside = false;
-    if (!reply) answerFocused = false;
+    if (!turn) answerFocused = false;
   }
-  // The text last sent: the answer's question, and what a failed answer gives back to the input.
+  // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
   // What the level lists, read once for every entry that acts on it.
   readonly property var levelList: listed(level?.entry?.list)
@@ -282,7 +282,7 @@ Scope {
     text = text.trim();
     if (!text || !input || inputBusy) return false;
     // The format wraps what starts a conversation; once the plugin has answered, the next send answers it as typed.
-    const sent = input.format && (!reply || reply.tone === "alert") ? input.format.replace(/\{text\}/g, () => text) : text;
+    const sent = input.format && (!turn || turn.phase === "failed") ? input.format.replace(/\{text\}/g, () => text) : text;
     if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
     // A plugin that failed to load takes nothing.
     else if (!inputPlugin || inputPlugin.submit(sent, background, input.after ?? "") === false) return false;
@@ -310,6 +310,14 @@ Scope {
       expandedWatching = "";
     });
     if (!opened) expandedWatching = "";
+  }
+
+  // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
+  property var expandedTurn: null
+  function overflowed() {
+    if (turn === expandedTurn || turn?.phase === "working") return;
+    expandedTurn = turn;
+    expand();
   }
 
   // Keys while the answer has them: Return opens the plugin's panel, Tab and Escape give them to the body, Shift+Tab back to the input.

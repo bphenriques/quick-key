@@ -103,19 +103,19 @@ ShellRoot {
         }
       },
       {
-        name: "while the menu shows its input, the answer shows there and stays while the next send runs, unread stays off, and the next send continues the conversation; a new visit starts fresh",
+        name: "while the menu shows its input, its turn shows there, the next working under the answer it follows, unread stays off, and the next send continues the conversation; a new visit starts fresh",
         until: () => {
           const ask = Plugins.get("visitor");
           if (!ask) return false;
           if (root.visitStep === 0) {
             Plugins.watching = "visitor\n{}";
             root.visitStep = ask.submit("one", false, "") ? 1 : 0;
-          } else if (root.visitStep === 1 && ask.reply?.text === "one") {
-            root.visitStep = ask.submit("two", false, "") && ask.busy && ask.reply?.text === "one" ? 2 : -1;
-          } else if (root.visitStep === 2 && ask.reply?.text === "two") {
+          } else if (root.visitStep === 1 && ask.turn?.text === "one") {
+            root.visitStep = ask.submit("two", false, "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" && ask.turn.context === "one" ? 2 : -1;
+          } else if (root.visitStep === 2 && ask.turn?.text === "two" && ask.turn.phase === "answered") {
             root.visitStep = ask.exchanges.length === 2 && !ask.unread ? 3 : -1;
             Plugins.watching = "";
-            root.visitStep = ask.reply === null && ask.submit("three", true, "") ? root.visitStep + 1 : -1;
+            root.visitStep = ask.turn === null && ask.submit("three", true, "") ? root.visitStep + 1 : -1;
           }
           return root.visitStep === 4 && !ask.busy && ask.exchanges.length === 1 && ask.unread;
         }
@@ -129,7 +129,7 @@ ShellRoot {
             Plugins.watching = "unanswered\n{}";
             root.failedSent = ask.submit("lost", false, "");
           }
-          const done = ask.reply?.tone === "alert" && ask.draft === "";
+          const done = ask.turn?.phase === "failed" && ask.draft === "";
           if (done) Plugins.watching = "";
           return done;
         }
@@ -145,7 +145,7 @@ ShellRoot {
             root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
             return false;
           case 1:
-            root.chooseStep = ask.reply?.options?.length === 2 && ask.choices.length === 2 && ask.escapeAction === "aside" && ask.act("Escape") && ask.aside
+            root.chooseStep = ask.turn?.phase === "choosing" && ask.turn.options.length === 2 && ask.choices.length === 2 && ask.escapeAction === "aside" && ask.act("Escape") && ask.aside
               && ask.choices.length === 0 && !ask.act("1") && ask.submit("pick again", false, "") ? 2 : -1;
             return false;
           case 2:
@@ -155,7 +155,7 @@ ShellRoot {
             root.chooseStep = ask.exchanges[ask.exchanges.length - 1].prompt === "b" && ask.exchanges[ask.exchanges.length - 1].reply === "b" && ask.submit("a table", false, "") ? 4 : -1;
             return false;
           }
-          const done = root.chooseStep === 4 && ask.reply?.table === true && ask.reply.options.length === 0;
+          const done = root.chooseStep === 4 && ask.turn?.table === true && ask.turn.phase === "answered" && ask.turn.options.length === 0;
           if (done) Plugins.watching = "";
           return done;
         }
