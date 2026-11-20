@@ -511,8 +511,7 @@ Scope {
         if (typeof part !== "string" && part.key) lines.push("- `Ctrl+" + part.key + "` " + (part.desc ?? part.status ?? ""));
       }
     }
-    return lines.join("
-");
+    return lines.join("\n");
   }
 
   // What a plugin's panel asks for (Ask's C-r): a list filtered on a level of its own.
