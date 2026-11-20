@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin adds a status, a list or a surface. List it by name under `plugins`, with its settings beside it. Nothing loads unlisted, and one that fails to load is logged and left out.
+A plugin adds a status, a list or a surface. List it by name under `plugins`, with its settings beside it. Nothing loads unlisted, and one that fails to load is logged and left out. What needs more of one tool is a plugin.
 
 ## Without QML
 
@@ -71,9 +71,9 @@ List one by name to use it: `plugins.dunst = { };`.
 
 ## Ask
 
-A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation and its keys in the bar beside the top level's statuses, the prompt saying who it asks (`placeholder`, by default "Ask {title}", after the prompt glyph every input shares, or its own `promptGlyph`) until a turn says what Return does next, and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden, unless the menu shows the answer above the input that sent it.
+A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, its prompt under the conversation and focused, being what it opens for, its keys in the bar beside the top level's statuses, the prompt saying who it asks (`placeholder`, by default "Ask {title}", after the prompt glyph every input shares, or its own `promptGlyph`) until a turn says what Return does next, and opening either closes the other. Its links show as rows, and a notification arrives when it answers while hidden, unless the menu shows the answer above the input that sent it.
 
-The one required setting is `ask`: an agent speaking [ACP](https://agentclientprotocol.com) on its stdio. It starts with the first turn and stays for the next ones, so a turn skips its start and its session's loading; after `idle` minutes without one (10) it stops, and the next turn starts it again and loads the session. Its answer streams in as it writes it, in Markdown, ACP's text format: the conversation renders it (an image as its alt text, `<` as itself, so nothing is fetched), the menu's island shows it plain. A closing numbered list is the options a digit picks.
+The one required setting is `ask`: an agent speaking [ACP](https://agentclientprotocol.com) on its stdio. It starts with the first turn and stays for the next ones, so a turn skips its start and its session's loading; after `idle` minutes without one (10) it stops, and the next turn starts it again and loads the session. Its answer streams in as it writes it, in Markdown, ACP's text format: the conversation renders it (an image as its alt text, `<` as itself, so nothing is fetched), the menu's island shows it plain. A closing numbered list is the options a digit picks: its structure is the Markdown's own, never guessed from plain text.
 
 ```nix
 # Claude, through Zed's ACP adapter; `open` resumes its session in a terminal.
@@ -124,7 +124,7 @@ What it gives:
 
 - `glyph`, `text`, `detail`, `glyphs` (before the detail, in its tone), `active` and `tone`, shown wherever its name is a `status`, and `fields` by name for an entry's `format`.
 - `fieldTones`: a tone per field, kept when a `format` shows it (`{ updated: "warning" }` on an old sync).
-- `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it beside its keys.
+- `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it beside its keys, in `alert`.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items`, `select(id)` and `run(id, key)` (an action from an item's own menu) for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `actions`: actions by name, as the built-in ones (`{ icon, detail, available, run }`), which an entry of a level listing it names in its `action` (the tasks' `sort`).
