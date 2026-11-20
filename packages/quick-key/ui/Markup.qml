@@ -7,6 +7,10 @@ import qs
 Singleton {
   readonly property var tableSeparator: /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/
   readonly property var listItem: /^(\s*)([-*+]|(\d+)[.)])\s+(.*)$/
+  readonly property var fenceLine: /^\s*(`{3,}|~{3,})/
+  readonly property var headingLine: /^\s{0,3}#{1,6}\s/
+  readonly property var ruleLine: /^\s{0,3}([-*_])(\s*\1){2,}\s*$/
+  readonly property var quoteLine: /^\s{0,3}>/
 
   // As compact lines show it: its marks gone, an image or a link by its text, a table's rows as columns.
   function plain(markdown) {
@@ -16,60 +20,104 @@ Singleton {
 
   // As `Markdown` renders it: rich text of the kit's own making (AGENTS.md rule 9), the answer's text escaped and an image or a link by its text, so nothing is fetched and no HTML runs.
   function html(markdown) {
-    return blocks(markdown.replace(/\r/g, "").split("\n"));
+    return blocks(linesOf(markdown));
+  }
+
+  // Its blocks gathered into pieces of at least `size` characters, as written, as `Markdown` renders one apiece: a stream redraws only its last, and an answer arriving whole is a few documents, not one per block.
+  function split(markdown, size) {
+    const lines = linesOf(markdown);
+    const out = [];
+    let first = -1;
+    let last = 0;
+    let length = 0;
+    for (const [start, end] of spans(lines)) {
+      if (first < 0) first = start;
+      last = end;
+      length += lines.slice(start, end).join("\n").length;
+      if (length < size) continue;
+      out.push(lines.slice(first, end).join("\n"));
+      first = -1;
+      length = 0;
+    }
+    if (first >= 0) out.push(lines.slice(first, last).join("\n"));
+    return out;
+  }
+
+  function linesOf(markdown) {
+    return markdown.replace(/\r/g, "").split("\n");
   }
 
   function blocks(lines) {
     const out = [];
     // A table already ends in its gap (closing).
     const top = () => out.length && !out[out.length - 1].endsWith("</table>") ? Config.theme.spacing : 0;
-    let i = 0;
-    while (i < lines.length) {
-      const line = lines[i];
-      const fence = line.match(/^\s*(`{3,}|~{3,})/);
-      if (!line.trim()) {
-        i++;
-      } else if (fence) {
-        // Unclosed, as while it streams in, it runs to the end.
-        const close = lines.findIndex((next, j) => j > i && next.trim().startsWith(fence[1]));
-        const end = close < 0 ? lines.length : close;
-        out.push(code(lines.slice(i + 1, end), top()));
-        i = end + 1;
-      } else if (startsTable(lines, i)) {
-        let end = i + 2;
-        while (end < lines.length && lines[end].includes("|") && lines[end].trim()) end++;
-        out.push(table(cells(line), cells(lines[i + 1]), lines.slice(i + 2, end).map(cells), top()));
-        i = end;
-      } else if (/^\s{0,3}#{1,6}\s/.test(line)) {
-        out.push(paragraph("<b>" + inline(line.replace(/^\s*#+\s+/, "").replace(/\s+#+\s*$/, "")) + "</b>", top()));
-        i++;
-      } else if (/^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(line)) {
-        out.push(rule(top()));
-        i++;
-      } else if (/^\s{0,3}>/.test(line)) {
-        let end = i;
-        while (end < lines.length && /^\s{0,3}>/.test(lines[end])) end++;
-        out.push(quote(blocks(lines.slice(i, end).map(quoted => quoted.replace(/^\s{0,3}>\s?/, ""))), top()));
-        i = end;
-      } else if (listItem.test(line)) {
-        const items = [];
-        while (i < lines.length) {
-          const item = lines[i].match(listItem);
-          if (item) items.push({ indent: item[1].length, number: item[3] === undefined ? 0 : parseInt(item[3]), text: item[4] });
-          else if (/^\s{2,}\S/.test(lines[i])) items[items.length - 1].text += " " + lines[i].trim();
-          else if (lines[i].trim() || !/^\s*([-*+]|\d+[.)])\s|^\s{2,}\S/.test(lines[i + 1] ?? "")) break;
-          i++;
-        }
-        out.push(list(items, top()));
-      } else {
-        let end = i + 1;
-        while (end < lines.length && lines[end].trim() && !interrupts(lines, end)) end++;
-        out.push(paragraph(inline(lines.slice(i, end).map(joined => joined.trim()).join(" ")), top()));
-        i = end;
-      }
-    }
+    for (const [start, end] of spans(lines)) out.push(block(lines.slice(start, end), top()));
     // Nothing follows the last table, so its gap goes.
     return out.join("").replace(/<tr><td colspan="\d+" style="padding-top:\d+px; font-size:1px"><\/td><\/tr><\/table>$/, "</table>");
+  }
+
+  // Where each block starts and ends, [start, end), the blank lines between them left out.
+  function spans(lines) {
+    const out = [];
+    for (let i = 0; i < lines.length;) {
+      if (!lines[i].trim()) {
+        i++;
+        continue;
+      }
+      const end = blockEnd(lines, i);
+      out.push([i, end]);
+      i = end;
+    }
+    return out;
+  }
+
+  function blockEnd(lines, i) {
+    const line = lines[i];
+    const fence = line.match(fenceLine);
+    let end = i + 1;
+    if (fence) {
+      // Unclosed, as while it streams in, it runs to the end.
+      const close = lines.findIndex((next, j) => j > i && next.trim().startsWith(fence[1]));
+      return close < 0 ? lines.length : close + 1;
+    }
+    if (startsTable(lines, i)) {
+      end = i + 2;
+      while (end < lines.length && lines[end].includes("|") && lines[end].trim()) end++;
+    } else if (headingLine.test(line) || ruleLine.test(line)) {
+      return end;
+    } else if (quoteLine.test(line)) {
+      while (end < lines.length && quoteLine.test(lines[end])) end++;
+    } else if (listItem.test(line)) {
+      // A blank line goes on with the list when an item or an indented line follows it.
+      while (end < lines.length && (listItem.test(lines[end]) || /^\s{2,}\S/.test(lines[end]) || !lines[end].trim() && /^\s*([-*+]|\d+[.)])\s|^\s{2,}\S/.test(lines[end + 1] ?? ""))) end++;
+    } else {
+      while (end < lines.length && lines[end].trim() && !interrupts(lines, end)) end++;
+    }
+    return end;
+  }
+
+  // One block, its lines as `spans` cut them.
+  function block(lines, top) {
+    const line = lines[0];
+    const fence = line.match(fenceLine);
+    if (fence) {
+      const closed = lines.length > 1 && lines[lines.length - 1].trim().startsWith(fence[1]);
+      return code(lines.slice(1, closed ? -1 : lines.length), top);
+    }
+    if (startsTable(lines, 0)) return table(cells(line), cells(lines[1]), lines.slice(2).map(cells), top);
+    if (headingLine.test(line)) return paragraph("<b>" + inline(line.replace(/^\s*#+\s+/, "").replace(/\s+#+\s*$/, "")) + "</b>", top);
+    if (ruleLine.test(line)) return rule(top);
+    if (quoteLine.test(line)) return quote(blocks(lines.map(quoted => quoted.replace(/^\s{0,3}>\s?/, ""))), top);
+    if (listItem.test(line)) {
+      const items = [];
+      for (const each of lines) {
+        const item = each.match(listItem);
+        if (item) items.push({ indent: item[1].length, number: item[3] === undefined ? 0 : parseInt(item[3]), text: item[4] });
+        else if (each.trim()) items[items.length - 1].text += " " + each.trim();
+      }
+      return list(items, top);
+    }
+    return paragraph(inline(lines.map(joined => joined.trim()).join(" ")), top);
   }
 
   function startsTable(lines, i) {

@@ -68,10 +68,10 @@ Scope {
   // Opened by the desktop's link handler, design rule 2's one exception; the panel hides so the browser shows.
   component LinkRow: ListItem {
     id: link
-    required property string modelData
+    property string url
     Layout.fillWidth: true
     onActivated: {
-      Qt.openUrlExternally(link.modelData);
+      Qt.openUrlExternally(link.url);
       panel.plugin.shown = false;
     }
 
@@ -85,7 +85,7 @@ Scope {
       Layout.fillWidth: true
       tone: "primary"
       elide: Text.ElideMiddle
-      text: panel.linkLabel(link.modelData)
+      text: panel.linkLabel(link.url)
     }
   }
 
@@ -106,6 +106,7 @@ Scope {
     required property int index
     readonly property var exchange: panel.plugin.exchanges[index] ?? ({})
     readonly property var drawn: panel.plugin.describe(exchange)
+    readonly property var links: panel.links(exchange.reply ?? "")
     Layout.fillWidth: true
     spacing: Config.theme.spacing / 2
 
@@ -136,9 +137,12 @@ Scope {
     }
 
     Repeater {
-      model: panel.links(turn.exchange.reply ?? "")
+      model: turn.links.length
 
-      LinkRow {}
+      LinkRow {
+        required property int index
+        url: turn.links[index] ?? ""
+      }
     }
   }
 

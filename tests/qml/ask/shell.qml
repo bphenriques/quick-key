@@ -42,6 +42,14 @@ ShellRoot {
         }
       },
       {
+        name: "an answer is drawn in pieces of whole blocks as written, a fence, a loose list and a table each whole, and a fence still streaming in runs to the end",
+        until: () => {
+          const blocks = Markup.split("# Plan\npara line\nmore\n\n```\na\n\nb\n```\n- x\n\n- y\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n```\nopen\n\nstill", 0);
+          const pieces = Markup.split("aaa\n\nb\n\ncc\n\nd", 3);
+          return JSON.stringify(blocks) === JSON.stringify(["# Plan", "para line\nmore", "```\na\n\nb\n```", "- x\n\n- y", "| a | b |\n|---|---|\n| 1 | 2 |", "```\nopen\n\nstill"]) && JSON.stringify(pieces) === JSON.stringify(["aaa", "b\n\ncc", "d"]);
+        }
+      },
+      {
         name: "the session it opens is kept, and an approval is answered by the user, never by a bare y, and stays as a step",
         until: () => root.asked("approved", ask => {
           if (ask.approval === "rm") {

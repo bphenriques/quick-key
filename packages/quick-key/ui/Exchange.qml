@@ -142,14 +142,15 @@ ColumnLayout {
           wrapMode: root.table ? Text.NoWrap : Text.Wrap
           maximumLineCount: Math.max(1, root.lines)
           elide: Text.ElideRight
-          text: Markup.plain(root.text)
+          // Hidden, a view still lays its text out: each takes the answer only while it shows.
+          text: root.compact ? Markup.plain(root.text) : ""
         }
 
         Markdown {
           Layout.fillWidth: true
           visible: !root.compact
           tone: root.tone || "normal"
-          markdown: root.text
+          markdown: root.compact ? "" : root.text
         }
       }
 
