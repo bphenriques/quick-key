@@ -11,6 +11,10 @@ ListItem {
   property int chars: 1
   // As wide as its content, against the right edge (the last column of a level): nothing to pack.
   property bool hugs: false
+  // On a crowded bar: its key and glyph alone, its label as its tip; without a glyph, its label stays.
+  property bool compact: false
+  // As wide as it is with its label, shown or not.
+  readonly property real labelledWidth: implicitWidth + (status.labelShown ? 0 : status.labelWidth)
 
   enabled: row.item.enabled !== false
   current: !!row.item.current
@@ -25,7 +29,9 @@ ListItem {
   }
 
   MenuStatus {
+    id: status
     Layout.fillWidth: true
+    labelShown: !row.compact || glyph === "" && image === ""
     image: row.item.image ?? ""
     status: row.item.status ?? ""
     format: row.item.format ?? ""
@@ -41,5 +47,11 @@ ListItem {
     inLevel: row.item.inLevel ?? false
     packed: inLevel && !row.hugs
     itemMeter: row.item.meter
+  }
+
+  Tip {
+    parent: row
+    hovered: row.hovered
+    text: status.labelShown ? "" : row.item.desc ?? ""
   }
 }

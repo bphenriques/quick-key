@@ -31,7 +31,10 @@ RowLayout {
   property bool strong: false
   // Still being made: a spinner in place of its icon.
   property bool busy: false
+  // Its label (the title, else the text) shown; hidden, still measured, so whether it would fit stays known.
+  property bool labelShown: true
   readonly property bool titled: title !== ""
+  readonly property real labelWidth: (titled ? titleLabel.implicitWidth : text !== "" ? textLabel.implicitWidth : 0) + spacing
 
   spacing: Config.theme.spacing
 
@@ -48,7 +51,8 @@ RowLayout {
   }
 
   Label {
-    visible: root.titled
+    id: titleLabel
+    visible: root.titled && root.labelShown
     Layout.minimumWidth: implicitWidth
     // Without a value beside it, it pushes the detail to the right.
     Layout.fillWidth: !root.packed && root.text === ""
@@ -57,7 +61,8 @@ RowLayout {
   }
 
   Label {
-    visible: root.text !== ""
+    id: textLabel
+    visible: root.text !== "" && (root.titled || root.labelShown)
     Layout.fillWidth: !root.packed
     // Squeezed, text ends in an ellipsis, but a short value (80%, EN) stays whole.
     Layout.minimumWidth: Math.min(implicitWidth, 6 * Metrics.cell)

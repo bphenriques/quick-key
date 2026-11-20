@@ -1,6 +1,6 @@
 # Menu
 
-The menu is a list of levels. Each is its body over an optional bar at the screen's edge. A body holds one thing: a menu's entries, each with a key and a label, that either do something or open a level of their own, or a level's content, its list or its view (the calendar). A content level's own entries, drawn as their rows, and its legend sit on its bar's left; the bar also holds what you glance at.
+The menu is a list of levels. Each is its body over an optional bar at the screen's edge. A body holds one thing: a menu's entries, each with a key and a label, that either do something or open a level of their own, or a level's content, its list or its view (the calendar). A content level's own entries, drawn as their rows, and its legend sit on its bar's left; when they do not all fit whole, each shows its key and icon alone, its label on hover, so a level's `width` decides. The bar also holds what you glance at.
 
 ```nix
 {

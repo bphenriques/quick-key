@@ -13,6 +13,14 @@ RowLayout {
   // Both sides as wide when there is a centre to keep centred.
   readonly property bool centred: centreSlot.visible
   readonly property real sideMinimum: Math.max(leftSlot.contentMinimum, rightSlot.contentMinimum)
+  // What the slots and the legend leave the actions, and what they need with every label: short of it, all show their glyphs alone.
+  readonly property real actionsRoom: width - [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.wanted + spacing : 0), 0) - (legend.visible ? legend.implicitWidth + actions.spacing : 0)
+  readonly property real actionsLabelled: {
+    let sum = Math.max(0, menu.barActions.length - 1) * actions.spacing;
+    for (let i = 0; i < actions.children.length; i++) sum += actions.children[i].labelledWidth ?? 0;
+    return sum;
+  }
+  readonly property bool compact: actionsLabelled > actionsRoom
 
   // A key of the legend clicked.
   signal picked(var key)
@@ -23,12 +31,13 @@ RowLayout {
 
   // As their rows draw them, so an action keeps its icon, state and value on the bar; filtering, the filter's keys alone.
   RowLayout {
+    id: actions
     visible: header.menu.barActions.length > 0 || header.menu.legend.length > 0
-    // Shrinks, never grows: its rows' text gives way, as the slots' does.
+    // Shrinks, never grows: past their glyphs alone, its rows' text gives way, as the slots' does.
     Layout.fillWidth: true
     Layout.maximumWidth: implicitWidth
-    // No spacing: each item's own padding already spaces them.
-    spacing: 0
+    // A column's gap, as between a menu's rows.
+    spacing: Config.theme.padding
 
     Repeater {
       model: header.menu.barActions.length
@@ -38,6 +47,7 @@ RowLayout {
         item: header.menu.barActions[index] ?? ({})
         menu: header.menu
         hugs: true
+        compact: header.compact
         Layout.fillWidth: true
         Layout.maximumWidth: implicitWidth
         chars: MenuKeys.label(item.key ?? "", item.paired ?? false).length
@@ -45,6 +55,7 @@ RowLayout {
     }
 
     KeyLegend {
+      id: legend
       visible: header.menu.legend.length > 0
       keys: header.menu.legend
       onPicked: key => header.picked(key)

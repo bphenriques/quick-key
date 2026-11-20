@@ -13,6 +13,8 @@ Item {
   readonly property bool centre: alignment === Qt.AlignHCenter
   // The least its items need, their text shortened, never their icons.
   readonly property real contentMinimum: row.Layout.minimumWidth
+  // What its items want, whole.
+  readonly property real wanted: row.implicitWidth
   // Set on the sides: at least what their items need, or what either side needs when there is a centre to keep centred.
   property real sideMinimum: 0
   property bool centred: false
