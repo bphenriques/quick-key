@@ -67,6 +67,16 @@ Scope {
     function toggleEntry(key: string): void {
       root.menu.toggleEntry(key);
     }
+
+    // A key path from the top level, as typing it would run it (`a 2`).
+    function press(path: string): bool {
+      return root.menu.press(path);
+    }
+
+    // Every key path, as Markdown.
+    function keys(): string {
+      return root.menu.keyMap();
+    }
   }
 
   Timer {
@@ -102,8 +112,9 @@ Scope {
       menu: root.menu
     }
 
-    inputShown: root.menu.input !== null
-    inputFocused: root.menu.inputFocused
+    // Filtering, the filter takes the island, the level's input waiting under it.
+    inputShown: root.menu.input !== null || root.menu.filtering
+    inputFocused: root.menu.inputFocused || root.menu.filtering
     // The conversation's last turn (Exchange, drawn by its state) over the line to send: Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background.
     input: ColumnLayout {
       id: island
@@ -116,7 +127,7 @@ Scope {
         property real tallest: 0
         // A turn it cannot hold opens the plugin's panel by itself, once, as its answer ends: while it streams in, its size is not known.
         readonly property bool expands: visible && exchange.overflows && root.menu.turn !== root.menu.expandedTurn && root.menu.turn?.phase !== "working"
-        visible: root.menu.turn !== null
+        visible: root.menu.turn !== null && !root.menu.filtering
         Layout.fillWidth: true
         // The height held sits above, outside what Tab lights, so the turn stays next to the prompt.
         Layout.topMargin: Math.max(0, last.tallest - exchange.implicitHeight)
@@ -164,33 +175,42 @@ Scope {
       Prompt {
         id: prompt
         Layout.fillWidth: true
-        active: root.menu.inputFocused
+        // Filtering, it is the filter: its glyph, its range on the right, Escape giving the level back once empty.
+        readonly property bool filter: root.menu.filtering
+        active: root.menu.inputFocused || filter
         // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
-        busy: root.menu.inputBusy && root.menu.turn === null
-        key: "Tab"
-        placeholder: root.menu.turn ? exchange.next : root.menu.input?.desc ?? ""
+        busy: root.menu.inputBusy && root.menu.turn === null && !filter
+        key: filter ? "" : "Tab"
+        glyph: filter ? Glyphs.search : Glyphs.prompt
+        detail: filter ? root.menu.filter.count : ""
+        placeholder: filter ? Words.filterPrompt : root.menu.turn ? exchange.next : root.menu.input?.desc ?? ""
         // The turn's own keys while Tab has it.
         keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }] : []
         onPicked: key => root.menu.answerKey(key)
         maxLines: 1
         onTapped: root.menu.inputFocused = true
-        onUnfocused: root.menu.inputFocused = false
-        // The level's own unsent text, as it opens or moves to another input.
+        onUnfocused: filter ? root.menu.leaveFilter() : root.menu.inputFocused = false
+        // The level's own unsent text, as it opens or moves to another input; filtering, the filter's.
         readonly property var owner: root.menu.input
-        onOwnerChanged: set(root.menu.draftOf(owner))
-        Component.onCompleted: set(root.menu.draftOf(owner))
-        onTextChanged: root.menu.keepDraft(text)
+        onOwnerChanged: if (!filter) set(root.menu.draftOf(owner))
+        onFilterChanged: set(filter ? "" : root.menu.draftOf(owner))
+        Component.onCompleted: set(filter ? "" : root.menu.draftOf(owner))
+        onTextChanged: filter ? root.menu.filter.query = text : root.menu.keepDraft(text)
         // Tab moves on to the turn, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits and Escape.
         onKeyPressed: event => {
           const send = MenuKeys.sends(event);
           const name = MenuKeys.name(event);
           // A choice waiting takes the digits whether or not they all show here, so they never type.
-          const waiting = root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && prompt.text === "";
-          if (send) prompt.send(send === "background");
+          const waiting = !prompt.filter && root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && prompt.text === "";
+          if (prompt.filter) {
+            if (!root.menu.filterKey(name)) return;
+          } else if (send) prompt.send(send === "background");
           else if (waiting && /^[1-9]$/.test(name)) {
             if (exchange.picking) root.menu.pick(Number(name) - 1);
           } else if (waiting && name === "Escape") root.menu.choicesAside = true;
-          else if (name === "Tab" && last.visible) {
+          else if (name === "Ctrl+r") {
+            if (!root.menu.recall()) return;
+          } else if (name === "Tab" && last.visible) {
             root.menu.inputFocused = false;
             root.menu.answerFocused = true;
           } else if (name === "Tab" || name === "Backtab") root.menu.inputFocused = false;
@@ -264,17 +284,34 @@ Scope {
 
       // An empty list says why, in its place.
       Label {
-        visible: !root.hinting && root.menu.emptyText !== ""
+        visible: !root.hinting && !root.menu.filtering && root.menu.emptyText !== ""
         Layout.leftMargin: Config.theme.itemPaddingX
         tone: "dim"
         text: root.menu.emptyText
       }
 
-      // What a level lists, apart from its actions and across the full width.
+      // What a level lists, apart from its actions and across the full width; filtering, as tall as its rows were, so nothing moves as the filter narrows.
       ColumnLayout {
         Layout.fillWidth: true
-        visible: !root.hinting && root.menu.rows.length > 0
+        Layout.preferredHeight: root.menu.filtering ? root.menu.filterSlots * filledRow.implicitHeight + (root.menu.filterSlots - 1) * spacing : -1
+        visible: !root.hinting && (root.menu.rows.length > 0 || root.menu.filtering)
         spacing: Config.theme.listSpacing
+
+        // A filled row's height, for the rows held while filtering.
+        MenuRow {
+          id: filledRow
+          visible: false
+          menu: root.menu
+          item: ({ key: "1", desc: "x", icon: Glyphs.search })
+        }
+
+        Label {
+          visible: root.menu.filtering && root.menu.emptyText !== ""
+          Layout.leftMargin: Config.theme.itemPaddingX
+          Layout.topMargin: Config.theme.itemPaddingY
+          tone: "dim"
+          text: root.menu.emptyText
+        }
 
         Repeater {
           model: root.menu.rows.length
@@ -286,6 +323,11 @@ Scope {
             Layout.fillWidth: true
             chars: root.menu.keyChars(root.menu.rows)
           }
+        }
+
+        Item {
+          visible: root.menu.filtering
+          Layout.fillHeight: true
         }
       }
 
@@ -329,7 +371,7 @@ Scope {
 
       Divider {
         Layout.fillWidth: true
-        visible: !root.hinting && root.menu.actions.length > 0 && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || !!root.menu.level?.entry?.view)
+        visible: !root.hinting && (root.menu.actions.length > 0 || root.menu.legend.length > 0) && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || root.menu.filtering || !!root.menu.level?.entry?.view)
       }
 
       Label {
@@ -343,47 +385,64 @@ Scope {
         text: root.menu.error
       }
 
-      // A level's legend shares its line with its actions, the keys on the left and the actions on the right; last, at the edge side, so a list that grows moves neither.
-      RowLayout {
+      // A level's legend shares its line with its actions, the keys on the left and the actions on the right; last, at the edge side, so a list that grows moves neither. Filtering, the letters type, so the filter's legend covers the line, which keeps its height.
+      Item {
         Layout.fillWidth: true
+        implicitHeight: Math.max(edge.implicitHeight, root.menu.filtering ? filterLegend.implicitHeight : 0)
         visible: !root.hinting && (root.menu.legend.length > 0 || root.menu.actions.length > 0)
-        spacing: Config.theme.padding
 
-        KeyLegend {
-          visible: root.menu.legend.length > 0
-          keys: root.menu.legend
-          onPicked: key => root.menu.inputFocused ? root.inputPicked(key) : root.menu.calendar.handleKey(key)
-        }
+        RowLayout {
+          id: edge
+          anchors.fill: parent
+          opacity: root.menu.filtering ? 0 : 1
+          enabled: !root.menu.filtering
+          spacing: Config.theme.padding
 
-        Item {
-          visible: root.menu.legend.length > 0
-          Layout.fillWidth: true
-        }
+          KeyLegend {
+            visible: root.menu.restLegend.length > 0
+            keys: root.menu.restLegend
+            onPicked: key => root.menu.inputFocused ? root.inputPicked(key) : root.menu.calendar.handleKey(key)
+          }
 
-        // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
-        GridLayout {
-          id: actionsGrid
-          Layout.fillWidth: root.menu.legend.length === 0
-          visible: root.menu.actions.length > 0
-          flow: GridLayout.LeftToRight
-          columns: Config.menu.columns
-          columnSpacing: Config.theme.padding
-          rowSpacing: Config.theme.listSpacing
+          Item {
+            visible: root.menu.restLegend.length > 0
+            Layout.fillWidth: true
+          }
 
-          Repeater {
-            model: root.menu.actions.length
+          // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
+          GridLayout {
+            id: actionsGrid
+            Layout.fillWidth: root.menu.restLegend.length === 0
+            visible: root.menu.actions.length > 0
+            flow: GridLayout.LeftToRight
+            columns: Config.menu.columns
+            columnSpacing: Config.theme.padding
+            rowSpacing: Config.theme.listSpacing
 
-            // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
-            MenuRow {
-              required property int index
-              item: root.menu.actions[index] ?? ({})
-              hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
-              menu: root.menu
-              Layout.fillWidth: !hugs
-              Layout.preferredWidth: hugs ? -1 : 1
-              chars: root.menu.columnChars(index, actionsGrid.columns)
+            Repeater {
+              model: root.menu.actions.length
+
+              // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
+              MenuRow {
+                required property int index
+                item: root.menu.actions[index] ?? ({})
+                hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
+                menu: root.menu
+                Layout.fillWidth: !hugs
+                Layout.preferredWidth: hugs ? -1 : 1
+                chars: root.menu.columnChars(index, actionsGrid.columns)
+              }
             }
           }
+        }
+
+        KeyLegend {
+          id: filterLegend
+          anchors.left: parent.left
+          anchors.verticalCenter: parent.verticalCenter
+          visible: root.menu.filtering
+          keys: root.menu.filter.legend
+          onPicked: key => key === "Escape" ? root.inputPicked(key) : root.menu.filterKey(key)
         }
       }
     }

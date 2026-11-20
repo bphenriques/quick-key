@@ -42,6 +42,13 @@ Plugin {
   property bool touched: false
   // The answer's pieces since the last flush: applied at most every 50 ms, so a fast stream costs a few redraws a second, not one a piece.
   property string streamed: ""
+  // Its past conversations as the agent lists them ([{ sessionId, title, updatedAt }]), while it lists them, and why it could not.
+  property var conversations: []
+  property bool listing: false
+  property string failure: ""
+  // A conversation being resumed, and its history as the agent replays it, built in place and shown once whole.
+  property bool resuming: false
+  property var recalled: []
   // Seconds the current run has taken, ticking only while it runs and the panel shows.
   property int sentAt: 0
   property int now: 0
@@ -56,7 +63,68 @@ Plugin {
   glyph: settings.glyph
   active: busy || unread
   tone: approval ? "warning" : ""
+  error: failure
   views: ["AskPanel.qml"]
+  recalls: settings.ask !== ""
+  // The open one lit; one the agent cannot carry on dims.
+  items: conversations.map(conversation => ({
+    id: conversation.sessionId,
+    label: conversation.title || conversation.sessionId,
+    icon: Glyphs.conversation,
+    detail: conversation.updatedAt ? Clock.recent(new Date(conversation.updatedAt)) : "",
+    active: conversation.sessionId === session,
+    enabled: agent.canLoad,
+    verb: "resume",
+    actions: settings.open ? [{ key: "o", desc: "Terminal" + Words.ellipsis, closes: true }] : []
+  }))
+  empty: listing ? "Listing conversations" + Words.ellipsis : "No conversations yet"
+
+  // Its past conversations, listed afresh each time, in the picker.
+  function recall(back) {
+    if (!settings.ask) return false;
+    listing = true;
+    failure = "";
+    agent.list((sessions, why) => {
+      listing = false;
+      conversations = sessions ?? [];
+      failure = why;
+    });
+    Picker.pick(name, back);
+    return true;
+  }
+
+  function select(id) {
+    resume(id);
+  }
+
+  function run(id, key) {
+    if (key === "o") exec(settings.open, id);
+  }
+
+  // An earlier conversation in the panel, between turns: the one open just shows, another loads, its history replayed (Acp.load).
+  function resume(id) {
+    if (busy) return;
+    if (id !== session || exchanges.length === 0) {
+      reset();
+      recalled = [];
+      resuming = true;
+      busy = true;
+      agent.load(id);
+    }
+    show();
+  }
+
+  // The history replayed, as exchanges, the last one's options waiting as a fresh answer's do; stopped or failed, none.
+  function resumed(outcome) {
+    resuming = false;
+    busy = false;
+    failure = outcome.error ?? "";
+    exchanges = !outcome.loaded ? [] : recalled.map(entry => {
+      const shaped = Markup.options(entry.reply);
+      return { prompt: entry.prompt.trim(), image: "", reply: shaped.text, error: "", stopped: false, after: "", input: false, options: shaped.options, table: Markup.hasTable(entry.reply) };
+    });
+    recalled = [];
+  }
 
   function activate() {
     toggle();
@@ -170,6 +238,7 @@ Plugin {
 
   // The turn's end, as the agent reports it: the answer it streamed, with its options and table, else why not.
   function close(outcome) {
+    if (resuming) return resumed(outcome);
     flush();
     if (!outcome.answered) return finish({ error: outcome.error ?? "Stopped", stopped: !!outcome.stopped });
     const text = exchanges[exchanges.length - 1].reply;
@@ -299,6 +368,7 @@ Plugin {
     case "Ctrl+y": answerApproval(true); return true;
     case "Ctrl+l": reset(); return true;
     case "Ctrl+o": moveToTerminal(); return true;
+    case "Ctrl+r": return recall(() => show());
     case "Ctrl+v": return pasteImage();
     }
     return false;
@@ -357,6 +427,13 @@ Plugin {
       root.approval = title;
       if (root.seen(root.exchanges[root.exchanges.length - 1])) root.report();
       else root.notify(Words.allowQuestion(title));
+    }
+    onHistory: (role, chunk) => {
+      const last = root.recalled[root.recalled.length - 1];
+      if (role === "user" && (!last || last.reply)) root.recalled.push({ prompt: chunk, reply: "" });
+      else if (role === "user") last.prompt += chunk;
+      else if (last) last.reply += chunk;
+      else root.recalled.push({ prompt: "", reply: chunk });
     }
     onEnded: outcome => root.close(outcome)
   }

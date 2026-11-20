@@ -38,7 +38,7 @@ Plugin {
   tone: late.length > 0 ? "warning" : ""
   glyphs: late.length > 0 ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
-  fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.stamp(Clock.parse(state.updated)) : "" })
+  fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.when(Clock.parse(state.updated), true) : "" })
   fieldTones: ({ updated: state.updated && Clock.date - Clock.parse(state.updated) >= settings.staleAfter * 60000 ? "warning" : "" })
   items: tasks.map(task => {
     const late = !task.done && !!task.due && task.due.slice(0, 10) < today;
@@ -47,26 +47,19 @@ Plugin {
       label: task.title,
       icon: task.done ? Glyphs.checkboxChecked : Glyphs.checkbox,
       glyphs: late ? [Glyphs.late] : [],
-      detail: when(task.due),
+      detail: task.due ? Clock.when(Clock.parse(task.due), task.due.includes("T")) : "",
       done: !!task.done,
       hidden: !!task.done && root.settled.includes(task.id),
       busy: !!task.adding,
       enabled: !task.adding,
-      tone: late ? "warning" : ""
+      tone: late ? "warning" : "",
+      verb: task.done ? "untick" : "tick"
     };
   })
 
   // Dates by code point: a locale may sort the undated mark (~) before digits.
   function order(a, b) {
     return a < b ? -1 : a > b ? 1 : 0;
-  }
-
-  // Its time when today, else its day, and the time when it has one.
-  function when(due) {
-    if (!due) return "";
-    const time = due.includes("T");
-    if (due.slice(0, 10) === today) return time ? due.slice(11) : "today";
-    return Clock.format(Clock.parse(due), time ? "%-d %b %H:%M" : "%-d %b");
   }
 
   // A tick shows at once; its command waits its turn, as each holds the calendar's lock and a sync may hold it too.

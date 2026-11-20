@@ -16,6 +16,8 @@ RowLayout {
   property alias maxLines: area.maxLines
   // A legend on its right, as KeyLegend takes it; a click is `picked`.
   property var keys: []
+  // A value on its right, dim (a filter's 1-9 of 14).
+  property string detail: ""
   // Nothing to clear; an owner with more to clear than the text (a pasted image) says when.
   property bool empty: text === ""
   // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys; the glyph on its left edge, where keys start.
@@ -110,5 +112,12 @@ RowLayout {
     visible: root.keys.length > 0
     keys: root.keys
     onPicked: key => root.picked(key)
+  }
+
+  Label {
+    Layout.alignment: Qt.AlignTop
+    visible: root.detail !== ""
+    tone: "dim"
+    text: root.detail
   }
 }

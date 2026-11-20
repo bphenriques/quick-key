@@ -17,6 +17,12 @@ Singleton {
   readonly property string syncing: "syncing" + ellipsis
   // An agent that could not carry on the conversation, starting a new one.
   readonly property string restarted: "Started a new conversation"
+  // A picker's filter, empty and when it leaves nothing.
+  readonly property string filterPrompt: "Filter" + ellipsis
+
+  function noMatch(text) {
+    return "Nothing matches " + text;
+  }
 
   // What an agent waits to be allowed to do, asked.
   function allowQuestion(what) {
@@ -35,11 +41,14 @@ Singleton {
   readonly property string event: "event"
   readonly property string events: "events"
   readonly property string help: "keys"
+  readonly property string history: "history"
   readonly property string hide: "hide"
   readonly property string menu: "menu"
   readonly property string month: "month"
+  readonly property string move: "move"
   readonly property string newChat: "new"
   readonly property string open: "open"
+  readonly property string pick: "pick"
   readonly property string stop: "stop"
   readonly property string terminal: "terminal" + ellipsis
   readonly property string today: "today"

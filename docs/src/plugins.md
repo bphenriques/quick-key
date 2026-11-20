@@ -28,7 +28,7 @@ The source is one of:
 
 `show` maps each value to `{ glyph, text, detail, active, tone }`; a value without one shows as text.
 
-For a fixed set of choices, `items` lists them, each `{ id, label, icon, detail }`, for an entry whose `list` is the plugin's name. The source's value names the one in use, and `select` runs with the chosen `id`.
+For a fixed set of choices, `items` lists them, each `{ id, label, icon, detail }`, for an entry whose `list` is the plugin's name. The source's value names the one in use, and `select` runs with the chosen `id`; `run` runs with an item's `id` and the key of the action chosen from its own menu.
 
 ```nix
 plugins.displayLayout = {
@@ -49,7 +49,7 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 - `value`: what `show` and `items` look up; a plain line is its value.
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
 - `enabled`: the ids of `items` that can be picked; unset, all.
-- `items`: items that change, each `{ id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone }`, when the settings list none. A `done` item dims, struck through, and can still be picked; a `hidden` one leaves the rows and stays in the level's picker; `tone` (`warning`) marks one that needs attention, with `glyphs` before its detail so colour is not all that says so; a `busy` one, still being made, shows a spinner for its icon.
+- `items`: items that change, each `{ id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone, verb, closes, actions }`, when the settings list none. A `done` item dims, struck through, and can still be picked; a `hidden` one leaves the rows and is found by filtering (`/`); `tone` (`warning`) marks one that needs attention, with `glyphs` before its detail so colour is not all that says so; a `busy` one, still being made, shows a spinner for its icon. `verb` names what choosing it does in the picker's legend (`tick`), `closes` hides the menu first, and `actions`, `[{ key, desc, icon, closes }]`, are its own menu (`M-` with its digit, `M-RET` while filtering), each running `run` with the item's id and the action's key.
 - `empty`: why `items` is empty, shown in its place (`No devices paired`).
 
 A line that is not a JSON object is logged and skipped. The shell ignores fields it does not know, and a plugin may read its own (`recording`'s `since`).
@@ -96,7 +96,9 @@ Keys:
 
 - `RET` sends, `C-S-RET` sends and hides the panel, the answer arriving as a notification, `S-RET` breaks the line, `C-v` attaches the clipboard's image. The legend shows only what the state changes; with the prompt dim, `?` lists every key, any key closing the list.
 - The prompt has the keys as the panel opens. `ESC` steps back: denies an approval, else stops the run, else lets the digits type over waiting options, else clears the prompt, else leaves it, dim, else hides, as does a click beside it; the conversation is kept, and an empty one says so.
-- `C-y` allows an approval, which stays in the conversation as a dim line (and a denial too), `C-l` starts a new conversation, `C-o` moves it to a terminal; with the prompt dim, plain `l` and `o` do and `y` copies the last answer (allowing takes `C-y` only, so `y` never approves); `TAB` moves the keys between the prompt and the panel, as in a level.
+- `C-y` allows an approval, which stays in the conversation as a dim line (and a denial too), `C-l` starts a new conversation, `C-o` moves it to a terminal, `C-r` lists its past conversations, filtered in the menu, as a shell's reverse search does, its legend naming it while the conversation is new; with the prompt dim, plain `l`, `o` and `r` do and `y` copies the last answer (allowing takes `C-y` only, so `y` never approves); `TAB` moves the keys between the prompt and the panel, as in a level.
+
+Past conversations are the agent's own (ACP's `session/list`, where `cwd` says), in its order, each with its last activity, the open one lit. `RET` resumes one, its history replayed as the conversation (`session/load`), and its own menu (`M-RET`) has `o`, `open` given its session; an agent that cannot load them dims them, and one that cannot list them says so. The menu's input that gives it text takes `C-r` too, its list being Ask's `items`.
 
 Two agents are two plugins with `type = "ask"`. A level's `input` may hand one its text (see [Input](menu.md#input)).
 
@@ -112,7 +114,7 @@ What it gets:
 
 - `name`, `settings` (its part of the config), and `state` (the state line, with `show` and `items` applied).
 - `exec(setting, ...args)` runs a command setting; `commandLine(setting, ...args)` builds one for a `Process`. Arguments arrive as `$1`, `$2`.
-- The theme (`Config.theme`), the [kit](kit.md), and the services: `Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Compositor`, and `Niri` for niri's own events.
+- The theme (`Config.theme`), the [kit](kit.md), and the services: `Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Compositor`, `Niri` for niri's own events, and `Picker` (`pick(list, back)` shows a list by name filtered on a menu level of its own, `back` showing the plugin's panel again on Escape).
 
 What it gives:
 
@@ -120,9 +122,10 @@ What it gives:
 - `fieldTones`: a tone per field, kept when a `format` shows it (`{ updated: "warning" }` on an old sync).
 - `error`: why its source or its last action failed, by default its state's own `error`; a level listing it shows it beside its keys.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
-- `items` and `select(id)` for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
+- `items`, `select(id)` and `run(id, key)` (an action from an item's own menu) for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.
 - `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `turn`, `{ question, context, text, phase, activity, options, table, steps }`, the conversation's turn as the menu draws it while watched, `phase` one of `working` (with `activity`, and `context` the answer it follows), `answered`, `choosing` (`options` a digit picks), `waiting` (on you), `failed` (the input getting the text back) or `stopped`, and `steps` what you answered on the way (an approval); null before the first.
+- `recall(back)` to show its past conversations filtered in the menu, for `C-r` in an input giving it text, while `recalls`: `back` shows again what opened it.
 - `expand(back)` to show the conversation in its own panel, when the answer over the input cannot fit it: `back(true)` when left by stepping back, so the menu shows again where it was, `back(false)` when left any other way; false without a panel.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.

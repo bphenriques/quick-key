@@ -26,6 +26,7 @@ The menu is a list of levels. Each is its body over an optional bar at the scree
 - Holding `Super` for a second lists each bar entry's `shortcut` the same way, the compositor key bound to it.
 - `?` lists the keys no row shows: the holds, `M-1` for an item's own menu, `DEL`, `ESC` and, on a level with an input, `TAB` and `C-S-RET`; any key closes it.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
+- `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does; a digit is the same item only while pinned. `menu keys` prints every path as Markdown, from `menu.entries` and the top level's bar.
 
 ## What an entry does
 
@@ -39,14 +40,14 @@ The label is `desc`, and never changes. `status` shows live state on the right o
 
 ## Bars
 
-`menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules, each unset slot the starter's (`menu.json`); an entry's `header` is its level's, with the same slots, and a level without one is its body alone. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). An entry shows its status, else its icon, and in a bar may do nothing but show its status. An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all in `menu.picker`; `theme.monochromeTray` draws the icons in greys. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`). Crowded, text shortens; icons and short values stay whole.
+`menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules, each unset slot the starter's (`menu.json`); an entry's `header` is its level's, with the same slots, and a level without one is its body alone. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). An entry shows its status, else its icon, and in a bar may do nothing but show its status. An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all, filtered on a level of their own; `theme.monochromeTray` draws the icons in greys. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`). Crowded, text shortens; icons and short values stay whole.
 
 ```nix
 menu.header.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } ];
 menu.header.right = [ "battery" { desc = "Tray"; list = "tray"; limit = 5; } ];
 ```
 
-The `clock` status takes `clock.format` (strftime as waybar's, plus `%o` for the English ordinal), else the locale's long date. `clock.locale` names days and months.
+The `clock` status takes `clock.format` (strftime as waybar's, plus `%o` for the English ordinal), else the locale's long date. `clock.locale`, else the system's, is the locale every date and time is said in. They are said one way everywhere: a time as the locale writes it (14:30, 2:30 PM), a day as yesterday, today or tomorrow, its weekday within a week either side, else its date (3 Nov), with its year when not this one; short names are cut to three letters where that still tells them apart (Sep, not Sept).
 
 ## Input
 
@@ -92,6 +93,6 @@ Each field takes one of its column's names, or a plugin's. A plugin's status giv
 | Keep awake | `keepAwake` | | | `keepAwake` | `keepAwake` |
 | Any list | | | | `pick` | |
 
-Volume steps by `audio.step` up to `audio.max`. `brightness` and `pick` are the actions that run a tool: `brightness.adjust`, and `menu.picker`, a dmenu-like command such as `fuzzel --dmenu`.
+Volume steps by `audio.step` up to `audio.max`. `brightness` is the action that runs a tool, `brightness.adjust`.
 
-`pick`, on `/` by default as in a pager or a browser, shows its level's whole list in `menu.picker`, past the nine on digits, and the chosen item runs as its digit would. A level's other pickers take any free key (`.` or a letter), their labels ending in `...`.
+A level lists up to nine items on fixed digits. `pick`, on `/` by default as in a pager or a browser, filters its level's list in place, its row saying how many rows show at rest of all the list holds (`1-9 of 14`): the filter takes the level's island and keeps the items whose label holds every word typed, hidden ones too, in the rows' place, as many at a time as the level showed (nine on a level of their own), so nothing moves. Digits pick from the rows shown, following them, and never type; `↑↓` move the cursor, `RET` runs its item as its digit would and `M-RET` opens its own menu, the filter's range on its right (`2-10 of 14`). `ESC` clears the filter, then gives the level back. A level's other pickers take any free key (`.` or a letter), their labels ending in `...`.

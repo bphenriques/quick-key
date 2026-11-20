@@ -10,6 +10,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | a glyph or an image | `Icon` |
 | a wait | `Spinner` |
 | a row to click | `ListItem`, `StatusLine` in it |
+| a listed item (a task, a device) | `ListItem`, `ItemLine` in it |
 | keys: one, a legend, a list | `KeyHint`, `KeyLegend`, `KeyList` |
 | text to type or send | `TextField`, `TextArea`, `Prompt` |
 | a conversation | `Exchange`, `Bubble` and `Markdown` in it; an answer's Markdown read through `Markup` |
@@ -22,6 +23,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Metrics` | the font's character width (`cell`) and line height (`line`), for sizes given in characters or lines |
 | `Icon` | a glyph or an image in the same square; `monochrome` draws an image in greys |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports |
+| `ItemLine` | a listed item's `StatusLine`: lit and bold while `active`, dim and struck through once `done`, its value in its own `itemTone` (a late date), its own `itemMeter`; the menu's rows draw a status over it |
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend, `allowQuestion` |
 | `KeyHint` | a key in its gutter |
 | `KeyLegend` | keys a level takes beyond its rows, on one line in its body: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
@@ -31,7 +33,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Markdown` | an agent's answer rendered from its Markdown (`markdown`) by `Markup`, selectable and copied on selection |
 | `Markup` | what the kit reads in an agent's Markdown, in one place: its `plain` lines (compact), its `html` (`Markdown`: rich text of the kit's own making, the text escaped and an image or a link by its text, so nothing is fetched and no HTML runs; a table's header bold over one divider, code on a faint wash, a quote dim behind a rule, a heading bold at the body size, prose at `theme.lineHeight`), its closing `options` and whether it `hasTable` |
 | `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
-| `Prompt` | a line of text to send: its `key` dim while it waits (`TAB` for a level's input), else a glyph, in one column as wide as the key's name, a spinner in their place while `busy` (what it sends to takes no text), then a `TextArea`; a click while waiting reaches `tapped`; its glyph on the column's left edge, where keys start; `keys` a legend on its right (`picked`) |
+| `Prompt` | a line of text to send: its `key` dim while it waits (`TAB` for a level's input), else a glyph, in one column as wide as the key's name, a spinner in their place while `busy` (what it sends to takes no text), then a `TextArea`; a click while waiting reaches `tapped`; its glyph on the column's left edge, where keys start; `keys` a legend on its right (`picked`) and `detail` a dim value after it |
 | `Exchange` | one turn of a conversation, the `question` a `Bubble` on the right and the answer plain on the left, its `text` Markdown, drawn by its `phase` (working with a spinner and `activity` until the answer streams in, then a spinner where its copy button goes until it is done, answered, choosing with `options` as digit keys while `picking`, waiting, failed in alert with the question faded, stopped); `context` the answer it follows, dim over the question; `steps` dim lines over the answer; with `lines` it is compact, the answer cut there and `overflows` saying what it cannot hold, else it all shows as `Markdown`, with a copy button (`copyable`) and options as rows (`picked`); `next` is what Return does after it, for the prompt under it |
 | `Bubble` | a message in a conversation, yours (`mine`) on the right in the theme's `bubble` colour with `bubbleText`, the other's plain on the left, its text on the keys' edge, as wide as its content up to `maximumWidth`, or all of it when `full` (text cut at a line count cannot size it); `faded` for one that did not go through |
 | `Spinner` | a wait in one cell, its `mood` saying whose turn it is: `working` turns the braille dots terminals use, `attention` knocks; its own tempo, still when animations are off |

@@ -1,5 +1,5 @@
 # The suites' stand-in ACP agent, on the SDK's agent side: argv names its session and, optionally, a behaviour; otherwise the prompt picks the answer.
-# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load), and `trapped` when a turn is cancelled.
+# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load), and `trapped` when a turn is cancelled; it lists two conversations, and a load replays one exchange.
 import asyncio
 import os
 import sys
@@ -8,10 +8,14 @@ import acp
 from acp.schema import (
     AgentCapabilities,
     InitializeResponse,
+    ListSessionsResponse,
     LoadSessionResponse,
     NewSessionResponse,
     PermissionOption,
     PromptResponse,
+    SessionCapabilities,
+    SessionInfo,
+    SessionListCapabilities,
     ToolCallUpdate,
 )
 
@@ -41,7 +45,12 @@ class Agent:
         trace("initialize")
         return InitializeResponse(
             protocol_version=acp.PROTOCOL_VERSION,
-            agent_capabilities=AgentCapabilities(load_session=True),
+            agent_capabilities=AgentCapabilities(
+                load_session=True,
+                session_capabilities=SessionCapabilities(
+                    list=SessionListCapabilities()
+                ),
+            ),
         )
 
     async def new_session(self, cwd, mcp_servers=None, **kwargs):
@@ -49,8 +58,24 @@ class Agent:
 
     async def load_session(self, cwd, session_id, mcp_servers=None, **kwargs):
         trace("load " + session_id)
+        await self.conn.session_update(
+            session_id, acp.update_user_message_text("what was it?")
+        )
         await self.say(session_id, "from before")
         return LoadSessionResponse()
+
+    async def list_sessions(self, cwd=None, cursor=None, **kwargs):
+        return ListSessionsResponse(
+            sessions=[
+                SessionInfo(
+                    session_id="old",
+                    cwd=cwd or "/",
+                    title="An old question",
+                    updated_at="2026-11-01T10:00:00Z",
+                ),
+                SessionInfo(session_id="older", cwd=cwd or "/"),
+            ]
+        )
 
     async def say(self, session_id, text):
         await self.conn.session_update(session_id, acp.update_agent_message_text(text))

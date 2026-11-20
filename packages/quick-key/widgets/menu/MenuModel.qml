@@ -11,7 +11,7 @@ Scope {
   id: root
 
   property bool open: false
-  // Levels opened below the top one, the last is shown: an entry's (kind "entry") or an app's own menu (kind "menu").
+  // Levels opened below the top one, the last is shown: an entry's (kind "entry"), an app's own menu (kind "menu") or a listed item's (kind "actions").
   property var stack: []
   // What lists keys in place of the body: "Ctrl" or "Super" held a second (not at once, so a chord does not flash them), or "Help" after `?`.
   property string held: ""
@@ -47,19 +47,29 @@ Scope {
   }
   // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
+  // Whether `/` filters the level's list in place (pick); a level opened to pick from (Picker, a bar's +N) always does.
+  property bool filterOn: false
+  readonly property bool filtering: (filterOn || !!level?.picking) && !!level?.entry?.list
+  // Its rows held while filtering, so the body keeps its height: the level's own, nine on a level opened to pick.
+  property int filterSlots: 9
+  readonly property ListFilter filter: ListFilter {
+    size: root.filterSlots
+    items: root.filtering ? root.ordered(root.level.entry.list, root.level.entry.pins, root.levelList).filter(item => item.id !== undefined) : []
+  }
   // What the level lists, read once for every entry that acts on it.
-  readonly property var levelList: listed(level?.entry?.list)
+  readonly property var levelList: Lists.items(level?.entry?.list)
   readonly property var items: itemsOf(level)
   readonly property var actions: items.filter(item => !item.listed)
-  readonly property var rows: items.filter(item => item.listed)
+  readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed)
   readonly property int width: level?.width ?? Config.menu.width
   // Why a level's list is empty, in its place; "" while it lists something.
-  readonly property string emptyText: level?.entry?.list && rows.length === 0 ? Lists.builtin[level.entry.list]?.empty() ?? Plugins.get(level.entry.list)?.empty ?? "" : ""
+  readonly property string emptyText: level?.entry?.list && rows.length === 0 ? (filtering && filter.emptyText) || Lists.empty(level.entry.list) : ""
   readonly property var topBar: ({ left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") })
   // The level's bar by slot: the top level's is menu.header, else the starter's, an entry's its own `header`, an app's menu the app and the way into it (blueman › Plugins).
   readonly property var bar: level === null ? topBar
     : level.kind === "entry" ? level.entry.header ?? {} : {}
   readonly property var barSlots: level?.kind === "menu" ? { left: [appOf(stack.filter(level => level.kind === "menu"))], center: [], right: [] }
+    : level?.kind === "actions" ? { left: [{ key: "", desc: level.title, icon: level.icon, named: true }], center: [], right: [] }
     : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
   // The keys no row shows, listed on `?`: holds, an item's own menu, back and close.
@@ -67,7 +77,7 @@ Scope {
     { key: "Ctrl+", desc: "Hold: the bar's keys" },
     { key: "Super+", desc: "Hold: compositor shortcuts" },
     { key: "Alt+1", desc: "An item's own menu" }
-  ].concat(input ? [{ key: "Tab", desc: "The input, and back" }, { key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], [
+  ].concat(input ? [{ key: "Tab", desc: "The input, and back" }, { key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], inputPlugin?.recalls ? [{ key: "Ctrl+r", desc: "An earlier conversation" }] : [], [
     { key: "BackSpace", desc: "Back" },
     { key: "Escape", desc: "Close" }
   ])
@@ -76,7 +86,8 @@ Scope {
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
   // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s); while its input has the keys, its Escape, in a level that has a legend.
   readonly property var levelLegend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
-  readonly property var legend: inputFocused && levelLegend.length > 0 ? [{ key: "Escape", what: draft ? Words.clear : Words.back, clickable: true }] : levelLegend
+  readonly property var restLegend: inputFocused && levelLegend.length > 0 ? [{ key: "Escape", what: draft ? Words.clear : Words.back, clickable: true }] : levelLegend
+  readonly property var legend: filtering ? filter.legend : restLegend
   // Why a level's source failed, under its keys: the calendar's sync, or the plugin it lists.
   readonly property string error: inCalendar ? (Calendar.syncing ? "" : Calendar.error) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
 
@@ -89,6 +100,7 @@ Scope {
       status: entry.status ?? "",
       format: entry.format ?? "",
       icon: entry.icon ?? (action ? action.icon() : ""),
+      detail: action?.detail ? action.detail(levelList) : "",
       enabled: available(entry),
       paired: isPair(entry),
       active: isOn(entry.activeWhen ?? action?.state),
@@ -110,6 +122,19 @@ Scope {
           // Before hide(), which releases the menu this entry belongs to.
           child.triggered();
           hide();
+        }
+      }));
+    }
+    // A listed item's own menu: its actions by their keys, each stepping back to the list once run.
+    if (level.kind === "actions") {
+      return Array.from(level.actions).map(action => ({
+        key: action.key,
+        desc: action.desc,
+        icon: action.icon,
+        closes: action.closes,
+        select: () => {
+          if (!action.closes) back();
+          action.select();
         }
       }));
     }
@@ -141,46 +166,29 @@ Scope {
     return { key: "", desc: menus.map(menu => menu.title).join(" › "), image: menus[0]?.image ?? "", named: true };
   }
 
-  // A list in a bar: its `limit` (at most nine) on digits, then 0 for the whole list in the picker when there are more.
+  // A list in a bar: its `limit` (at most nine) on digits, then 0 for the whole list, filtered on a level of its own, when there are more.
   function barList(entry) {
-    const all = listed(entry.list);
+    const all = Lists.items(entry.list);
     const shown = numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
     const more = all.length - shown.length;
-    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, enabled: Config.menu.picker !== "", closes: true, select: () => Picker.pick(all) }) : shown;
+    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list, null) }) : shown;
   }
 
-  // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order, a hidden one only in the picker.
-  function numbered(list, pins, items = listed(list)) {
-    const rest = Array.from(items).filter(item => !item.hidden);
+  // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order.
+  function ordered(list, pins, items) {
+    const rest = Array.from(items);
     const pinned = Array.from(pins ?? []).map(pin => {
       const index = rest.findIndex(item => MenuKeys.glob(pin.match, item.id));
       if (index < 0) return { desc: pin.label, icon: pin.icon ?? Lists.builtin[list]?.icon ?? Glyphs.tray, enabled: false };
       const item = rest.splice(index, 1)[0];
       return Object.assign({}, item, { desc: pin.label, icon: pin.icon ?? item.icon });
     });
-    return pinned.concat(rest).slice(0, 9).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
+    return pinned.concat(rest);
   }
 
-  // What a runtime list holds, without keys; each item's id is what pins match.
-  function listed(list) {
-    if (!list) return [];
-    if (Lists.builtin[list]) return Lists.builtin[list].items();
-    const plugin = Plugins.get(list);
-    return Array.from(plugin?.items ?? []).map(item => ({
-      id: item.id,
-      desc: item.label ?? item.id,
-      icon: item.icon ?? "",
-      detail: item.detail ?? "",
-      meter: item.meter,
-      active: item.active ?? false,
-      enabled: item.enabled ?? true,
-      done: item.done ?? false,
-      hidden: item.hidden ?? false,
-      busy: item.busy ?? false,
-      glyphs: Array.from(item.glyphs ?? []),
-      tone: item.tone ?? "",
-      select: () => plugin.select(item.id)
-    }));
+  // The rows at rest: the first nine on fixed digits, a hidden item only when filtering.
+  function numbered(list, pins, items = Lists.items(list)) {
+    return ordered(list, pins, Array.from(items).filter(item => !item.hidden)).slice(0, 9).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
   }
 
   // The widest key of a group of items, in characters.
@@ -236,6 +244,7 @@ Scope {
   function hide() {
     open = false;
     stack = [];
+    stopFilter();
     held = "";
     inputFocused = false;
     answerFocused = false;
@@ -244,6 +253,7 @@ Scope {
   // A level starts with no event in focus, coming back to it too.
   function back() {
     stack = stack.slice(0, -1);
+    stopFilter();
     inputFocused = false;
     answerFocused = false;
     calendar.focused = "";
@@ -251,6 +261,7 @@ Scope {
 
   function push(next) {
     stack = stack.concat([next]);
+    stopFilter();
     inputFocused = false;
     answerFocused = false;
     calendar.focused = "";
@@ -269,7 +280,7 @@ Scope {
       // Read before hide(), which leaves the level.
       const list = levelList;
       if (entry.keepOpen === false || action.closes) hide();
-      action.run(second === 1, list);
+      action.run(second === 1, list, root);
       return;
     }
     const cmd = MenuKeys.isPair(entry) ? Array.from(entry.cmd)[MenuKeys.names(entry.key).indexOf(name)] : entry.cmd;
@@ -290,6 +301,57 @@ Scope {
     lastSent = text;
     if (background) hide();
     return true;
+  }
+
+  // The input's plugin's past conversations (C-r), on a level over this one; whether it has any to show.
+  function recall() {
+    return !!inputPlugin?.recall(null);
+  }
+
+  // The level's list filtered in place, the filter in its island with the keys; as many rows held as it shows.
+  function startFilter() {
+    if (!level?.entry?.list) return;
+    filterSlots = Math.max(1, rows.length);
+    filterOn = true;
+  }
+
+  function stopFilter() {
+    filterOn = false;
+    filter.reset();
+  }
+
+  // A list on a level of its own, filtering from the start: a bar's +N, or what a plugin's panel asks for (Picker), `back` showing that panel again on Escape.
+  function pickList(list, back) {
+    if (!open) show();
+    push({ kind: "entry", entry: { list: list }, picking: true, back: back, width: Config.menu.width });
+    filterSlots = 9;
+  }
+
+  // Escape on an empty filter: back to the level at rest, or out of a level opened to pick.
+  function leaveFilter() {
+    if (!level?.picking) return stopFilter();
+    const then = level.back;
+    if (!then) return back();
+    hide();
+    then();
+  }
+
+  // The keys the filter leaves, by name: a digit picks a row shown and never types, Alt with it or Return its own menu.
+  function filterKey(name) {
+    const digit = name.match(/^(Alt\+)?([1-9])$/);
+    const row = digit ? filter.rows[Number(digit[2]) - 1] : filter.item;
+    if (digit && digit[1] || name === "Alt+Return") openMenu(row);
+    else if (digit || name === "Return") choose(row);
+    else if (name === "Up" || name === "Down") filter.move(name === "Down" ? 1 : -1);
+    else return false;
+    return true;
+  }
+
+  // Runs as its digit would at rest, the cursor staying on it.
+  function choose(item) {
+    if (!item) return;
+    filter.current = item.id;
+    activate(item, item.key);
   }
 
   // An option of the answer, sent as the next message.
@@ -357,9 +419,10 @@ Scope {
     }
   }
 
-  // A tray app's own menu: Alt with its digit, or a right click.
+  // An item's own menu, its actions or a tray app's: Alt with its digit, or a right click.
   function openMenu(item) {
-    if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, image: item.image ?? "", handle: item.app.menu, width: width });
+    if (item?.actions?.length > 0) push({ kind: "actions", title: item.desc, icon: item.icon ?? "", actions: item.actions, width: width });
+    else if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, image: item.image ?? "", handle: item.app.menu, width: width });
   }
 
   // The mouse wheel on a row: a pair runs itself; an entry runs the action of its own on that key, e.g. volume.
@@ -370,9 +433,13 @@ Scope {
 
   // The body's keys first, then Alt for an item's own menu and Ctrl for the bar (with Alt, a bar item's own menu); Esc and Backspace are kept free by the check.
   function handleKey(event) {
-    const name = MenuKeys.name(event);
     // A modifier on its own has no name, and Super belongs to the compositor: a chord with it runs nothing here.
-    if (!name || event.modifiers & Qt.MetaModifier) return false;
+    if (event.modifiers & Qt.MetaModifier) return false;
+    return handleName(MenuKeys.name(event));
+  }
+
+  function handleName(name) {
+    if (!name) return false;
     const [, ctrl, alt, key] = name.match(/^(Ctrl\+)?(Alt\+)?(.*)$/);
     const own = find(items, name);
     const target = alt && /^[0-9]$/.test(key) ? find(ctrl ? barItems : rows, key) : null;
@@ -390,6 +457,48 @@ Scope {
     else if (barred) activate(barred, key);
     else return false;
     return true;
+  }
+
+  // A key path (`a 2`, `t Ctrl+x`), each key named as entries declare it, run from the top level as typing it would: what a compositor binding or a terminal reaches.
+  function press(path) {
+    stack = [];
+    if (!open) show();
+    for (const name of path.trim().split(/\s+/)) {
+      if (!(filtering ? filterKey(name) : handleName(name))) return false;
+    }
+    return true;
+  }
+
+  // Every entry's key path and name, as Markdown, from menu.entries and the top level's bar: the paths `press` takes.
+  function keyMap() {
+    const lines = [];
+    const path = (prefix, key) => MenuKeys.names(key).map(name => "`" + (prefix + " " + name).trim() + "`").join(" ");
+    const walk = (entries, prefix, depth) => {
+      for (const entry of Array.from(entries ?? [])) {
+        const at = (prefix + " " + MenuKeys.names(entry.key ?? "")[0]).trim();
+        lines.push("  ".repeat(depth) + "- " + path(prefix, entry.key ?? "") + " " + (entry.desc ?? entry.status ?? ""));
+        for (const [i, pin] of Array.from(entry.pins ?? []).entries()) lines.push("  ".repeat(depth + 1) + "- `" + at + " " + (i + 1) + "` " + pin.label);
+        if (entry.list) lines.push("  ".repeat(depth + 1) + "- `" + at + " 1-9` " + entry.list);
+        walk(entry.submenu, at, depth + 1);
+      }
+    };
+    walk(entries, "", 0);
+    for (const slot of ["left", "center", "right"]) {
+      for (const part of Array.from(topBar[slot] ?? [])) {
+        if (typeof part !== "string" && part.key) lines.push("- `Ctrl+" + part.key + "` " + (part.desc ?? part.status ?? ""));
+      }
+    }
+    return lines.join("
+");
+  }
+
+  // What a plugin's panel asks for (Ask's C-r): a list filtered on a level of its own.
+  Connections {
+    target: Picker
+
+    function onRequested(list, back) {
+      root.pickList(list, back);
+    }
   }
 
   QsMenuOpener {

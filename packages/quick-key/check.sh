@@ -60,6 +60,11 @@ for file in $(grep -rlE '"#[0-9a-fA-F]{6,8}"' --include='*.qml' . | grep -vE '^\
   fail "$file: a colour outside the theme"
 done
 
+# Rule 11: a date or a time is said through Clock alone, so every surface says it alike.
+for file in $(grep -rlE 'Clock\.format\(|toLocale(Date|Time)String|dayName\(|monthName\(|Qt\.format(Date|Time)' --include='*.qml' . | grep -v '^\./services/Clock\.qml$'); do
+  fail "$file: says a date or a time past Clock"
+done
+
 # Rule 6: one ellipsis, Words'.
 for file in $(grep -rl '…' --include='*.qml' .); do
   fail "$file: an ellipsis other than Words.ellipsis"

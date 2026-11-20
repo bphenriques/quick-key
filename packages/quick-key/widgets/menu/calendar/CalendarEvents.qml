@@ -56,23 +56,16 @@ ListView {
     // Ending at midnight, an event ends on the day before.
     const last = new Date(event.end - 1);
     if (event.allDay || (event.start <= day && event.end >= dayEnd))
-      return ["All day", event.end > dayEnd ? "to " + Clock.format(last, "%a %-d") : ""];
+      return ["All day", event.end > dayEnd ? "to " + Clock.day(last) : ""];
     return [
-      event.start < day ? Words.ellipsis : Clock.format(event.start, "%H:%M"),
-      event.end > dayEnd ? Words.ellipsis : event.end > event.start ? Clock.format(event.end, "%H:%M") : ""
+      event.start < day ? Words.ellipsis : Clock.time(event.start),
+      event.end > dayEnd ? Words.ellipsis : event.end > event.start ? Clock.time(event.end) : ""
     ];
   }
 
   // Whether it ends in view; only the bottom counts, or the top row would blink while the list scrolls to a new day.
   function fits(y, height) {
     return y + height <= contentY + root.height + 1;
-  }
-
-  function heading(day) {
-    const tomorrow = new Date(Clock.date.getFullYear(), Clock.date.getMonth(), Clock.date.getDate() + 1);
-    return day.toDateString() === Clock.date.toDateString() ? "Today"
-      : day.toDateString() === tomorrow.toDateString() ? "Tomorrow"
-      : Clock.format(day, "%A %-d %B");
   }
 
   // The height of a day's first row, one line or two (an end, a place): what its heading needs below it to be shown.
@@ -107,7 +100,7 @@ ListView {
         topPadding: root.headingPadding
         tone: "dim"
         strong: true
-        text: root.heading(Clock.parse(day.section))
+        text: Clock.heading(Clock.parse(day.section))
       }
     }
   }

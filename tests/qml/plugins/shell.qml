@@ -97,7 +97,7 @@ ShellRoot {
       {
         name: "picking an open task ticks it off, then syncs, and it stays to untick",
         start: () => Plugins.get("tasks").select("c"),
-        until: () => Plugins.get("tasks").items.find(item => item.id === "c").done && !Plugins.get("tasks").items.find(item => item.id === "c").hidden && Plugins.get("synced")?.text === "synced"
+        until: () => Plugins.get("tasks").items.find(item => item.id === "c").done && !Plugins.get("tasks").items.find(item => item.id === "c").hidden && Plugins.get("tasks").items.find(item => item.id === "c").verb === "untick" && Plugins.get("synced")?.text === "synced"
       },
       {
         name: "picking a done task unticks it",

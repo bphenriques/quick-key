@@ -16,18 +16,25 @@ Item {
   // The conversation: "" until a turn opens one, which the next turns carry on.
   property string session: ""
 
+  // What it can do, once started: carry on an earlier conversation (`load`), list them (`list`).
+  property bool canLoad: false
+  property bool canList: false
+
   // The answer as it streams in; a tool it started; it had to start a new conversation; it asks to be allowed `title` (answered by `answer`).
   signal text(string chunk)
+  // A loaded conversation's history, as the agent replays it: `role` user or agent, a piece of its text.
+  signal history(string role, string chunk)
   signal tool(string title)
   signal restarted
   signal permission(string title)
   // The turn's end: `answered` (`stopped` when cancelled, `cut` when it ran out of tokens), else the `error` the user reads.
   signal ended(var outcome)
 
-  // Its own state: the process initialized, what it can do, the session it has open, the turn under way and the permission it waits on.
+  // Its own state: the process initialized and who waits for it, the session it has open, the turn under way (or the load replaying) and the permission it waits on.
   property bool ready: false
-  property bool canLoad: false
+  property var waiters: null
   property string opened: ""
+  property bool replaying: false
   property int turns: 0
   property int current: 0
   property bool done: true
@@ -48,7 +55,30 @@ Item {
     spoke = false;
     idleTimer.stop();
     const live = () => ticket === current && !done;
-    connect(live, () => open(live, () => ask(live, blocks)));
+    connect(() => live() && open(live, () => ask(live, blocks)), why => live() && fail(why));
+  }
+
+  // An earlier conversation, between turns: its history replayed through `history`, then `ended` with `loaded`.
+  function load(id) {
+    if (!done) return;
+    session = id;
+    const ticket = current = ++turns;
+    done = false;
+    replaying = true;
+    idleTimer.stop();
+    const live = () => ticket === current && !done;
+    connect(() => live() && open(live, () => end({ loaded: true })), why => live() && fail(why));
+  }
+
+  // Its conversations where it works, as it orders them: then([{ sessionId, title, updatedAt }]), else then(null, why).
+  function list(then) {
+    connect(() => {
+      if (!canList) return then(null, name + " keeps no list of conversations");
+      request("session/list", { cwd: cwd }, (error, result) => {
+        if (done) idleTimer.restart();
+        then(error ? null : Array.from(result.sessions ?? []), error?.message ?? "");
+      });
+    }, why => then(null, why));
   }
 
   function answer(allowed) {
@@ -77,6 +107,7 @@ Item {
   function end(outcome) {
     if (done) return;
     done = true;
+    replaying = false;
     waiting = null;
     idleTimer.restart();
     ended(outcome);
@@ -90,20 +121,26 @@ Item {
     return error.code === authRequired ? "Sign in to " + name + " first" : error.message;
   }
 
-  function connect(live, then) {
+  // Started and initialized once for every caller waiting meanwhile: each hears `then()`, or `failed(why)`.
+  function connect(then, failed) {
     if (ready) return then();
+    if (waiters) return waiters.push({ then, failed });
+    waiters = [{ then, failed }];
     if (!process.running) {
       complaint = "";
       process.command = command;
       process.running = true;
     }
     request("initialize", { protocolVersion: 1, clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false }, clientInfo: { name: "quick-key", version: "1" } }, (error, result) => {
-      if (!live()) return;
-      if (error) return fail(error.message);
-      if (result.protocolVersion !== 1) return fail(name + " speaks ACP v" + result.protocolVersion + ", quick-key v1");
-      ready = true;
-      canLoad = !!result.agentCapabilities?.loadSession;
-      then();
+      const waiting = waiters;
+      waiters = null;
+      const problem = error ? error.message : result.protocolVersion !== 1 ? name + " speaks ACP v" + result.protocolVersion + ", quick-key v1" : "";
+      if (!problem) {
+        ready = true;
+        canLoad = !!result.agentCapabilities?.loadSession;
+        canList = !!result.agentCapabilities?.sessionCapabilities?.list;
+      }
+      for (const waiter of waiting) problem ? waiter.failed(problem) : waiter.then();
     });
   }
 
@@ -144,7 +181,9 @@ Item {
   function receive(message) {
     if (message.method === "session/update") {
       const update = message.params.update;
-      // A load replays the history; only the turn's own answer counts.
+      const role = { user_message_chunk: "user", agent_message_chunk: "agent" }[update.sessionUpdate];
+      // A load replays the history, which only `load` asked for; a turn's own answer is its own.
+      if (replaying && role && update.content?.type === "text") return history(role, update.content.text);
       if (!prompting || done) return;
       if (update.sessionUpdate === "agent_message_chunk" && update.content?.type === "text") {
         spoke = true;
@@ -219,12 +258,16 @@ Item {
       }
     }
 
+    // The turn ends first, so what then hears its reply never come (a list, a load's fallback) finds it over.
     onExited: {
+      const why = root.complaint || root.name + " ended before answering";
+      const unanswered = Object.values(root.pending);
       root.ready = false;
       root.opened = "";
       root.prompting = false;
       root.pending = {};
-      root.fail(root.complaint || root.name + " ended before answering");
+      root.fail(why);
+      for (const reply of unanswered) reply({ message: why }, null);
     }
   }
 }

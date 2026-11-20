@@ -44,7 +44,7 @@ Scope {
   // Whether it takes no text now; an input giving it text shows a spinner meanwhile and sends nothing.
   property bool busy: false
 
-  // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone }.
+  // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone, verb, closes, actions }: `verb` names what choosing it does, `closes` hides the surface first, `actions` ([{ key, desc, icon, closes }]) are its own menu.
   property var items: state.items ?? []
 
   // What a click on it in a bar, or `<name> activate` over IPC, does.
@@ -53,9 +53,20 @@ Scope {
   // What choosing one of its items does, given the item's id.
   function select(id) {}
 
+  // An action from an item's own menu, given the item's id and the action's key.
+  function run(id, key) {}
+
   // A level's input's text, when it sets no `cmd`: `background` from C-S-RET, `after` to run once done with it; false if not taken, the input keeping it.
   function submit(text, background, after) {
     console.warn(name + ": takes no text, so the input keeps it");
+    return false;
+  }
+
+  // Whether `recall` shows its past conversations, which C-r in an input giving it text opens.
+  property bool recalls: false
+
+  // Its past conversations in the picker, `back` showing again what opened it; false without.
+  function recall(back) {
     return false;
   }
 

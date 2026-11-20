@@ -5,6 +5,19 @@
       "read": "echo '{\"items\": [{\"id\": \"a-1\"}, {\"id\": \"b-2\"}]}'",
       "select": "sh -c 'echo \"$1\" > \"$XDG_RUNTIME_DIR/picked\"' sh"
     },
+    "many": {
+      "type": "command",
+      "read": "python3 -c 'import json; print(json.dumps({\"items\": [{\"id\": str(i), \"label\": \"Item %d\" % i} for i in range(10000)]}))'"
+    },
+    "ordered": {
+      "type": "command",
+      "file": "ordered"
+    },
+    "acting": {
+      "type": "command",
+      "read": "echo '{\"items\": [{\"id\": \"a\", \"label\": \"A\", \"verb\": \"open\", \"actions\": [{\"key\": \"d\", \"desc\": \"Delete\"}]}]}'",
+      "run": "sh -c 'echo \"$1 $2\" > \"$XDG_RUNTIME_DIR/picked\"' sh"
+    },
     "picked": {
       "type": "command",
       "file": "picked"
@@ -24,7 +37,6 @@
     }
   },
   "menu": {
-    "picker": "sed -n 2p",
     "header": {
       "left": [
         {

@@ -105,7 +105,7 @@ Singleton {
     for (const event of store.events) {
       if (event.allDay || event.start <= now || event.start > until || store.reminded[event.id]) continue;
       store.reminded[event.id] = true;
-      const when = Clock.format(event.start, "%H:%M") + (event.location ? " · " + event.location : "");
+      const when = Clock.time(event.start) + (event.location ? " · " + event.location : "");
       Commands.run(Config.calendar.remind, event.title, when);
     }
   }

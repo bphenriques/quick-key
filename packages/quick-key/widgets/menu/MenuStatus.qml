@@ -5,8 +5,8 @@ import qs.services
 import qs.ui
 import qs.builtins
 
-// A status by name (`status` in an entry), or an icon and label without one. On a row its label stays and the status follows as a value; in a bar the status alone.
-StatusLine {
+// A status by name (`status` in an entry), or an icon and label without one, drawn as a listed item (ItemLine). On a row its label stays and the status follows as a value; in a bar the status alone.
+ItemLine {
   id: root
 
   required property string status
@@ -18,15 +18,9 @@ StatusLine {
   property string icon: ""
   // In a bar: the status alone, dim unless lit.
   property bool quiet: false
-  property bool active: false
-  // A listed item that is done (a ticked task): dim and struck through, though it still runs.
-  property bool done: false
-  // A listed item's own tone for its value (warning on a late task's date), over its status's.
-  property string itemTone: ""
   property var pins: []
-  // An entry's own row in its level: its value follows its label, with the status's meter; a listed item brings its own meter (each output's volume).
+  // An entry's own row in its level: its value follows its label, with the status's meter.
   property bool inLevel: false
-  property var listedMeter: undefined
 
   readonly property var builtin: Statuses.builtin[status] ?? null
   readonly property var plugin: builtin ? null : Plugins.get(status)
@@ -42,24 +36,21 @@ StatusLine {
   text: status ? value.text : fallback
   detail: status ? value.detail : fallbackDetail
   detailGlyphs: status ? value.glyphs ?? [] : fallbackGlyphs
-  struck: done
   // The one to find first: the bar's anchor (the clock), or on a row what is in use, so colour is not all that says so.
   strong: !!builtin?.strong || (!status && active)
-  meter: listedMeter !== undefined ? listedMeter : inLevel && builtin?.meter ? builtin.meter() : -1
-  // A listed item's meter is lit while it is in use, like its value.
-  meterTone: listedMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
+  meter: itemMeter !== undefined ? itemMeter : inLevel && builtin?.meter ? builtin.meter() : -1
+  meterTone: itemMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
   // In a bar: its own tone, else lit while on; what is not lit dims, but for the strong one.
   readonly property string barTone: statusTone || (active || plugin?.active ? "primary" : strong ? "normal" : "dim")
-  // On a row: a listed item in use is lit whole; a status leaves its label and icon plain, its value taking the tone.
-  readonly property string rowTone: !status && active ? "primary" : "normal"
   // A status's tone is its own value's, but not over a format, which shows other fields.
   readonly property string ownValueTone: itemTone || (format ? formatTone : statusTone)
   // Under a format, the tone of a field it shows, when one has its own.
   readonly property var fieldTones: builtin?.fieldTones ? builtin.fieldTones() : plugin?.fieldTones ?? {}
   readonly property string formatTone: format ? (format.match(/\{\w+\}/g) ?? []).map(field => fieldTones[field.slice(1, -1)]).find(tone => tone) ?? "" : ""
 
-  tone: done ? "dim" : quiet ? barTone : rowTone
-  valueTone: done ? "dim" : ownValueTone || (active ? "primary" : "dim")
+  // With a status, its label and icon stay plain and its value takes the tone; without one, a listed item's look.
+  tone: done ? "dim" : quiet ? barTone : status ? "normal" : itemLabelTone
+  valueTone: status ? (done ? "dim" : ownValueTone || (active ? "primary" : "dim")) : itemValueTone
 
   function pinned(id, name) {
     return Array.from(pins).find(pin => MenuKeys.glob(pin.match, id))?.label ?? name;

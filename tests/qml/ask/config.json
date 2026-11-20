@@ -86,6 +86,17 @@
     "s4log": {
       "type": "command",
       "file": "s4-log"
+    },
+    "recaller": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s5",
+      "notify": "",
+      "open": "true"
+    },
+    "unlisted": {
+      "type": "ask",
+      "ask": "true",
+      "notify": ""
     }
   }
 }

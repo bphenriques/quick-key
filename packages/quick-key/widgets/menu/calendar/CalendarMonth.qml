@@ -67,7 +67,7 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         tone: "dim"
         // Some locales' short names are whole words (pt: segunda), too wide for a column.
-        text: Clock.locale.dayName((root.firstDay + index) % 7, Locale.ShortFormat).slice(0, 3)
+        text: Clock.weekdays[(root.firstDay + index) % 7].slice(0, 3)
       }
     }
 

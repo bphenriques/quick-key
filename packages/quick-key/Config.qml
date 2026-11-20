@@ -172,8 +172,6 @@ Singleton {
         }
         property int width: 960
         property int columns: 2
-        // A dmenu-like command (fuzzel --dmenu) the `pick` action shows a level's whole list in: a line per item in, the chosen one out; unset, no picking.
-        property string picker
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
         property var input: null
       }
@@ -181,7 +179,7 @@ Singleton {
       property JsonObject clock: JsonObject {
         // strftime, as waybar's clock takes it (see services/Clock.qml); unset, the locale's long date and short time.
         property string format
-        // The locale the clock and calendar name days and months in (en_GB); unset, the system's for dates (LC_TIME).
+        // The locale every date and time is said in (en_GB): names, the time's 24 or 12 hours; unset, the system's (LC_TIME).
         property string locale
         // The calendar's, 0 for Sunday to 6 for Saturday; unset (-1), the locale's.
         property int firstDayOfWeek: -1

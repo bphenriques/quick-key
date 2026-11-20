@@ -46,6 +46,36 @@ Singleton {
     }
   })
 
+  // What a list holds, built-in or a plugin's, as the menu and the picker show it: each item's id is what pins match, `select` what its digit runs, `actions` its own menu.
+  function items(list) {
+    if (!list) return [];
+    if (builtin[list]) return builtin[list].items();
+    const plugin = Plugins.get(list);
+    return Array.from(plugin?.items ?? []).map(item => ({
+      id: item.id,
+      desc: item.label ?? item.id,
+      icon: item.icon ?? "",
+      detail: item.detail ?? "",
+      meter: item.meter,
+      active: item.active ?? false,
+      enabled: item.enabled ?? true,
+      done: item.done ?? false,
+      hidden: item.hidden ?? false,
+      busy: item.busy ?? false,
+      glyphs: Array.from(item.glyphs ?? []),
+      tone: item.tone ?? "",
+      verb: item.verb ?? "",
+      closes: item.closes ?? false,
+      select: () => plugin.select(item.id),
+      actions: Array.from(item.actions ?? []).map(action => ({ key: action.key, desc: action.desc ?? action.key, icon: action.icon ?? "", closes: action.closes ?? false, select: () => plugin.run(item.id, action.key) }))
+    }));
+  }
+
+  // Why a list is empty, in its own words.
+  function empty(list) {
+    return builtin[list]?.empty() ?? Plugins.get(list)?.empty ?? "";
+  }
+
   // Each device with its own volume and meter.
   function audio(devices, current) {
     return devices.map(device => {

@@ -17,6 +17,12 @@ Plugin {
     selector.running = true;
   }
 
+  function run(id, key) {
+    if (!settings.run) return;
+    selector.command = commandLine(settings.run, id, key);
+    selector.running = true;
+  }
+
   Process {
     id: selector
     onExited: root.refresh()

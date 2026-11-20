@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// The time to the minute, and the locale the clock and calendar name days and months in (Config.clock).
+// The time to the minute, its locale (Config.clock, else the machine's), and the one place a moment is said, so every surface says it alike.
 Singleton {
   id: root
 
@@ -15,14 +15,14 @@ Singleton {
   readonly property string text: Config.clock.format ? format(date, Config.clock.format)
     : date.toLocaleDateString(locale, Locale.LongFormat) + " " + date.toLocaleTimeString(locale, Locale.ShortFormat)
 
-  // strftime as waybar takes it (%a %A %b %B %d %m %y %Y %H %I %M %p %%, %-d unpadded), plus %o, the English ordinal.
+  // strftime as waybar takes it (%a %A %b %B, the short names as `weekdays` and `months` say them, %d %m %y %Y %H %I %M %p %%, %-d unpadded), plus %o, the English ordinal.
   function format(date, pattern) {
     const pad = (value, flag) => flag === "-" ? String(value) : String(value).padStart(2, "0");
     return pattern.replace(/%(-?)([a-zA-Z%])/g, (all, flag, code) => {
       switch (code) {
-      case "a": return locale.dayName(date.getDay(), Locale.ShortFormat);
+      case "a": return weekdays[date.getDay()];
       case "A": return locale.dayName(date.getDay(), Locale.LongFormat);
-      case "b": return locale.monthName(date.getMonth(), Locale.ShortFormat);
+      case "b": return months[date.getMonth()];
       case "B": return locale.monthName(date.getMonth(), Locale.LongFormat);
       case "d": return pad(date.getDate(), flag);
       case "m": return pad(date.getMonth() + 1, flag);
@@ -39,9 +39,50 @@ Singleton {
     });
   }
 
-  // A past moment as a sync's age reads: its time today, else its day too.
-  function stamp(moment) {
-    return format(moment, moment.toDateString() === date.toDateString() ? "%H:%M" : "%-d %b %H:%M");
+  // Short day and month names, cut to three letters where that still tells them apart (en_GB's Sept), without a closing dot (fr's janv.).
+  readonly property var weekdays: abbreviated(Array.from({ length: 7 }, (_, day) => locale.dayName(day, Locale.ShortFormat)))
+  readonly property var months: abbreviated(Array.from({ length: 12 }, (_, month) => locale.monthName(month, Locale.ShortFormat)))
+  // The days next to today, as said.
+  readonly property var nearDays: ({ "-1": "yesterday", "0": "today", "1": "tomorrow" })
+
+  function abbreviated(names) {
+    const plain = names.map(name => name.replace(/\.$/, ""));
+    const cut = plain.map(name => name.slice(0, 3));
+    return new Set(cut).size === cut.length ? cut : plain;
+  }
+
+  // A time as the locale writes it (14:30, 2:30 PM).
+  function time(moment) {
+    return moment.toLocaleTimeString(locale, Locale.ShortFormat);
+  }
+
+  // Whole days from today to a moment's day: 0 today, 1 tomorrow, -1 yesterday.
+  function daysFrom(moment) {
+    const midnight = day => new Date(day.getFullYear(), day.getMonth(), day.getDate());
+    return Math.round((midnight(moment) - midnight(date)) / 86400000);
+  }
+
+  // A day as you would say it: yesterday, today or tomorrow, its weekday within a week either side, else its date (3 Nov), with its year when not this one.
+  function day(moment) {
+    const days = daysFrom(moment);
+    return nearDays[days] ?? (Math.abs(days) < 7 ? weekdays[moment.getDay()] : format(moment, moment.getFullYear() === date.getFullYear() ? "%-d %b" : "%-d %b %Y"));
+  }
+
+  // A moment as you would say it: today its time, else its day, with its time when `timed` (tomorrow 09:30).
+  function when(moment, timed) {
+    if (!timed) return day(moment);
+    return daysFrom(moment) === 0 ? time(moment) : day(moment) + " " + time(moment);
+  }
+
+  // When something last happened, in a list of recent things: its time today, else its day.
+  function recent(moment) {
+    return when(moment, daysFrom(moment) === 0);
+  }
+
+  // A day as a heading: Yesterday, Today or Tomorrow, else in full (Wednesday 26 November).
+  function heading(moment) {
+    const near = nearDays[daysFrom(moment)];
+    return near ? near[0].toUpperCase() + near.slice(1) : format(moment, "%A %-d %B");
   }
 
   // A day as the files key it: 2026-11-12.

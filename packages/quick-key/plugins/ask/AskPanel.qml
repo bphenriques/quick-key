@@ -25,6 +25,7 @@ Scope {
     { key: "y", desc: "Copy the last answer" },
     { key: "Ctrl+l", desc: "A new conversation" },
     { key: "Ctrl+o", desc: "Move it to a terminal" },
+    { key: "Ctrl+r", desc: "An earlier conversation" },
     { key: "Ctrl+v", desc: "Attach the clipboard's image" },
     { key: "1-9", desc: "Pick an option" },
     { key: "Escape", desc: "Step back one thing" }
@@ -162,6 +163,8 @@ Scope {
         keys: (panel.plugin.approval ? [{ key: "Ctrl+y", what: Words.allow, clickable: true }] : [])
           .concat(!panel.plugin.typing && panel.plugin.exchanges[panel.plugin.exchanges.length - 1]?.reply ? [{ key: "y", what: Words.copy, clickable: true }] : [])
           .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: Words.newChat, clickable: true }] : [])
+          // Where an earlier conversation is wanted most: before this one starts.
+          .concat(panel.plugin.exchanges.length === 0 && panel.plugin.recalls ? [{ key: chord + "r", what: Words.history, clickable: true }] : [])
           .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: Words.choose }] : [])
           .concat(panel.plugin.canMove ? [{ key: chord + "o", what: Words.terminal, clickable: true }] : [])
           .concat(!panel.plugin.typing ? [{ key: "?", what: Words.help, clickable: true }] : [])
@@ -222,11 +225,13 @@ Scope {
           // Wider between exchanges than within one, so each reads as a unit.
           spacing: Config.theme.padding
 
-          // An empty conversation says so, as an empty list does.
+          // An empty conversation says so, as an empty list does, or why it is empty: one being resumed, or one that could not be.
           Label {
             visible: panel.plugin.exchanges.length === 0
-            tone: "dim"
-            text: "New conversation"
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            tone: panel.plugin.failure ? "alert" : "dim"
+            text: panel.plugin.resuming ? "Resuming" + Words.ellipsis : panel.plugin.failure || "New conversation"
           }
 
           Repeater {

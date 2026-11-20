@@ -20,6 +20,9 @@ ShellRoot {
   property var backs: []
   property int streamStep: 0
   property real byeAt: 0
+  property int resumeStep: 0
+  property bool listedOnce: false
+  property bool recalledOnce: false
 
   // Sends a prompt once the plugin has loaded, then whether `done` holds for it.
   function asked(name, done) {
@@ -226,6 +229,54 @@ ShellRoot {
             break;
           }
           return root.streamStep === 5 && !ask.busy && ask.exchanges[ask.exchanges.length - 1].reply === "added" && log === "load s4" && Plugins.get("synced")?.text === "synced";
+        }
+      },
+      {
+        name: "recall lists the agent's conversations in the picker, as it orders them, each to resume and the last activity on its right",
+        until: () => {
+          const ask = Plugins.get("recaller");
+          if (!ask) return false;
+          if (!root.recalledOnce) root.recalledOnce = ask.recall(null);
+          const [old, older] = ask.items;
+          return Picker.list === "recaller" && !ask.listing && ask.items.length === 2 && old.label === "An old question" && old.verb === "resume" && old.enabled
+            && old.detail === Clock.recent(new Date("2026-11-01T10:00:00Z")) && older.label === "older" && ask.recalls;
+        }
+      },
+      {
+        name: "resuming one replays its history as the conversation, lit in the list, and the next turn carries it on",
+        until: () => {
+          const ask = Plugins.get("recaller");
+          if (root.resumeStep === 0) {
+            ask.select("old");
+            root.resumeStep = ask.resuming && ask.shown ? 1 : -1;
+          } else if (root.resumeStep === 1 && !ask.busy) {
+            root.resumeStep = ask.exchanges.length === 1 && ask.exchanges[0].prompt === "what was it?" && ask.exchanges[0].reply === "from before" && ask.items[0].active && ask.send("next", "") ? 2 : -1;
+          }
+          return root.resumeStep === 2 && !ask.busy && ask.session === "old" && ask.exchanges.length === 2 && ask.exchanges[1].reply === "next";
+        }
+      },
+      {
+        name: "an agent that ends before listing says why, and the list is empty",
+        until: () => {
+          const ask = Plugins.get("unlisted");
+          if (!ask) return false;
+          if (!root.listedOnce) root.listedOnce = ask.recall(null);
+          return !ask.listing && ask.items.length === 0 && ask.error !== "";
+        }
+      },
+      {
+        name: "a moment is said one way everywhere: near days by name, the week by weekday, else the date, with its year when not this one; short names cut to three letters only where that still tells them apart",
+        until: () => {
+          const day = 86400000;
+          const at = days => new Date(Date.now() + days * day);
+          const now = Clock.date;
+          const lastYear = new Date(now.getFullYear() - 1, 5, 3, 9, 30);
+          return /^\d\d:\d\d$/.test(Clock.recent(new Date())) && Clock.recent(at(-1)) === "yesterday" && Clock.day(at(1)) === "tomorrow"
+            && Clock.recent(at(-3)) === Clock.weekdays[at(-3).getDay()] && Clock.day(at(-10)) === Clock.format(at(-10), "%-d %b")
+            && Clock.day(lastYear) === "3 " + Clock.months[5] + " " + lastYear.getFullYear()
+            && Clock.when(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 30), true) === "tomorrow " + Clock.time(new Date(2000, 0, 1, 9, 30))
+            && Clock.heading(now) === "Today"
+            && JSON.stringify(Clock.abbreviated(["Sept", "Oct"])) === '["Sep","Oct"]' && JSON.stringify(Clock.abbreviated(["janv.", "juin", "juil."])) === '["janv","juin","juil"]';
         }
       }
     ]

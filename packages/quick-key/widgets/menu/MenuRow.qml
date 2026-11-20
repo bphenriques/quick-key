@@ -13,6 +13,7 @@ ListItem {
   property bool hugs: false
 
   enabled: row.item.enabled !== false
+  current: !!row.item.current
   onActivated: menu.activate(row.item)
   onSecondaryActivated: menu.openMenu(row.item)
   onScrolled: up => menu.act(row.item, up ? "Up" : "Down")
@@ -39,6 +40,6 @@ ListItem {
     pins: row.item.entry?.pins ?? []
     inLevel: row.item.inLevel ?? false
     packed: inLevel && !row.hugs
-    listedMeter: row.item.meter
+    itemMeter: row.item.meter
   }
 }
