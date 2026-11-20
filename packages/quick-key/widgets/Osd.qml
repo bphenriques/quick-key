@@ -133,9 +133,8 @@ Scope {
         Label {
           id: value
           anchors.verticalCenter: parent.verticalCenter
-          // As wide as its widest value while a toggle named (its glyph alone says little), else as wide as its text.
-          width: root.kind === "keyboardLayout" ? Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)) * Metrics.cell
-            : root.kind === "keepAwake" ? Words.keepAwakeState(false).length * Metrics.cell : window.text.length * Metrics.cell
+          // As wide as its widest value where the glyph alone says little, so the pill holds still as the value changes.
+          width: (window.status && window.status.popupWidth ? window.status.popupWidth() : window.text.length) * Metrics.cell
           tone: window.tone
           text: window.text
         }

@@ -10,7 +10,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text).
+  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own).
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -90,7 +90,8 @@ Singleton {
     keyboardLayout: {
       glyph: () => Glyphs.keyboard,
       fields: () => ({ layout: KeyboardLayout.label || KeyboardLayout.name }),
-      value: fields => ({ text: fields.layout, detail: "" })
+      value: fields => ({ text: fields.layout, detail: "" }),
+      popupWidth: () => Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length))
     },
     keepAwake: {
       glyph: () => Glyphs.keepAwake,
@@ -98,7 +99,8 @@ Singleton {
       value: () => ({ text: "", detail: "" }),
       tone: () => IdleInhibit.enabled ? "primary" : "",
       muted: () => !IdleInhibit.enabled,
-      popup: () => Words.keepAwakeState(IdleInhibit.enabled)
+      popup: () => Words.keepAwakeState(IdleInhibit.enabled),
+      popupWidth: () => Words.keepAwakeState(false).length
     }
   })
 
