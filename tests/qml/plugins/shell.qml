@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs
 import qs.services
 import qs.ui
 
@@ -194,6 +195,10 @@ ShellRoot {
         name: "a sync that failed is the plugin's error, for its level to show",
         start: () => root.tasks("broken"),
         until: () => Plugins.get("tasks").error.endsWith("personal: could not sync")
+      },
+      {
+        name: "a theme file sets the bubble colour",
+        until: () => Qt.colorEqual(Config.colors.bubble, "#123456")
       }
     ]
   }

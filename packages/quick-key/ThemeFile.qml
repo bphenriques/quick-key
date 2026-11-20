@@ -21,5 +21,7 @@ FileView {
     property string alert
     property string warning
     property string border
+    property string bubble
+    property string bubbleText
   }
 }

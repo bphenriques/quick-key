@@ -1,4 +1,7 @@
 {
+  "theme": {
+    "name": "bubbly"
+  },
   "plugins": {
     "lastLine": {
       "type": "command",
