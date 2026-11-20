@@ -122,6 +122,7 @@ Singleton {
   readonly property string move: "move"
   readonly property string newChat: "new"
   readonly property string open: "open"
+  readonly property string openTerminal: "Terminal" + ellipsis
   readonly property string pick: "pick"
   readonly property string stop: "stop"
   readonly property string terminal: "terminal" + ellipsis

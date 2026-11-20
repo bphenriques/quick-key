@@ -70,6 +70,11 @@ for file in $(grep -rl '…' --include='*.qml' .); do
   fail "$file: an ellipsis other than Words.ellipsis"
 done
 
+# Rule 6: a word the surfaces share is Words', declared there.
+for key in $(grep -rhoE '\bWords\.[a-zA-Z]+' --include='*.qml' . | sed 's/^Words\.//' | sort -u); do
+  grep -qsE "(property|function) [a-z]+ $key\b|^  function $key\b" ui/Words.qml || fail "Words.$key, which ui/Words.qml does not declare"
+done
+
 # Rule 11: a legend's words come from Words.
 for file in $(grep -rlE 'what: "' --include='*.qml' . | grep -v '^\./ui/Words\.qml$'); do
   fail "$file: a legend word outside Words"
