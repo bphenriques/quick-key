@@ -47,8 +47,11 @@ Plugin {
   tone: late.length > 0 ? "warning" : ""
   glyphs: late.length > 0 ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
-  fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: state.updated ? "updated " + Clock.when(Clock.parse(state.updated), true) : "" })
-  fieldTones: ({ updated: state.updated && Clock.date - Clock.parse(state.updated) >= settings.staleAfter * 60000 ? "warning" : "" })
+  fields: {
+    const updated = state.updated ? Clock.parse(state.updated) : null;
+    return ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" });
+  }
+  fieldTones: ({ updated: Clock.stale(state.updated ? Clock.parse(state.updated) : null, settings.staleAfter) ? "warning" : "" })
   items: tasks.map(task => {
     const late = !task.done && !!task.due && task.due.slice(0, 10) < today;
     return {
@@ -129,7 +132,8 @@ Plugin {
   function refresh() {
     failure = "";
     settled = tasks.filter(task => task.done).map(task => task.id);
-    if (!state.updated || Clock.date - Clock.parse(state.updated) >= settings.syncAfter * 60000) exec(settings.sync);
+    const updated = state.updated ? Clock.parse(state.updated) : null;
+    if (!updated || Clock.stale(updated, settings.syncAfter)) exec(settings.sync);
   }
 
   // Each timed task once, as its time comes, on the clock's own minute.

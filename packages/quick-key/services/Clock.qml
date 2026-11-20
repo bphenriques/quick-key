@@ -79,6 +79,11 @@ Singleton {
     return when(moment, daysFrom(moment) === 0);
   }
 
+  // Whether a moment is `minutes` or more ago; never for none.
+  function stale(moment, minutes) {
+    return !!moment && date - moment >= minutes * 60000;
+  }
+
   // A day as a heading: Yesterday, Today or Tomorrow, else in full (Wednesday 26 November).
   function heading(moment) {
     const near = nearDays[daysFrom(moment)];

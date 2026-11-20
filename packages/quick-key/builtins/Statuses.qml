@@ -68,7 +68,7 @@ Singleton {
       fields: () => root.calendar(),
       busy: () => Calendar.syncing,
       // A sync older than calendar.staleAfter warns, a format showing it or not.
-      fieldTones: () => ({ updated: !Calendar.syncing && Calendar.updated && Clock.date - Calendar.updated >= Config.calendar.staleAfter * 60000 ? "warning" : "" }),
+      fieldTones: () => ({ updated: !Calendar.syncing && Clock.stale(Calendar.updated, Config.calendar.staleAfter) ? "warning" : "" }),
       value: fields => ({ text: "", detail: fields.when ?? "" })
     },
     clock: {
@@ -105,7 +105,7 @@ Singleton {
   // The next event and when, and how old the events are: their age even after a failed sync, the line under the legend saying why.
   function calendar() {
     if (!Calendar.enabled) return {};
-    const updated = Calendar.syncing ? Words.syncing : Calendar.updated ? "updated " + Clock.when(Calendar.updated, true) : "";
+    const updated = Calendar.syncing ? Words.syncing : Calendar.updated ? Words.updated(Clock.when(Calendar.updated, true)) : "";
     const next = Calendar.next;
     if (!next) return { updated };
     // An all-day event under way is today's.

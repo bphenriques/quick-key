@@ -39,6 +39,11 @@ Singleton {
     return "Allow " + what + "?";
   }
 
+  // When a source last brought its data, beside its state.
+  function updated(when) {
+    return "updated " + when;
+  }
+
   // What a key does, in a legend: a lowercase word or two.
   readonly property string allow: "allow"
   readonly property string appMenu: "app menu"
