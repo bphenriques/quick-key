@@ -149,10 +149,10 @@ Scope {
           id: value
           anchors.verticalCenter: parent.verticalCenter
           // As wide as its widest value, so the pill holds still as it changes; a toggle named, as its glyph alone says little.
-          width: (root.kind === "keyboardLayout" ? Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)) : "Keep awake off".length) * Metrics.cell
+          width: (root.kind === "keyboardLayout" ? Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)) : Words.keepAwakeState(false).length) * Metrics.cell
           tone: window.tone
           text: root.kind === "keyboardLayout" ? KeyboardLayout.label
-            : "Keep awake " + (IdleInhibit.enabled ? "on" : "off")
+            : Words.keepAwakeState(IdleInhibit.enabled)
         }
       }
     }

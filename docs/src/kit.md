@@ -43,6 +43,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined the same, or in its `tone` for a state (recording) |
 | `Panel` | a surface the keyboard opens, the menu or a plugin's: at the bottom centre, its `bar` at the edge (with the top level's right slot on its right when `statuses`), its `body` over it and its `input` over the body (`inputOver`, a level's island) or between the body and the bar (with the keys while `inputFocused`), one open at a time, dismissed by a click anywhere else; keys its body leaves reach `keyPressed` |
+| `Panels` | which `Panel` opened last, so opening one dismisses the other, and the top level's right slot a plugin's panel's bar repeats |
 | `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
 | `OverlayWindow`, `DismissArea` | a popup above everything; the click-outside catcher under it, one per screen |

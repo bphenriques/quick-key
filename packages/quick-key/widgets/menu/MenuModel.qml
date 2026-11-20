@@ -80,11 +80,11 @@ Scope {
   readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > 0
   // The keys no row shows, listed on `?`: holds, an item's own menu, and back.
   readonly property var help: [
-    { key: "Ctrl+", desc: "Hold: the bar's keys" },
-    { key: "Super+", desc: "Hold: compositor shortcuts" },
-    { key: "Alt+1", desc: "An item's own menu" }
-  ].concat(slashFilters ? [{ key: "/", desc: "Filter the list" }] : [], input ? [{ key: "Tab", desc: "The input, and back" }, { key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], inputPlugin?.recalls ? [{ key: "Ctrl+r", desc: "An earlier conversation" }] : [], [
-    { key: "Escape", desc: "Clear, else back" }
+    { key: "Ctrl+", desc: Words.helpBarKeys },
+    { key: "Super+", desc: Words.helpCompositor },
+    { key: "Alt+1", desc: Words.helpItemMenu }
+  ].concat(slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [], input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpBackground }] : [], inputPlugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [], [
+    { key: "Escape", desc: Words.helpEscape }
   ])
   // `/` filters the level's list, unless the level binds it itself.
   readonly property bool slashFilters: !!level?.entry?.list && !find(items, "/")

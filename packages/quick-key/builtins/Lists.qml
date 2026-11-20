@@ -13,18 +13,18 @@ Singleton {
   readonly property var builtin: ({
     tray: {
       icon: Glyphs.tray,
-      empty: () => "No apps in the tray",
+      empty: () => Words.emptyTray,
       legend: [{ key: "Alt+digit", what: Words.appMenu }],
       items: () => Tray.items.map(app => ({ id: app.id, desc: app.title || app.id, image: app.icon, app, closes: true, select: () => app.activate() }))
     },
     wifi: {
       icon: Glyphs.wifi,
-      empty: () => Network.wifiEnabled ? "No saved networks in range" : "Wi-Fi is off",
+      empty: () => Network.wifiEnabled ? Words.emptyNetworks : Words.emptyWifiOff,
       items: () => Network.known.map(network => ({ id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, select: () => root.toggle(network) }))
     },
     bluetooth: {
       icon: Glyphs.bluetooth,
-      empty: () => !Bluez.present ? "No Bluetooth adapter" : Bluez.enabled ? "No paired devices" : "Bluetooth is off",
+      empty: () => !Bluez.present ? Words.emptyNoAdapter : Bluez.enabled ? Words.emptyNoPaired : Words.emptyBluetoothOff,
       items: () => !Bluez.enabled ? [] : Bluez.paired.map(device => ({
         id: device.address,
         desc: device.name,
@@ -36,12 +36,12 @@ Singleton {
     },
     sinks: {
       icon: Glyphs.audioDevice("external"),
-      empty: () => "No outputs",
+      empty: () => Words.emptyOutputs,
       items: () => root.audio(Audio.sinks, Audio.sink?.name)
     },
     sources: {
       icon: Glyphs.microphone,
-      empty: () => "No inputs",
+      empty: () => Words.emptyInputs,
       items: () => root.audio(Audio.sources, Audio.source?.name)
     }
   })

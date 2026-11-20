@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 import qs
+import qs.ui
 
 // Default output and input, and every device to pick from.
 Singleton {
@@ -28,7 +29,7 @@ Singleton {
 
   // A device's volume as said beside it: muted, else its percentage.
   function level(node) {
-    return node?.audio?.muted ? "muted" : Math.round((node?.audio?.volume ?? 0) * 100) + "%";
+    return node?.audio?.muted ? Words.muted : Math.round((node?.audio?.volume ?? 0) * 100) + "%";
   }
 
   // The output's or input's volume a step down or up (Config.audio.step), never past Config.audio.max.
@@ -62,7 +63,7 @@ Singleton {
 
   function describe(node) {
     const deviceType = type(node);
-    const label = deviceType === "internal" ? "Speakers" : deviceType === "headphones" ? "Headphones" : node.nickname || node.description;
+    const label = deviceType === "internal" ? Words.speakers : deviceType === "headphones" ? Words.headphones : node.nickname || node.description;
     return { node, kind: node.isSink ? "sink" : "source", name: node.name, type: deviceType, label };
   }
 

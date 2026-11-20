@@ -29,7 +29,7 @@ CornerPill {
     // Padded to the time's width (the font is monospace), so the pill keeps its size under the pointer.
     Label {
       anchors.verticalCenter: parent.verticalCenter
-      text: pill.hovered ? "Stop".padEnd(pill.plugin.shownTime.length) : pill.plugin.shownTime
+      text: pill.hovered ? Words.stopButton.padEnd(pill.plugin.shownTime.length) : pill.plugin.shownTime
     }
 
     Icon {

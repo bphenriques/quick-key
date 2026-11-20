@@ -44,6 +44,68 @@ Singleton {
     return "updated " + when;
   }
 
+  // Why an empty list says it is empty.
+  readonly property string emptyTray: "No apps in the tray"
+  readonly property string emptyNetworks: "No saved networks in range"
+  readonly property string emptyWifiOff: "Wi-Fi is off"
+  readonly property string emptyNoAdapter: "No Bluetooth adapter"
+  readonly property string emptyNoPaired: "No paired devices"
+  readonly property string emptyBluetoothOff: "Bluetooth is off"
+  readonly property string emptyOutputs: "No outputs"
+  readonly property string emptyInputs: "No inputs"
+  readonly property string noSong: "No song playing"
+  readonly property string noDevice: "No device connected"
+  readonly property string noEvents: "No events"
+  readonly property string noTasks: "No tasks"
+  readonly property string noCompleted: "No completed tasks"
+
+  function devicesConnected(count) {
+    return count + " devices connected";
+  }
+
+  // What an action failed to do, named after the thing it was given.
+  function addFailed(what) {
+    return "Could not add " + what;
+  }
+
+  function tickFailed(what) {
+    return "Could not tick off " + what;
+  }
+
+  function reopenFailed(what) {
+    return "Could not reopen " + what;
+  }
+
+  // A value's words, on the right of a row.
+  readonly property string off: "off"
+  readonly property string paused: "paused"
+  readonly property string wifiOff: "Wi-Fi off"
+  readonly property string disconnected: "Disconnected"
+  readonly property string ethernet: "Ethernet"
+  readonly property string muted: "muted"
+
+  // What carries the sound when its own name says nothing.
+  readonly property string speakers: "Speakers"
+  readonly property string headphones: "Headphones"
+
+  // A named toggle's pill, the state in its name.
+  function keepAwakeState(keep) {
+    return "Keep awake " + (keep ? "on" : "off");
+  }
+
+  // An input's plugin: the prompt's and the conversation's states.
+  readonly property string resuming: "Resuming" + ellipsis
+  readonly property string newConversation: "New conversation"
+  readonly property string listingConversations: "Listing conversations" + ellipsis
+  readonly property string noConversations: "No conversations yet"
+  readonly property string noAnswer: "No answer"
+  readonly property string noImage: "Could not read the image"
+  readonly property string stopButton: "Stop"
+
+  function approvalLine(allowed, what) {
+    return (allowed ? "Allowed: " : "Denied: ") + what;
+  }
+
   // What a key does, in a legend: a lowercase word or two.
   readonly property string allow: "allow"
   readonly property string appMenu: "app menu"
@@ -66,4 +128,22 @@ Singleton {
   readonly property string today: "today"
   readonly property string week: "week"
   readonly property string year: "year"
+
+  // What a key does, listed on `?`.
+  readonly property string helpBarKeys: "Hold: the bar's keys"
+  readonly property string helpCompositor: "Hold: compositor shortcuts"
+  readonly property string helpItemMenu: "An item's own menu"
+  readonly property string helpFilter: "Filter the list"
+  readonly property string helpTab: "The input, and back"
+  readonly property string helpNewline: "A new line"
+  readonly property string helpBackground: "Send in the background"
+  readonly property string helpAllow: "Allow what it asks"
+  readonly property string helpStop: "Stop the answer"
+  readonly property string helpCopy: "Copy the last answer"
+  readonly property string helpNew: "A new conversation"
+  readonly property string helpMoveTerminal: "Move it to a terminal"
+  readonly property string helpRecall: "An earlier conversation"
+  readonly property string helpAttach: "Attach the clipboard's image"
+  readonly property string helpOptions: "Pick an option"
+  readonly property string helpEscape: "Clear, else back"
 }

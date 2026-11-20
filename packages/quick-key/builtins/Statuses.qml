@@ -29,7 +29,7 @@ Singleton {
     // Its glyph says whether it plays; with nothing playing it says so, which reads as state rather than something missing.
     music: {
       glyph: () => !Music.present || !Music.title ? Glyphs.musicOff : Music.playing ? Glyphs.music : Glyphs.musicPaused,
-      fields: () => !Music.present || !Music.title ? { song: "No song playing" } : { song: Music.title + (Music.artist ? " · " + Music.artist : ""), title: Music.title, artist: Music.artist, state: Music.playing ? "" : "paused" },
+      fields: () => !Music.present || !Music.title ? { song: Words.noSong } : { song: Music.title + (Music.artist ? " · " + Music.artist : ""), title: Music.title, artist: Music.artist, state: Music.playing ? "" : Words.paused },
       value: fields => ({
         text: fields.song,
         detail: "",
@@ -39,8 +39,8 @@ Singleton {
     network: {
       glyph: () => Network.kind === "wifi" ? Glyphs.wifi : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected,
       fields: pinned => ({
-        name: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? "Ethernet" : "Disconnected",
-        wifi: Network.wifiEnabled ? "" : "Wi-Fi off"
+        name: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? Words.ethernet : Words.disconnected,
+        wifi: Network.wifiEnabled ? "" : Words.wifiOff
       }),
       value: fields => ({ text: fields.name, detail: fields.wifi })
     },
@@ -48,10 +48,10 @@ Singleton {
       glyph: () => !Bluez.enabled ? Glyphs.bluetoothOff : Bluez.connected.length ? Glyphs.bluetoothConnected : Glyphs.bluetooth,
       fields: pinned => {
         if (!Bluez.present) return {};
-        if (!Bluez.enabled) return { state: "off" };
+        if (!Bluez.enabled) return { state: Words.off };
         const [device, ...others] = Bluez.connected;
-        if (!device) return { device: "No device connected" };
-        if (others.length) return { device: Bluez.connected.length + " devices connected" };
+        if (!device) return { device: Words.noDevice };
+        if (others.length) return { device: Words.devicesConnected(Bluez.connected.length) };
         return { device: pinned(device.address, device.name), battery: device.batteryAvailable ? Math.round(device.battery * 100) + "%" : "" };
       },
       value: fields => ({ text: fields.device ?? "", detail: fields.state ?? fields.battery ?? "" })

@@ -123,7 +123,7 @@ ListView {
     Label {
       visible: !row.event
       tone: "dim"
-      text: "No events"
+      text: Words.noEvents
     }
 
     Swatch {

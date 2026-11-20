@@ -18,18 +18,18 @@ Scope {
   property real threadWidth: 0
   // Every key the panel takes, for `?`.
   readonly property var help: [
-    { key: "Tab", desc: "The prompt, and back" },
-    { key: "Shift+Return", desc: "A new line" },
-    { key: "Ctrl+Shift+Return", desc: "Send in the background" },
-    { key: "Ctrl+y", desc: "Allow what it asks" },
-    { key: "Ctrl+c", desc: "Stop the answer" },
-    { key: "y", desc: "Copy the last answer" },
-    { key: "Ctrl+l", desc: "A new conversation" },
-    { key: "Ctrl+o", desc: "Move it to a terminal" },
-    { key: "Ctrl+r", desc: "An earlier conversation" },
-    { key: "Ctrl+v", desc: "Attach the clipboard's image" },
-    { key: "1-9", desc: "Pick an option" },
-    { key: "Escape", desc: "Clear, else back" }
+    { key: "Tab", desc: Words.helpTab },
+    { key: "Shift+Return", desc: Words.helpNewline },
+    { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
+    { key: "Ctrl+y", desc: Words.helpAllow },
+    { key: "Ctrl+c", desc: Words.helpStop },
+    { key: "y", desc: Words.helpCopy },
+    { key: "Ctrl+l", desc: Words.helpNew },
+    { key: "Ctrl+o", desc: Words.helpMoveTerminal },
+    { key: "Ctrl+r", desc: Words.helpRecall },
+    { key: "Ctrl+v", desc: Words.helpAttach },
+    { key: "1-9", desc: Words.helpOptions },
+    { key: "Escape", desc: Words.helpEscape }
   ]
   // The last turn as drawn, for what Return does next.
   readonly property var last: plugin.exchanges.length > 0 ? plugin.describe(plugin.exchanges[plugin.exchanges.length - 1]) : null
@@ -256,7 +256,7 @@ Scope {
           width: thread.width
           wrapMode: Text.Wrap
           tone: panel.plugin.failure ? "alert" : "dim"
-          text: panel.plugin.resuming ? "Resuming" + Words.ellipsis : panel.plugin.failure || "New conversation"
+          text: panel.plugin.resuming ? Words.resuming : panel.plugin.failure || Words.newConversation
         }
       }
 

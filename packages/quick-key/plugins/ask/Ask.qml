@@ -71,9 +71,9 @@ Plugin {
     active: conversation.sessionId === session,
     enabled: agent.canLoad,
     verb: "resume",
-    actions: settings.open ? [{ key: "o", desc: "Terminal" + Words.ellipsis, closes: true }] : []
+    actions: settings.open ? [{ key: "o", desc: Words.openTerminal, closes: true }] : []
   }))
-  empty: listing ? "Listing conversations" + Words.ellipsis : "No conversations yet"
+  empty: listing ? Words.listingConversations : Words.noConversations
 
   // Its past conversations, listed afresh each time, in the picker.
   function recall(back) {
@@ -254,7 +254,7 @@ Plugin {
   }
 
   function finish(answer) {
-    const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? "No answer", stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
+    const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? Words.noAnswer, stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
     exchanges = exchanges.slice(0, -1).concat([last]);
     busy = false;
     approval = "";
@@ -271,7 +271,7 @@ Plugin {
 
   // An image as the agent takes it: base64, its type read from its first bytes.
   function encode(path, then) {
-    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : fail("Could not read the image"));
+    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : fail(Words.noImage));
   }
 
   function mimeOf(data) {
@@ -296,7 +296,7 @@ Plugin {
     if (!approval) return;
     agent.answer(allowed);
     const last = exchanges[exchanges.length - 1];
-    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { steps: (last.steps ?? []).concat([(allowed ? "Allowed: " : "Denied: ") + approval]) })]);
+    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { steps: (last.steps ?? []).concat([Words.approvalLine(allowed, approval)]) })]);
     approval = "";
   }
 

@@ -33,7 +33,7 @@ Plugin {
   property var reminded: ({})
 
   text: ""
-  empty: completed === "only" ? "No completed tasks" : "No tasks"
+  empty: completed === "only" ? Words.noCompleted : Words.noTasks
   actions: ({
     sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.sort, available: () => true, run: () => root.sort = root.after(root.sorts, root.sort) },
     completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.shows, root.completed) }
@@ -167,10 +167,10 @@ Plugin {
       if (job.verb === "add") root.adding = root.adding.filter(title => title !== job.arg);
       if (code === 0) root.exec(job.after);
       if (code !== 0 && job.verb === "add") {
-        root.failure = "Could not add " + job.arg;
+        root.failure = Words.addFailed(job.arg);
       } else if (code !== 0) {
         root.pending = root.kept(id => id !== job.arg);
-        root.failure = (job.verb === "done" ? "Could not tick off " : "Could not reopen ") + (Array.from(root.state.tasks ?? []).find(task => task.id === job.arg)?.title ?? job.arg);
+        root.failure = (job.verb === "done" ? Words.tickFailed : Words.reopenFailed)((Array.from(root.state.tasks ?? []).find(task => task.id === job.arg)?.title ?? job.arg));
       }
       if (root.queue.length > 0) root.next();
       else root.exec(root.settings.sync);
