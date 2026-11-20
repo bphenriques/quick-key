@@ -40,6 +40,8 @@ ShellRoot {
     ["an input naming a plugin that is not one", menu([{ key: "x", desc: "X", list: "tray", input: { desc: "Add", plugin: "nope" } }]), "plugin 'nope', which is not one"],
     ["an input format without its text", menu([{ key: "x", desc: "X", list: "tray", input: { desc: "Add", cmd: "true", format: "Add it" } }]), "input.format without {text}"],
     ["an ask plugin without its command", { plugins: { a: { type: "ask" } } }, "plugins.a needs ask"],
+    ["a plugin setting its plugin does not declare", { plugins: { d: { type: "dunst", activat: "x" } } }, "plugins.d.activat is not a setting"],
+    ["a plugin setting of another kind", { plugins: { t: { type: "tasks", syncAfter: "5" } } }, "plugins.t.syncAfter takes a number"],
     ["a glyph that does not exist", { glyphs: { wifii: "x" } }, "glyphs.wifii is not a glyph"],
     ["a glyph of another kind", { glyphs: { batteryLevels: "x" } }, "glyphs.batteryLevels takes a list of glyphs"]
   ]
@@ -57,6 +59,10 @@ ShellRoot {
       {
         name: "a top-level input handing a plugin its text has nothing wrong",
         until: () => Validation.check({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" } } }).length === 0
+      },
+      {
+        name: "a plugin's own settings have nothing wrong",
+        until: () => Validation.check({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }).length === 0
       }
     ].concat(root.wrong.map(([what, config, problem]) => ({
       name: what + " is named",

@@ -27,14 +27,10 @@ Singleton {
 
     property var loaded: ({})
 
-    // A type with a slash is a plugin file's path, else a plugin's name: its folder, in the user's plugins then the shipped ones.
     function component(name, spec) {
-      const type = spec.type ?? name;
-      const file = type + "/" + type.charAt(0).toUpperCase() + type.slice(1) + ".qml";
-      const paths = type.includes("/") ? [type] : [Config.configDir + "/plugins/" + file, "plugins/" + file];
       let found = null;
-      for (const path of paths) {
-        found = Qt.createComponent(path.startsWith("/") ? "file://" + path : Quickshell.shellPath(path));
+      for (const url of Config.pluginUrls(name, spec)) {
+        found = Qt.createComponent(url);
         if (found.status === Component.Ready) break;
       }
       return found;

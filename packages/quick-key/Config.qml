@@ -58,6 +58,14 @@ Singleton {
     return found;
   }
 
+  // A plugin's file as candidate URLs: a type with a slash is its path, else its name in the user's plugins, then the shipped ones.
+  function pluginUrls(name, spec) {
+    const type = spec.type ?? name;
+    const file = type + "/" + type.charAt(0).toUpperCase() + type.slice(1) + ".qml";
+    const paths = type.includes("/") ? [type] : [root.configDir + "/plugins/" + file, "plugins/" + file];
+    return paths.map(path => path.startsWith("/") ? "file://" + path : Quickshell.shellPath(path));
+  }
+
   ThemeFile {
     id: userTheme
     path: adapter.theme.name ? root.configDir + "/themes/" + adapter.theme.name + ".json" : ""

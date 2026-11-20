@@ -111,7 +111,7 @@ Two agents are two plugins with `type = "ask"`. A level's `input` may hand one i
 A plugin that needs behaviour (a timer, a surface, a protocol) is a folder, found in `$XDG_CONFIG_HOME/quick-key/plugins/` and then among the shipped ones. `type` names it, by default the plugin's own name, or gives a path to its file.
 
 - `<Name>.qml`, rooted at `Plugin`: its state and actions. It never draws.
-- `Settings.qml`, rooted at `PluginSettings`: every setting it takes, with its default.
+- `Settings.qml`, rooted at `PluginSettings`: every setting it takes, with its default. It is read as the configuration builds, so it must stay declarative; the shell creates it once to check the config and once to run the plugin.
 - One file per view it draws, listed in `views` (`["Minimap.qml"]`). Each is given the plugin as `plugin` and only reads it.
 
 What it gets:
