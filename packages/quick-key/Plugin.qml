@@ -106,6 +106,31 @@ Scope {
     Commands.run(shell, ...args);
   }
 
+  // Runs a command from its settings with its arguments, then `then(code, output)`; false, running nothing, when unset.
+  function call(shell, args, then) {
+    if (!shell) return false;
+    const process = job.createObject(root, { command: commandLine(shell, ...args), then: then ?? null });
+    process.running = true;
+    return true;
+  }
+
+  // `running` is set after creation, never declared: a running that turns true before `command` is set starts nothing (see services/CommandReader.qml).
+  Component {
+    id: job
+
+    Process {
+      id: process
+      property var then
+      stdout: StdioCollector {
+        id: output
+      }
+      onExited: code => {
+        if (process.then) process.then(code, output.text);
+        process.destroy();
+      }
+    }
+  }
+
   Component.onCompleted: {
     for (const file of views) {
       const component = Qt.createComponent(folder + file);

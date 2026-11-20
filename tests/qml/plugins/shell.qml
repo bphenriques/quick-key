@@ -212,6 +212,15 @@ ShellRoot {
         name: "any plugin runs its activate",
         start: () => Plugins.get("lastLine").activate(),
         until: () => Plugins.get("activated")?.text === "on"
+      },
+      {
+        name: "a choice made while another runs is not dropped",
+        start: () => {
+          Plugins.get("chooser").select("a");
+          Plugins.get("chooser").select("b");
+          Plugins.get("chooser").select("c");
+        },
+        until: () => Plugins.get("choseA").text === "picked" && Plugins.get("choseB").text === "picked" && Plugins.get("choseC").text === "picked"
       }
     ]
   }

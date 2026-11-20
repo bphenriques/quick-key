@@ -271,9 +271,7 @@ Plugin {
 
   // An image as the agent takes it: base64, its type read from its first bytes.
   function encode(path, then) {
-    encoder.done = then;
-    encoder.command = commandLine(settings.encodeImage, path);
-    encoder.running = true;
+    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : fail("Could not read the image"));
   }
 
   function mimeOf(data) {
@@ -289,11 +287,8 @@ Plugin {
 
   // Ctrl+V: the clipboard's image, attached to the next prompt; without one, the text paste it would have been.
   function pasteImage() {
-    if (!settings.pasteImage) return false;
-    paster.path = Quickshell.env("XDG_RUNTIME_DIR") + "/" + name + "-" + Date.now();
-    paster.command = commandLine(settings.pasteImage, paster.path);
-    paster.running = true;
-    return true;
+    const path = Quickshell.env("XDG_RUNTIME_DIR") + "/" + name + "-" + Date.now();
+    return call(settings.pasteImage, [path], code => code === 0 ? root.image = path : root.pasteText());
   }
 
   // Allow or deny once; an agent offering neither for the answer is told it was cancelled.
@@ -436,27 +431,6 @@ Plugin {
     id: flushing
     interval: 50
     onTriggered: root.flush()
-  }
-
-  Process {
-    id: encoder
-    property var done
-
-    stdout: StdioCollector {
-      id: encoded
-    }
-
-    onExited: code => code === 0 ? done(encoded.text.trim()) : root.fail("Could not read the image")
-  }
-
-  Process {
-    id: paster
-    property string path
-
-    onExited: code => {
-      if (code === 0) root.image = path;
-      else root.pasteText();
-    }
   }
 
   Process {

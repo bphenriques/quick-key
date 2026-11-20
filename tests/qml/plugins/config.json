@@ -18,6 +18,22 @@
       "watch": "echo up",
       "glyph": "W"
     },
+    "chooser": {
+      "type": "command",
+      "select": "sleep 0.3; echo picked > \"$XDG_RUNTIME_DIR/chose-$1\"; :"
+    },
+    "choseA": {
+      "type": "command",
+      "file": "chose-a"
+    },
+    "choseB": {
+      "type": "command",
+      "file": "chose-b"
+    },
+    "choseC": {
+      "type": "command",
+      "file": "chose-c"
+    },
     "wallpaper": {
       "file": "wallpaper"
     },
