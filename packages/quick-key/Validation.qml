@@ -43,7 +43,6 @@ Singleton {
       if (builtin.includes(name)) found.push(at + " takes a built-in name");
       if (["watch", "read", "file"].filter(source => plugin[source] != null).length > 1) found.push(at + " sets more than one of watch, read and file");
       if (plugin.every != null && plugin.read == null) found.push(at + " sets every without read");
-      if (plugin.type === "ask" && !plugin.ask) found.push(at + " needs ask, the command it asks");
       let settings = null;
       for (const url of Config.pluginUrls(name, plugin)) {
         const component = Qt.createComponent(url.replace(/[^/]*$/, "Settings.qml"));
@@ -57,7 +56,12 @@ Singleton {
         const object = settings.createObject(null);
         const given = Object.assign({}, plugin);
         delete given.type;
-        found.push(...Config.undeclared(given, object, at + "."));
+        const wrong = Config.undeclared(given, object, at + ".");
+        found.push(...wrong);
+        if (wrong.length === 0) {
+          for (const key of Object.keys(given)) object[key] = given[key];
+          found.push(...object.problems().map(problem => at + " " + problem));
+        }
         object.destroy();
       }
     }

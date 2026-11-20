@@ -16,4 +16,9 @@ QtObject {
   property string shortcut
   // Its name, in tips, prompts and notifications; unset, the plugin's.
   property string title
+
+  // What else is wrong with these settings, each named after plugins.<name> by Validation.
+  function problems() {
+    return [];
+  }
 }

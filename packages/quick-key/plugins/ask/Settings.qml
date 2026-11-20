@@ -27,4 +27,8 @@ PluginSettings {
   property string placeholder: "Ask {title}"
   // How many lines tall the conversation is, like a level's width: declared, so the panel holds still (rule 4).
   property int lines: 14
+
+  function problems() {
+    return ask ? [] : ["needs ask, the command it asks"];
+  }
 }
