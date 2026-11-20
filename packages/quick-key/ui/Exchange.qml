@@ -65,13 +65,8 @@ ColumnLayout {
     faded: root.phase === "failed"
     maximumWidth: root.maximumWidth
 
-    Image {
-      visible: root.image !== ""
-      source: root.image ? "file://" + root.image : ""
-      fillMode: Image.PreserveAspectFit
-      sourceSize.height: Metrics.line * 4
-      Layout.preferredHeight: Metrics.line * 4
-      Layout.preferredWidth: implicitHeight > 0 ? Layout.preferredHeight * implicitWidth / implicitHeight : 0
+    Thumbnail {
+      path: root.image
     }
 
     Label {
