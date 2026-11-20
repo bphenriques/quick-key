@@ -85,7 +85,7 @@ Singleton {
         desc: device.label,
         icon: Glyphs.audioDevice(device.type),
         active: device.name === current,
-        detail: audio?.muted ? "muted" : Math.round((audio?.volume ?? 0) * 100) + "%",
+        detail: Audio.level(device.node),
         meter: audio?.volume ?? 0,
         select: () => Audio.select(device)
       };

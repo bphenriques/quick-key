@@ -26,6 +26,11 @@ Singleton {
   readonly property bool sinkMuted: sink?.audio?.muted ?? false
   readonly property bool sourceMuted: source?.audio?.muted ?? false
 
+  // A device's volume as said beside it: muted, else its percentage.
+  function level(node) {
+    return node?.audio?.muted ? "muted" : Math.round((node?.audio?.volume ?? 0) * 100) + "%";
+  }
+
   // The output's or input's volume a step down or up (Config.audio.step), never past Config.audio.max.
   function adjust(kind, up) {
     const node = kind === "sink" ? sink : source;

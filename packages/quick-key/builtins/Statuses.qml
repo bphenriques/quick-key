@@ -14,14 +14,14 @@ Singleton {
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
-      fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.sinkMuted ? "muted" : Math.round(Audio.sinkVolume * 100) + "%" },
+      fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.level(Audio.sink) },
       value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
       meter: () => Audio.sinkVolume,
       muted: () => Audio.sinkMuted
     },
     source: {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
-      fields: pinned => !Audio.source ? {} : { device: pinned(Audio.source.name, Audio.sourceName), volume: Audio.sourceMuted ? "muted" : Math.round(Audio.sourceVolume * 100) + "%" },
+      fields: pinned => !Audio.source ? {} : { device: pinned(Audio.source.name, Audio.sourceName), volume: Audio.level(Audio.source) },
       value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
       meter: () => Audio.sourceVolume,
       muted: () => Audio.sourceMuted
