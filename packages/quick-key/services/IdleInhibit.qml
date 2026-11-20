@@ -21,7 +21,7 @@ Singleton {
   }
 
   IpcHandler {
-    target: "idle"
+    target: "keepAwake"
 
     function toggle(): void {
       root.toggle();
