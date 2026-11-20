@@ -199,6 +199,10 @@ ShellRoot {
       {
         name: "a theme file sets the bubble colour",
         until: () => Qt.colorEqual(Config.colors.bubble, "#123456")
+      },
+      {
+        name: "any plugin takes a title, else its name",
+        until: () => Plugins.get("lastLine").title === "Last" && Plugins.get("watcher").title === "watcher"
       }
     ]
   }

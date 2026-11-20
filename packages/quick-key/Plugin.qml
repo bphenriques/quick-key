@@ -9,6 +9,7 @@ Scope {
 
   // Set by the shell: the plugin's name in Config.plugins, and its settings there read through its Settings.qml.
   property string name
+  readonly property string title: settings.title || name
   required property PluginSettings settings
   // Set by the shell: the folder its files are in.
   property string folder

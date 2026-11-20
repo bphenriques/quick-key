@@ -19,8 +19,6 @@ PluginSettings {
   property string pasteImage: "sh -c 'for type in $(wl-paste --list-types); do case $type in image/*) exec wl-paste --type \"$type\" > \"$1\" ;; esac; done; exit 1' sh"
   // Given the session, opens it in a terminal.
   property string open
-  // Its name, in the prompt and notifications; unset, the plugin's.
-  property string title
   // Its glyph in the bar and notifications.
   property string glyph
   // The prompt's glyph, its own (the agent's face) over the one every input shares (glyphs.prompt).

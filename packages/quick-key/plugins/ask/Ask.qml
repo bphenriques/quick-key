@@ -12,7 +12,6 @@ Plugin {
   id: root
 
   readonly property int lines: settings.lines
-  readonly property string title: settings.title || name
 
   // [{ prompt, image, reply, error, stopped, after, input, options, table, steps }], the last one streaming in while busy; `input` when a level's input sent it, or its panel while expanded from one.
   property var exchanges: []

@@ -14,4 +14,6 @@ QtObject {
   property var items: []
   // Its compositor key, shown beside it while Super is held.
   property string shortcut
+  // Its name, in tips, prompts and notifications; unset, the plugin's.
+  property string title
 }

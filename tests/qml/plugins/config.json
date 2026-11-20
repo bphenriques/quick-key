@@ -5,7 +5,8 @@
   "plugins": {
     "lastLine": {
       "type": "command",
-      "read": "printf 'first\\nsecond\\n'"
+      "read": "printf 'first\\nsecond\\n'",
+      "title": "Last"
     },
     "watcher": {
       "type": "command",
