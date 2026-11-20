@@ -57,6 +57,11 @@ Singleton {
       // None: a user's plugin may be absent where the build runs; its loading logs it.
       if (settings) {
         const object = settings.createObject(null);
+        // Ready is not enough: settings that fail to instantiate name themselves, they do not hang the check.
+        if (!object) {
+          found.push(at + " Settings.qml does not instantiate");
+          continue;
+        }
         const given = Object.assign({}, plugin);
         delete given.type;
         const wrong = Config.undeclared(given, object, at + ".");
