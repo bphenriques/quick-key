@@ -8,7 +8,7 @@
 - `Ctrl+←→` moves a month, `Ctrl+↑↓` a year, `t` goes back to today.
 - `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns.
 
-A dot under a day marks each colour of its events. The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it; its fields are `title`, `when` and `updated`, how old the events are, `syncing...` while a sync runs. The month and year head the grid, its keys sit on the bar, and a failed sync says why under the events. A Sync button in the level's bar shows only its icon, spinning while the sync runs and in warning past `calendar.staleAfter`, `updated` on hover:
+A dot under a day marks each colour of its events. The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it; its fields are `title`, `when` and `updated`, how old the events are, `syncing...` while a sync runs. The month and year head the grid, its keys sit on the bar, and a failed sync says why under the events. A Sync button in the level's bar shows only its icon, spinning while the sync runs, `updated` on hover; past `calendar.staleAfter` it turns warning with `updated` beside it:
 
 ```nix
 header.right = [ { key = "s"; desc = "Sync"; icon = "<glyph>"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];

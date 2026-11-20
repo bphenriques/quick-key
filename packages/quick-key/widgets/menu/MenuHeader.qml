@@ -24,7 +24,9 @@ RowLayout {
   // As their rows draw them, so an action keeps its icon, state and value on the bar; filtering, the filter's keys alone.
   RowLayout {
     visible: header.menu.barActions.length > 0 || header.menu.legend.length > 0
-    Layout.minimumWidth: 0
+    // Shrinks, never grows: its rows' text gives way, as the slots' does.
+    Layout.fillWidth: true
+    Layout.maximumWidth: implicitWidth
     // No spacing: each item's own padding already spaces them.
     spacing: 0
 
@@ -36,6 +38,8 @@ RowLayout {
         item: header.menu.barActions[index] ?? ({})
         menu: header.menu
         hugs: true
+        Layout.fillWidth: true
+        Layout.maximumWidth: implicitWidth
         chars: MenuKeys.label(item.key ?? "", item.paired ?? false).length
       }
     }

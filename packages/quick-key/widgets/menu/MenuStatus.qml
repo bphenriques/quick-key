@@ -18,7 +18,7 @@ ItemLine {
   property string icon: ""
   // In a bar: the status alone, dim unless lit.
   property bool quiet: false
-  // In a bar, an entry's own icon: its glyph alone, a spinner while the status is busy, its value left to a tip.
+  // In a bar, an entry's own icon: its glyph alone, its value left to a tip.
   property bool glyphOnly: false
   property var pins: []
   // An entry's own row in its level: its value follows its label, with the status's meter.
