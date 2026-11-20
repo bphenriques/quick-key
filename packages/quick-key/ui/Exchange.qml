@@ -32,11 +32,15 @@ ColumnLayout {
   readonly property bool compact: lines > 0
   readonly property bool fits: options.length <= 9 && choices.implicitWidth <= maximumWidth - 2 * Config.theme.itemPaddingX
   readonly property bool overflows: compact && (phase === "waiting" || table || brief.width > 0 && brief.truncated || (options.length > 0 && !fits))
-  // What Return does next, for the prompt under the exchange; nothing while it works, where the answer says so and typing ahead is free.
-  readonly property string next: phase === "working" ? "" : phase === "waiting" ? Words.approvePrompt : picking && options.length > 0 ? Words.pickPrompt : Words.replyPrompt
+  // What Return does next, for the prompt under the exchange.
+  readonly property string next: Words.next(phase, picking, options.length)
+  // The answer's selection to show again (Markdown.kept).
+  property alias kept: answer.kept
   readonly property string tone: phase === "failed" ? "alert" : phase === "waiting" ? "warning" : phase === "stopped" ? "dim" : ""
 
   signal picked(int index)
+  // The answer's selection made or cleared (Markdown.selected).
+  signal selected(var selection)
 
   spacing: Config.theme.spacing / 2
 
@@ -147,7 +151,9 @@ ColumnLayout {
         }
 
         Markdown {
+          id: answer
           Layout.fillWidth: true
+          onSelected: selection => root.selected(selection)
           visible: !root.compact
           tone: root.tone || "normal"
           markdown: root.compact ? "" : root.text

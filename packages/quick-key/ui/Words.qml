@@ -20,6 +20,11 @@ Singleton {
   // A picker's filter, empty and when it leaves nothing.
   readonly property string filterPrompt: "Filter" + ellipsis
 
+  // What Return does after a turn in `phase`, for the prompt under it: nothing while it works, where the answer says so and typing ahead is free.
+  function next(phase, picking, options) {
+    return phase === "working" ? "" : phase === "waiting" ? approvePrompt : picking && options > 0 ? pickPrompt : replyPrompt;
+  }
+
   function noMatch(text) {
     return "Nothing matches " + text;
   }

@@ -30,8 +30,10 @@ Scope {
     { key: "1-9", desc: "Pick an option" },
     { key: "Escape", desc: "Step back one thing" }
   ]
-  // What Return does next, as the last turn says.
-  property string next: ""
+  // The last turn as drawn, for what Return does next.
+  readonly property var last: plugin.exchanges.length > 0 ? plugin.describe(plugin.exchanges[plugin.exchanges.length - 1]) : null
+  // An answer's selection, kept while its turn is scrolled away or the panel hidden: { turn, piece, start, end }; another conversation drops it.
+  property var selection: null
 
   // Page Up and Down, for the conversation.
   signal paged(bool down)
@@ -45,6 +47,12 @@ Scope {
       return true;
     }
     return plugin.act(MenuKeys.name(event));
+  }
+
+  // A turn's answer selected (kept for it) or cleared (dropped, if it was the one kept).
+  function keep(turn, selection) {
+    if (selection) panel.selection = Object.assign({ turn: turn }, selection);
+    else if (panel.selection && panel.selection.turn === turn) panel.selection = null;
   }
 
   // The web links in a reply, each once, without the punctuation that ends a sentence.
@@ -111,7 +119,6 @@ Scope {
     spacing: Config.theme.spacing / 2
 
     Exchange {
-      id: drawnExchange
       Layout.fillWidth: true
       maximumWidth: panel.threadWidth * 0.85
       question: turn.drawn.question ?? ""
@@ -126,14 +133,9 @@ Scope {
       steps: turn.drawn.steps ?? []
       picking: !panel.plugin.draft
       copyable: true
+      kept: panel.selection && panel.selection.turn === turn.index ? panel.selection : null
       onPicked: index => panel.plugin.pick(index)
-    }
-
-    Binding {
-      when: turn.index === panel.plugin.exchanges.length - 1
-      target: panel
-      property: "next"
-      value: drawnExchange.next
+      onSelected: selection => panel.keep(turn.index, selection)
     }
 
     Repeater {
@@ -143,6 +145,18 @@ Scope {
         required property int index
         url: turn.links[index] ?? ""
       }
+    }
+  }
+
+  Connections {
+    target: panel.plugin
+
+    function onSessionChanged() {
+      panel.selection = null;
+    }
+
+    function onExchangesChanged() {
+      if (panel.selection && panel.selection.turn >= panel.plugin.exchanges.length) panel.selection = null;
     }
   }
 
@@ -187,32 +201,55 @@ Scope {
     body: ColumnLayout {
       spacing: Config.theme.padding
 
-      // The conversation, kept scrolled to its end.
-      Flickable {
+      // The conversation, built only where it shows, so a long one opens as fast as a short one.
+      ListView {
         id: thread
+        // At its end, where a new turn or the stream keeps it, until you scroll away.
+        property bool following: true
         visible: !panel.plugin.helping
         onWidthChanged: panel.threadWidth = width
-        Component.onCompleted: panel.threadWidth = width
+        Component.onCompleted: {
+          panel.threadWidth = width;
+          positionViewAtEnd();
+        }
         Layout.fillWidth: true
         Layout.preferredHeight: panel.plugin.lines * Metrics.line - panel.inputExtra
         Layout.leftMargin: Config.theme.itemPaddingX
         Layout.rightMargin: Config.theme.itemPaddingX
         clip: true
         // What scrolled away above fades out, so a cut bubble shows no edge; only while something is cut.
-        layer.enabled: contentY > 0
+        layer.enabled: !atYBeginning
         layer.effect: MultiEffect {
           maskEnabled: true
           maskSource: fadeMask
           maskThresholdMin: 0.5
           maskSpreadAtMin: 1
         }
-        contentHeight: exchangeList.implicitHeight
+        // Wider between exchanges than within one, so each reads as a unit.
+        spacing: Config.theme.padding
         boundsBehavior: Flickable.StopAtBounds
-        onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
-        onHeightChanged: contentY = Math.max(0, contentHeight - height)
+        model: panel.plugin.exchanges.length
+        delegate: Turn {
+          width: thread.width
+        }
+        onCountChanged: {
+          // No turn is current: a ListView keeps its current item built wherever it is, and makes the first current again as its count changes.
+          currentIndex = -1;
+          following = true;
+          Qt.callLater(follow);
+        }
+        // Later, as positioning builds turns and changes the height again; and only while following, as scrolling back builds turns too.
+        onContentHeightChanged: Qt.callLater(follow)
+        onHeightChanged: Qt.callLater(follow)
+        onMovementEnded: following = atYEnd
+
+        function follow() {
+          if (following && !atYEnd) positionViewAtEnd();
+        }
 
         function page(down) {
-          contentY = Math.max(0, Math.min(contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
+          contentY = Math.max(originY, Math.min(originY + contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
+          following = atYEnd;
         }
 
         Connections {
@@ -223,26 +260,13 @@ Scope {
           }
         }
 
-        ColumnLayout {
-          id: exchangeList
+        // An empty conversation says so, as an empty list does, or why it is empty: one being resumed, or one that could not be.
+        Label {
+          visible: panel.plugin.exchanges.length === 0
           width: thread.width
-          // Wider between exchanges than within one, so each reads as a unit.
-          spacing: Config.theme.padding
-
-          // An empty conversation says so, as an empty list does, or why it is empty: one being resumed, or one that could not be.
-          Label {
-            visible: panel.plugin.exchanges.length === 0
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            tone: panel.plugin.failure ? "alert" : "dim"
-            text: panel.plugin.resuming ? "Resuming" + Words.ellipsis : panel.plugin.failure || "New conversation"
-          }
-
-          Repeater {
-            model: panel.plugin.exchanges.length
-
-            Turn {}
-          }
+          wrapMode: Text.Wrap
+          tone: panel.plugin.failure ? "alert" : "dim"
+          text: panel.plugin.resuming ? "Resuming" + Words.ellipsis : panel.plugin.failure || "New conversation"
         }
       }
 
@@ -300,7 +324,7 @@ Scope {
         Layout.fillWidth: true
         glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
         // Who it asks until a turn says what Return does next, as the menu's input does.
-        placeholder: panel.plugin.exchanges.length > 0 ? panel.next : panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
+        placeholder: panel.last ? Words.next(panel.last.phase, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
         active: panel.plugin.typing
         key: "Tab"
         onTapped: panel.plugin.typing = true

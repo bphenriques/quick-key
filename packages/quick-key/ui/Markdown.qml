@@ -11,10 +11,15 @@ ColumnLayout {
 
   property string markdown
   property string tone: "normal"
+  // A selection to show again as its piece is made, as `selected` reported it: { piece, start, end }.
+  property var kept: null
   // The piece selected in last; a selection in another clears it, so one shows at a time.
-  property int selected: -1
+  property int current: -1
   // Characters a piece gathers before the next starts: what a streaming piece costs to redraw, against how many an answer arriving whole is drawn as.
   readonly property int pieceSize: 1000
+
+  // A selection made or cleared, { piece, start, end } or null, for whoever keeps it while its piece is gone.
+  signal selected(var selection)
 
   spacing: Config.theme.spacing
 
@@ -41,7 +46,9 @@ ColumnLayout {
     TextEdit {
       required property int index
       required property string source
-      readonly property bool others: root.selected !== index
+      readonly property bool others: root.current !== index
+      // Showing a kept selection again, which is not copied again, so it never overwrites what was copied since.
+      property bool restoring: false
 
       Layout.fillWidth: true
       text: Markup.html(source)
@@ -50,17 +57,31 @@ ColumnLayout {
       selectByMouse: true
       persistentSelection: true
       activeFocusOnPress: false
-      wrapMode: TextEdit.Wrap
+      // Unwrapped until a layout gives it a width: at none it would wrap every character, and a list would size itself by that height.
+      wrapMode: width > 0 ? TextEdit.Wrap : TextEdit.NoWrap
       color: Tone.color(root.tone)
       selectionColor: Tone.wash("primary", 2)
       selectedTextColor: Tone.color("normal")
       font.family: Config.theme.monospaceFont
       font.pointSize: Config.theme.fontSize
       onOthersChanged: if (others) deselect()
+      Component.onCompleted: {
+        const kept = root.kept;
+        if (!kept || kept.piece !== index || kept.end > length) return;
+        root.current = index;
+        restoring = true;
+        select(kept.start, kept.end);
+        restoring = false;
+      }
       onSelectedTextChanged: {
-        if (!selectedText) return;
-        root.selected = index;
+        if (!selectedText) {
+          if (root.current === index) root.selected(null);
+          return;
+        }
+        root.current = index;
+        if (restoring) return;
         Quickshell.clipboardText = selectedText;
+        root.selected({ piece: index, start: selectionStart, end: selectionEnd });
       }
     }
   }
