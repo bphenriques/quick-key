@@ -5,12 +5,12 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A pill in the top right corner of every screen while `shown`, fading in and out; `slot` stacks it under the ones above.
+// A pill in the top right corner of every screen while `shown`, fading in and out, stacked under the pills already showing.
 Scope {
   id: root
 
   property bool shown: false
-  property int slot: 0
+  readonly property int slot: Math.max(0, CornerPills.order.indexOf(root))
   property string tone: ""
   property string namespace
   default property Component content
@@ -27,7 +27,10 @@ Scope {
   Fade {
     id: fade
     shown: root.shown
+    onLoadedChanged: loaded ? CornerPills.add(root) : CornerPills.remove(root)
   }
+
+  Component.onDestruction: CornerPills.remove(root)
 
   LazyLoader {
     active: fade.loaded
