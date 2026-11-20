@@ -20,7 +20,7 @@ Scope {
   readonly property var state: compose(source.state)
 
   // What a menu entry with `status` set to the name shows, and whether one with `activeWhen` set to it is lit; by default, the state.
-  property string glyph: state.glyph ?? ""
+  property string glyph: state.glyph ?? settings.glyph
   property string text: state.text ?? ""
   property string detail: state.detail ?? ""
   property bool active: state.active ?? false
@@ -51,7 +51,9 @@ Scope {
   property var actions: ({})
 
   // What a click on it in a bar, or `<name> activate` over IPC, does.
-  function activate() {}
+  function activate() {
+    exec(settings.activate);
+  }
 
   // What choosing one of its items does, given the item's id.
   function select(id) {}

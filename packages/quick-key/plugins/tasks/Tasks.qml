@@ -32,7 +32,6 @@ Plugin {
   // The tasks reminded of, by id and due, so each is once.
   property var reminded: ({})
 
-  glyph: settings.glyph
   text: ""
   empty: completed === "only" ? "No completed tasks" : "No tasks"
   actions: ({

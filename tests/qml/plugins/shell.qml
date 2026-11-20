@@ -203,6 +203,15 @@ ShellRoot {
       {
         name: "any plugin takes a title, else its name",
         until: () => Plugins.get("lastLine").title === "Last" && Plugins.get("watcher").title === "watcher"
+      },
+      {
+        name: "any plugin takes a glyph",
+        until: () => Plugins.get("watcher").glyph === "W"
+      },
+      {
+        name: "any plugin runs its activate",
+        start: () => Plugins.get("lastLine").activate(),
+        until: () => Plugins.get("activated")?.text === "on"
       }
     ]
   }

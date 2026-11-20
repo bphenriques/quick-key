@@ -6,11 +6,17 @@
     "lastLine": {
       "type": "command",
       "read": "printf 'first\\nsecond\\n'",
-      "title": "Last"
+      "title": "Last",
+      "activate": "echo on > \"$XDG_RUNTIME_DIR/activated\""
+    },
+    "activated": {
+      "type": "command",
+      "file": "activated"
     },
     "watcher": {
       "type": "command",
-      "watch": "echo up"
+      "watch": "echo up",
+      "glyph": "W"
     },
     "wallpaper": {
       "file": "wallpaper"

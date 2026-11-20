@@ -12,7 +12,6 @@ Plugin {
   readonly property bool recording: phase === "recording"
   readonly property bool transcribing: phase === "transcribing"
 
-  glyph: settings.glyph
   active: recording || transcribing
   views: ["DictationPill.qml"]
 }

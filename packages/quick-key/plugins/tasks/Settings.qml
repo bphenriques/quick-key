@@ -20,5 +20,4 @@ PluginSettings {
   property string completed: "hidden"
   // Given a title and a time, as a timed task falls due; unset, no reminders.
   property string remind
-  property string glyph
 }

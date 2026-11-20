@@ -28,7 +28,7 @@ The source is one of:
 
 `show` maps each value to `{ glyph, text, detail, active, tone }`; a value without one shows as text.
 
-`title` names it in tips, prompts and notifications; unset, its name in `plugins`.
+`title` names it in tips, prompts and notifications; unset, its name in `plugins`. `glyph` is its glyph when its state names none. `activate` is what a click on it in a bar, or `<name> activate` over IPC, runs.
 
 For a fixed set of choices, `items` lists them, each `{ id, label, icon, detail }`, for an entry whose `list` is the plugin's name. The source's value names the one in use, and `select` runs with the chosen `id`; `run` runs with an item's `id` and the key of the action chosen from its own menu.
 
@@ -92,7 +92,7 @@ A turn resumes the session, or starts one and says so when the old one is gone; 
 
 Other ACP agents (Claude through `claude-agent-acp`, Codex through `codex-acp`, Gemini CLI, OpenCode, Goose) speak the same protocol and are untested here.
 
-Other settings: `cwd` (where its sessions work, on the agent's machine; `$HOME`), `toolMatch` and `toolRun` (a command run once a turn that used a tool matching it ends), `open` (given the session, opens it in a terminal), `glyph`, `promptGlyph`, `placeholder`, `lines` (the conversation's height, 14), and `notify`, `pasteImage` and `encodeImage`, which default to `notify-send`, `wl-paste` and `base64`.
+Other settings: `cwd` (where its sessions work, on the agent's machine; `$HOME`), `toolMatch` and `toolRun` (a command run once a turn that used a tool matching it ends), `open` (given the session, opens it in a terminal), `promptGlyph`, `placeholder`, `lines` (the conversation's height, 14), and `notify`, `pasteImage` and `encodeImage`, which default to `notify-send`, `wl-paste` and `base64`.
 
 Keys:
 
