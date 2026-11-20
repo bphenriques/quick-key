@@ -81,7 +81,8 @@ ColumnLayout {
       // Compact, one line unwrapped: a wrapped line cut short reports the width it was cut to, and the bubble would shrink to it.
       wrapMode: root.compact ? Text.NoWrap : Text.Wrap
       elide: Text.ElideRight
-      text: root.question
+      // Its line breaks as spaces, compact: unwrapped text still breaks at them, and Qt elides only a single line.
+      text: root.compact ? root.question.replace(/\s*\n\s*/g, " ") : root.question
     }
   }
 
