@@ -29,7 +29,7 @@ Singleton {
       available: list => list.length > 0,
       detail: list => {
         const shown = list.filter(item => !item.hidden).length;
-        return shown > 9 ? "1-9 of " + shown : "";
+        return shown > 9 ? Words.shownOf(shown) : "";
       },
       run: (second, list, menu) => menu.startFilter()
     }

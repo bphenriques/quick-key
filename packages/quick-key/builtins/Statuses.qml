@@ -10,7 +10,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted().
+  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted().
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -66,6 +66,7 @@ Singleton {
     calendar: {
       glyph: () => Glyphs.calendar,
       fields: () => root.calendar(),
+      busy: () => Calendar.syncing,
       // A sync older than calendar.staleAfter warns, a format showing it or not.
       fieldTones: () => ({ updated: !Calendar.syncing && Calendar.updated && Clock.date - Calendar.updated >= Config.calendar.staleAfter * 60000 ? "warning" : "" }),
       value: fields => ({ text: "", detail: fields.when ?? "" })

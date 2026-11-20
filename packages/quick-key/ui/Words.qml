@@ -25,6 +25,11 @@ Singleton {
     return phase === "working" ? "" : phase === "waiting" ? approvePrompt : picking && options > 0 ? pickPrompt : replyPrompt;
   }
 
+  // A list's rows at rest of all it holds, when it holds more (1-9 of 14).
+  function shownOf(total) {
+    return "1-9 of " + total;
+  }
+
   function noMatch(text) {
     return "Nothing matches " + text;
   }

@@ -58,6 +58,10 @@ Scope {
   readonly property var levelList: Lists.items(level?.entry?.list)
   readonly property var items: itemsOf(level)
   readonly property var actions: items.filter(item => !item.listed)
+  // A level with a list or a view is its content, its actions on its bar (rule 4); any other is a menu, its actions its rows.
+  readonly property bool content: level?.kind === "entry" && !!(level.entry.list || level.entry.view)
+  readonly property var bodyActions: content ? [] : actions
+  readonly property var barActions: content && !filtering ? actions : []
   readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed)
   readonly property int width: level?.width ?? Config.menu.width
   // Its actions' columns: its entry's own, else menu.columns.
@@ -72,21 +76,27 @@ Scope {
     : level?.kind === "actions" ? { left: [{ key: "", desc: level.title, icon: level.icon, named: true }], center: [], right: [] }
     : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
+  // A level with nothing for its bar is its body alone.
+  readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > 0
   // The keys no row shows, listed on `?`: holds, an item's own menu, and back.
   readonly property var help: [
     { key: "Ctrl+", desc: "Hold: the bar's keys" },
     { key: "Super+", desc: "Hold: compositor shortcuts" },
     { key: "Alt+1", desc: "An item's own menu" }
-  ].concat(input ? [{ key: "Tab", desc: "The input, and back" }, { key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], inputPlugin?.recalls ? [{ key: "Ctrl+r", desc: "An earlier conversation" }] : [], [
+  ].concat(slashFilters ? [{ key: "/", desc: "Filter the list" }] : [], input ? [{ key: "Tab", desc: "The input, and back" }, { key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], inputPlugin?.recalls ? [{ key: "Ctrl+r", desc: "An earlier conversation" }] : [], [
     { key: "Escape", desc: "Clear, else back" }
   ])
+  // `/` filters the level's list, unless the level binds it itself.
+  readonly property bool slashFilters: !!level?.entry?.list && !find(items, "/")
+  readonly property int unhidden: levelList.filter(item => !item.hidden).length
   // The keys listed in place of the body: the help, the bar's while Ctrl is held, the compositor's while Super is.
   readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
-  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s).
-  readonly property var levelLegend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
+  // Keys a level takes beyond its rows, after its actions on its bar (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s), and `/` while the list holds more than its rows.
+  readonly property var levelLegend: (inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
+    .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend : levelLegend
-  // Why a level's source failed, under its keys: the calendar's sync, or the plugin it lists.
+  // Why a level's source failed, at the end of its body: the calendar's sync, or the plugin it lists.
   readonly property string error: inCalendar ? (Calendar.syncing ? "" : Calendar.error) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
 
   // An entry as a row or a bar item shows it.
@@ -196,7 +206,7 @@ Scope {
 
   // Actions flow across, so a column is every nth one.
   function columnChars(index, columns) {
-    return keyChars(actions.filter((_, i) => i % columns === index % columns));
+    return keyChars(bodyActions.filter((_, i) => i % columns === index % columns));
   }
 
   // Whether an entry can run now: a command always, an action when it has something to act on.
@@ -459,6 +469,7 @@ Scope {
     else if (inCalendar && calendar.handleKey(name)) return true;
     else if (input && name === "Tab") inputFocused = true;
     else if (own) activate(own, name);
+    else if (name === "/" && slashFilters) startFilter();
     else if (target) openMenu(target);
     else if (barred) activate(barred, key);
     else return false;

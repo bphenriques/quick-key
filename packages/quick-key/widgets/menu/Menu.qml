@@ -90,7 +90,7 @@ Scope {
     shown: root.menu.open
     namespace: "menu"
     width: root.menu.width
-    barShown: root.menu.barItems.length > 0
+    barShown: root.menu.barShown
     inputOver: true
     onDismissed: root.menu.hide()
     // As Escape does, but never closing the top level.
@@ -110,6 +110,8 @@ Scope {
 
     bar: MenuHeader {
       menu: root.menu
+      // Filtering, the filter's keys; else as typed.
+      onPicked: key => root.menu.filtering ? (key === "Escape" ? root.inputPicked(key) : root.menu.filterKey(key)) : root.menu.handleName(key)
     }
 
     // Filtering, the filter takes the island, the level's input waiting under it.
@@ -370,9 +372,30 @@ Scope {
         }
       }
 
-      Divider {
+      // A menu's entries, in declared columns flowing across; hidden when empty, since an empty GridLayout keeps its last height.
+      GridLayout {
+        id: actionsGrid
         Layout.fillWidth: true
-        visible: !root.hinting && (root.menu.actions.length > 0 || root.menu.legend.length > 0) && (root.menu.rows.length > 0 || root.menu.emptyText !== "" || root.menu.filtering || !!root.menu.level?.entry?.view)
+        visible: !root.hinting && root.menu.bodyActions.length > 0
+        flow: GridLayout.LeftToRight
+        columns: root.menu.columns
+        columnSpacing: Config.theme.padding
+        rowSpacing: Config.theme.listSpacing
+
+        Repeater {
+          model: root.menu.bodyActions.length
+
+          // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
+          MenuRow {
+            required property int index
+            item: root.menu.bodyActions[index] ?? ({})
+            hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
+            menu: root.menu
+            Layout.fillWidth: !hugs
+            Layout.preferredWidth: hugs ? -1 : 1
+            chars: root.menu.columnChars(index, actionsGrid.columns)
+          }
+        }
       }
 
       Label {
@@ -384,67 +407,6 @@ Scope {
         tone: "alert"
         wrapMode: Text.Wrap
         text: root.menu.error
-      }
-
-      // A level's legend shares its line with its actions, the keys on the left and the actions on the right; last, at the edge side, so a list that grows moves neither. Filtering, the letters type, so the filter's legend covers the line, which keeps its height.
-      Item {
-        Layout.fillWidth: true
-        implicitHeight: Math.max(edge.implicitHeight, root.menu.filtering ? filterLegend.implicitHeight : 0)
-        visible: !root.hinting && (root.menu.legend.length > 0 || root.menu.actions.length > 0)
-
-        RowLayout {
-          id: edge
-          anchors.fill: parent
-          opacity: root.menu.filtering ? 0 : 1
-          enabled: !root.menu.filtering
-          spacing: Config.theme.padding
-
-          KeyLegend {
-            visible: root.menu.levelLegend.length > 0
-            keys: root.menu.levelLegend
-            onPicked: key => root.menu.calendar.handleKey(key)
-          }
-
-          Item {
-            visible: root.menu.levelLegend.length > 0
-            Layout.fillWidth: true
-          }
-
-          // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
-          GridLayout {
-            id: actionsGrid
-            Layout.fillWidth: root.menu.levelLegend.length === 0
-            visible: root.menu.actions.length > 0
-            flow: GridLayout.LeftToRight
-            columns: root.menu.columns
-            columnSpacing: Config.theme.padding
-            rowSpacing: Config.theme.listSpacing
-
-            Repeater {
-              model: root.menu.actions.length
-
-              // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
-              MenuRow {
-                required property int index
-                item: root.menu.actions[index] ?? ({})
-                hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
-                menu: root.menu
-                Layout.fillWidth: !hugs
-                Layout.preferredWidth: hugs ? -1 : 1
-                chars: root.menu.columnChars(index, actionsGrid.columns)
-              }
-            }
-          }
-        }
-
-        KeyLegend {
-          id: filterLegend
-          anchors.left: parent.left
-          anchors.verticalCenter: parent.verticalCenter
-          visible: root.menu.filtering
-          keys: root.menu.filter.legend
-          onPicked: key => key === "Escape" ? root.inputPicked(key) : root.menu.filterKey(key)
-        }
       }
     }
   }

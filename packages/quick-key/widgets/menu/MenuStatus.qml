@@ -18,6 +18,8 @@ ItemLine {
   property string icon: ""
   // In a bar: the status alone, dim unless lit.
   property bool quiet: false
+  // In a bar, an entry's own icon: its glyph alone, a spinner while the status is busy, its value left to a tip.
+  property bool glyphOnly: false
   property var pins: []
   // An entry's own row in its level: its value follows its label, with the status's meter.
   property bool inLevel: false
@@ -27,21 +29,22 @@ ItemLine {
   readonly property var fields: builtin ? builtin.fields((id, name) => root.pinned(id, name)) : Object.assign({ text: plugin?.text ?? "", detail: plugin?.detail ?? "" }, plugin?.fields ?? {})
   readonly property var value: format ? { text: Statuses.formatted(format.split("|")[0], fields), detail: Statuses.formatted(format.split("|")[1] ?? "", fields) } : builtin ? builtin.value(fields) : { text: plugin?.text ?? "", detail: plugin?.detail ?? "", glyphs: Array.from(plugin?.glyphs ?? []) }
   readonly property string statusTone: plugin?.tone || (builtin?.tone ? builtin.tone() : "")
+  readonly property bool statusBusy: builtin?.busy ? builtin.busy() : plugin?.busy ?? false
   readonly property bool blank: glyph === "" && text === "" && detail === ""
 
   glyph: icon || (builtin ? builtin.glyph() : plugin?.glyph ?? "")
   // In a bar an icon sits closer to its own text than to its neighbours.
   spacing: quiet ? Config.theme.spacing / 2 : Config.theme.spacing
   title: status && !quiet ? fallback : ""
-  text: status ? value.text : fallback
-  detail: status ? value.detail : fallbackDetail
+  text: glyphOnly ? "" : status ? value.text : fallback
+  detail: glyphOnly ? "" : status ? value.detail : fallbackDetail
   detailGlyphs: status ? value.glyphs ?? [] : fallbackGlyphs
   // The one to find first: the bar's anchor (the clock), or on a row what is in use, so colour is not all that says so.
   strong: !!builtin?.strong || (!status && active)
   meter: itemMeter !== undefined ? itemMeter : inLevel && builtin?.meter ? builtin.meter() : -1
   meterTone: itemMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
-  // In a bar: its own tone, else lit while on; what is not lit dims, but for the strong one.
-  readonly property string barTone: statusTone || (active || plugin?.active ? "primary" : strong ? "normal" : "dim")
+  // In a bar: its own tone (over a format, a field's it shows), else lit while on; what is not lit dims, but for the strong one.
+  readonly property string barTone: (format ? formatTone : statusTone) || (active || plugin?.active ? "primary" : strong ? "normal" : "dim")
   // A status's tone is its own value's, but not over a format, which shows other fields.
   readonly property string ownValueTone: itemTone || (format ? formatTone : statusTone)
   // Under a format, the tone of a field it shows, when one has its own.

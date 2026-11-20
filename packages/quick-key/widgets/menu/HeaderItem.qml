@@ -4,7 +4,7 @@ import qs
 import qs.services
 import qs.ui
 
-// An item of a bar (its keys are listed in the body while Ctrl is held): an entry as its status or else its icon, a listed item (a tray app) as its image, or a status or plugin by name.
+// An item of a bar (its keys are listed in the body while Ctrl is held): an entry as its status or else its icon (its icon, given both, the status lending it its tone, spinner and tip), a listed item (a tray app) as its image, or a status or plugin by name.
 ListItem {
   id: root
 
@@ -32,6 +32,9 @@ ListItem {
     status: root.item.status ?? ""
     format: root.item.format ?? ""
     active: root.item.active ?? false
+    icon: root.item.icon ?? ""
+    glyphOnly: !!root.item.icon
+    busy: glyphOnly && statusBusy
   }
 
   Icon {
@@ -53,7 +56,8 @@ ListItem {
   Tip {
     parent: root
     hovered: root.hovered
-    text: root.item.status ? (status.text === "" && status.detail === "" ? root.plugin?.title ?? root.item.desc ?? "" : "")
+    text: status.glyphOnly ? [root.item.desc ?? "", status.value.text, status.value.detail].filter(part => part).join(", ")
+      : root.item.status ? (status.text === "" && status.detail === "" ? root.plugin?.title ?? root.item.desc ?? "" : "")
       : !root.item.named && (!!root.item.image || !!root.item.icon) ? root.item.desc : ""
   }
 }

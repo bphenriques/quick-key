@@ -124,6 +124,28 @@ ShellRoot {
         }
       },
       {
+        name: "a list level's own entries sit on its bar and a menu's are its rows; / filters a list unless its level binds it, the legend saying so while it holds more than nine",
+        until: () => {
+          if (Plugins.get("many")?.items.length !== 10000) return false;
+          menu.hide();
+          menu.show();
+          const top = menu.bodyActions.length > 0 && menu.barActions.length === 0 && !menu.slashFilters;
+          menu.push({ kind: "entry", entry: { list: "many", submenu: [{ key: "m", desc: "Mute", cmd: "true" }] } });
+          const content = menu.content && menu.barActions.length === 1 && menu.bodyActions.length === 0 && menu.barShown;
+          const legend = menu.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join() === "/ 1-9 of 10000";
+          const listed = menu.help.some(key => key.key === "/");
+          menu.handleKey({ key: Qt.Key_Slash, modifiers: Qt.NoModifier, text: "/" });
+          const filtering = menu.filtering && menu.barActions.length === 0;
+          menu.hide();
+          menu.push({ kind: "entry", entry: { list: "many", submenu: [{ key: "/", desc: "All...", action: "pick" }] } });
+          const bound = !menu.slashFilters && menu.legend.length === 0 && menu.barActions[0]?.detail === "1-9 of 10000";
+          menu.push({ kind: "entry", entry: { submenu: [{ key: "m", desc: "Mute", cmd: "true" }] } });
+          const bare = !menu.content && !menu.barShown;
+          menu.hide();
+          return top && content && legend && listed && filtering && bound && bare;
+        }
+      },
+      {
         name: "a list of 10000 opens and filters without a stall",
         until: () => {
           if (Plugins.get("many")?.items.length !== 10000) return false;

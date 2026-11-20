@@ -26,7 +26,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `ItemLine` | a listed item's `StatusLine`: lit and bold while `active`, dim and struck through once `done`, its value in its own `itemTone` (a late date), its own `itemMeter`; the menu's rows draw a status over it |
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend, `allowQuestion` |
 | `KeyHint` | a key in its gutter |
-| `KeyLegend` | keys a level takes beyond its rows, on one line in its body: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
+| `KeyLegend` | keys a level takes beyond its rows, on one line on its bar after a content level's actions: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
 | `KeyList` | keys and what each does, a row each across the menu's columns, as `?` lists them; a click is `picked` |
 | `Meter` | a thin level bar |
 | `TextField` | text typed in, plain and wrapped, coloured by `tone`; a dim `placeholder` while empty, and `copyOnSelect` to copy what the mouse selects |
@@ -37,7 +37,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Exchange` | one turn of a conversation, the `question` a `Bubble` on the right and the answer plain on the left, its `text` Markdown, drawn by its `phase` (working with a spinner and `activity` until the answer streams in, then a spinner where its copy button goes until it is done, answered, choosing with `options` as digit keys while `picking`, waiting, failed in alert with the question faded, stopped); `context` the answer it follows, dim over the question; `steps` dim lines over the answer; with `lines` it is compact, the answer cut there and `overflows` saying what it cannot hold, else it all shows as `Markdown`, with a copy button (`copyable`) and options as rows (`picked`); `next` is what Return does after it, for the prompt under it (`Words.next`); `kept` and `selected` pass its answer's selection through |
 | `Bubble` | a message in a conversation, yours (`mine`) on the right in the theme's `bubble` colour with `bubbleText`, the other's plain on the left, its text on the keys' edge, as wide as its content up to `maximumWidth`, or all of it when `full` (text cut at a line count cannot size it); `faded` for one that did not go through |
 | `Spinner` | a wait in one cell, its `mood` saying whose turn it is: `working` turns the braille dots terminals use, `attention` knocks; its own tempo, still when animations are off |
-| `Divider` | a line between two groups of rows, in the theme's `border` |
+| `Divider` | a line between two parts of one content (the calendar's month and agenda), in the theme's `border`; never between content and its actions |
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined the same, or in its `tone` for a state (recording) |

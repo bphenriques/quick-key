@@ -12,7 +12,7 @@ menu.entries = [ { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; 
 
 Tasks sort by due date, undated last, a late one in the warning tone with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it; the next opening hides it, still found by filtering (`/`), and the file drops it the next day. With none, the level says so.
 
-The file is read on every change. Opening the menu syncs when it is `syncAfter` minutes old (5), and every tick syncs after it. Past `staleAfter` minutes (120), its last sync shows in warning, as the calendar's does past `calendar.staleAfter`.
+The file is read on every change. Opening the menu syncs when it is `syncAfter` minutes old (5), and every tick syncs after it. Past `staleAfter` minutes (120), its last sync shows in warning, as the calendar's does past `calendar.staleAfter`; a Sync button in its level's bar shows it as the calendar's does ([Calendar](calendar.md)).
 
 ## The tasks file
 
