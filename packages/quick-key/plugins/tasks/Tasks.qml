@@ -36,8 +36,8 @@ Plugin {
   text: ""
   empty: completed === "only" ? "No completed tasks" : "No tasks"
   actions: ({
-    sort: { icon: () => Glyphs.sort, detail: () => root.sort, available: () => true, run: () => root.sort = root.after(root.sorts, root.sort) },
-    completed: { icon: () => Glyphs.completed, detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.shows, root.completed) }
+    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.sort, available: () => true, run: () => root.sort = root.after(root.sorts, root.sort) },
+    completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.shows, root.completed) }
   })
   // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.
   detail: {

@@ -40,8 +40,18 @@ Singleton {
   readonly property var brightnessLevels: Config.glyphs.brightnessLevels ?? ["\u{F00DE}", "\u{F00DF}", "\u{F00E0}"] // md-brightness_5, _6, _7
   readonly property string check: Config.glyphs.check ?? "\u{F012C}" // md-check
   readonly property string search: Config.glyphs.search ?? "\u{F0349}" // md-magnify
-  readonly property string sort: Config.glyphs.sort ?? "\u{F04BA}" // md-sort
-  readonly property string completed: Config.glyphs.completed ?? "\u{F012D}" // md-check_all
+  // The tasks' order and what their done ones show, each by its value.
+  readonly property var sorts: Object.assign({
+    due: "\u{F1547}", // md-sort_calendar_ascending
+    priority: "\u{F1389}", // md-sort_numeric_ascending
+    title: "\u{F05BD}", // md-sort_alphabetical_ascending
+    list: "\u{F1860}" // md-format_list_group
+  }, Config.glyphs.sorts ?? {})
+  readonly property var completed: Object.assign({
+    hidden: "\u{F06D1}", // md-eye_off_outline
+    shown: "\u{F06D0}", // md-eye_outline
+    only: "\u{F012D}" // md-check_all
+  }, Config.glyphs.completed ?? {})
   readonly property string submenu: Config.glyphs.submenu ?? "\u{F0142}" // md-chevron_right
   // What marks a prompt: an input with the keys, and what was asked in Ask.
   readonly property string prompt: Config.glyphs.prompt ?? "\u{F0142}" // md-chevron_right

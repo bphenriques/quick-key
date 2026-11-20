@@ -151,14 +151,14 @@ ShellRoot {
           const plugin = Plugins.get("devices");
           if (!plugin) return false;
           let ran = 0;
-          plugin.actions = { flip: { icon: () => Glyphs.sort, detail: () => "on", available: () => true, run: () => ran++ } };
+          plugin.actions = { flip: { icon: () => Glyphs.search, detail: () => "on", available: () => true, run: () => ran++ } };
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "f", desc: "Flip", action: "flip" }, { key: "g", desc: "Gone", action: "gone" }] } });
           const [flip, gone] = menu.actions;
           menu.handleName("f");
           menu.hide();
           plugin.actions = {};
-          return flip.icon === Glyphs.sort && flip.detail === "on" && flip.enabled && !gone.enabled && ran === 1;
+          return flip.icon === Glyphs.search && flip.detail === "on" && flip.enabled && !gone.enabled && ran === 1;
         }
       },
       {

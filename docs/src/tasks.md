@@ -15,7 +15,7 @@ menu.entries = [ { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; 
 ]; } ];
 ```
 
-Tasks sort by `sort`: `due` (undated last), `priority` (highest first, unset last), `title`, or `list` (by list, then due). `completed` says what the done ones show: `hidden` (done before the opening, still found by filtering, `/`), `shown`, or `only` the done ones. The plugin's `sort` and `completed` actions step through them, the one in use beside them, until the shell restarts. A late task is in the warning tone with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it. With none, the level says so.
+Tasks sort by `sort`: `due` (undated last), `priority` (highest first, unset last), `title`, or `list` (by list, then due). `completed` says what the done ones show: `hidden` (done before the opening, still found by filtering, `/`), `shown`, or `only` the done ones. The plugin's `sort` and `completed` actions step through them, the one in use beside them and as their icon (the glyphs `sorts` and `completed`, by value), until the shell restarts. A late task is in the warning tone with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it. With none, the level says so.
 
 The file is read on every change. Opening the menu syncs when it is `syncAfter` minutes old (5), and every tick syncs after it. Past `staleAfter` minutes (120), its last sync shows in warning, as the calendar's does past `calendar.staleAfter`; a Sync button in its level's bar shows it as the calendar's does ([Calendar](calendar.md)).
 

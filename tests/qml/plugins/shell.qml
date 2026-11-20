@@ -113,7 +113,7 @@ ShellRoot {
             shows.push(tasks.completed + " " + shown());
           }
           return sorts.join() === "priority b,a,e,f,c,d,title a,c,b,e,f,d,list e,f,b,d,a,c,due a,e,f,b,c,d"
-            && shows.join() === "shown a,e,f,b,c,d,only e,hidden a,f,b,c,d";
+            && shows.join() === "shown a,e,f,b,c,d,only e,hidden a,f,b,c,d" && tasks.actions.completed.icon() === Glyphs.completed.hidden && tasks.actions.sort.icon() === Glyphs.sorts.due;
         }
       },
       {
