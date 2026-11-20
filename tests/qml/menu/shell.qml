@@ -146,6 +146,22 @@ ShellRoot {
         }
       },
       {
+        name: "an entry's action may be one of the plugin its level lists, its icon and value as a built-in one's; a name the plugin lacks dims",
+        until: () => {
+          const plugin = Plugins.get("devices");
+          if (!plugin) return false;
+          let ran = 0;
+          plugin.actions = { flip: { icon: () => Glyphs.sort, detail: () => "on", available: () => true, run: () => ran++ } };
+          menu.hide();
+          menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "f", desc: "Flip", action: "flip" }, { key: "g", desc: "Gone", action: "gone" }] } });
+          const [flip, gone] = menu.actions;
+          menu.handleName("f");
+          menu.hide();
+          plugin.actions = {};
+          return flip.icon === Glyphs.sort && flip.detail === "on" && flip.enabled && !gone.enabled && ran === 1;
+        }
+      },
+      {
         name: "a list of 10000 opens and filters without a stall",
         until: () => {
           if (Plugins.get("many")?.items.length !== 10000) return false;

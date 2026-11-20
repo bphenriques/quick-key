@@ -19,12 +19,13 @@ pkgs.runCommand "quick-key-calendar-sync"
     fail() { echo "not ok - $1"; cat state/tasks.json; exit 1; }
 
     sync tasks
-    [ "$(jq '.tasks | length' state/tasks.json)" = 1 ] || fail "a task done before today is left out"
-    [ "$(task | jq -c '[.due, .done, .color]')" = '["2026-10-06T09:00",false,"#ff8c00"]' ] || fail "a task reads with its local time, open, in its calendar's colour"
+    [ "$(jq '.tasks | length' state/tasks.json)" = 1 ] || fail "a task done more than 14 days ago is left out"
+    [ "$(task | jq -c '[.due, .done, .list, .priority, .color]')" = '["2026-10-06T09:00",false,"personal",1,"#ff8c00"]' ] || fail "a task reads with its local time, open, with its list, priority and calendar's colour"
 
     id=$(task | jq -r .id)
     quick-key-calendar-sync done ${./calendars.yaml} state/events.json "$id"
     [ "$(task | jq .done)" = true ] || fail "done ticks it off in the tasks file"
+    task | jq -r .completed | grep -q "^$(date +%Y-%m-%d)" || fail "done says when, so the done ones can be shown"
     grep -q '^STATUS:COMPLETED' state/vdirs/personal/bills.ics || fail "done marks the file completed"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "done keeps the reminder"
 

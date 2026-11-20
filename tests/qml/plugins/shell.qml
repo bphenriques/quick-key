@@ -95,6 +95,28 @@ ShellRoot {
         until: () => Plugins.get("tasks").items.find(item => item.id === "e").hidden && !Plugins.get("tasks").items.find(item => item.id === "a").hidden
       },
       {
+        name: "the sort action steps through due, priority (none last), title and list, then due again, the one in use its value; completed through hidden, shown and only the done ones",
+        until: () => {
+          const tasks = Plugins.get("tasks");
+          tasks.sort = "due";
+          tasks.completed = "hidden";
+          const ids = () => tasks.items.map(item => item.id).join();
+          const shown = () => tasks.items.filter(item => !item.hidden).map(item => item.id).join();
+          const sorts = [];
+          for (let i = 0; i < 4; i++) {
+            tasks.actions.sort.run();
+            sorts.push(tasks.actions.sort.detail() + " " + ids());
+          }
+          const shows = [];
+          for (let i = 0; i < 3; i++) {
+            tasks.actions.completed.run();
+            shows.push(tasks.completed + " " + shown());
+          }
+          return sorts.join() === "priority b,a,e,f,c,d,title a,c,b,e,f,d,list e,f,b,d,a,c,due a,e,f,b,c,d"
+            && shows.join() === "shown a,e,f,b,c,d,only e,hidden a,f,b,c,d";
+        }
+      },
+      {
         name: "picking an open task ticks it off, then syncs, and it stays to untick",
         start: () => Plugins.get("tasks").select("c"),
         until: () => Plugins.get("tasks").items.find(item => item.id === "c").done && !Plugins.get("tasks").items.find(item => item.id === "c").hidden && Plugins.get("tasks").items.find(item => item.id === "c").verb === "untick" && Plugins.get("synced")?.text === "synced"

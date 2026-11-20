@@ -137,18 +137,21 @@ def local-time [seconds: int]: nothing -> string {
   if ($time | str ends-with "T00:00") { $time | str substring 0..9 } else { $time }
 }
 
-# Open tasks, and those done today, so a tick stays to be undone until tomorrow.
+# Open tasks, and those done in the last 14 days, so a tick stays to be undone and the done ones can be shown.
 def write-tasks [calendars: list, state: path, error?: string] {
-  let today = date now | format date "%Y-%m-%d"
+  let since = (date now) - 14day | format date "%Y-%m-%d"
   let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
   let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY
   | from json
-  | where {|t| not $t.completed or ($t.completed_at != null and ((local-time $t.completed_at) | str starts-with $today)) }
+  | where {|t| not $t.completed or ($t.completed_at != null and (local-time $t.completed_at) >= $since) }
   | each {|t| {
     id: ($t.id | into string)
     title: $t.summary
     due: (if $t.due == null { null } else { local-time $t.due })
     done: $t.completed
+    completed: (if $t.completed_at == null { null } else { local-time $t.completed_at })
+    list: $t.list
+    priority: ($t.priority | default 0)
     color: ($colors | get --optional $t.list | default "")
   } }
   let content = { updated: (date now | format date "%Y-%m-%dT%H:%M"), tasks: $tasks }

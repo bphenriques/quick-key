@@ -26,7 +26,7 @@ Singleton {
     const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
-    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins), input);
+    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
   }
 
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices).
@@ -49,7 +49,7 @@ Singleton {
   }
 
   // A level's keys in its body and its bar, then each entry and the level under it.
-  function levelProblems(path, entries, header, plugins) {
+  function levelProblems(path, entries, header, plugins, list) {
     const keys = entries.reduce((keys, entry) => keys.concat(entry.key ?? []), []);
     const bar = ["left", "center", "right"].reduce((parts, slot) => parts.concat(Array.from(header?.[slot] ?? [])), []);
     const barEntries = bar.filter(part => typeof part !== "string");
@@ -69,8 +69,8 @@ Singleton {
     for (const name of bar.filter(part => typeof part === "string"))
       if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin");
     for (const [entry, inBar] of entries.map(entry => [entry, false]).concat(barEntries.map(entry => [entry, true]))) {
-      found.push(...entryProblems(entry, plugins, inBar).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
-      if (entry.submenu || entry.header) found.push(...levelProblems(path + " > " + entry.desc, entry.submenu ?? [], entry.header, plugins));
+      found.push(...entryProblems(entry, plugins, inBar, list).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
+      if (entry.submenu || entry.header) found.push(...levelProblems(path + " > " + entry.desc, entry.submenu ?? [], entry.header, plugins, entry.list));
     }
     return found;
   }
@@ -91,7 +91,7 @@ Singleton {
   }
 
   // In a bar an entry needs no key, and may only show its status.
-  function entryProblems(entry, plugins, inBar) {
+  function entryProblems(entry, plugins, inBar, list) {
     const found = [];
     const named = (field, table) => {
       if (entry[field] != null && !(entry[field] in table) && !plugins.includes(entry[field])) found.push("names " + field + " '" + entry[field] + "', neither built in nor a plugin");
@@ -106,7 +106,8 @@ Singleton {
     if (does > 1 || does === 0 && !(inBar && entry.status != null))
       found.push("needs one of cmd, action, or submenu and/or list or view" + (inBar ? ", or only a status" : ""));
     if (inBar && entry.list == null && entry.status == null && entry.icon == null && entry.action == null) found.push("shows nothing: needs a status, an icon or an action");
-    if (entry.action != null && !action) found.push("runs action '" + entry.action + "', which is not built in");
+    // A plugin's actions are its own, known only once it runs: on a level listing one, any name may be one.
+    if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is not built in nor its level's plugin's");
     named("status", Statuses.builtin);
     named("activeWhen", States.builtin);
     named("list", Lists.builtin);

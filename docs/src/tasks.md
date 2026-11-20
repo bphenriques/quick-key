@@ -6,11 +6,16 @@ The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks i
 plugins.tasks = {
   file = config.programs.quick-key.calendarSync.tasksFile;
   inherit (config.programs.quick-key.calendarSync.exec) done reopen sync;
+  sort = "due";
+  completed = "hidden";
 };
-menu.entries = [ { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; } ];
+menu.entries = [ { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; submenu = [
+  { key = "s"; desc = "Sort"; action = "sort"; }
+  { key = "c"; desc = "Completed"; action = "completed"; }
+]; } ];
 ```
 
-Tasks sort by due date, undated last, a late one in the warning tone with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it; the next opening hides it, still found by filtering (`/`), and the file drops it the next day. With none, the level says so.
+Tasks sort by `sort`: `due` (undated last), `priority` (highest first, unset last), `title`, or `list` (by list, then due). `completed` says what the done ones show: `hidden` (done before the opening, still found by filtering, `/`), `shown`, or `only` the done ones. The plugin's `sort` and `completed` actions step through them, the one in use beside them, until the shell restarts. A late task is in the warning tone with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it. With none, the level says so.
 
 The file is read on every change. Opening the menu syncs when it is `syncAfter` minutes old (5), and every tick syncs after it. Past `staleAfter` minutes (120), its last sync shows in warning, as the calendar's does past `calendar.staleAfter`; a Sync button in its level's bar shows it as the calendar's does ([Calendar](calendar.md)).
 
@@ -20,13 +25,14 @@ One line, so the plugin reads it as its state:
 
 ```json
 {"updated": "2026-11-17T14:30", "error": "personal: could not sync", "tasks": [
-  {"id": "8", "title": "Pay the electricity", "due": "2026-11-20T18:00", "done": false, "color": "#ff8c00"},
-  {"id": "3", "title": "Call the plumber", "due": "2026-11-18", "done": false, "color": "#ff8c00"}]}
+  {"id": "8", "title": "Pay the electricity", "due": "2026-11-20T18:00", "done": false, "list": "personal", "priority": 1, "color": "#ff8c00"},
+  {"id": "3", "title": "Call the plumber", "due": "2026-11-18", "done": true, "completed": "2026-11-17T09:12", "list": "personal", "color": "#ff8c00"}]}
 ```
 
 - Times are local, without an offset; a due date without a time is due that day.
 - `id` is what `done` and `reopen` are given. It need not outlast the next write.
-- Open tasks, and those done today, so a mistaken tick can be undone.
+- `priority` runs from 1, the highest, to 9; unset or 0, none.
+- Open tasks, and those done in the last 14 days, so a mistaken tick can be undone and `completed` has some to show.
 
 ## calendarSync
 

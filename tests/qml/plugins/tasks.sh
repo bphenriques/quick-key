@@ -3,12 +3,12 @@ file="$XDG_RUNTIME_DIR/tasks"
 case "$1" in
   write)
     printf '{"updated":"%s","tasks":[%s,%s,%s,%s,%s,%s]}\n' "${2:-$(date +%Y-%m-%dT%H:%M)}" \
-      '{"id":"d","done":false,"title":"Undated"}' \
-      "{\"id\":\"c\",\"done\":false,\"title\":\"Later\",\"due\":\"$(date -d tomorrow +%Y-%m-%d)\"}" \
-      "{\"id\":\"b\",\"done\":false,\"title\":\"Now\",\"due\":\"$(date +%Y-%m-%dT%H:%M)\"}" \
-      "{\"id\":\"a\",\"done\":false,\"title\":\"Late\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
-      "{\"id\":\"e\",\"done\":true,\"title\":\"Ticked\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
-      "{\"id\":\"f\",\"done\":false,\"title\":\"Today\",\"due\":\"$(date +%Y-%m-%d)\"}" > "$file.tmp"
+      '{"id":"d","done":false,"title":"Undated","list":"home"}' \
+      "{\"id\":\"c\",\"done\":false,\"title\":\"Later\",\"list\":\"work\",\"due\":\"$(date -d tomorrow +%Y-%m-%d)\"}" \
+      "{\"id\":\"b\",\"done\":false,\"title\":\"Now\",\"list\":\"home\",\"priority\":1,\"due\":\"$(date +%Y-%m-%dT%H:%M)\"}" \
+      "{\"id\":\"a\",\"done\":false,\"title\":\"Late\",\"list\":\"work\",\"priority\":5,\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
+      "{\"id\":\"e\",\"done\":true,\"title\":\"Ticked\",\"list\":\"home\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
+      "{\"id\":\"f\",\"done\":false,\"title\":\"Today\",\"list\":\"home\",\"due\":\"$(date +%Y-%m-%d)\"}" > "$file.tmp"
     mv "$file.tmp" "$file"
     ;;
   many)

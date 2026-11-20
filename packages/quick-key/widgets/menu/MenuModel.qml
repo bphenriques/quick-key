@@ -101,7 +101,7 @@ Scope {
 
   // An entry as a row or a bar item shows it.
   function itemOf(entry) {
-    const action = Actions.builtin[entry.action];
+    const action = actionOf(entry);
     return {
       key: entry.key ?? "",
       desc: entry.desc,
@@ -211,12 +211,17 @@ Scope {
 
   // Whether an entry can run now: a command always, an action when it has something to act on.
   function available(entry) {
-    return Actions.builtin[entry.action]?.available(levelList) ?? true;
+    return entry.action ? actionOf(entry)?.available(levelList) ?? false : true;
+  }
+
+  // A built-in action by name, else the one of the plugin its level lists.
+  function actionOf(entry) {
+    return Actions.builtin[entry.action] ?? Plugins.get(level?.entry?.list ?? "")?.actions?.[entry.action];
   }
 
   // A pair runs one command or action per key, shown as one row (Down and Up).
   function isPair(entry) {
-    return MenuKeys.isPair(entry) || !!Actions.builtin[entry.action]?.pair;
+    return MenuKeys.isPair(entry) || !!actionOf(entry)?.pair;
   }
 
   function isOn(state) {
@@ -284,7 +289,7 @@ Scope {
 
   // A pair runs the command or action of the key pressed, a click on it nothing; an action keeps the menu open by default.
   function run(entry, name) {
-    const action = Actions.builtin[entry.action];
+    const action = actionOf(entry);
     if (action) {
       const second = MenuKeys.names(entry.key).indexOf(name);
       if (action.pair && second < 0) return;

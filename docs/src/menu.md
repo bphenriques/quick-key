@@ -33,7 +33,7 @@ The menu is a list of levels. Each is its body over an optional bar at the scree
 One of:
 
 - `cmd`: a shell command. The menu closes, unless `keepOpen = true`.
-- `action`: a built-in action (below). It brings its icon, which shows its state (Wi-Fi off), and what lights it, keeps the menu open, and dims while it has nothing to act on (no player, no adapter).
+- `action`: a built-in action (below), or one of the plugin its level lists (the tasks' `sort`). It brings its icon, which shows its state (Wi-Fi off), and what lights it, keeps the menu open, and dims while it has nothing to act on (no player, no adapter).
 - `submenu`, `list` or `view`: a level. `list` adds items found at runtime on digits, `pins` keeps chosen ones on their digit, and `view = "calendar"` shows the [calendar](calendar.md).
 
 The label is `desc`, and never changes. `status` shows live state on the right of the row, short by default, or beside the label for an action in its level (Brightness 55%); `format` picks its fields instead (`"{song}"`), and what follows a `|` stays whole on the right (`"{title}|{when}"`). `activeWhen` lights an entry of your own, and `icon` sets its glyph. A level is as wide as its entry's `width`, else `menu.width`, and lays its actions out in its entry's `columns`, else `menu.columns` (`columns = 1` for a level of three, so none sits alone).

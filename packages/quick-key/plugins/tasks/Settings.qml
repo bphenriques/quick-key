@@ -14,6 +14,10 @@ PluginSettings {
   property int syncAfter: 5
   // Minutes after which the last sync shows in warning.
   property int staleAfter: 120
+  // The order to start in: due, priority, title or list; the `sort` action steps through them.
+  property string sort: "due"
+  // What the done ones show at the start: hidden, shown or only; the `completed` action steps through them.
+  property string completed: "hidden"
   // Given a title and a time, as a timed task falls due; unset, no reminders.
   property string remind
   property string glyph

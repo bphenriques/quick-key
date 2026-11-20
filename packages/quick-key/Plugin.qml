@@ -46,6 +46,8 @@ Scope {
 
   // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone, verb, closes, actions }: `verb` names what choosing it does, `closes` hides the surface first, `actions` ([{ key, desc, icon, closes }]) are its own menu.
   property var items: state.items ?? []
+  // Actions by name, as the built-in ones (builtins/Actions.qml), for the entries of a level listing it.
+  property var actions: ({})
 
   // What a click on it in a bar, or `<name> activate` over IPC, does.
   function activate() {}

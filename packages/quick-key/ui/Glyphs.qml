@@ -40,6 +40,8 @@ Singleton {
   readonly property var brightnessLevels: Config.glyphs.brightnessLevels ?? ["\u{F00DE}", "\u{F00DF}", "\u{F00E0}"] // md-brightness_5, _6, _7
   readonly property string check: Config.glyphs.check ?? "\u{F012C}" // md-check
   readonly property string search: Config.glyphs.search ?? "\u{F0349}" // md-magnify
+  readonly property string sort: Config.glyphs.sort ?? "\u{F04BA}" // md-sort
+  readonly property string completed: Config.glyphs.completed ?? "\u{F012D}" // md-check_all
   readonly property string submenu: Config.glyphs.submenu ?? "\u{F0142}" // md-chevron_right
   // What marks a prompt: an input with the keys, and what was asked in Ask.
   readonly property string prompt: Config.glyphs.prompt ?? "\u{F0142}" // md-chevron_right

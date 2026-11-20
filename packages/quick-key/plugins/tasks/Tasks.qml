@@ -9,10 +9,15 @@ Plugin {
   id: root
 
   readonly property string today: Clock.dayKey(Clock.date)
-  // By due, undated last, never by whether done: a tick keeps its digit, so the same key unticks it. A tick shows before the file has it, and an added task last, so no digit moves until the file places it.
+  // In the order chosen, never by whether done: a tick keeps its digit, so the same key unticks it. A tick shows before the file has it, and an added task last, so no digit moves until the file places it.
   readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
-    .sort((a, b) => root.order(a.due ?? "~", b.due ?? "~") || a.title.localeCompare(b.title))
+    .sort((a, b) => root.compare(a, b))
     .concat(adding.map(title => ({ id: "", title, adding: true })))
+  // From the settings, stepped through by the level's actions until the shell restarts.
+  property string sort: settings.sort
+  property string completed: settings.completed
+  readonly property var sorts: ["due", "priority", "title", "list"]
+  readonly property var shows: ["hidden", "shown", "only"]
   // Ticks not in the file yet, by id: done or not; titles added and not in it yet; and their commands, run one at a time.
   property var pending: ({})
   property var adding: []
@@ -29,7 +34,11 @@ Plugin {
 
   glyph: settings.glyph
   text: ""
-  empty: "No tasks"
+  empty: completed === "only" ? "No completed tasks" : "No tasks"
+  actions: ({
+    sort: { icon: () => Glyphs.sort, detail: () => root.sort, available: () => true, run: () => root.sort = root.after(root.sorts, root.sort) },
+    completed: { icon: () => Glyphs.completed, detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.shows, root.completed) }
+  })
   // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.
   detail: {
     const count = late.length || due.length;
@@ -49,7 +58,8 @@ Plugin {
       glyphs: late ? [Glyphs.late] : [],
       detail: task.due ? Clock.when(Clock.parse(task.due), task.due.includes("T")) : "",
       done: !!task.done,
-      hidden: !!task.done && root.settled.includes(task.id),
+      // Settled as the menu opened, so a tick made in the visit stays to untick, whichever is shown.
+      hidden: root.completed === "hidden" ? !!task.done && root.settled.includes(task.id) : root.completed === "only" && !task.done && !root.settled.includes(task.id),
       busy: !!task.adding,
       enabled: !task.adding,
       tone: late ? "warning" : "",
@@ -60,6 +70,22 @@ Plugin {
   // Dates by code point: a locale may sort the undated mark (~) before digits.
   function order(a, b) {
     return a < b ? -1 : a > b ? 1 : 0;
+  }
+
+  // By the order chosen, then by due (undated last), then by title; priority 1 first, none last.
+  function compare(a, b) {
+    const due = order(a.due ?? "~", b.due ?? "~");
+    const title = a.title.localeCompare(b.title);
+    const rank = task => task.priority > 0 ? task.priority : 10;
+    if (sort === "title") return title || due;
+    if (sort === "priority") return rank(a) - rank(b) || due || title;
+    if (sort === "list") return order(a.list ?? "", b.list ?? "") || due || title;
+    return due || title;
+  }
+
+  // The next of a cycle, back to the first after the last.
+  function after(cycle, current) {
+    return cycle[(cycle.indexOf(current) + 1) % cycle.length];
   }
 
   // A tick shows at once; its command waits its turn, as each holds the calendar's lock and a sync may hold it too.
