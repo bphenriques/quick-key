@@ -6,7 +6,7 @@
 
 - Arrows move the selected day by a day or a week.
 - `Ctrl+←→` moves a month, `Ctrl+↑↓` a year, `t` goes back to today.
-- `Return` steps into the events: the arrows then move through them, the month following, and `Backspace` returns.
+- `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns.
 
 A dot under a day marks each colour of its events. The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it; its fields are `title`, `when` and `updated`, how old the events are, which a Sync row can show with `format = "|{updated}"`. The month and year head the grid, and a failed sync says why under the legend.
 

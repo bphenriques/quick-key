@@ -84,18 +84,43 @@ ShellRoot {
         }
       },
       {
-        name: "Escape on an empty filter gives the level back at rest, and leaves a level opened to pick for what opened it",
+        name: "Escape on an empty filter gives the level back at rest; a level opened to pick goes back to the input it came from, focused, or to what opened it",
         until: () => {
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "devices" } });
           menu.startFilter();
           const filtered = menu.filtering;
-          menu.leaveFilter();
+          menu.stepBack();
           const rest = !menu.filtering && menu.stack.length === 1;
+          menu.inputFocused = true;
+          menu.pickList("devices", null);
+          const picking = menu.stack.length === 2 && menu.filtering && !menu.inputFocused;
+          menu.stepBack();
+          const refocused = menu.stack.length === 1 && menu.inputFocused;
+          menu.hide();
           Picker.pick("devices", () => root.backed = true);
-          const picking = menu.stack.length === 2 && menu.filtering;
-          menu.leaveFilter();
-          return filtered && rest && picking && !menu.open && root.backed;
+          const fromPanel = menu.stack.length === 1 && menu.filtering;
+          menu.stepBack();
+          return filtered && rest && picking && refocused && fromPanel && !menu.open && root.backed;
+        }
+      },
+      {
+        name: "Escape goes back a level and closes at the top, or at a level opened on its own; Backspace never goes back",
+        until: () => {
+          const escape = { key: Qt.Key_Escape, modifiers: Qt.NoModifier, text: "\u001b" };
+          menu.hide();
+          menu.show();
+          menu.handleKey({ key: Qt.Key_A, modifiers: Qt.NoModifier, text: "a" });
+          const backspace = !menu.handleKey({ key: Qt.Key_Backspace, modifiers: Qt.NoModifier, text: "\b" }) && menu.stack.length === 1;
+          menu.handleKey(escape);
+          const up = menu.open && menu.stack.length === 0;
+          menu.handleKey(escape);
+          const closed = !menu.open;
+          menu.press("a");
+          menu.handleKey(escape);
+          const direct = !menu.open;
+          menu.hide();
+          return backspace && up && closed && direct;
         }
       },
       {
@@ -170,7 +195,7 @@ ShellRoot {
           menu.filterKey("Alt+1");
           const own = menu.level.kind === "actions" && menu.items[0].key === "d" && menu.barSlots.left[0].desc === "A";
           menu.handleName("d");
-          return legend === "1 choose, ↑ move, RET open, M-RET menu, ESC back" && counted === "1 of 1" && own && menu.level.picking && menu.filtering && Plugins.get("picked")?.text === "a d";
+          return legend === "1 choose, ↑ move, RET open, M-RET menu" && counted === "1 of 1" && own && menu.level.picking && menu.filtering && Plugins.get("picked")?.text === "a d";
         }
       },
       {
@@ -221,7 +246,7 @@ ShellRoot {
         until: () => menu.inputFocused && Plugins.get("picked")?.text === "typed" && Plugins.get("followed")?.text === "done 0"
       },
       {
-        name: "an input naming a plugin gives it its text in its format, the legend showing only its Escape; in the background the menu closes",
+        name: "an input naming a plugin gives it its text in its format, the level's legend staying as it was; in the background the menu closes",
         start: () => {
           menu.stack = [];
           menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}." } } });
@@ -229,7 +254,7 @@ ShellRoot {
           root.typingLegend = menu.legend.map(key => MenuKeys.label(key.key));
           menu.submit("typed", true);
         },
-        until: () => root.typingLegend.length === 1 && root.typingLegend[0] === "ESC" && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.reply === "Add: typed."
+        until: () => root.typingLegend.length > 0 && !root.typingLegend.includes("ESC") && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.reply === "Add: typed."
       },
       {
         name: "an input whose plugin did not load takes nothing, so the menu stays and the input keeps its text",

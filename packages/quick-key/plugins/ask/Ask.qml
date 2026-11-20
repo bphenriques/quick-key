@@ -22,19 +22,17 @@ Plugin {
   // An image pasted for the next prompt, as a file under $XDG_RUNTIME_DIR.
   property string image: ""
   property bool shown: false
-  // Whether the prompt has the keys; it does as the panel opens, and Escape gives them back.
+  // Whether the prompt has the keys; it does as the panel opens, and Tab moves them.
   property bool typing: true
   property bool unread: false
   // Whether this visit (the menu showing its input) sent it a turn, so the next send continues that conversation.
   property bool visited: false
   // How its panel was opened from an input's answer, to say how it is left (Plugin.expand); null otherwise.
   property var backTo: null
-  // Escape set the last answer's options aside: digits type again.
-  property bool aside: false
   // `?` with the prompt dim: the panel's keys in place of the conversation, until the next key.
   property bool helping: false
   // What a digit picks: the last answer's options, once it is in.
-  readonly property var choices: busy || aside ? [] : exchanges[exchanges.length - 1]?.options ?? []
+  readonly property var choices: busy ? [] : exchanges[exchanges.length - 1]?.options ?? []
   // What the agent waits to be allowed to run, and what it is doing.
   property string approval: ""
   property string activity: ""
@@ -53,8 +51,6 @@ Plugin {
   property int sentAt: 0
   property int now: 0
   readonly property int waited: Math.max(0, now - sentAt)
-  // Escape steps back without losing the conversation, as in a chat app: what needs it first, then the prompt (clear, back), then the panel.
-  readonly property string escapeAction: approval ? "deny" : busy ? "stop" : choices.length > 0 && !draft && !image ? "type" : !typing ? (backTo ? "menu" : "hide") : draft || image ? "clear" : "back"
   readonly property bool canMove: !busy && exchanges.length > 0
 
   // Ctrl+V found no image, so it pastes text as usual.
@@ -225,7 +221,6 @@ Plugin {
     exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || backTo !== null }]);
     if (image === root.image) root.image = "";
     busy = true;
-    aside = false;
     approval = "";
     activity = "";
     touched = false;
@@ -366,6 +361,10 @@ Plugin {
     if (!typing && key === "y") return copy();
     switch (!typing && /^[a-z]$/.test(key) ? "Ctrl+" + key : key) {
     case "Escape": return stepBack();
+    case "Ctrl+c":
+      if (!busy) return false;
+      stop();
+      return true;
     case "Ctrl+y": answerApproval(true); return true;
     case "Ctrl+l": reset(); return true;
     case "Ctrl+o": moveToTerminal(); return true;
@@ -375,16 +374,11 @@ Plugin {
     return false;
   }
 
-  // Its own steps; clearing and giving the keys back are the prompt's (Prompt.stepBack), so false leaves them to it.
+  // With the prompt dim, Escape leaves, the conversation kept; typing, clearing first is the prompt's (Prompt.stepBack), so false leaves it to it.
   function stepBack() {
-    switch (escapeAction) {
-    case "deny": answerApproval(false); return true;
-    case "stop": stop(); return true;
-    case "type": aside = true; return true;
-    case "menu":
-    case "hide": leave(true); return true;
-    }
-    return false;
+    if (typing) return false;
+    leave(true);
+    return true;
   }
 
   // The menu left the input, or closed: the visit ends, and its answer with it.

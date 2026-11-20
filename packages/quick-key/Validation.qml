@@ -18,7 +18,7 @@ Singleton {
   readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "columns", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
   readonly property var views: ["calendar"]
   // Esc closes the menu, Backspace goes back a level, ? lists the keys no row shows, Tab moves to the input and Shift+Tab back.
-  readonly property var reservedKeys: ["Escape", "BackSpace", "?", "Tab", "Backtab"]
+  readonly property var reservedKeys: ["Escape", "?", "Tab", "Backtab"]
 
   function check(json) {
     const plugins = Object.keys(json.plugins ?? {});

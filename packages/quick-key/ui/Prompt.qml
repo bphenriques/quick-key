@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A line of text to send: its key while it waits (a level's), else a glyph, a spinner in their place while what it sends to is busy, then the text growing to `maxLines`. Keys reach `keyPressed` first; Escape the owner leaves clears it, then gives the keys back (`unfocused`, `stepBack`). The conversation it sends to goes over it, in an Exchange; `keys` on its right say what other keys do.
+// A line of text to send: its key while it waits (a level's), else a glyph, a spinner in their place while what it sends to is busy, then the text growing to `maxLines`. Keys reach `keyPressed` first; Escape the owner leaves clears it, then asks its owner to step back (`back`). The conversation it sends to goes over it, in an Exchange; `keys` on its right say what other keys do.
 RowLayout {
   id: root
 
@@ -26,13 +26,13 @@ RowLayout {
   signal keyPressed(var event)
   signal tapped
   signal cleared
-  signal unfocused
+  signal back
   signal picked(var key)
 
-  // Escape's own steps: clear, then give the keys back.
+  // Escape's own steps: clear, then the owner's.
   function stepBack() {
     if (empty) {
-      unfocused();
+      back();
       return;
     }
     area.clear();

@@ -20,7 +20,7 @@ QtObject {
     { key: "t", what: Words.today, clickable: true, moves: { t: null } },
     { key: "Return", what: Words.events, clickable: true }
   ]
-  readonly property var eventKeys: [{ key: ["Up", "Down"], what: Words.event }, { key: "BackSpace", what: Words.back, clickable: true }]
+  readonly property var eventKeys: [{ key: ["Up", "Down"], what: Words.event }]
   // Shown under the header (KeyLegend).
   readonly property var legend: focused ? eventKeys : keys.filter(entry => !entry.unlisted)
 
@@ -39,7 +39,7 @@ QtObject {
     selected = row.day;
   }
 
-  // Whether the key was a calendar key, acting on it: Return focuses events, arrows step them, Backspace leaves.
+  // Whether the key was a calendar key, acting on it: Return focuses events, arrows step them; Escape leaves them (MenuModel.stepBack).
   function handleKey(name) {
     const rows = Calendar.timeline;
     const at = focused ? rows.findIndex(row => row.id === focused) : -1;
@@ -50,10 +50,6 @@ QtObject {
     }
     if (at >= 0 && (name === "Up" || name === "Down")) {
       focus(rows[Math.min(Math.max(at + (name === "Up" ? -1 : 1), 0), rows.length - 1)]);
-      return true;
-    }
-    if (focused && name === "BackSpace") {
-      focused = "";
       return true;
     }
     const entry = keys.find(entry => entry.moves && MenuKeys.matches(entry.key, name));

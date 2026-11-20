@@ -13,7 +13,7 @@ Singleton {
   readonly property string thinking: "Thinking"
   readonly property string replyPrompt: "Reply" + ellipsis
   readonly property string pickPrompt: "A digit picks, or reply" + ellipsis
-  readonly property string approvePrompt: MenuKeys.label("Ctrl+y") + " allows, " + MenuKeys.label("Escape") + " denies" + ellipsis
+  readonly property string approvePrompt: MenuKeys.label("Ctrl+y") + " allows, " + MenuKeys.label("Ctrl+c") + " stops" + ellipsis
   readonly property string syncing: "syncing" + ellipsis
   // An agent that could not carry on the conversation, starting a new one.
   readonly property string restarted: "Started a new conversation"
@@ -34,20 +34,17 @@ Singleton {
     return "Allow " + what + "?";
   }
 
-  // What a key does, in a legend: a lowercase word or two. ESC's steps are named by their own ids (Words[id]).
+  // What a key does, in a legend: a lowercase word or two.
   readonly property string allow: "allow"
   readonly property string appMenu: "app menu"
-  readonly property string back: "back"
   readonly property string choose: "choose"
   readonly property string clear: "clear"
   readonly property string copy: "copy"
   readonly property string day: "day"
-  readonly property string deny: "deny"
   readonly property string event: "event"
   readonly property string events: "events"
   readonly property string help: "keys"
   readonly property string history: "history"
-  readonly property string hide: "hide"
   readonly property string menu: "menu"
   readonly property string month: "month"
   readonly property string move: "move"
@@ -57,7 +54,6 @@ Singleton {
   readonly property string stop: "stop"
   readonly property string terminal: "terminal" + ellipsis
   readonly property string today: "today"
-  readonly property string type: "type"
   readonly property string week: "week"
   readonly property string year: "year"
 }

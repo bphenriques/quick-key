@@ -10,6 +10,8 @@ ShellRoot {
   property bool submitted: false
   property bool retried: false
   property bool refused: false
+  // Whether Escape left the panel with the run still going.
+  property string leftRunning: ""
   // Whether a bare y, waiting on an approval, left it alone.
   property string bareY: ""
   property bool renewed: false
@@ -61,12 +63,12 @@ ShellRoot {
         })
       },
       {
-        name: "typing, Escape leaves clearing and leaving to the prompt; waiting, it hides, a letter acts and its key gives the prompt the keys again",
+        name: "typing, Escape leaves clearing and stepping back to the prompt; waiting, it hides, a letter acts and its key gives the prompt the keys again",
         until: () => {
           const ask = Plugins.get("idle");
           if (!ask) return false;
           ask.toggle();
-          const promptsOwn = ask.typing && !ask.act("Escape") && ask.escapeAction === "back" && ask.shown;
+          const promptsOwn = ask.typing && !ask.act("Escape") && ask.shown;
           ask.typing = false;
           ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
           const letter = ask.act("l") && ask.exchanges.length === 0;
@@ -92,13 +94,16 @@ ShellRoot {
         }
       },
       {
-        name: "stopping cancels the turn, which the agent hears",
+        name: "Escape leaves a run going and C-c stops it, which the agent hears",
         until: () => root.asked("stopped", ask => {
-          if (ask.busy && ask.activity === "thinking") {
+          if (ask.busy && ask.activity === "thinking" && !root.leftRunning) {
             root.refused = ask.submit("more", true, "") === false;
-            ask.stop();
+            ask.show();
+            ask.typing = false;
+            root.leftRunning = ask.act("Escape") && !ask.shown && ask.busy ? "yes" : "no";
+            ask.act("Ctrl+c");
           }
-          return root.refused && ask.exchanges[0].stopped && !ask.busy && Plugins.get("trapped")?.text === "stopped";
+          return root.refused && root.leftRunning === "yes" && ask.exchanges[0].stopped && !ask.busy && Plugins.get("trapped")?.text === "stopped";
         })
       },
       {
@@ -161,7 +166,7 @@ ShellRoot {
         }
       },
       {
-        name: "an answer's options are the choices: Escape sets them aside, a send brings them back, a digit picks one as the next message; a table stays marked",
+        name: "an answer's options are the choices, a digit picking one as the next message, Escape leaving them alone; a table stays marked",
         until: () => {
           const ask = Plugins.get("chooser");
           if (!ask || ask.busy) return false;
@@ -171,11 +176,7 @@ ShellRoot {
             root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
             return false;
           case 1:
-            root.chooseStep = ask.turn?.phase === "choosing" && ask.turn.options.length === 2 && ask.choices.length === 2 && ask.escapeAction === "type" && ask.act("Escape") && ask.aside
-              && ask.choices.length === 0 && !ask.act("1") && ask.submit("pick again", false, "") ? 2 : -1;
-            return false;
-          case 2:
-            root.chooseStep = !ask.aside && ask.choices.length === 2 && ask.act("2") ? 3 : -1;
+            root.chooseStep = ask.turn?.phase === "choosing" && ask.turn.options.length === 2 && !ask.act("Escape") && ask.choices.length === 2 && ask.act("2") ? 3 : -1;
             return false;
           case 3:
             root.chooseStep = ask.exchanges[ask.exchanges.length - 1].prompt === "b" && ask.exchanges[ask.exchanges.length - 1].reply === "b" && ask.submit("a table", false, "") ? 4 : -1;
@@ -194,7 +195,7 @@ ShellRoot {
           ask.expand(returning => root.backs = root.backs.concat([returning]));
           const shown = ask.shown;
           ask.typing = false;
-          const stepped = ask.escapeAction === "menu" && ask.act("Escape") && !ask.shown;
+          const stepped = ask.act("Escape") && !ask.shown;
           ask.expand(returning => root.backs = root.backs.concat([returning]));
           ask.shown = false;
           return shown && stepped && root.backs.join() === "true,false" && ask.backTo === null;

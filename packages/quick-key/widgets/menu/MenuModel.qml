@@ -11,8 +11,10 @@ Scope {
   id: root
 
   property bool open: false
-  // Levels opened below the top one, the last is shown: an entry's (kind "entry"), an app's own menu (kind "menu") or a listed item's (kind "actions").
+  // Levels opened below the top one, the last is shown: an entry's (kind "entry"), an app's own menu (kind "menu") or a listed item's (kind "actions"). Each keeps `inputFocused` as it was below it, for Escape to give back.
   property var stack: []
+  // How deep the menu opened (a level opened on its own by a shortcut or a key path), where Escape closes it.
+  property int base: 0
   // What lists keys in place of the body: "Ctrl" or "Super" held a second (not at once, so a chord does not flash them), or "Help" after `?`.
   property string held: ""
   // Whether the level's input has the keys, else its body.
@@ -37,14 +39,10 @@ Scope {
   property string expandedWatching: ""
   // What Plugins.watching is set to.
   readonly property string watching: open ? inputToken : expandedWatching
-  // The turn of the conversation the input started (Plugin.turn), its options a digit picks until Escape sets them aside.
+  // The turn of the conversation the input started (Plugin.turn), its options a digit picks.
   readonly property var turn: inputPlugin?.turn ?? null
   readonly property var choices: turn?.options ?? []
-  property bool choicesAside: false
-  onTurnChanged: {
-    choicesAside = false;
-    if (!turn) answerFocused = false;
-  }
+  onTurnChanged: if (!turn) answerFocused = false
   // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
   // Whether `/` filters the level's list in place (pick); a level opened to pick from (Picker, a bar's +N) always does.
@@ -74,22 +72,20 @@ Scope {
     : level?.kind === "actions" ? { left: [{ key: "", desc: level.title, icon: level.icon, named: true }], center: [], right: [] }
     : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
-  // The keys no row shows, listed on `?`: holds, an item's own menu, back and close.
+  // The keys no row shows, listed on `?`: holds, an item's own menu, and back.
   readonly property var help: [
     { key: "Ctrl+", desc: "Hold: the bar's keys" },
     { key: "Super+", desc: "Hold: compositor shortcuts" },
     { key: "Alt+1", desc: "An item's own menu" }
   ].concat(input ? [{ key: "Tab", desc: "The input, and back" }, { key: "Ctrl+Shift+Return", desc: "Send in the background" }] : [], inputPlugin?.recalls ? [{ key: "Ctrl+r", desc: "An earlier conversation" }] : [], [
-    { key: "BackSpace", desc: "Back" },
-    { key: "Escape", desc: "Close" }
+    { key: "Escape", desc: "Clear, else back" }
   ])
   // The keys listed in place of the body: the help, the bar's while Ctrl is held, the compositor's while Super is.
   readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
-  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s); while its input has the keys, its Escape, in a level that has a legend.
+  // Keys a level takes beyond its rows, shown in its body (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s).
   readonly property var levelLegend: inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? []
-  readonly property var restLegend: inputFocused && levelLegend.length > 0 ? [{ key: "Escape", what: draft ? Words.clear : Words.back, clickable: true }] : levelLegend
-  readonly property var legend: filtering ? filter.legend : restLegend
+  readonly property var legend: filtering ? filter.legend : levelLegend
   // Why a level's source failed, under its keys: the calendar's sync, or the plugin it lists.
   readonly property string error: inCalendar ? (Calendar.syncing ? "" : Calendar.error) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
 
@@ -241,28 +237,31 @@ Scope {
     stack = [];
     if (!open) show();
     activate(item, key);
+    base = stack.length;
   }
 
   function hide() {
     open = false;
     stack = [];
+    base = 0;
     stopFilter();
     held = "";
     inputFocused = false;
     answerFocused = false;
   }
 
-  // A level starts with no event in focus, coming back to it too.
+  // A level starts with no event in focus, coming back to it too, and its input as it was left.
   function back() {
+    const left = level;
     stack = stack.slice(0, -1);
     stopFilter();
-    inputFocused = false;
+    inputFocused = !!left?.inputFocused;
     answerFocused = false;
     calendar.focused = "";
   }
 
   function push(next) {
-    stack = stack.concat([next]);
+    stack = stack.concat([Object.assign({}, next, { inputFocused: inputFocused })]);
     stopFilter();
     inputFocused = false;
     answerFocused = false;
@@ -329,13 +328,17 @@ Scope {
     filterSlots = 9;
   }
 
-  // Escape on an empty filter: back to the level at rest, or out of a level opened to pick.
-  function leaveFilter() {
-    if (!level?.picking) return stopFilter();
-    const then = level.back;
-    if (!then) return back();
-    hide();
-    then();
+  // Escape once its text is cleared: what is open on top (the filter, a focused event), then back where the level came from, closing where the menu opened.
+  function stepBack() {
+    if (filtering && !level.picking) return stopFilter();
+    if (inCalendar && calendar.focused) {
+      calendar.focused = "";
+      return;
+    }
+    const then = level?.back;
+    if (then || stack.length <= base) hide();
+    else back();
+    if (then) then();
   }
 
   // The keys the filter leaves, by name: a digit picks a row shown and never types, Alt with it or Return its own menu.
@@ -359,16 +362,18 @@ Scope {
   // An option of the answer, sent as the next message.
   function pick(index) {
     const option = choices[index];
-    return option !== undefined && !choicesAside && submit(option, false);
+    return option !== undefined && submit(option, false);
   }
 
   // The plugin's own panel on the conversation; stepping back from it shows this level again, the visit going on, and leaving it otherwise ends the visit.
   function expand() {
     const saved = stack.slice();
+    const savedBase = base;
     expandedWatching = inputToken;
     const opened = inputPlugin?.expand(returning => {
       if (returning) {
         stack = saved;
+        base = savedBase;
         show();
         inputFocused = true;
       }
@@ -385,11 +390,11 @@ Scope {
     expand();
   }
 
-  // Keys while the answer has them: Return opens the plugin's panel, y copies the answer, Tab and Escape give them to the body, Shift+Tab back to the input.
+  // Keys while the answer has them: Return opens the plugin's panel, y copies the answer, Tab gives them to the body, Shift+Tab back to the input.
   function answerKey(name) {
     if (name === "Return") expand();
     else if (name === "y") Quickshell.clipboardText = turn?.text ?? "";
-    else if (name === "Tab" || name === "Escape") answerFocused = false;
+    else if (name === "Tab") answerFocused = false;
     else if (name === "Backtab") {
       answerFocused = false;
       inputFocused = true;
@@ -433,7 +438,7 @@ Scope {
     if (action && available(action)) run(action, name);
   }
 
-  // The body's keys first, then Alt for an item's own menu and Ctrl for the bar (with Alt, a bar item's own menu); Esc and Backspace are kept free by the check.
+  // The body's keys first, then Alt for an item's own menu and Ctrl for the bar (with Alt, a bar item's own menu); Escape and Tab are kept free by the check.
   function handleKey(event) {
     // A modifier on its own has no name, and Super belongs to the compositor: a chord with it runs nothing here.
     if (event.modifiers & Qt.MetaModifier) return false;
@@ -450,9 +455,8 @@ Scope {
     if (held === "Help") held = "";
     else if (name === "?") held = "Help";
     else if (answerFocused && answerKey(name)) return true;
-    else if (name === "Escape") hide();
+    else if (name === "Escape") stepBack();
     else if (inCalendar && calendar.handleKey(name)) return true;
-    else if (name === "BackSpace" && level) back();
     else if (input && name === "Tab") inputFocused = true;
     else if (own) activate(own, name);
     else if (target) openMenu(target);
@@ -468,6 +472,7 @@ Scope {
     for (const name of path.trim().split(/\s+/)) {
       if (!(filtering ? filterKey(name) : handleName(name))) return false;
     }
+    base = stack.length;
     return true;
   }
 

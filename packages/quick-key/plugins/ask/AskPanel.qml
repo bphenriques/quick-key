@@ -22,13 +22,14 @@ Scope {
     { key: "Shift+Return", desc: "A new line" },
     { key: "Ctrl+Shift+Return", desc: "Send in the background" },
     { key: "Ctrl+y", desc: "Allow what it asks" },
+    { key: "Ctrl+c", desc: "Stop the answer" },
     { key: "y", desc: "Copy the last answer" },
     { key: "Ctrl+l", desc: "A new conversation" },
     { key: "Ctrl+o", desc: "Move it to a terminal" },
     { key: "Ctrl+r", desc: "An earlier conversation" },
     { key: "Ctrl+v", desc: "Attach the clipboard's image" },
     { key: "1-9", desc: "Pick an option" },
-    { key: "Escape", desc: "Step back one thing" }
+    { key: "Escape", desc: "Clear, else back" }
   ]
   // The last turn as drawn, for what Return does next.
   readonly property var last: plugin.exchanges.length > 0 ? plugin.describe(plugin.exchanges[plugin.exchanges.length - 1]) : null
@@ -185,9 +186,9 @@ Scope {
           .concat(panel.plugin.exchanges.length === 0 && panel.plugin.recalls ? [{ key: chord + "r", what: Words.history, clickable: true }] : [])
           .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: Words.choose }] : [])
           .concat(panel.plugin.canMove ? [{ key: chord + "o", what: Words.terminal, clickable: true }] : [])
+          .concat(panel.plugin.busy ? [{ key: chord + "c", what: Words.stop, clickable: true }] : [])
           .concat(!panel.plugin.typing ? [{ key: "?", what: Words.help, clickable: true }] : [])
-          // Last, so its changing word moves nothing.
-          .concat([{ key: "Escape", what: Words[panel.plugin.escapeAction], clickable: true }])
+          .concat(panel.plugin.typing && (panel.plugin.draft || panel.plugin.image) ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
         onPicked: key => {
           if (!panel.plugin.act(key)) panel.promptPicked(key);
         }
@@ -328,7 +329,7 @@ Scope {
         active: panel.plugin.typing
         key: "Tab"
         onTapped: panel.plugin.typing = true
-        onUnfocused: panel.plugin.typing = false
+        onBack: panel.plugin.leave(true)
         empty: text === "" && !panel.plugin.image
         onCleared: panel.plugin.image = ""
         onTextChanged: panel.plugin.draft = text

@@ -93,8 +93,8 @@ Scope {
     barShown: root.menu.barItems.length > 0
     inputOver: true
     onDismissed: root.menu.hide()
-    // As Backspace does.
-    onSecondaryClicked: if (root.menu.level) root.menu.back()
+    // As Escape does, but never closing the top level.
+    onSecondaryClicked: if (root.menu.level) root.menu.stepBack()
     onKeyPressed: event => {
       if (root.modifier(event) && !event.isAutoRepeat) {
         held.modifier = root.modifier(event);
@@ -167,15 +167,14 @@ Scope {
           activity: root.menu.turn?.activity ?? ""
           options: root.menu.choices
           table: !!root.menu.turn?.table
-          // Set aside, the options wait as text and the digits type again.
-          picking: root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && fits
+          picking: root.menu.turn?.phase === "choosing" && fits
         }
       }
 
       Prompt {
         id: prompt
         Layout.fillWidth: true
-        // Filtering, it is the filter: its glyph, its range on the right, Escape giving the level back once empty.
+        // Filtering, it is the filter: its glyph, its range on the right.
         readonly property bool filter: root.menu.filtering
         active: root.menu.inputFocused || filter
         // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
@@ -184,32 +183,33 @@ Scope {
         glyph: filter ? Glyphs.search : Glyphs.prompt
         detail: filter ? root.menu.filter.count : ""
         placeholder: filter ? Words.filterPrompt : root.menu.turn ? exchange.next : root.menu.input?.desc ?? ""
-        // The turn's own keys while Tab has it; focused and empty before a conversation starts, where its plugin's past ones are.
+        // The turn's own keys while Tab has it; focused, Escape while it clears, else, before a conversation starts, its plugin's past ones.
         keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }]
-          : !filter && root.menu.inputFocused && text === "" && !root.menu.turn && root.menu.inputPlugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
-        onPicked: key => key === "Ctrl+r" ? root.menu.recall() : root.menu.answerKey(key)
+          : filter || !root.menu.inputFocused ? []
+          : text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }]
+          : !root.menu.turn && root.menu.inputPlugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
+        onPicked: key => key === "Ctrl+r" ? root.menu.recall() : key === "Escape" ? stepBack() : root.menu.answerKey(key)
         maxLines: 1
         onTapped: root.menu.inputFocused = true
-        onUnfocused: filter ? root.menu.leaveFilter() : root.menu.inputFocused = false
+        onBack: root.menu.stepBack()
         // The level's own unsent text, as it opens or moves to another input; filtering, the filter's.
         readonly property var owner: root.menu.input
         onOwnerChanged: if (!filter) set(root.menu.draftOf(owner))
         onFilterChanged: set(filter ? "" : root.menu.draftOf(owner))
         Component.onCompleted: set(filter ? "" : root.menu.draftOf(owner))
         onTextChanged: filter ? root.menu.filter.query = text : root.menu.keepDraft(text)
-        // Tab moves on to the turn, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits and Escape.
+        // Tab moves on to the turn, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits.
         onKeyPressed: event => {
           const send = MenuKeys.sends(event);
           const name = MenuKeys.name(event);
           // A choice waiting takes the digits whether or not they all show here, so they never type.
-          const waiting = !prompt.filter && root.menu.turn?.phase === "choosing" && !root.menu.choicesAside && prompt.text === "";
+          const waiting = !prompt.filter && root.menu.turn?.phase === "choosing" && prompt.text === "";
           if (prompt.filter) {
             if (!root.menu.filterKey(name)) return;
           } else if (send) prompt.send(send === "background");
           else if (waiting && /^[1-9]$/.test(name)) {
             if (exchange.picking) root.menu.pick(Number(name) - 1);
-          } else if (waiting && name === "Escape") root.menu.choicesAside = true;
-          else if (name === "Ctrl+r") {
+          } else if (name === "Ctrl+r") {
             if (!root.menu.recall()) return;
           } else if (name === "Tab" && last.visible) {
             root.menu.inputFocused = false;
@@ -400,20 +400,20 @@ Scope {
           spacing: Config.theme.padding
 
           KeyLegend {
-            visible: root.menu.restLegend.length > 0
-            keys: root.menu.restLegend
-            onPicked: key => root.menu.inputFocused ? root.inputPicked(key) : root.menu.calendar.handleKey(key)
+            visible: root.menu.levelLegend.length > 0
+            keys: root.menu.levelLegend
+            onPicked: key => root.menu.calendar.handleKey(key)
           }
 
           Item {
-            visible: root.menu.restLegend.length > 0
+            visible: root.menu.levelLegend.length > 0
             Layout.fillWidth: true
           }
 
           // Declared columns, entries flowing across; hidden when empty, since an empty GridLayout keeps its last height.
           GridLayout {
             id: actionsGrid
-            Layout.fillWidth: root.menu.restLegend.length === 0
+            Layout.fillWidth: root.menu.levelLegend.length === 0
             visible: root.menu.actions.length > 0
             flow: GridLayout.LeftToRight
             columns: root.menu.columns
