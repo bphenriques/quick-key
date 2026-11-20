@@ -10,21 +10,23 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted().
+  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text).
   readonly property var builtin: ({
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
       fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.level(Audio.sink) },
       value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
       meter: () => Audio.sinkVolume,
-      muted: () => Audio.sinkMuted
+      muted: () => Audio.sinkMuted,
+      adjust: "sinkVolume"
     },
     source: {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
       fields: pinned => !Audio.source ? {} : { device: pinned(Audio.source.name, Audio.sourceName), volume: Audio.level(Audio.source) },
       value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
       meter: () => Audio.sourceVolume,
-      muted: () => Audio.sourceMuted
+      muted: () => Audio.sourceMuted,
+      adjust: "sourceVolume"
     },
     // Its glyph says whether it plays; with nothing playing it says so, which reads as state rather than something missing.
     music: {
@@ -61,7 +63,8 @@ Singleton {
       // Unlit, no backlight to report: the row dims for that, and "off" would read as the screen being off.
       fields: () => !Brightness.lit ? {} : { level: Brightness.percentage + "%" },
       value: fields => ({ text: "", detail: fields.level ?? "" }),
-      meter: () => Brightness.lit ? Brightness.percentage / 100 : -1
+      meter: () => Brightness.lit ? Brightness.percentage / 100 : -1,
+      adjust: "brightness"
     },
     calendar: {
       glyph: () => Glyphs.calendar,
@@ -93,7 +96,9 @@ Singleton {
       glyph: () => Glyphs.keepAwake,
       fields: () => ({}),
       value: () => ({ text: "", detail: "" }),
-      tone: () => IdleInhibit.enabled ? "primary" : ""
+      tone: () => IdleInhibit.enabled ? "primary" : "",
+      muted: () => !IdleInhibit.enabled,
+      popup: () => Words.keepAwakeState(IdleInhibit.enabled)
     }
   })
 

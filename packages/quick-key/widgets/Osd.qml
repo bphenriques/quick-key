@@ -4,23 +4,18 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs
+import qs.builtins
 import qs.services
 import qs.ui
 
-// A slim bar at the right edge on a volume, device, brightness, layout or keep-awake change, so it never reads as a notification.
+// A slim bar at the right edge on a change to any listed status or plugin, so it never reads as a notification.
 Scope {
   id: root
 
-  // What is or was last shown, one of Config.popups.show; kept while the window closes.
+  // What is or was last shown, a status or a plugin; kept while the window closes.
   property string kind: ""
 
-  // An unlisted pop-up never starts its service: the target is null.
-  function listed(kind) {
-    return Config.popups.show.includes(kind);
-  }
-
   function show(newKind) {
-    if (!listed(newKind)) return;
     kind = newKind;
     transient.show();
   }
@@ -36,28 +31,23 @@ Scope {
     shown: transient.shown
   }
 
-  Connections {
-    target: root.listed("sink") || root.listed("source") ? Audio : null
-    function onSinkVolumeChanged() { root.show("sink"); }
-    function onSinkMutedChanged() { root.show("sink"); }
-    function onSinkNameChanged() { root.show("sink"); }
-    function onSourceVolumeChanged() { root.show("source"); }
-    function onSourceMutedChanged() { root.show("source"); }
-  }
+  // One per listed name, showing itself when its state changes; a service starts only for what is listed.
+  Instantiator {
+    model: Config.popups.show
 
-  Connections {
-    target: root.listed("brightness") ? Brightness : null
-    function onPercentageChanged() { root.show("brightness"); }
-  }
+    delegate: Scope {
+      required property string modelData
 
-  Connections {
-    target: root.listed("keyboardLayout") ? KeyboardLayout : null
-    function onIndexChanged() { root.show("keyboardLayout"); }
-  }
+      readonly property var status: Statuses.builtin[modelData] ?? null
+      readonly property var plugin: status === null ? Plugins.get(modelData) : null
+      readonly property var fields: status ? status.fields((id, name) => name) : ({})
+      // Glyph, fields, meter, muted and text together: a toggle's glyph never moves, so its text says the change.
+      readonly property string signature: JSON.stringify(status
+        ? [status.glyph(), fields, status.meter ? status.meter() : -1, status.muted ? status.muted() : false, status.popup ? status.popup() : status.value(fields).text]
+        : plugin ? [plugin.glyph, plugin.text, plugin.detail, plugin.active, plugin.tone] : [])
 
-  Connections {
-    target: root.listed("keepAwake") ? IdleInhibit : null
-    function onEnabledChanged() { root.show("keepAwake"); }
+      onSignatureChanged: root.show(modelData)
+    }
   }
 
   LazyLoader {
@@ -66,17 +56,15 @@ Scope {
     OverlayWindow {
       id: window
 
-      readonly property bool metered: root.kind === "sink" || root.kind === "source" || root.kind === "brightness"
-      readonly property bool muted: root.kind === "sink" ? Audio.sinkMuted
-        : root.kind === "source" ? Audio.sourceMuted
-        : root.kind === "keepAwake" ? !IdleInhibit.enabled
-        : false
-      readonly property string tone: muted ? "dim" : root.kind === "keepAwake" ? "primary" : "normal"
-      readonly property string glyph: root.kind === "sink" ? (muted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType))
-        : root.kind === "source" ? (muted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType))
-        : root.kind === "brightness" ? Glyphs.brightness(Brightness.percentage)
-        : root.kind === "keepAwake" ? Glyphs.keepAwake
-        : Glyphs.keyboard
+      readonly property var status: Statuses.builtin[root.kind] ?? null
+      readonly property var plugin: Plugins.get(root.kind)
+      readonly property var fields: status ? status.fields((id, name) => name) : ({})
+      readonly property bool metered: status !== null && !!status.meter && status.meter() >= 0
+      readonly property bool muted: status !== null && !!status.muted && status.muted()
+      // Never a dim fallback: a status without a tone of its own reads normal.
+      readonly property string tone: muted ? "dim" : status ? ((status.tone ? status.tone() : "") || "normal") : plugin ? (plugin.tone || (plugin.active ? "primary" : "normal")) : "normal"
+      readonly property string glyph: status ? status.glyph() : plugin ? plugin.glyph : ""
+      readonly property string text: status ? (status.popup ? status.popup() : status.value(fields).text) : plugin ? [plugin.text, plugin.detail].filter(part => part).join(" ") : ""
 
       anchors.right: true
       margins.right: Config.theme.edgeMargin
@@ -94,14 +82,13 @@ Scope {
         implicitWidth: Config.theme.osdIconSize + 2 * Config.theme.padding
         implicitHeight: levelColumn.implicitHeight + 2 * Config.theme.padding
 
-        // The wheel adjusts the level shown: the volume directly, the backlight with brightness.adjust.
+        // The wheel runs the pair action the status names; a pill adjusts nothing.
         WheelSteps {
           anchors.fill: parent
           hoverEnabled: true
           onContainsMouseChanged: transient.held = containsMouse
           onStepped: up => {
-            if (root.kind !== "brightness") Audio.adjust(root.kind, up);
-            else Brightness.adjust(up);
+            if (window.status && window.status.adjust) Actions.builtin[window.status.adjust].run(up);
           }
         }
 
@@ -115,9 +102,7 @@ Scope {
             orientation: Qt.Vertical
             height: Config.theme.osdLength
             tone: window.muted ? "dim" : "primary"
-            value: root.kind === "sink" ? Audio.sinkVolume
-              : root.kind === "source" ? Audio.sourceVolume
-              : Brightness.percentage / 100
+            value: window.metered ? window.status.meter() : 0
           }
 
           Icon {
@@ -129,7 +114,7 @@ Scope {
         }
       }
 
-      // A state without a level (layout, keep awake): a pill with the icon and what it is now.
+      // A state without a level: a pill with the icon and what it is now.
       Pill {
         id: pill
         opacity: fade.value
@@ -148,11 +133,11 @@ Scope {
         Label {
           id: value
           anchors.verticalCenter: parent.verticalCenter
-          // As wide as its widest value, so the pill holds still as it changes; a toggle named, as its glyph alone says little.
-          width: (root.kind === "keyboardLayout" ? Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)) : Words.keepAwakeState(false).length) * Metrics.cell
+          // As wide as its widest value while a toggle named (its glyph alone says little), else as wide as its text.
+          width: root.kind === "keyboardLayout" ? Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)) * Metrics.cell
+            : root.kind === "keepAwake" ? Words.keepAwakeState(false).length * Metrics.cell : window.text.length * Metrics.cell
           tone: window.tone
-          text: root.kind === "keyboardLayout" ? KeyboardLayout.label
-            : Words.keepAwakeState(IdleInhibit.enabled)
+          text: window.text
         }
       }
     }

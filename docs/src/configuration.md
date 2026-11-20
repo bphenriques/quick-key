@@ -41,6 +41,6 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | Calendar reminders | `notify-send` |
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
 
-`popups.show` lists the changes that pop up (`sink`, `source`, `brightness`, `keyboardLayout`, `keepAwake`; all by default), so another on-screen display can take any of them over.
+`popups.show` lists the statuses or plugins whose changes pop up (`sink`, `source`, `brightness`, `keyboardLayout`, `keepAwake`; all by default), so another on-screen display can take any of them over. A plugin shows as a pill with its glyph and text; one whose text changes constantly (a recording's timer) pops up on every change, so list only plugins that change rarely.
 
 Setting `menu.entries` replaces the starter menu whole. To start from it, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json): it is a valid `config.json`. Do-not-disturb (the `dunst` plugin, or your own) and display layouts are plugins you list ([Plugins](plugins.md)).

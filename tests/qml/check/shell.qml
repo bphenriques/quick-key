@@ -17,6 +17,7 @@ ShellRoot {
     ["every without read", { plugins: { x: { every: 5 } } }, "sets every without read"],
     ["a plugin with a built-in name", { plugins: { sink: {} } }, "takes a built-in name"],
     ["a name in a bar neither a status nor a plugin", { menu: { header: { left: ["nope"] } } }, "'nope' in the top level's bar is neither a status nor a plugin"],
+    ["a pop-up that is neither a status nor a plugin", { popups: { show: ["nope"] } }, "popups.show"],
     ["a bar key the body binds with Ctrl", { menu: { header: { left: [{ key: "x", desc: "X", cmd: "true" }] }, entries: [{ key: "Ctrl+x", desc: "Y", cmd: "true" }] } }, "bar keys its body binds with Ctrl too in the top level: x"],
     ["a bar key with a modifier", { menu: { header: { left: [{ key: "Alt+x", desc: "X", cmd: "true" }] } } }, "bar keys with a modifier"],
     ["a limit outside a bar", menu([{ key: "x", desc: "X", list: "tray", limit: 3 }]), "can only set limit on a list in a bar"],

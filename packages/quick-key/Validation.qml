@@ -26,7 +26,10 @@ Singleton {
     const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
-    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
+    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}),
+      // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
+      (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
+      levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
   }
 
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices).
