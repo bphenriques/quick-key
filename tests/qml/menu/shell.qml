@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs
 import qs.builtins
 import qs.services
 import qs.ui
@@ -308,6 +309,16 @@ ShellRoot {
           menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Ask", plugin: "agent" } } }];
           const named = menu.help.some(key => key.key === "Ctrl+r");
           return named && menu.recall() && menu.stack.length === 2 && menu.level.picking && menu.level.entry.list === "agent" && menu.filtering;
+        }
+      },
+      {
+        name: "a level lays its actions out in its own columns, else menu.columns",
+        until: () => {
+          menu.hide();
+          menu.push({ kind: "entry", entry: { submenu: [], columns: 1 } });
+          const own = menu.columns === 1;
+          menu.hide();
+          return own && menu.columns === Config.menu.columns;
         }
       },
       {

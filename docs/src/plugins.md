@@ -100,6 +100,8 @@ Keys:
 
 Past conversations are the agent's own (ACP's `session/list`, where `cwd` says), in its order, each with its last activity, the open one lit. `RET` resumes one, its history replayed as the conversation (`session/load`), and its own menu (`M-RET`) has `o`, `open` given its session; an agent that cannot load them dims them, and one that cannot list them says so. The menu's input that gives it text takes `C-r` too, its list being Ask's `items`.
 
+Its status (its name in a bar) shows its `glyph` only while it has something to report: a run, an answer unread, a question for you. To ask from a key, bind `menu press Tab`: the menu opens with its input focused.
+
 Two agents are two plugins with `type = "ask"`. A level's `input` may hand one its text (see [Input](menu.md#input)).
 
 ## Writing one in QML

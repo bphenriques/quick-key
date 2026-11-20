@@ -70,7 +70,8 @@
     "idle": {
       "type": "ask",
       "ask": "true",
-      "notify": ""
+      "notify": "",
+      "glyph": "A"
     },
     "streamer": {
       "type": "ask",

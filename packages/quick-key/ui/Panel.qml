@@ -122,9 +122,11 @@ Scope {
           anchors.bottomMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
         }
 
+        // Over the card, so a tip on its items shows above it.
         Surface {
           id: bar
           visible: root.barShown
+          z: 1
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.bottom: parent.bottom
           anchors.bottomMargin: Config.theme.edgeMargin

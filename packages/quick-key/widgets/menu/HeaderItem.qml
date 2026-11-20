@@ -49,10 +49,11 @@ ListItem {
     text: root.item.desc ?? ""
   }
 
-  // An icon alone is named on hover; the row would lay it out, so it sits on the item itself.
+  // An icon alone is named on hover, a status showing only its glyph too (a plugin by its title); the row would lay it out, so it sits on the item itself.
   Tip {
     parent: root
     hovered: root.hovered
-    text: !root.item.status && !root.item.named && (!!root.item.image || !!root.item.icon) ? root.item.desc : ""
+    text: root.item.status ? (status.text === "" && status.detail === "" ? root.plugin?.title ?? root.item.desc ?? "" : "")
+      : !root.item.named && (!!root.item.image || !!root.item.icon) ? root.item.desc : ""
   }
 }

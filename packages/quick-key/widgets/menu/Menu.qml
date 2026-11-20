@@ -184,9 +184,10 @@ Scope {
         glyph: filter ? Glyphs.search : Glyphs.prompt
         detail: filter ? root.menu.filter.count : ""
         placeholder: filter ? Words.filterPrompt : root.menu.turn ? exchange.next : root.menu.input?.desc ?? ""
-        // The turn's own keys while Tab has it.
-        keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }] : []
-        onPicked: key => root.menu.answerKey(key)
+        // The turn's own keys while Tab has it; focused and empty before a conversation starts, where its plugin's past ones are.
+        keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }]
+          : !filter && root.menu.inputFocused && text === "" && !root.menu.turn && root.menu.inputPlugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
+        onPicked: key => key === "Ctrl+r" ? root.menu.recall() : root.menu.answerKey(key)
         maxLines: 1
         onTapped: root.menu.inputFocused = true
         onUnfocused: filter ? root.menu.leaveFilter() : root.menu.inputFocused = false
@@ -264,7 +265,7 @@ Scope {
         Layout.fillWidth: true
         visible: root.hinting
         flow: GridLayout.LeftToRight
-        columns: Config.menu.columns
+        columns: root.menu.columns
         columnSpacing: Config.theme.padding
         rowSpacing: Config.theme.listSpacing
 
@@ -415,7 +416,7 @@ Scope {
             Layout.fillWidth: root.menu.restLegend.length === 0
             visible: root.menu.actions.length > 0
             flow: GridLayout.LeftToRight
-            columns: Config.menu.columns
+            columns: root.menu.columns
             columnSpacing: Config.theme.padding
             rowSpacing: Config.theme.listSpacing
 

@@ -60,7 +60,8 @@ Plugin {
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText
 
-  glyph: settings.glyph
+  // Its status shows only while it has something to report: a run, an answer unread, a question for you.
+  glyph: busy || unread || approval ? settings.glyph : ""
   active: busy || unread
   tone: approval ? "warning" : ""
   error: failure

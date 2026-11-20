@@ -265,6 +265,10 @@ ShellRoot {
         }
       },
       {
+        name: "its status shows its glyph only while it has something to report",
+        until: () => Plugins.get("idle")?.glyph === "" && Plugins.get("idle").settings.glyph !== ""
+      },
+      {
         name: "a moment is said one way everywhere: near days by name, the week by weekday, else the date, with its year when not this one; short names cut to three letters only where that still tells them apart",
         until: () => {
           const day = 86400000;

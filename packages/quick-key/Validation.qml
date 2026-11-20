@@ -15,7 +15,7 @@ Singleton {
     for (const problem of problems ?? []) console.warn("config.json:", problem);
   }
 
-  readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
+  readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "columns", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
   readonly property var views: ["calendar"]
   // Esc closes the menu, Backspace goes back a level, ? lists the keys no row shows, Tab moves to the input and Shift+Tab back.
   readonly property var reservedKeys: ["Escape", "BackSpace", "?", "Tab", "Backtab"]
@@ -115,6 +115,7 @@ Singleton {
     if (entry.header != null && !level) found.push("can only set header with submenu, list or view");
     if (entry.limit != null && !(inBar && entry.list != null)) found.push("can only set limit on a list in a bar");
     if (entry.limit != null && !(entry.limit >= 1 && entry.limit <= 9)) found.push("limits its list to " + entry.limit + ", not 1 to 9 digits");
+    if (entry.columns != null && !(Number.isInteger(entry.columns) && entry.columns >= 1 && (entry.submenu || entry.list || entry.view))) found.push("sets columns, which only a level of 1 or more columns takes");
     if (entry.view != null && !views.includes(entry.view)) found.push("shows view '" + entry.view + "', which is not built in");
     if (entry.view != null && entry.list != null) found.push("cannot combine view with list");
     if (entry.keepOpen != null && entry.cmd == null && entry.action == null) found.push("can only set keepOpen with cmd or action");
