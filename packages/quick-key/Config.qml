@@ -225,8 +225,10 @@ Singleton {
       property JsonObject brightness: JsonObject {
         // Prints the path of a file holding the backlight's value, a tab, and its maximum; by default the first backlight.
         property string backlight: 'for d in /sys/class/backlight/*; do [ -r "$d/brightness" ] && printf "%s\\t%s\\n" "$d/brightness" "$(cat "$d/max_brightness")" && break; done'
-        // What the brightness action and the pop-up's wheel run, down then up.
-        property var adjust: ["brightnessctl set 5%-", "brightnessctl set 5%+"]
+        // Percent a key or the wheel moves the backlight.
+        property int step: 5
+        // Given the backlight's name and a value, sets it; logind lets the active session do so without root.
+        property string set: "busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto org.freedesktop.login1.Session SetBrightness ssu backlight"
         // The panel the backlight dims; unset, the built-in output (eDP, LVDS or DSI).
         property string panel
       }

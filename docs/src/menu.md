@@ -93,6 +93,6 @@ Each field takes one of its column's names, or a plugin's. A plugin's status giv
 | Keep awake | `keepAwake` | | | `keepAwake` | `keepAwake` |
 | Any list | | | | `pick` | |
 
-Volume steps by `audio.step` up to `audio.max`. `brightness` is the action that runs a tool, `brightness.adjust`.
+Volume steps by `audio.step` up to `audio.max`. The backlight steps by `brightness.step` through logind; set `brightness.set` for another tool.
 
 A level lists up to nine items on fixed digits. `/` filters its list in place, as in a pager or a browser, unless the level binds `/` itself, the legend saying how many rows show at rest of all the list holds while it holds more (`/ 1-9 of 14`); `pick` does it on any other key, its row saying the same: the filter takes the level's island and keeps the items whose label holds every word typed, hidden ones too, in the rows' place, as many at a time as the level showed (nine on a level of their own), so nothing moves. Digits pick from the rows shown, following them, and never type; `↑↓` move the cursor, `RET` runs its item as its digit would and `M-RET` opens its own menu, the filter's range on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, or a level of its own with it. A level's other pickers take any free key (`.` or a letter), their labels ending in `...`.

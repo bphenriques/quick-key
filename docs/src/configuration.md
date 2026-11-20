@@ -34,7 +34,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 
 | Feature | Tool |
 |---|---|
-| Brightness | the first `/sys/class/backlight` device, `brightnessctl` |
+| Brightness | the first `/sys/class/backlight` device, `busctl` |
 | Bluetooth, when rfkill blocks it | `rfkill` |
 | Keep awake | `systemd-inhibit` |
 | Session | `loginctl`, `systemctl` |

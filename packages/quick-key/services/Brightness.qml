@@ -10,15 +10,18 @@ Singleton {
   id: root
 
   readonly property bool present: internal.maximum > 0
+  // The backlight directory's name, which is how logind addresses it.
+  readonly property string name: internal.file.replace(/\/brightness$/, "").split("/").pop()
   // The panel it dims is on, as of the last time the menu opened.
   readonly property string panel: Config.brightness.panel || Compositor.connected.find(output => /^(eDP|LVDS|DSI)-/.test(output)) || ""
   readonly property bool lit: present && Compositor.enabled.includes(panel)
   readonly property int percentage: present ? Math.round(internal.current * 100 / internal.maximum) : 0
 
-  // A step down or up, by Config.brightness.adjust.
+  // A step down or up, by Config.brightness.step; a step of at least 1 still moves a panel with few levels, and a floor of 1 never turns the backlight off.
   function adjust(up) {
-    const command = Config.brightness.adjust[up ? 1 : 0];
-    Commands.run(command);
+    const by = Math.max(1, Math.round(Config.brightness.step * internal.maximum / 100));
+    const value = Math.max(1, Math.min(internal.maximum, internal.current + (up ? by : -by)));
+    Commands.run(Config.brightness.set, name, String(value));
   }
 
   QtObject {

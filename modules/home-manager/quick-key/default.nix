@@ -35,7 +35,6 @@ let
         cfg.extraPackages
         ++ [
           pkgs.util-linux
-          pkgs.brightnessctl
           pkgs.libnotify
           pkgs.wl-clipboard
         ]
