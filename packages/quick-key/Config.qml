@@ -44,16 +44,21 @@ Singleton {
   property var written: null
   property string invalid: ""
 
+  // A value's kind as the checks name it: a list, a map, else its type; a list read back from the adapter is list-like, not an Array.
+  function kind(value) {
+    if (value === null || typeof value !== "object") return typeof value;
+    return Array.isArray(value) || typeof value.length === "number" ? "list" : "map";
+  }
+
   // What json sets that the settings do not declare, or declare as another kind of value; lists and maps are not looked into.
   function undeclared(json, group = adapter, path = "") {
     let found = [];
     for (const key of Object.keys(json)) {
       const [value, declared] = [json[key], group[key]];
-      const isMap = value !== null && typeof value === "object" && !Array.isArray(value);
       if (!(key in group)) found.push(path + key + " is not a setting");
       else if (declared !== null && typeof declared === "object" && "objectName" in declared)
-        found = found.concat(isMap ? undeclared(value, declared, path + key + ".") : [path + key + " holds settings, not a value"]);
-      else if (declared !== null && typeof value !== typeof declared) found.push(path + key + " takes a " + typeof declared);
+        found = found.concat(kind(value) === "map" ? undeclared(value, declared, path + key + ".") : [path + key + " holds settings, not a value"]);
+      else if (declared !== null && kind(value) !== kind(declared)) found.push(path + key + " takes a " + kind(declared));
     }
     return found;
   }

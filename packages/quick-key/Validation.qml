@@ -20,13 +20,16 @@ Singleton {
   // Esc steps back, ? lists the keys no row shows, Tab moves to the input and Shift+Tab back.
   readonly property var reservedKeys: ["Escape", "?", "Tab", "Backtab"]
 
+  // Kinds first: the checks after them read the config in the shapes the settings declare.
   function check(json) {
+    const kinds = Config.undeclared(json);
+    if (kinds.length) return kinds;
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
-    return Config.undeclared(json).concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}),
+    return pluginProblems(json.plugins ?? {}).concat(glyphProblems(json.glyphs ?? {}),
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
       levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
@@ -43,6 +46,10 @@ Singleton {
     const found = [];
     for (const [name, plugin] of Object.entries(plugins)) {
       const at = "plugins." + name;
+      if (Config.kind(plugin) !== "map") {
+        found.push(at + " takes a map of settings");
+        continue;
+      }
       if (builtin.includes(name)) found.push(at + " takes a built-in name");
       if (["watch", "read", "file"].filter(source => plugin[source] != null).length > 1) found.push(at + " sets more than one of watch, read and file");
       if (plugin.every != null && plugin.read == null) found.push(at + " sets every without read");
@@ -56,33 +63,38 @@ Singleton {
       }
       // None: a user's plugin may be absent where the build runs; its loading logs it.
       if (settings) {
-        const object = settings.createObject(null);
+        // Kinds read from defaults, then problems() from an object made with the values given: one written after being read would loop this binding.
+        const defaults = settings.createObject(null);
         // Ready is not enough: settings that fail to instantiate name themselves, they do not hang the check.
-        if (!object) {
+        if (!defaults) {
           found.push(at + " Settings.qml does not instantiate");
           continue;
         }
         const given = Object.assign({}, plugin);
         delete given.type;
-        const wrong = Config.undeclared(given, object, at + ".");
+        const wrong = Config.undeclared(given, defaults, at + ".");
+        defaults.destroy();
         found.push(...wrong);
         if (wrong.length === 0) {
-          for (const key of Object.keys(given)) object[key] = given[key];
+          const object = settings.createObject(null, given);
           found.push(...object.problems().map(problem => at + " " + problem));
+          object.destroy();
         }
-        object.destroy();
       }
     }
     return found;
   }
 
-  // A level's keys in its body and its bar, then each entry and the level under it.
-  function levelProblems(path, entries, header, plugins, list) {
-    const keys = entries.reduce((keys, entry) => keys.concat(entry.key ?? []), []);
+  // A level's shape, its keys in its body and its bar, then each entry and the level under it.
+  function levelProblems(path, given, header, plugins, list) {
+    if (Config.kind(given) !== "list") return ["menu: " + path + " takes a list of entries"];
+    const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
     const bar = ["left", "center", "right"].reduce((parts, slot) => parts.concat(Array.from(header?.[slot] ?? [])), []);
-    const barEntries = bar.filter(part => typeof part !== "string");
+    const barEntries = bar.filter(part => Config.kind(part) === "map");
+    const keys = entries.reduce((keys, entry) => keys.concat(entry.key ?? []), []);
     const barKeys = barEntries.reduce((keys, entry) => keys.concat(entry.key ?? []), []);
     const found = [];
+    if (entries.length < given.length || bar.some(part => Config.kind(part) !== "map" && typeof part !== "string")) found.push("menu: " + path + " holds something that is not an entry");
     const wrong = (which, why) => {
       if (which.length) found.push("menu: " + why + " in " + path + ": " + [...new Set(which)].join(", "));
     };

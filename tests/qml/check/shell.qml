@@ -44,7 +44,11 @@ ShellRoot {
     ["a plugin setting its plugin does not declare", { plugins: { d: { type: "dunst", activat: "x" } } }, "plugins.d.activat is not a setting"],
     ["a plugin setting of another kind", { plugins: { t: { type: "tasks", syncAfter: "5" } } }, "plugins.t.syncAfter takes a number"],
     ["a glyph that does not exist", { glyphs: { wifii: "x" } }, "glyphs.wifii is not a glyph"],
-    ["a glyph of another kind", { glyphs: { batteryLevels: "x" } }, "glyphs.batteryLevels takes a list of glyphs"]
+    ["a glyph of another kind", { glyphs: { batteryLevels: "x" } }, "glyphs.batteryLevels takes a list of glyphs"],
+    ["a map where a list is declared", { popups: { show: { a: 1 } } }, "popups.show takes a list"],
+    ["entries that are not a list", { menu: { entries: "x" } }, "the top level takes a list of entries"],
+    ["an entry that is not one", menu([null]), "the top level holds something that is not an entry"],
+    ["a plugin that is not a map of settings", { plugins: { x: "on" } }, "plugins.x takes a map of settings"]
   ]
 
   Suite {
