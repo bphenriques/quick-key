@@ -24,6 +24,11 @@ Rectangle {
     height: root.vertical ? parent.height * root.filled : parent.height
     radius: parent.radius
     color: Tone.color(root.tone)
+    Behavior on color {
+      ColorAnimation {
+        duration: Config.theme.animationDuration
+      }
+    }
 
     Behavior on width {
       NumberAnimation {

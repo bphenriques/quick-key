@@ -59,6 +59,7 @@ ColumnLayout {
       activeFocusOnPress: false
       // Unwrapped until a layout gives it a width: at none it would wrap every character, and a list would size itself by that height.
       wrapMode: width > 0 ? TextEdit.Wrap : TextEdit.NoWrap
+      // Snaps, unlike a Label: easing a rich text's colour redraws the whole answer every frame.
       color: Tone.color(root.tone)
       selectionColor: Tone.wash("primary", 2)
       selectedTextColor: Tone.color("normal")
