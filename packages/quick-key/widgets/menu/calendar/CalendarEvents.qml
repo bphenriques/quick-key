@@ -27,6 +27,7 @@ ListView {
     return Calendar.timeline.slice(0, before).concat([{ id: "", key: selectedKey, day, event: null }], Calendar.timeline.slice(before));
   }
 
+  // An array model, unlike the kit's count models: sections need roles, and rows change as a day is picked or the file read, not under the pointer.
   model: rows
 
   clip: true
