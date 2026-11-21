@@ -75,6 +75,11 @@ for key in $(grep -rhoE '\bWords\.[a-zA-Z]+' --include='*.qml' . | sed 's/^Words
   grep -qsE "(property|function) [a-z]+ $key\b|^  function $key\b" ui/Words.qml || fail "Words.$key, which ui/Words.qml does not declare"
 done
 
+# Rule 11: a glyph is Glyphs', declared there (a comment naming ui/Glyphs.qml is not a use).
+for key in $(grep -rhoE '\bGlyphs\.[a-zA-Z]+' --include='*.qml' . | sed 's/^Glyphs\.//' | grep -vx qml | sort -u); do
+  grep -qsE "(property [a-z]+|function) $key\b" ui/Glyphs.qml || fail "Glyphs.$key, which ui/Glyphs.qml does not declare"
+done
+
 # Rule 11: a legend's words come from Words.
 for file in $(grep -rlE 'what: "' --include='*.qml' . | grep -v '^\./ui/Words\.qml$'); do
   fail "$file: a legend word outside Words"
