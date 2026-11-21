@@ -7,10 +7,13 @@ config=$(realpath "${2:-$config_home/quick-key/config.json}")
 work=$(mktemp -d)
 trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$work"' EXIT
 
-# Your config, for fonts and icons, with this config.json in place of the shell's.
+# Your config, for fonts and icons, and the shell's folder (themes, plugins) with this config.json in place of its own.
 mkdir "$work/config" "$work/config.shell"
 ln -s "$config_home"/* "$work/config/"
 rm -f "$work/config/quick-key"
+for entry in "$config_home"/quick-key/*; do
+  if [ -e "$entry" ] && [ "$(basename "$entry")" != config.json ]; then ln -s "$entry" "$work/config.shell/"; fi
+done
 mv "$work/config.shell" "$work/config/quick-key"
 cp "$config" "$work/config/quick-key/config.json"
 
