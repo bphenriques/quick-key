@@ -314,7 +314,7 @@ Scope {
         Layout.fillWidth: true
         glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
         // Who it asks until a turn says what Return does next, as the menu's input does.
-        placeholder: panel.last ? Words.next(panel.last.phase, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace("{title}", panel.plugin.title)
+        placeholder: panel.last ? Words.next(panel.last.phase, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
         active: panel.plugin.typing
         key: "Tab"
         onTapped: panel.plugin.typing = true
