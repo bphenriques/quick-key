@@ -8,13 +8,13 @@ Singleton {
   readonly property var tableSeparator: /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/
   readonly property var listItem: /^(\s*)([-*+]|(\d+)[.)])\s+(.*)$/
   readonly property var fenceLine: /^\s*(`{3,}|~{3,})/
-  readonly property var headingLine: /^\s{0,3}#{1,6}\s/
+  readonly property var headingLine: /^ {0,3}#{1,6}\s/
   readonly property var ruleLine: /^\s{0,3}([-*_])(\s*\1){2,}\s*$/
   readonly property var quoteLine: /^\s{0,3}>/
 
   // As compact lines show it: its marks gone, an image or a link by its text, a table's rows as columns.
   function plain(markdown) {
-    return markdown.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1").replace(/^#+\s+/gm, "")
+    return markdown.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1").replace(/^ {0,3}#{1,6}\s+/gm, "")
       .split("\n").filter(line => !tableSeparator.test(line.trim())).join("\n").replace(/^\|\s*|\s*\|\s*$/gm, "").replace(/\s*\|\s*/g, "  ");
   }
 
