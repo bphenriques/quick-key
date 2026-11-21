@@ -53,6 +53,8 @@ ShellRoot {
     ["a status named after what every object inherits", menu([{ key: "x", desc: "X", list: "tray", submenu: [{ key: "a", desc: "A", status: "constructor", cmd: "true" }] }]), "names status 'constructor'"],
     ["a glyph named after what every object inherits", { glyphs: { objectName: "x" } }, "glyphs.objectName is not a glyph"],
     ["an ask toolMatch that is not a pattern", { plugins: { a: { type: "ask", ask: "true", toolMatch: "([(" } } }, "plugins.a sets toolMatch to what is not a regular expression"],
+    ["a look that is not one", { plugins: { x: { type: "command", show: { "true": "x" } } } }, "plugins.x.show.true takes a map"],
+    ["an item without a string id", { plugins: { x: { type: "command", items: [{ id: 1 }] } } }, "plugins.x.items[0] takes a map with a string id"],
     ["a tasks sort it does not have", { plugins: { t: { type: "tasks", sort: "date" } } }, "plugins.t sets sort to 'date', none of due, priority, title, list"]
   ]
 

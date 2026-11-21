@@ -53,6 +53,11 @@ Singleton {
       if (builtin.includes(name)) found.push(at + " takes a built-in name");
       if (["watch", "read", "file"].filter(source => plugin[source] != null).length > 1) found.push(at + " sets more than one of watch, read and file");
       if (plugin.every != null && plugin.read == null) found.push(at + " sets every without read");
+      // Every plugin's look and static items, as Plugin.compose reads them: a look by value, an item matched by its id as the source's value, a string.
+      if (Config.kind(plugin.show) === "map")
+        found.push(...Object.keys(plugin.show).filter(value => Config.kind(plugin.show[value]) !== "map").map(value => at + ".show." + value + " takes a map: glyph, text, detail, active, tone"));
+      if (Config.kind(plugin.items) === "list")
+        found.push(...Array.from(plugin.items).map((item, i) => Config.kind(item) === "map" && typeof item.id === "string" ? "" : at + ".items[" + i + "] takes a map with a string id").filter(problem => problem));
       let settings = null;
       for (const url of Config.pluginUrls(name, plugin)) {
         const component = Qt.createComponent(url.replace(/[^/]*$/, "Settings.qml"));
