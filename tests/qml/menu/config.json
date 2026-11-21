@@ -34,6 +34,10 @@
     "nothing": {
       "type": "command",
       "read": "echo '{\"items\": [], \"empty\": \"Nothing found\"}'"
+    },
+    "hides": {
+      "type": "command",
+      "read": "echo '{\"items\":[{\"id\":\"a\"},{\"id\":\"b\",\"hidden\":true}]}'"
     }
   },
   "menu": {

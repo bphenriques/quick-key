@@ -22,6 +22,10 @@ ShellRoot {
   Suite {
     cases: [
       {
+        name: "a bar list's +N counts only what the bar leaves out and its picker shows, never a hidden item",
+        until: () => Lists.items("hides").length === 2 && menu.barOf([{ desc: "H", list: "hides", limit: 1 }]).length === 1
+      },
+      {
         name: "pinned items keep their digits, dimmed while absent; the rest follow",
         until: () => JSON.stringify(menu.numbered("devices", [{ match: "b-*", label: "Bee" }, { match: "z-*", label: "Zed" }])
           .map(item => [item.key, item.desc, item.enabled !== false])) === '[["1","Bee",true],["2","Zed",false],["3","a-1",true]]'

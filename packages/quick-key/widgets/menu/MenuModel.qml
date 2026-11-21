@@ -178,7 +178,8 @@ Scope {
   function barList(entry) {
     const all = Lists.items(entry.list);
     const shown = numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
-    const more = all.length - shown.length;
+    const onBar = shown.map(item => item.id);
+    const more = all.filter(item => !item.hidden && !onBar.includes(item.id)).length;
     return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list, null) }) : shown;
   }
 
