@@ -31,10 +31,9 @@ RowLayout {
   property bool strong: false
   // Still being made: a spinner in place of its icon.
   property bool busy: false
-  // Its label (the title, else the text) shown; hidden, still measured, so whether it would fit stays known.
+  // Its label (the title, else the text) shown.
   property bool labelShown: true
   readonly property bool titled: title !== ""
-  readonly property real labelWidth: (titled ? titleLabel.implicitWidth : text !== "" ? textLabel.implicitWidth : 0) + spacing
 
   spacing: Config.theme.spacing
 

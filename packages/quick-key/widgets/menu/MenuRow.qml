@@ -13,8 +13,6 @@ ListItem {
   property bool hugs: false
   // On a crowded bar: its key and glyph alone, its label as its tip; without a glyph, its label stays.
   property bool compact: false
-  // As wide as it is with its label, shown or not.
-  readonly property real labelledWidth: implicitWidth + (status.labelShown ? 0 : status.labelWidth)
 
   enabled: row.item.enabled !== false
   current: !!row.item.current
