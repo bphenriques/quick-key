@@ -19,8 +19,22 @@ ShellRoot {
   // Whether Escape out of a level opened to pick showed what opened it.
   property bool backed: false
 
+  ListFilter {
+    id: probe
+    size: 3
+  }
+
   Suite {
     cases: [
+      {
+        name: "the filter's cursor stays on a row it shows when its item leaves the list",
+        start: () => {
+          probe.items = Array.from({ length: 10 }, (_, i) => ({ id: "i" + i, desc: "i" + i }));
+          probe.move(8);
+          probe.items = probe.items.filter(item => item.id !== "i8");
+        },
+        until: () => probe.rows.some(row => row.current && row.id === probe.item.id)
+      },
       {
         name: "a bar list's +N counts only what the bar leaves out and its picker shows, never a hidden item",
         until: () => Lists.items("hides").length === 2 && menu.barOf([{ desc: "H", list: "hides", limit: 1 }]).length === 1

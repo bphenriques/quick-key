@@ -18,7 +18,11 @@ QtObject {
   readonly property var labels: items.map(item => (item.desc ?? "").toLowerCase())
   readonly property var words: query.toLowerCase().split(/\s+/).filter(word => word !== "")
   readonly property var found: words.length === 0 ? items.filter(item => !item.hidden) : items.filter((item, i) => root.words.every(word => root.labels[i].includes(word)))
-  readonly property int index: Math.max(0, found.findIndex(item => item.id === current))
+  // The cursor's item, else the first row shown, so the cursor never leaves the rows.
+  readonly property int index: {
+    const at = found.findIndex(item => item.id === current);
+    return at >= 0 ? at : first;
+  }
   readonly property var item: found[index] ?? null
   // Clamped, so a list that shrinks keeps its rows filled.
   readonly property int first: Math.max(0, Math.min(offset, found.length - size))
