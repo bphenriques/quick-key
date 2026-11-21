@@ -104,7 +104,7 @@ in
   };
 
   config = lib.mkIf (config.programs.quick-key.enable && cfg.enable) {
-    programs.quick-key.settings.calendar.file = cfg.eventsFile;
+    programs.quick-key.settings.calendar.file = lib.mkDefault cfg.eventsFile;
 
     home.activation.quickKeyCalendars = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       [ -e "${cfg.calendars}" ] || run install -Dm600 ${cfg.package.sample} "${cfg.calendars}"

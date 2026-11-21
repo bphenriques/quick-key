@@ -104,6 +104,12 @@ assert lib.assertMsg (
   }).programs.quick-key.settings.theme.primary == "#123456"
 ) "the target turns on by itself, and a colour of the user's own wins over stylix's";
 assert lib.assertMsg (cfg.programs.quick-key.settings.theme == { name = "mine"; }) "without stylix, nothing is themed";
+assert lib.assertMsg (
+  (evalHome {
+    programs.quick-key.calendarSync.enable = true;
+    programs.quick-key.settings.calendar.file = "/elsewhere/events.json";
+  }).programs.quick-key.settings.calendar.file == "/elsewhere/events.json"
+) "a calendar file set by hand wins over calendar-sync's";
 pkgs.runCommand "quick-key-module-eval"
   {
     nativeBuildInputs = [ pkgs.jq ];
