@@ -50,7 +50,7 @@ Plugin {
   property int sentAt: 0
   property int now: 0
   readonly property int waited: Math.max(0, now - sentAt)
-  readonly property bool canMove: !busy && exchanges.length > 0
+  readonly property bool canMove: !busy && exchanges.length > 0 && settings.open !== ""
 
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText

@@ -25,7 +25,7 @@ Scope {
     { key: "Ctrl+c", desc: Words.helpStop },
     { key: "y", desc: Words.helpCopy },
     { key: "Ctrl+l", desc: Words.helpNew },
-    { key: "Ctrl+o", desc: Words.helpMoveTerminal },
+    ...(plugin.settings.open ? [{ key: "Ctrl+o", desc: Words.helpMoveTerminal }] : []),
     { key: "Ctrl+r", desc: Words.helpRecall },
     { key: "Ctrl+v", desc: Words.helpAttach },
     { key: "1-9", desc: Words.helpOptions },

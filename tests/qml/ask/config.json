@@ -104,6 +104,11 @@
       "ask": "true",
       "notify": "",
       "encodeImage": ""
+    },
+    "sealed": {
+      "type": "ask",
+      "ask": "true",
+      "notify": ""
     }
   }
 }

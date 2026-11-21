@@ -46,6 +46,18 @@ ShellRoot {
         }
       },
       {
+        name: "without a terminal to open, C-o keeps the conversation and is not offered",
+        until: () => {
+          const ask = Plugins.get("sealed");
+          if (!ask) return false;
+          if (!ask.exchanges.length) {
+            ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
+            ask.act("Ctrl+o");
+          }
+          return ask.exchanges.length === 1 && !ask.canMove;
+        }
+      },
+      {
         name: "an answer renders as rich text of the kit's own: its HTML escaped, a link and an image by their text, a table's header bold",
         until: () => {
           const html = Markup.html("<img src=x onerror=y> [site](https://example.com) ![pic](https://example.com/a.png)\n\n| A | B |\n|---|---|\n| 1 | 2 |");
