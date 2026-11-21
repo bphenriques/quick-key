@@ -59,8 +59,8 @@ Singleton {
       value: fields => ({ text: fields.device ?? "", detail: fields.state ?? fields.battery ?? "" })
     },
     brightness: {
-      glyph: () => Glyphs.brightness(Brightness.percentage),
-      // Unlit, no backlight to report: the row dims for that, and "off" would read as the screen being off.
+      // Unlit, no level to report, not even in its glyph: the row dims for that, "off" would read as the screen being off, and a level changing unseen is no change to pop up.
+      glyph: () => Glyphs.brightness(Brightness.lit ? Brightness.percentage : 0),
       fields: () => !Brightness.lit ? {} : { level: Brightness.percentage + "%" },
       value: fields => ({ text: "", detail: fields.level ?? "" }),
       meter: () => Brightness.lit ? Brightness.percentage / 100 : -1,
