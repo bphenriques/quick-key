@@ -253,9 +253,9 @@ ShellRoot {
         }
       },
       {
-        name: "Ctrl held lists the bar's keys, each named",
+        name: "Ctrl held lists the bar's keys, each named, a pair as one",
         start: () => menu.held = "Ctrl",
-        until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key), hint.desc])) === '[["C-x","X"],["C-1","a-1"],["C-0","+1"]]'
+        until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-1","a-1"],["C-0","+1"]]'
       },
       {
         name: "a format fills its fields, and a field without a value leaves nothing",
@@ -395,7 +395,7 @@ ShellRoot {
           const ran = menu.press("Ctrl+x");
           const missing = menu.press("Ctrl+x nope");
           const map = menu.keyMap();
-          return ran && !missing && map.includes("- `Ctrl+x` X") && Plugins.get("picked")?.text === "bar";
+          return ran && !missing && map.includes("- `Ctrl+x` X") && map.includes("- `Ctrl+Down` `Ctrl+Up` Volume") && Plugins.get("picked")?.text === "bar";
         }
       }
     ]

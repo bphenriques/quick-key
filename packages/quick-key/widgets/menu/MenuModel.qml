@@ -90,7 +90,7 @@ Scope {
   readonly property bool slashFilters: !!level?.entry?.list && !find(items, "/")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
   // The keys listed in place of the body: the help, the bar's while Ctrl is held, the compositor's while Super is.
-  readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, "Ctrl+" + item.key))
+  readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name)))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
   // Keys a level takes beyond its rows, after its actions on its bar (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s), and `/` while the list holds more than its rows.
   readonly property var levelLegend: (inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
@@ -166,7 +166,7 @@ Scope {
   // A bar item as a line of the legend: its key, its icon (its status's glyph when it shows a status) and its name.
   function hint(item, key) {
     const glyph = Statuses.builtin[item.status]?.glyph() ?? Plugins.get(item.status)?.glyph ?? "";
-    return Object.assign({}, item, { key, status: "", format: "", paired: false, icon: item.icon || (item.image ? "" : glyph) });
+    return Object.assign({}, item, { key, status: "", format: "", paired: typeof key !== "string", icon: item.icon || (item.image ? "" : glyph) });
   }
 
   // An app's menu as its bar shows it: the app's icon, and its name with the submenus opened since.
@@ -509,7 +509,7 @@ Scope {
     walk(entries, "", 0);
     for (const slot of ["left", "center", "right"]) {
       for (const part of Array.from(topBar[slot] ?? [])) {
-        if (typeof part !== "string" && part.key) lines.push("- `Ctrl+" + part.key + "` " + (part.desc ?? part.status ?? ""));
+        if (typeof part !== "string" && part.key) lines.push("- " + MenuKeys.names(part.key).map(name => "`Ctrl+" + name + "`").join(" ") + " " + (part.desc ?? part.status ?? ""));
       }
     }
     return lines.join("\n");
