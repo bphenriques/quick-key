@@ -29,4 +29,6 @@ let
         touch $out
       '';
 in
-pkgs.lib.genAttrs' [ "plugins" "menu" "calendar" "ask" "check" ] (name: pkgs.lib.nameValuePair "qml-${name}" (run name))
+pkgs.lib.genAttrs' [ "plugins" "menu" "calendar" "ask" "check" "load" ] (
+  name: pkgs.lib.nameValuePair "qml-${name}" (run name)
+)
