@@ -20,4 +20,12 @@ PluginSettings {
   property string completed: "hidden"
   // Given a title and a time, as a timed task falls due; unset, no reminders.
   property string remind
+  // What sort and completed take, in the order the actions step through them.
+  readonly property var sorts: ["due", "priority", "title", "list"]
+  readonly property var shows: ["hidden", "shown", "only"]
+
+  function problems() {
+    return [["sort", sort, sorts], ["completed", completed, shows]].filter(([, value, values]) => !values.includes(value))
+      .map(([name, value, values]) => "sets " + name + " to '" + value + "', none of " + values.join(", "));
+  }
 }

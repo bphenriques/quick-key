@@ -16,8 +16,6 @@ Plugin {
   // From the settings, stepped through by the level's actions until the shell restarts.
   property string sort: settings.sort
   property string completed: settings.completed
-  readonly property var sorts: ["due", "priority", "title", "list"]
-  readonly property var shows: ["hidden", "shown", "only"]
   // Ticks not in the file yet, by id: done or not; titles added and not in it yet; and their commands, run one at a time.
   property var pending: ({})
   property var adding: []
@@ -35,8 +33,8 @@ Plugin {
   text: ""
   empty: completed === "only" ? Words.noCompleted : Words.noTasks
   actions: ({
-    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.sort, available: () => true, run: () => root.sort = root.after(root.sorts, root.sort) },
-    completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.shows, root.completed) }
+    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.sort, available: () => true, run: () => root.sort = root.after(root.settings.sorts, root.sort) },
+    completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.settings.shows, root.completed) }
   })
   // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.
   detail: {
