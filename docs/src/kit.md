@@ -29,7 +29,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `KeyLegend` | keys a level takes beyond its rows, on one line on its bar after a content level's actions: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
 | `KeyList` | keys and what each does, a row each across the menu's columns, as `?` lists them; a click is `picked` |
 | `Meter` | a thin level bar |
-| `TextField` | text typed in, plain and wrapped, coloured by `tone`; a dim `placeholder` while empty, and `copyOnSelect` to copy what the mouse selects |
+| `TextField` | text typed in, plain and wrapped, coloured by `tone`, with a dim `placeholder` while empty |
 | `Markdown` | an agent's answer rendered from its Markdown (`markdown`) by `Markup` a piece at a time, so a stream redraws only its last; a selection, within a piece, is copied and reported (`selected`), and `kept` shows it again as its piece is rebuilt |
 | `Markup` | what the kit reads in an agent's Markdown, in one place: its `plain` lines (compact), its pieces (`split`, whole blocks gathered to a size), each one's `html` (`Markdown`: rich text of the kit's own making, the text escaped and an image or a link by its text, so nothing is fetched and no HTML runs; a table's header bold over one divider, code on a faint wash, a quote dim behind a rule, a heading bold at the body size (the calendar's month, an answer's `##`), prose at `theme.lineHeight`), its closing `options` and whether it `hasTable` |
 | `Thumbnail` | a picture by its file path, four lines tall and as wide as its shape, so a screenshot gets no bands |

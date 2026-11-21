@@ -1,14 +1,12 @@
 import QtQuick
-import Quickshell
 import qs
 
-// Plain text input in the theme font, coloured by `tone`; `copyOnSelect` copies a mouse selection, as a terminal does.
+// Plain text input in the theme font, coloured by `tone`.
 TextEdit {
   id: root
 
   property string tone: "normal"
   property string placeholder: ""
-  property bool copyOnSelect: false
 
   color: Tone.color(tone)
   Behavior on color {
@@ -22,7 +20,6 @@ TextEdit {
   font.pointSize: Config.theme.fontSize
   textFormat: TextEdit.PlainText
   wrapMode: TextEdit.Wrap
-  onSelectedTextChanged: if (copyOnSelect && selectedText) Quickshell.clipboardText = selectedText
 
   Label {
     visible: root.text === "" && root.placeholder !== ""
