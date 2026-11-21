@@ -48,7 +48,10 @@ ShellRoot {
     ["a map where a list is declared", { popups: { show: { a: 1 } } }, "popups.show takes a list"],
     ["entries that are not a list", { menu: { entries: "x" } }, "the top level takes a list of entries"],
     ["an entry that is not one", menu([null]), "the top level holds something that is not an entry"],
-    ["a plugin that is not a map of settings", { plugins: { x: "on" } }, "plugins.x takes a map of settings"]
+    ["a plugin that is not a map of settings", { plugins: { x: "on" } }, "plugins.x takes a map of settings"],
+    ["a pop-up named after what every object inherits", { popups: { show: ["toString"] } }, "popups.show: 'toString' is neither a status nor a plugin"],
+    ["a status named after what every object inherits", menu([{ key: "x", desc: "X", list: "tray", submenu: [{ key: "a", desc: "A", status: "constructor", cmd: "true" }] }]), "names status 'constructor'"],
+    ["a glyph named after what every object inherits", { glyphs: { objectName: "x" } }, "glyphs.objectName is not a glyph"]
   ]
 
   Suite {

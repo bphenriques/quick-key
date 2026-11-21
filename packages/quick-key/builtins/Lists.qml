@@ -5,12 +5,12 @@ import Quickshell
 import qs.services
 import qs.ui
 
-// The built-in lists by name; `list` names one of these or a plugin.
+// The built-in lists by name; `list` names one of these or a plugin; a table without a prototype, so no name every object inherits (toString) is one.
 Singleton {
   id: root
 
   // Each: items() as { id, desc, select, closes, detail, meter, ... }, the icon a pin shows while absent, why it is empty, extra keys.
-  readonly property var builtin: ({
+  readonly property var builtin: Object.assign(Object.create(null), {
     tray: {
       icon: Glyphs.tray,
       empty: () => Words.emptyTray,

@@ -6,12 +6,12 @@ import qs
 import qs.services
 import qs.ui
 
-// The built-in statuses by name; `status` and the header name one of these or a plugin.
+// The built-in statuses by name; `status` and the header name one of these or a plugin; a table without a prototype, so no name every object inherits (toString) is one.
 Singleton {
   id: root
 
   // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own).
-  readonly property var builtin: ({
+  readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
       fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.level(Audio.sink) },

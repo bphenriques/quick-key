@@ -6,10 +6,10 @@ import qs
 import qs.services
 import qs.ui
 
-// The built-in actions by name; an entry's `action` names one in place of `cmd`, its icon and lit state overridable.
+// The built-in actions by name; an entry's `action` names one in place of `cmd`, its icon and lit state overridable; a table without a prototype, so no name every object inherits (toString) is one.
 Singleton {
   // Each: run(second, list, menu), told whether a pair's second key was pressed, given its level's list and the menu; detail(list), a value beside it; available(list); icon(), showing its state where it has one; the state lighting it; pair; closes, to hide the menu first.
-  readonly property var builtin: ({
+  readonly property var builtin: Object.assign(Object.create(null), {
     sinkVolume: { pair: true, icon: () => Glyphs.volume, available: () => Audio.sink !== null, run: up => Audio.adjust("sink", up) },
     sinkMute: { icon: () => Glyphs.volumeOff, state: "sinkMuted", available: () => Audio.sink !== null, run: () => Audio.toggleMute("sink") },
     sourceVolume: { pair: true, icon: () => Glyphs.microphone, available: () => Audio.source !== null, run: up => Audio.adjust("source", up) },

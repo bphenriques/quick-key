@@ -35,9 +35,9 @@ Singleton {
       levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
   }
 
-  // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices).
+  // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices); objectName is what Glyphs inherits as a QObject.
   function glyphProblems(glyphs) {
-    return Object.keys(glyphs).map(name => !(name in Glyphs) || typeof Glyphs[name] === "function" ? "glyphs." + name + " is not a glyph"
+    return Object.keys(glyphs).map(name => !(name in Glyphs) || name === "objectName" || typeof Glyphs[name] === "function" ? "glyphs." + name + " is not a glyph"
       : typeof glyphs[name] !== typeof Glyphs[name] ? "glyphs." + name + " takes a " + (typeof Glyphs[name] === "string" ? "glyph" : Array.isArray(Glyphs[name]) ? "list of glyphs" : "map of glyphs") : "").filter(problem => problem);
   }
 
