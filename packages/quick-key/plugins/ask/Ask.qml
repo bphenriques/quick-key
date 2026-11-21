@@ -406,7 +406,7 @@ Plugin {
     onTool: title => {
       // An MCP tool by its server (mcp__meals__plan_week: meals), the rest by name.
       root.activity = title.startsWith("mcp__") ? title.split("__")[1] : title;
-      if (root.settings.toolMatch && new RegExp(root.settings.toolMatch).test(title)) root.touched = true;
+      if (root.settings.toolPattern && root.settings.toolPattern.test(title)) root.touched = true;
       root.report();
     }
     onRestarted: {

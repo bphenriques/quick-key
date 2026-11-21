@@ -11,6 +11,14 @@ PluginSettings {
   // A tool name (a regular expression) that makes `toolRun` run once the turn that used it ends.
   property string toolMatch
   property string toolRun
+  // toolMatch compiled once; null when unset or not a pattern, which problems() names.
+  readonly property var toolPattern: {
+    try {
+      return toolMatch ? new RegExp(toolMatch) : null;
+    } catch (error) {
+      return null;
+    }
+  }
   // Given a file, prints it base64, as an image goes to the agent.
   property string encodeImage: "base64 -w0"
   // Given a title and a text, while the panel is hidden; prints `default` when clicked.
@@ -27,6 +35,6 @@ PluginSettings {
   property int lines: 14
 
   function problems() {
-    return ask ? [] : ["needs ask, the command it asks"];
+    return (ask ? [] : ["needs ask, the command it asks"]).concat(toolMatch && !toolPattern ? ["sets toolMatch to what is not a regular expression"] : []);
   }
 }
