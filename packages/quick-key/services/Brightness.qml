@@ -17,11 +17,12 @@ Singleton {
   readonly property bool lit: present && Compositor.enabled.includes(panel)
   readonly property int percentage: present ? Math.round(internal.current * 100 / internal.maximum) : 0
 
-  // A step down or up, by Config.brightness.step; a step of at least 1 still moves a panel with few levels, and a floor of 1 never turns the backlight off.
+  // A step down or up, by Config.brightness.step, from the level last asked for while a write is under way; at least 1, so a panel with few levels still moves, and never below 1, which would turn the backlight off.
   function adjust(up) {
     const by = Math.max(1, Math.round(Config.brightness.step * internal.maximum / 100));
-    const value = Math.max(1, Math.min(internal.maximum, internal.current + (up ? by : -by)));
-    Commands.run(Config.brightness.set, name, String(value));
+    const from = internal.wanted >= 0 ? internal.wanted : internal.current;
+    internal.wanted = Math.max(1, Math.min(internal.maximum, from + (up ? by : -by)));
+    if (!writer.running) writer.write();
   }
 
   QtObject {
@@ -29,6 +30,26 @@ Singleton {
     property string file: ""
     property int maximum: 0
     property int current: 0
+    // The level asked for while a write is under way, else -1.
+    property int wanted: -1
+  }
+
+  // One write at a time: steps taken meanwhile gather into the next, and a write that succeeded is the level before the file reports it.
+  Process {
+    id: writer
+    property int writing: -1
+
+    function write() {
+      writing = internal.wanted;
+      command = Commands.line(Config.brightness.set, root.name, String(writing));
+      running = true;
+    }
+
+    onExited: code => {
+      if (code === 0) internal.current = writing;
+      if (internal.wanted !== writing) write();
+      else internal.wanted = -1;
+    }
   }
 
   CommandReader {
