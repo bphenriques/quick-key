@@ -60,7 +60,10 @@ Singleton {
       property Timer expiry: Timer {
         interval: 5000
         running: true
-        onTriggered: socket.destroy()
+        onTriggered: {
+          console.warn("niri: no answer to", socket.message);
+          socket.destroy();
+        }
       }
 
       path: Quickshell.env("NIRI_SOCKET")
@@ -77,7 +80,8 @@ Singleton {
       parser: SplitParser {
         onRead: line => {
           const reply = JSON.parse(line);
-          if (reply.Ok && socket.callback) socket.callback(reply.Ok);
+          if (!reply.Ok) console.warn("niri: refused", socket.message + ":", JSON.stringify(reply.Err ?? reply));
+          else if (socket.callback) socket.callback(reply.Ok);
           socket.connected = false;
         }
       }
