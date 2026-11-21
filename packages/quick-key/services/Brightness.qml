@@ -35,7 +35,7 @@ Singleton {
   }
 
   // One write at a time: steps taken meanwhile gather into the next, and a write that succeeded is the level before the file reports it.
-  Process {
+  CommandProcess {
     id: writer
     property int writing: -1
 

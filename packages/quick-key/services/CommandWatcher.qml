@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell.Io
 
 // A config command run for as long as it lasts, read by line; restarts back off up to a minute, so a missing tool cannot spin.
-Process {
+CommandProcess {
   id: root
 
   property string shell

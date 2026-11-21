@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Io
 import qs
 import qs.services
 import qs.ui
@@ -156,7 +155,7 @@ Plugin {
   }
 
   // Each tick and add is written to the file in turn; a failed one shows the file's state again. The sync after the last takes them to the server.
-  Process {
+  CommandProcess {
     id: toggler
     // { verb, arg, after }: done or reopen and an id, or add and a title, then what runs once it is added.
     property var job: null

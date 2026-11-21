@@ -120,7 +120,7 @@ Scope {
   Component {
     id: job
 
-    Process {
+    CommandProcess {
       id: process
       property var then
       stdout: StdioCollector {

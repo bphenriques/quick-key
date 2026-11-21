@@ -17,10 +17,20 @@ ShellRoot {
   // The minute the timed task was last written as due.
   property string dueMinute: ""
 
+  CommandProcess {
+    id: complainer
+    command: ["sh", "-c", "echo bad >&2; exit 3"]
+  }
+
   Suite {
     id: suite
 
     cases: [
+      {
+        name: "a command that fails keeps its last word on stderr, which it logs",
+        start: () => complainer.running = true,
+        until: () => !complainer.running && complainer.complaint === "bad"
+      },
       {
         name: "a read command's last line is its state, plain text its text",
         until: () => Plugins.get("lastLine")?.text === "second"
