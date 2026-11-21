@@ -37,6 +37,15 @@ ShellRoot {
   Suite {
     cases: [
       {
+        name: "a picture sent without a command to encode it fails the turn rather than waiting on it",
+        until: () => {
+          const ask = Plugins.get("blind");
+          if (!ask) return false;
+          if (!ask.exchanges.length) ask.send("p", "/nonexistent.png");
+          return !ask.busy && ask.exchanges[0].error === Words.noImage;
+        }
+      },
+      {
         name: "an answer renders as rich text of the kit's own: its HTML escaped, a link and an image by their text, a table's header bold",
         until: () => {
           const html = Markup.html("<img src=x onerror=y> [site](https://example.com) ![pic](https://example.com/a.png)\n\n| A | B |\n|---|---|\n| 1 | 2 |");

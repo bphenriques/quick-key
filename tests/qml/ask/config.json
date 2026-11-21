@@ -98,6 +98,12 @@
       "type": "ask",
       "ask": "true",
       "notify": ""
+    },
+    "blind": {
+      "type": "ask",
+      "ask": "true",
+      "notify": "",
+      "encodeImage": ""
     }
   }
 }

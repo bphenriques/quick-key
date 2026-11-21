@@ -288,7 +288,8 @@ Plugin {
   // Ctrl+V: the clipboard's image, attached to the next prompt; without one, the text paste it would have been.
   function pasteImage() {
     const path = Quickshell.env("XDG_RUNTIME_DIR") + "/" + name + "-" + Date.now();
-    return call(settings.pasteImage, [path], code => code === 0 ? root.image = path : root.pasteText());
+    call(settings.pasteImage, [path], code => code === 0 ? root.image = path : root.pasteText());
+    return true;
   }
 
   // Allow or deny once; an agent offering neither for the answer is told it was cancelled.

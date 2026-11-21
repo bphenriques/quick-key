@@ -106,12 +106,14 @@ Scope {
     Commands.run(shell, ...args);
   }
 
-  // Runs a command from its settings with its arguments, then `then(code, output)`; false, running nothing, when unset.
+  // Runs a command from its settings with its arguments, then always `then(code, output)`: unset, it fails as sh finding no command would (127).
   function call(shell, args, then) {
-    if (!shell) return false;
+    if (!shell) {
+      if (then) then(127, "");
+      return;
+    }
     const process = job.createObject(root, { command: commandLine(shell, ...args), then: then ?? null });
     process.running = true;
-    return true;
   }
 
   // `running` is set after creation, never declared: a running that turns true before `command` is set starts nothing (see services/CommandReader.qml).
