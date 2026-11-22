@@ -27,7 +27,7 @@ ShellRoot {
   // What the rules' commands wrote, and whether a notification's text ran anything.
   Process {
     id: reader
-    command: ["sh", "-c", "cd \"$XDG_RUNTIME_DIR\" && for f in ran arrived opened pwned; do [ -e $f ] && echo \"$f: $(cat $f)\"; done; true"]
+    command: ["sh", "-c", "cd \"$XDG_RUNTIME_DIR\" && for f in ran arrived opened edited pwned; do [ -e $f ] && echo \"$f: $(cat $f)\"; done; true"]
     stdout: StdioCollector {
       onStreamFinished: root.files = text
     }
@@ -390,10 +390,27 @@ ShellRoot {
         }
       },
       {
+        name: "a rule's command gets its picture as a file, as niri sends a screenshot, and closes its card when the action says so",
+        start: () => {
+          root.files = "";
+          Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify", "'shooter'", "uint32 0", "'file:///tmp/My%20Shot.png'", "'Screenshot captured'", "'You can paste the image from the clipboard.'", "@as []", "@a{sv} {}", "int32 -1"]);
+        },
+        until: () => {
+          const shot = root.find("Screenshot captured");
+          const edit = root.plugin.actionsOf(shot).find(action => action.key === "e");
+          if (edit && !("shot" in root.marks)) {
+            root.mark("shot");
+            edit.run();
+          }
+          if ("shot" in root.marks && root.mark("shot") > 500 && !root.files) root.readFiles();
+          return root.files.includes("edited: /tmp/My Shot.png") && !root.find("Screenshot captured");
+        }
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
-          const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c" }], run: 1 });
-          return root.plugin.settings.problems().length === 0 && problems.length === 10 && root.plugin.settings.groupNames("(a)(?:b)(?<c>[(]d)\\(").join() === ",c" && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
+          const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c", closes: "yes" }], run: 1 });
+          return root.plugin.settings.problems().length === 0 && problems.length === 11 && root.plugin.settings.groupNames("(a)(?:b)(?<c>[(]d)\\(").join() === ",c" && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
         }
       }
     ]

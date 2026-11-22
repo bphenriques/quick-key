@@ -7,7 +7,7 @@ import Quickshell.Wayland
 import qs
 import qs.ui
 
-// The cards in their corner of the focused screen, the newest by the corner; the window spans the screen's height, so it never resizes, and only the cards take the pointer. Summoned, it takes the keys where it is, its bar where its pills sit.
+// The cards in their corner of the focused screen, the newest by the corner; only the cards take the pointer. Summoned, it takes the keys where it is, its bar where its pills sit.
 Scope {
   id: view
 
@@ -51,13 +51,18 @@ Scope {
     OverlayWindow {
       id: window
 
-      anchors.top: true
-      anchors.bottom: true
+      // As tall as the cards, so blocking it from screen capture hides them and nothing beside them.
+      anchors.top: view.top
+      anchors.bottom: !view.top
       anchors.right: view.right
       anchors.left: !view.right
+      // In the top right, under the corner pills (recording) as they stack.
+      margins.top: Config.theme.edgeMargin + (view.right ? CornerPills.order.length * (Metrics.line + 3 * Config.theme.spacing) : 0)
+      margins.bottom: Config.theme.edgeMargin
       margins.right: Config.theme.edgeMargin
       margins.left: Config.theme.edgeMargin
       implicitWidth: view.settings.width
+      implicitHeight: stack.implicitHeight
       WlrLayershell.namespace: "quick-key-notifications"
       WlrLayershell.keyboardFocus: view.plugin.summoned ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
       mask: Region {
@@ -72,8 +77,6 @@ Scope {
         Column {
           id: stack
           width: parent.width
-          // In the top right, under the corner pills (recording) as they stack.
-          y: view.top ? Config.theme.edgeMargin + (view.right ? CornerPills.order.length * (Metrics.line + 3 * Config.theme.spacing) : 0) : window.height - height - Config.theme.edgeMargin
           spacing: Config.theme.spacing
           opacity: fade.value
 

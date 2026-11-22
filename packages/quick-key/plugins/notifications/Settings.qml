@@ -24,9 +24,9 @@ PluginSettings {
   readonly property var sides: ["right", "left"]
   readonly property var fields: ["app", "summary", "body", "category", "urgency", "desktopEntry"]
   readonly property var ruleKeys: ["match", "hide", "timeout", "urgency", "ignorePause", "actions", "default", "run"]
-  readonly property var actionKeys: ["key", "desc", "icon", "cmd"]
+  readonly property var actionKeys: ["key", "desc", "icon", "cmd", "closes"]
   // What its commands get as NOTIFICATION_<NAME>, so a group by one of these names would hide it.
-  readonly property var given: ["app", "summary", "body", "urgency", "id"]
+  readonly property var given: ["app", "summary", "body", "urgency", "id", "icon"]
   readonly property var urgencies: ["low", "normal", "critical"]
 
   function problems() {
@@ -75,6 +75,7 @@ PluginSettings {
       if (action === null || typeof action !== "object") return found.push(at + "is no object");
       found.push(...Object.keys(action).filter(key => !actionKeys.includes(key)).map(key => at + "sets " + key + ", none of " + actionKeys.join(", ")));
       if (typeof action.desc !== "string" || typeof action.cmd !== "string") found.push(at + "needs a desc and a cmd");
+      if ("closes" in action && typeof action.closes !== "boolean") found.push(at + "sets closes to no boolean");
       if (!/^[a-wyz]$/.test(action.key ?? "")) found.push(at + "sets key to '" + action.key + "': one letter, any but x, which dismisses");
       else if (keys.includes(action.key)) found.push(at + "takes key " + action.key + " twice");
       keys.push(action.key);

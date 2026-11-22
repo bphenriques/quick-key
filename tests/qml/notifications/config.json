@@ -60,6 +60,19 @@
             "app": "^opener$"
           },
           "default": "echo opened > \"$XDG_RUNTIME_DIR/opened\""
+        },
+        {
+          "match": {
+            "app": "^shooter$"
+          },
+          "actions": [
+            {
+              "key": "e",
+              "desc": "Edit",
+              "cmd": "echo \"$NOTIFICATION_ICON\" > \"$XDG_RUNTIME_DIR/edited\"",
+              "closes": true
+            }
+          ]
         }
       ]
     }

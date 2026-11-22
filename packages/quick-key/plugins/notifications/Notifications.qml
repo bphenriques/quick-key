@@ -121,7 +121,10 @@ Plugin {
   function actionsOf(notification) {
     if (!notification || notification.gone) return [];
     const values = valuesOf(notification);
-    const ruled = Array.from(internal.applied[notification.id]?.actions ?? []).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => root.runFor(notification, action.cmd) }));
+    const ruled = Array.from(internal.applied[notification.id]?.actions ?? []).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => {
+        root.runFor(notification, action.cmd);
+        if (action.closes) notification.dismiss();
+      } }));
     const actions = Array.from(notification.actions).filter(action => action.identifier !== "default");
     const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "");
     const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
@@ -221,9 +224,15 @@ Plugin {
     return applied;
   }
 
-  // What a rule's labels and commands read: its app, summary, body, urgency and id, and what its groups found.
+  // What a rule's labels and commands read: its app, summary, body, urgency and id, its picture or icon as a file (`icon`, as niri sends a screenshot), and what its groups found.
   function valuesOf(notification) {
-    return Object.assign({ app: notification.appName, summary: notification.summary, body: notification.body, urgency: urgencyOf(notification), id: String(notification.id) }, internal.applied[notification.id]?.values);
+    return Object.assign({ app: notification.appName, summary: notification.summary, body: notification.body, urgency: urgencyOf(notification), id: String(notification.id), icon: fileOf(notification) }, internal.applied[notification.id]?.values);
+  }
+
+  // Its picture, else its icon, as a path when it is a file; else its icon's name.
+  function fileOf(notification) {
+    const file = [notification.image, notification.appIcon].find(source => source?.startsWith("/") || source?.startsWith("file://")) ?? notification.appIcon ?? "";
+    return file.startsWith("file://") ? decodeURIComponent(file.slice(7)) : file;
   }
 
   // A rule's command, given them in its environment as NOTIFICATION_<NAME>, as dunst gives DUNST_*.
