@@ -125,7 +125,7 @@ Cards stack in a corner of the focused screen, newest by the corner, critical on
 
 A click opens a card, running its default action, else dismissing it. `✕` or a right click dismisses it.
 
-A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time holds while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card, its rules and its time starting again.
+A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time holds while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card, which comes in as the newest, its rules and its time starting again. One re-sent by its id with nothing changed restarts nothing: Quickshell tells the shell only of changes.
 
 `limit` cards show at once, `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, and their time starts once they show; a critical one shows anyway. A struck bell by the corner counts those waiting, except over a fullscreen window. Past `keep` notifications, the oldest close. Pause survives a reload and a restart.
 
@@ -144,7 +144,7 @@ plugins.notifications = {
 
 Rules apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field: `app`, `summary`, `body`, `category`, `urgency` or `desktopEntry`. Anchor one with `^…$`. They are JavaScript's, with no inline flags: `[Ss]lack` matches either case. A rule with no `match` applies to all, so `{ run = "env | grep ^NOTIFICATION_ >> /tmp/notifications"; }` logs what each tool sends. A rule can set:
 
-- `hide`: drops it as it arrives. No card shows, `C-r` has nothing to bring back, and no `run` runs.
+- `hide`: drops it, as it arrives or once a replacement matches. No card shows, `C-r` has nothing to bring back, and no `run` runs.
 - `timeout`: the seconds it shows; 0, never.
 - `urgency` (`low`, `normal`, `critical`): how it shows and lasts.
 - `ignorePause`: shows it while paused.
@@ -158,11 +158,13 @@ There is no sound, per-output placement or per-rule colour.
 
 ### Keys
 
-Cards never take the keys on their own, so a notification never takes your typing. `summon` gives them the keys where they are, the newest picked, until you let go. Bind it to a compositor key; with niri through [niri-flake](https://github.com/sodiboo/niri-flake):
+Cards never take the keys on their own, so a notification never takes your typing. `summon` gives them the keys where they are, the newest picked, until you let go. Bind it to a compositor key; in niri's config:
 
-```nix
-programs.niri.settings.binds."Mod+N".action.spawn = [ "sh" "-c" "${config.programs.quick-key.exec.ipc} notifications action summon" ];
+```kdl
+Mod+N { spawn "qs" "-c" "quick-key" "ipc" "call" "notifications" "action" "summon"; }
 ```
+
+With Nix, `config.programs.quick-key.exec.ipc` is that command's prefix.
 
 The plugin's `shortcut` only labels that key. Their keys show where they act, and nothing moves. Summoned, waiting cards show too, `limit` at a time, critical ones staying by the corner and one place left for the rest to scroll through. The bar under the cards holds the keys the state changes and counts the cards not shown (`+2`). `?` lists the rest.
 
