@@ -50,8 +50,7 @@ Scope {
 
   Fade {
     id: fade
-    // Under a fullscreen window, the held count shows nothing over it.
-    shown: view.plugin.summoned || view.plugin.shown.length > 0 || view.plugin.held > 0 && !view.plugin.fullscreen
+    shown: view.plugin.summoned || view.plugin.shown.length > 0 || view.plugin.held > 0
   }
 
   // A click beside the cards lets go of the keys; on the layer below theirs, so the cards keep their clicks.
@@ -143,7 +142,8 @@ Scope {
               lines: notification && notification === view.plugin.replying ? 1 : 2
               footer: !notification ? null : notification === view.plugin.replying ? reply : notification.id in view.plugin.sent ? sent : null
               actionSide: view.settings.actionSide
-              key: String(view.plugin.showable.indexOf(notification) + 1)
+              // Its place among all, while a digit reaches it.
+              key: notification && view.plugin.showable.indexOf(notification) < 9 ? String(view.plugin.showable.indexOf(notification) + 1) : ""
               closeKey: "x"
               // Replying, the prompt has the keys: the others would type.
               keysShown: view.plugin.summoned && !view.plugin.replying
@@ -158,7 +158,7 @@ Scope {
                 Label {
                   elide: Text.ElideRight
                   tone: "dim"
-                  text: view.plugin.words.you + view.plugin.sent[card.notification?.id] ?? ""
+                  text: view.plugin.words.you + (view.plugin.sent[card.notification?.id] ?? "")
                 }
               }
             }
@@ -238,17 +238,10 @@ Scope {
             : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }, { key: "?", what: Words.help }]
         }
 
-        Icon {
-          visible: view.plugin.paused && !view.plugin.replying
-          size: Metrics.line
-          tone: "dim"
-          glyph: Glyphs.notificationsPaused
-        }
-
         Label {
           visible: text !== ""
           tone: view.plugin.replying?.gone ? "warning" : "dim"
-          text: view.plugin.replying?.gone ? view.plugin.words.closedBySender : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.range
+          text: view.plugin.replying?.gone ? view.plugin.words.closedBySender : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? "+" + view.plugin.more : ""
         }
       }
     }
@@ -277,7 +270,7 @@ Scope {
       }
 
       Pill {
-        visible: view.plugin.held > 0 && !view.plugin.fullscreen
+        visible: view.plugin.held > 0
 
         Icon {
           anchors.verticalCenter: parent.verticalCenter

@@ -2,12 +2,11 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A card that comes and goes on its own (a notification): its icon, its title and what it is from, a body of up to `lines`, a meter, a picture on its right, actions below; a click activates it, a right click or its ✕ dismisses it. Its keys have their room at rest, so showing them moves nothing.
+// A card that comes and goes on its own (a notification); its keys have their room at rest, so showing them moves nothing.
 Surface {
   id: root
 
-  property string glyph: ""
-  // An app's icon in the glyph's place, at its size, in greys when `monochrome`; the column stays when there is neither, so every card's text starts in one place.
+  // An app's icon at a glyph's size, in greys when `monochrome`; its column stays without one, so every card's text starts in one place.
   property string icon: ""
   property bool monochrome: false
   // A picture (album art, a screenshot) on the right, square and three lines tall.
@@ -37,13 +36,21 @@ Surface {
   readonly property bool hovered: mouse.containsMouse
   readonly property bool acting: keysShown && current
   readonly property string textTone: dimmed ? "dim" : "normal"
-  // Each action's width in characters: whole while they fit, else the longest shortened first, so short ones stay whole.
-  readonly property var widths: {
-    const natural = actions.map(action => (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0));
-    const room = Math.floor(actionRow.width / Metrics.cell) - actions.length;
-    let longest = Math.max(0, ...natural);
-    while (longest > 1 && natural.reduce((sum, chars) => sum + Math.min(chars, longest), 0) > room) longest--;
-    return natural.map(chars => Math.min(chars, longest));
+  // The actions in rows as wide as fit, in their order, by characters as the font is monospace: whole, wrapping rather than cut, and the card's height is set as it comes, so nothing moves.
+  readonly property var rows: {
+    const room = Math.floor(actionArea.width / Metrics.cell);
+    const rows = [];
+    let used = room;
+    actions.forEach((action, i) => {
+      const chars = (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0);
+      if (used + 1 + chars > room) {
+        rows.push([]);
+        used = -1;
+      }
+      used += 1 + chars;
+      rows[rows.length - 1].push(i);
+    });
+    return rows;
   }
 
   signal activated
@@ -93,7 +100,6 @@ Surface {
 
         Icon {
           anchors.centerIn: parent
-          glyph: root.glyph
           source: root.icon
           monochrome: root.monochrome
           tone: root.textTone
@@ -202,59 +208,72 @@ Surface {
       }
     }
 
-    RowLayout {
-      id: actionRow
+    ColumnLayout {
+      id: actionArea
       Layout.fillWidth: true
       Layout.leftMargin: gutter.width + Config.theme.spacing
       // The card's width, never its own: actions asking for theirs would widen the card past its edge.
       Layout.preferredWidth: 0
       visible: root.actions.length > 0 && root.footer === null
-      spacing: Metrics.cell
-
-      // Only on the open side: a hidden one takes no spacing, so the actions meet the edge.
-      Item {
-        visible: root.actionSide !== "left"
-        Layout.fillWidth: true
-      }
+      spacing: 0
 
       Repeater {
-        model: root.actions.length
+        model: root.rows.length
 
-        Item {
-          id: action
+        RowLayout {
+          id: actionRow
           required property int index
-          readonly property var entry: root.actions[index] ?? ({})
-          implicitWidth: entryRow.implicitWidth
-          implicitHeight: entryRow.implicitHeight
+          readonly property var row: root.rows[index] ?? []
+          Layout.fillWidth: true
+          spacing: Metrics.cell
 
-          Row {
-            id: entryRow
+          // Only on the open side: a hidden one takes no spacing, so the actions meet the edge.
+          Item {
+            visible: root.actionSide !== "left"
+            Layout.fillWidth: true
+          }
 
-            KeyCell {
-              id: actionKey
-              key: action.entry.key ?? ""
-            }
+          Repeater {
+            model: actionRow.row.length
 
-            Label {
-              width: Math.min(implicitWidth, (root.widths[action.index] ?? 0) * Metrics.cell - actionKey.implicitWidth)
-              elide: Text.ElideRight
-              tone: hover.containsMouse ? "primary" : root.textTone
-              text: action.entry.desc ?? ""
+            Item {
+              id: action
+              required property int index
+              readonly property var entry: root.actions[actionRow.row[index]] ?? ({})
+              implicitWidth: entryRow.implicitWidth
+              implicitHeight: entryRow.implicitHeight
+
+              Row {
+                id: entryRow
+
+                KeyCell {
+                  id: actionKey
+                  key: action.entry.key ?? ""
+                }
+
+                // Shortened only when one alone is wider than the card.
+                Label {
+                  width: Math.min(implicitWidth, actionArea.width - actionKey.implicitWidth)
+                  elide: Text.ElideRight
+                  tone: hover.containsMouse ? "primary" : root.textTone
+                  text: action.entry.desc ?? ""
+                }
+              }
+
+              MouseArea {
+                id: hover
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: if (action.entry.run) action.entry.run()
+              }
             }
           }
 
-          MouseArea {
-            id: hover
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: if (action.entry.run) action.entry.run()
+          Item {
+            visible: root.actionSide === "left"
+            Layout.fillWidth: true
           }
         }
-      }
-
-      Item {
-        visible: root.actionSide === "left"
-        Layout.fillWidth: true
       }
     }
 

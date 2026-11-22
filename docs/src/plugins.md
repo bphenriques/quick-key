@@ -141,7 +141,7 @@ plugins.notifications = {
 
 A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, `NOTIFICATION_ICON` (its icon as sent: a file's path, as a screenshot or album art comes, else a name), and each named group of its `match` (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields are checked as the configuration builds.
 
-Cards never take the keys on their own, so a notification never takes your typing. `summon`, bound to a compositor key (`Mod+N` through `action summon`, the plugin's `shortcut` naming it), gives them the keys where they are, the newest picked. Their keys show where they act, and nothing moves. Summoned, held cards show too, `limit` at a time (at most 9), critical ones staying by the corner while the rest scroll, the bar saying how many of all there are (`3-6 of 8`). The bar holds the keys the state changes (`C-p` pause or resume, `?`); `?` lists the rest, any key closing the list. `hint` shows the `shortcut` dimly by the cards at rest. Keys:
+Cards never take the keys on their own, so a notification never takes your typing. `summon`, bound to a compositor key (`Mod+N` through `action summon`, the plugin's `shortcut` naming it), gives them the keys where they are, the newest picked. Their keys show where they act, and nothing moves. Summoned, held cards show too, `limit` at a time (at most 9), critical ones staying by the corner while the rest scroll, the bar counting those not shown (`+2`). The bar holds the keys the state changes (`C-p` pause or resume, `?`); `?` lists the rest, any key closing the list. `hint` shows the `shortcut` dimly by the cards at rest. Keys:
 
 - A digit picks a card by its place among all, so it holds still, scrolling it into view; `↑↓` move the pick as the cards show, scrolling past the last one.
 - The picked card's letters run its actions (from their labels, never `x`); the keys stay, so one summon can clear several.
@@ -155,7 +155,7 @@ A card whose sender takes a reply offers it first among its actions, on `TAB`. T
 
 Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `summon` gives the cards the keys, `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `restore` brings back the last closed, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
 
-Other settings: `limit`, `width` (480), `hint`, `idle`.
+`width` sets the cards' width (480).
 
 ## Writing one in QML
 

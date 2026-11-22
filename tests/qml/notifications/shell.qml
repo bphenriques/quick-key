@@ -469,18 +469,18 @@ ShellRoot {
             root.plugin.key("Up");
             root.plugin.key("Up");
           }
-          return root.plugin.summoned && root.plugin.shown.length === 3 && root.plugin.range === "2-4 of 5" && root.plugin.picked === root.plugin.shown[2];
+          return root.plugin.summoned && root.plugin.shown.length === 3 && root.plugin.more === 2 && root.plugin.shown[0] === root.plugin.showable[1] && root.plugin.picked === root.plugin.shown[2];
         }
       },
       {
         name: "and Down goes back toward the corner",
         start: () => root.plugin.key("Down"),
-        until: () => root.plugin.picked === root.plugin.shown[1] && root.plugin.range === "2-4 of 5"
+        until: () => root.plugin.picked === root.plugin.shown[1] && root.plugin.shown[0] === root.plugin.showable[1]
       },
       {
         name: "a digit is a card's place among all, so it holds still, and picking one scrolls it into view",
         start: () => root.plugin.key("1"),
-        until: () => root.plugin.picked === root.plugin.showable[0] && root.plugin.range === "1-3 of 5" && root.plugin.shown[0] === root.plugin.showable[0]
+        until: () => root.plugin.picked === root.plugin.showable[0] && root.plugin.shown[0] === root.plugin.showable[0]
       },
       {
         name: "a critical card stays by the corner while the rest scroll",
@@ -490,7 +490,7 @@ ShellRoot {
             root.mark("pinned");
             for (let i = 0; i < 6; i++) root.plugin.key("Up");
           }
-          return "pinned" in root.marks && root.plugin.shown[0]?.summary === "Alarm two" && root.plugin.range !== "" && !root.plugin.range.startsWith("1-");
+          return "pinned" in root.marks && root.plugin.shown[0]?.summary === "Alarm two" && root.plugin.shown[1] !== root.plugin.showable[1];
         }
       },
       {
@@ -582,6 +582,23 @@ ShellRoot {
           }
           if ("fork" in root.marks && root.mark("fork") > 1200 && !root.files) root.readFiles();
           return root.files.includes("forked: forker");
+        }
+      },
+      {
+        name: "however the keys go, the menu taking them included, a reply ends, a closed card's placeholder with it",
+        start: () => root.chatSend("Dee"),
+        until: () => {
+          const dee = root.find("Dee");
+          if (dee && !dee.gone && !("dee" in root.marks)) {
+            root.mark("dee");
+            root.plugin.reply(dee);
+            dee.dismiss();
+          }
+          if (root.plugin.replying?.gone && !("taken" in root.marks)) {
+            root.mark("taken");
+            Panels.close();
+          }
+          return "taken" in root.marks && root.plugin.replying === null && !root.find("Dee") && !root.plugin.summoned;
         }
       },
       {

@@ -32,9 +32,8 @@ Plugin {
   readonly property var shown: pinned.slice(0, settings.limit).concat(rest.slice(internal.offset, internal.offset + room))
   // Those not shown, and those pause or a fullscreen window holds.
   readonly property int more: showable.length - shown.length
-  readonly property int held: ordered.length - showable.length
-  // Where the ones shown sit among all, as a filter says it (3-6 of 8); "" while all show.
-  readonly property string range: more > 0 ? Words.rangeOf(pinned.length + internal.offset, Math.max(1, shown.length - Math.min(pinned.length, settings.limit)), showable.length) : ""
+  // None under a fullscreen window: the count would sit over it.
+  readonly property int held: fullscreen ? 0 : ordered.length - showable.length
   // The keys, listed while `?` holds them, as the menu lists its own.
   readonly property bool help: internal.help
   readonly property var keys: [
@@ -43,7 +42,7 @@ Plugin {
     { key: "Return", desc: words.helpOpen },
     { key: "x", desc: words.helpDismiss },
     { key: "Tab", desc: words.helpReply },
-    { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
+    { key: "Ctrl+Shift+Return", desc: words.helpLeave },
     { key: "Ctrl+Shift+x", desc: words.helpClear },
     { key: "Ctrl+r", desc: words.helpRestore },
     { key: "Ctrl+p", desc: words.helpPause },
@@ -61,7 +60,6 @@ Plugin {
   error: internal.error
   words: ({
       taken: "Another notification daemon has the bus: stop it, then restart quick-key",
-      clear: "clear all",
       pause: "pause",
       resume: "resume",
       none: "No notifications",
@@ -71,7 +69,8 @@ Plugin {
       closedBySender: "closed by sender",
       helpPick: "Pick that card",
       helpMove: "Move the pick, scrolling",
-      helpOpen: "Open it, and let go",
+      helpOpen: "Open it and let go",
+      helpLeave: "Send and let go",
       helpDismiss: "Dismiss it",
       helpReply: "Reply, where it takes one",
       helpClear: "Clear all",
@@ -108,15 +107,20 @@ Plugin {
   function summon() {
     if (summoned) return;
     freeze();
-    internal.offset = 0;
     Panels.open(root);
     internal.picked = newest();
   }
 
   function release() {
+    if (summoned) Panels.back();
+  }
+
+  // However the keys go (ESC, the menu opening over the cards), the reply, the scroll and the list go with them.
+  onSummonedChanged: {
+    if (summoned) return;
     endReply();
     internal.offset = 0;
-    if (summoned) Panels.back();
+    internal.help = false;
   }
 
   // The order as it is now, which `still` keeps.
@@ -160,7 +164,7 @@ Plugin {
         if (action.closes !== false) notification.dismiss();
       } }));
     const actions = Array.from(notification.actions).filter(action => action.identifier !== "default");
-    const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwyz");
+    const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwxyz");
     const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
     const reply = notification.hasInlineReply ? [{ desc: Words.replyPrompt, key: "Tab", run: () => root.reply(notification) }] : [];
     return reply.concat(ruled, own);
@@ -189,13 +193,12 @@ Plugin {
     if (notification) internal.drafts = Object.assign({}, internal.drafts, { [notification.id]: text });
   }
 
-  // Sent as the reply; false once its card is closed, the prompt keeping the text. The keys stay only on a card its sender keeps (resident), which shows what was sent; else, as with C-S-RET, they go back.
+  // False once its card closed, the prompt keeping the text; the keys stay only on a resident card.
   function sendReply(text, close) {
     const notification = internal.replying;
     if (!notification || notification.gone) return false;
     internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
     internal.drafts = without(internal.drafts, notification.id);
-    internal.arrived = without(internal.arrived, notification.id);
     notification.sendInlineReply(text);
     if (close || !notification.resident) release();
     else endReply();
@@ -254,7 +257,6 @@ Plugin {
     return since && Clock.date - since >= 60000 ? Clock.time(new Date(since)) : "";
   }
 
-  // A key while summoned: a digit picks a card, ↑↓ move the pick, its letters run its actions, RET opens it and lets go of the keys, x dismisses it; C-X clears all, C-r brings back the last closed, C-p pauses, ? lists the keys and any key closes the list, ESC lets go.
   function key(name) {
     if (internal.help) internal.help = false;
     else if (name === "?") internal.help = true;
@@ -340,8 +342,8 @@ Plugin {
 
   // Milliseconds it shows: a rule's, else its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's; 0 for never, as for a critical one.
   function timeoutOf(notification) {
-    const rule = internal.applied[notification.id]?.timeout;
     if (critical(notification)) return 0;
+    const rule = internal.applied[notification.id]?.timeout;
     if (rule !== undefined) return rule * 1000;
     if (notification.expireTimeout >= 0) return notification.expireTimeout;
     return 1000 * (urgencyOf(notification) === "low" ? settings.timeout.low : settings.timeout.normal);
@@ -374,7 +376,7 @@ Plugin {
   // The pick moves to the card that takes its place; the last one gone lets go of the keys. One closing while replied to stays as a placeholder, its slot and the text kept, until the reply ends.
   function leave(notification) {
     if (notification === internal.replying && !notification.gone) {
-      const ghost = Object.assign(snapshot(notification), { gone: true, dismiss: () => root.endReply() });
+      const ghost = Object.assign(snapshot(notification), { gone: true, dismiss: () => root.endReply(), expire: () => root.endReply() });
       internal.list = internal.list.map(each => each === notification ? ghost : each);
       internal.replying = internal.picked = ghost;
       return;
@@ -387,7 +389,8 @@ Plugin {
     internal.sent = without(internal.sent, notification.id);
     internal.applied = without(internal.applied, notification.id);
     internal.drafts = without(internal.drafts, notification.id);
-    if (internal.offset > 0 && internal.offset + settings.limit > showable.length) internal.offset--;
+    internal.arrived = without(internal.arrived, notification.id);
+    if (internal.offset > 0 && internal.offset + room > rest.length) internal.offset--;
     if (internal.picked !== notification) return;
     internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
     if (internal.picked === null) release();
@@ -395,7 +398,7 @@ Plugin {
 
   // What a card shows, kept once its sender is done with it: a placeholder that reads as it did and runs nothing.
   function snapshot(notification) {
-    return { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image, urgency: notification.urgency, hints: ({ "image-path": notification.hints["image-path"] }), actions: [], arrived: internal.arrived[notification.id] };
+    return { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image, urgency: notification.urgency, hints: ({ "image-path": notification.hints["image-path"], value: notification.hints.value }), actions: [], arrived: internal.arrived[notification.id] };
   }
 
   function without(map, id) {
