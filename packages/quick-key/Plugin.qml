@@ -49,6 +49,8 @@ Scope {
   property var items: state.items ?? []
   // Actions by name, as the built-in ones (builtins/Actions.qml), for the entries of a level listing it.
   property var actions: ({})
+  // Its own words, what only it says, as Words holds those the surfaces share.
+  property var words: ({})
 
   // What a click on it in a bar, or `<name> activate` over IPC, does.
   function activate() {

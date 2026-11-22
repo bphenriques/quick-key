@@ -56,26 +56,9 @@ Singleton {
   readonly property string noSong: "No song playing"
   readonly property string noDevice: "No device connected"
   readonly property string noEvents: "No events"
-  readonly property string noTasks: "No tasks"
-  readonly property string noCompleted: "No completed tasks"
-  // The tasks' order as its action says it, by its value.
-  readonly property var sortedBy: ({ due: "by due date", priority: "by priority", title: "by title", list: "by list" })
 
   function devicesConnected(count) {
     return count + " devices connected";
-  }
-
-  // What an action failed to do, named after the thing it was given.
-  function addFailed(what) {
-    return "Could not add " + what;
-  }
-
-  function tickFailed(what) {
-    return "Could not tick off " + what;
-  }
-
-  function reopenFailed(what) {
-    return "Could not reopen " + what;
   }
 
   // A value's words, on the right of a row.
@@ -95,19 +78,6 @@ Singleton {
     return "Keep awake " + (keep ? "on" : "off");
   }
 
-  // An input's plugin: the prompt's and the conversation's states.
-  readonly property string resuming: "Resuming" + ellipsis
-  readonly property string newConversation: "New conversation"
-  readonly property string listingConversations: "Listing conversations" + ellipsis
-  readonly property string noConversations: "No conversations yet"
-  readonly property string noAnswer: "No answer"
-  readonly property string noImage: "Could not read the image"
-  readonly property string stopButton: "Stop"
-
-  function approvalLine(allowed, what) {
-    return (allowed ? "Allowed: " : "Denied: ") + what;
-  }
-
   // What a key does, in a legend: a lowercase word or two.
   readonly property string allow: "allow"
   readonly property string appMenu: "app menu"
@@ -124,7 +94,6 @@ Singleton {
   readonly property string move: "move"
   readonly property string newChat: "new"
   readonly property string open: "open"
-  readonly property string openTerminal: "Terminal" + ellipsis
   readonly property string pick: "pick"
   readonly property string stop: "stop"
   readonly property string terminal: "terminal" + ellipsis

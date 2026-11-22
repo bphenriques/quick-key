@@ -12,6 +12,16 @@ Plugin {
   id: root
 
   readonly property int lines: settings.lines
+  words: ({
+    resuming: "Resuming" + Words.ellipsis,
+    newConversation: "New conversation",
+    listing: "Listing conversations" + Words.ellipsis,
+    none: "No conversations yet",
+    noAnswer: "No answer",
+    noImage: "Could not read the image",
+    openTerminal: "Terminal" + Words.ellipsis,
+    approval: (allowed, what) => (allowed ? "Allowed: " : "Denied: ") + what
+  })
 
   // [{ prompt, image, reply, error, stopped, after, input, options, table, steps }], the last one streaming in while busy; `input` when a level's input sent it, or its panel while expanded from one.
   property var exchanges: []
@@ -71,9 +81,9 @@ Plugin {
     active: conversation.sessionId === session,
     enabled: agent.canLoad,
     verb: "resume",
-    actions: settings.open ? [{ key: "o", desc: Words.openTerminal, closes: true }] : []
+    actions: settings.open ? [{ key: "o", desc: words.openTerminal, closes: true }] : []
   }))
-  empty: listing ? Words.listingConversations : Words.noConversations
+  empty: listing ? words.listing : words.none
 
   // Its past conversations, listed afresh each time, in the picker.
   function recall(back) {
@@ -254,7 +264,7 @@ Plugin {
   }
 
   function finish(answer) {
-    const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? Words.noAnswer, stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
+    const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? words.noAnswer, stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
     exchanges = exchanges.slice(0, -1).concat([last]);
     busy = false;
     approval = "";
@@ -271,7 +281,7 @@ Plugin {
 
   // An image as the agent takes it: base64, its type read from its first bytes.
   function encode(path, then) {
-    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : fail(Words.noImage));
+    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : fail(words.noImage));
   }
 
   function mimeOf(data) {
@@ -297,7 +307,7 @@ Plugin {
     if (!approval) return;
     agent.answer(allowed);
     const last = exchanges[exchanges.length - 1];
-    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { steps: (last.steps ?? []).concat([Words.approvalLine(allowed, approval)]) })]);
+    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { steps: (last.steps ?? []).concat([words.approval(allowed, approval)]) })]);
     approval = "";
   }
 

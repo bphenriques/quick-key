@@ -10,6 +10,7 @@ import qs.ui
 Plugin {
   id: root
 
+  words: ({ stop: "Stop" })
   property int now: 0
   readonly property bool recording: state.active ?? false
   readonly property int startedAt: state.since ?? 0

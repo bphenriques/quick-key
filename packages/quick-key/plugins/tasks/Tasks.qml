@@ -8,6 +8,14 @@ Plugin {
   id: root
 
   readonly property string today: Clock.dayKey(Clock.date)
+  words: ({
+    none: "No tasks",
+    noneDone: "No completed tasks",
+    sortedBy: { due: "by due date", priority: "by priority", title: "by title", list: "by list" },
+    addFailed: what => "Could not add " + what,
+    tickFailed: what => "Could not tick off " + what,
+    reopenFailed: what => "Could not reopen " + what
+  })
   // In the order chosen, never by whether done: a tick keeps its digit, so the same key unticks it. A tick shows before the file has it, and an added task last, so no digit moves until the file places it.
   readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
     .sort((a, b) => root.compare(a, b))
@@ -30,9 +38,9 @@ Plugin {
   property var reminded: ({})
 
   text: ""
-  empty: completed === "only" ? Words.noCompleted : Words.noTasks
+  empty: completed === "only" ? words.noneDone : words.none
   actions: ({
-    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => Words.sortedBy[root.sort], available: () => true, run: () => root.sort = root.after(root.settings.sorts, root.sort) },
+    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.words.sortedBy[root.sort], available: () => true, run: () => root.sort = root.after(root.settings.sorts, root.sort) },
     completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.settings.shows, root.completed) }
   })
   // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.
@@ -164,10 +172,10 @@ Plugin {
       if (job.verb === "add") root.adding = root.adding.filter(title => title !== job.arg);
       if (code === 0) root.exec(job.after);
       if (code !== 0 && job.verb === "add") {
-        root.failure = Words.addFailed(job.arg);
+        root.failure = root.words.addFailed(job.arg);
       } else if (code !== 0) {
         root.pending = root.kept(id => id !== job.arg);
-        root.failure = (job.verb === "done" ? Words.tickFailed : Words.reopenFailed)((Array.from(root.state.tasks ?? []).find(task => task.id === job.arg)?.title ?? job.arg));
+        root.failure = (job.verb === "done" ? root.words.tickFailed : root.words.reopenFailed)((Array.from(root.state.tasks ?? []).find(task => task.id === job.arg)?.title ?? job.arg));
       }
       if (root.queue.length > 0) root.next();
       else root.exec(root.settings.sync);

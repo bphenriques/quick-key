@@ -128,6 +128,7 @@ What it gives:
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
 - `items`, `select(id)` and `run(id, key)` (an action from an item's own menu) for an entry whose `list` is its name; an item may bring a `meter` (0 to 1).
 - `actions`: actions by name, as the built-in ones (`{ icon, detail, available, run }`), which an entry of a level listing it names in its `action` (the tasks' `sort`).
+- `words`: what only it says (its empty list, its failures), as `Words` holds the words the surfaces share; a plugin never adds to `Words`.
 - `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.
 - `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `turn`, `{ question, context, text, phase, activity, options, table, steps }`, the conversation's turn as the menu draws it while watched, `phase` one of `working` (with `activity`, and `context` the answer it follows), `answered`, `choosing` (`options` a digit picks), `waiting` (on you), `failed` (the input getting the text back) or `stopped`, and `steps` what you answered on the way (an approval); null before the first.
 - `recall(back)` to show its past conversations filtered in the menu, for `C-r` in an input giving it text, while `recalls`: `back` shows again what opened it.

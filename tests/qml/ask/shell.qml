@@ -42,7 +42,7 @@ ShellRoot {
           const ask = Plugins.get("blind");
           if (!ask) return false;
           if (!ask.exchanges.length) ask.send("p", "/nonexistent.png");
-          return !ask.busy && ask.exchanges[0].error === Words.noImage;
+          return !ask.busy && ask.exchanges[0].error === ask.words.noImage;
         }
       },
       {
