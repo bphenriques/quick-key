@@ -114,10 +114,10 @@ Singleton {
   // What a key does, listed on `?`.
   readonly property string helpBarKeys: "Hold: the bar's keys"
   readonly property string helpCompositor: "Hold: compositor shortcuts"
-  readonly property string helpItemMenu: "An item's own menu"
+  readonly property string helpItemMenu: "Open an item's own menu"
   readonly property string helpFilter: "Filter the list"
-  readonly property string helpTab: "The input, and back"
+  readonly property string helpTab: "Go to the input and back"
   readonly property string helpBackground: "Send in the background"
-  readonly property string helpRecall: "An earlier conversation"
+  readonly property string helpRecall: "Resume an earlier conversation"
   readonly property string helpEscape: "Clear, else back"
 }

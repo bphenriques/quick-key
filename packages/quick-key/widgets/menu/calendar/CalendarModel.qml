@@ -10,7 +10,7 @@ QtObject {
   // The event in focus, by its row id in Calendar.timeline, so a new read of the file keeps it; "" while the keys move the day.
   property string focused: ""
 
-  readonly property string title: Clock.locale.standaloneMonthName(selected.getMonth()) + " " + selected.getFullYear()
+  readonly property string title: Clock.monthHeading(selected)
   // Each moves the selected day by [years, months, days], or back to today (null); the arrows go unlisted, the grid shows them.
   readonly property var keys: [
     { key: ["Left", "Right"], what: Words.day, unlisted: true, moves: { Left: [0, 0, -1], Right: [0, 0, 1] } },

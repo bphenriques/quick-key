@@ -29,12 +29,12 @@ Plugin {
   // Its keys, each once: what `?` lists (`desc`), the legend's word while it applies (`what`, `shows`), and what one it handles runs (`run`, false when it leaves the key to the prompt).
   readonly property var keys: [
     { key: "Tab", desc: Words.helpTab },
-    { key: "Shift+Return", desc: "A new line" },
+    { key: "Shift+Return", desc: "Break the line" },
     { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
     { key: "Ctrl+y", desc: "Allow what it asks", what: words.allow, shows: () => approval !== "", run: () => answerApproval(true) },
     { key: "Ctrl+c", desc: "Stop the answer", what: words.stop, shows: () => busy, run: () => busy && stop() },
     { key: "y", desc: "Copy the last answer", what: Words.copy, shows: () => !typing && !!exchanges[exchanges.length - 1]?.reply, run: () => !typing && copy() },
-    { key: "Ctrl+l", desc: "A new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
+    { key: "Ctrl+l", desc: "Start a new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
     { key: "Ctrl+o", desc: "Move it to a terminal", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
     { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => exchanges.length === 0 && recalls, run: () => recall() },
     { key: "Ctrl+v", desc: "Attach the clipboard's image", run: () => pasteImage() },
