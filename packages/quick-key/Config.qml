@@ -54,6 +54,17 @@ Singleton {
     return Array.isArray(value) || typeof value.length === "number" ? "list" : "map";
   }
 
+  // Whether a key is one of a settings object's settings: not a helper it reads (readonly, a function) nor QtObject's own; written back to test, as QML says no other way.
+  function settable(object, key) {
+    if (!(key in object) || key === "objectName" || typeof object[key] === "function") return false;
+    try {
+      object[key] = object[key];
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
   function over(declared, value) {
     return kind(declared) === "map" && kind(value) === "map" ? Object.assign({}, declared, value) : value;

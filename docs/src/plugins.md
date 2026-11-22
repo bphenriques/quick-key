@@ -185,8 +185,8 @@ A sender that takes a reply (the protocol's `inline-reply` action) gets one firs
 - `RET` sends it. The reply closes the card and lets go, unless its sender keeps it (`resident`): then it shows what you sent, and the keys stay.
 - `C-S-RET` sends it and lets go.
 - `ESC` clears it; empty, `ESC` goes back to the card's keys.
-- A card keeps its own unsent reply until it goes.
-- A card that closes while you type ends the reply, your text going to the clipboard, so none is lost; the bar says so a moment.
+- A card keeps its own unsent reply until it goes, and its time holds while it has one.
+- A card that closes while you type ends the reply, your text going to the clipboard, so none is lost. The bar says so, and the keys do nothing until `ESC`, so the rest of what you type goes nowhere.
 
 ## Writing one in QML
 

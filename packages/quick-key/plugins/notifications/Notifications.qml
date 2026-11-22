@@ -20,7 +20,7 @@ Plugin {
   readonly property bool summoned: Panels.top === root
   // Summoned or under the pointer, nothing moves and no time runs: the order holds, one that comes meanwhile going last.
   readonly property bool still: summoned || internal.hovered
-  readonly property var ordered: internal.list.slice().sort(still ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || internal.came[b.id] - internal.came[a.id])
+  readonly property var ordered: still ? internal.list.slice().sort((a, b) => internal.rank(a) - internal.rank(b)) : atRest()
   // Summoned, the held ones show too.
   readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !internal.fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
   // Critical ones by the corner, leaving a place while others wait, then the rest `limit` at a time, summoned the arrows scrolling past them; a card's digit is its place among all, so it holds still.
@@ -48,8 +48,8 @@ Plugin {
   // The card being replied to, its prompt in its actions' place; and what was sent, by id, shown until it goes.
   readonly property var replying: internal.replying
   readonly property var sent: internal.sent
-  // A reply whose card closed went to the clipboard: the bar says so a moment.
-  readonly property bool copied: copyNotice.running
+  // The card you replied to closed: the bar says so, and the keys do nothing until ESC, so what you were typing goes nowhere.
+  readonly property string notice: internal.notice
 
   glyph: paused ? Glyphs.notificationsPaused : Glyphs.notifications
   text: ordered.length > 0 ? String(ordered.length) : ""
@@ -64,6 +64,8 @@ Plugin {
       sendLeave: "send, go",
       you: "You: ",
       replyCopied: "reply copied",
+      cardClosed: "card closed",
+      letGo: "let go",
       helpPick: "Pick that card",
       helpMove: "Move the pick",
       helpOpen: "Open it and let go",
@@ -78,7 +80,7 @@ Plugin {
       summon: { icon: () => Glyphs.notifications, available: () => true, run: () => root.summon() },
       pause: { icon: () => root.glyph, state: root.name, available: () => true, run: () => root.togglePause() },
       clear: { icon: () => Glyphs.close, available: () => internal.list.length > 0, run: () => root.clear() },
-      dismiss: { icon: () => Glyphs.close, available: () => root.newest() !== null, run: () => root.newest().dismiss() },
+      dismiss: { icon: () => Glyphs.close, available: () => root.newest() !== null, run: () => root.dismiss(root.newest()) },
       invoke: { icon: () => Glyphs.notifications, available: () => root.newest() !== null, run: () => root.open(root.newest()) },
       restore: { icon: () => Glyphs.notifications, available: () => internal.closed.length > 0, run: () => root.restore() }
     })
@@ -103,7 +105,6 @@ Plugin {
 
   function summon() {
     if (summoned) return;
-    freeze();
     Panels.open(root);
     internal.picked = newest();
   }
@@ -114,15 +115,26 @@ Plugin {
 
   // However the keys go (ESC, the menu opening over the cards), the reply, the scroll and the list go with them.
   onSummonedChanged: {
-    if (summoned) return;
+    // Back from the menu too, the order as it is now, the pick on a card that shows.
+    if (summoned) {
+      if (!internal.hovered) freeze();
+      if (!shown.includes(internal.picked)) internal.picked = newest();
+      return;
+    }
     endReply();
+    internal.notice = "";
     internal.offset = 0;
     internal.help = false;
   }
 
   // The order as it is now, which `still` keeps.
   function freeze() {
-    if (!still) internal.frozen = ordered.map(notification => notification.id);
+    internal.frozen = atRest().map(notification => notification.id);
+  }
+
+  // Critical ones first, then the newest.
+  function atRest() {
+    return internal.list.slice().sort((a, b) => critical(b) - critical(a) || internal.came[b.id] - internal.came[a.id]);
   }
 
   // The newest card on screen, which a binding acts on and summoning picks.
@@ -152,12 +164,13 @@ Plugin {
   }
 
   function clear() {
+    endReply();
     for (const notification of internal.list.slice()) notification.dismiss();
   }
 
   // The pointer is on a card: every one holds still, so the one under it stays there.
   function hold(on) {
-    if (on) freeze();
+    if (on && !still) freeze();
     internal.hovered = on;
   }
 
@@ -200,7 +213,7 @@ Plugin {
   // False once its card closed, the prompt keeping the text; the keys stay only on a resident card.
   function sendReply(text, close) {
     const notification = internal.replying;
-    if (!notification) return false;
+    if (!notification || text.trim() === "") return false;
     internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
     internal.drafts = without(internal.drafts, notification.id);
     // No longer the reply target, so if the reply closes it, it is kept to bring back.
@@ -243,14 +256,14 @@ Plugin {
     const card = Object.assign({}, last, { restored: true });
     internal.came[card.id] = ++internal.seq;
     // Held still, it comes last, as a new one does, not back to its old place.
-    internal.frozen = internal.frozen.filter(id => id !== card.id);
+    internal.frozen = internal.frozen.filter(id => id !== card.id).concat(still ? [card.id] : []);
     card.dismiss = card.expire = () => root.leave(card);
     // Its rules with it, so a pause or a timeout they set still holds.
     if (last.applied) internal.applied = Object.assign({}, internal.applied, { [card.id]: last.applied });
     internal.list = internal.list.concat([card]);
     internal.left = Object.assign({}, internal.left, { [card.id]: timeoutOf(card) });
     internal.arrived = Object.assign({}, internal.arrived, { [card.id]: last.arrived });
-    if (summoned) pick(card);
+    if (summoned && !internal.replying) pick(card);
   }
 
   // When it came, once it has waited a minute or more (held by pause, idle or a fullscreen window): so an old one never reads as new.
@@ -260,6 +273,10 @@ Plugin {
   }
 
   function key(name) {
+    if (internal.notice) {
+      if (name === "Escape") release();
+      return true;
+    }
     // The prompt has the keys: what it leaves (arrows, chords) would act on the cards under the text; Escape, from a binding, still lets go.
     if (internal.replying && name !== "Escape") return false;
     if (internal.help) internal.help = false;
@@ -374,6 +391,9 @@ Plugin {
     internal.came[notification.id] = ++internal.seq;
     internal.list = internal.list.concat([notification]);
     notification.closed.connect(() => root.leave(notification));
+    // Held still, a newcomer takes the next place for good, so later ones never swap with it.
+    if (still) internal.frozen = internal.frozen.concat([notification.id]);
+    if (summoned && !internal.picked) pick(notification);
     // A sender replacing it by id changes it in place: once for all it changed, it comes again, its rules and time with it.
     const renew = () => root.renew(notification);
     for (const changed of [notification.appNameChanged, notification.summaryChanged, notification.bodyChanged, notification.urgencyChanged, notification.expireTimeoutChanged, notification.hintsChanged, notification.actionsChanged]) changed.connect(() => Qt.callLater(renew));
@@ -405,11 +425,11 @@ Plugin {
     for (const old of internal.list) {
       if (!tag || old === notification || old.appName !== notification.appName || tagOf(old) !== tag) continue;
       if (internal.picked === old) internal.picked = notification;
-      if (internal.replying === old) {
+      if (internal.replying === old && notification.hasInlineReply) {
         internal.drafts = Object.assign({}, internal.drafts, { [notification.id]: draftOf(old) });
         internal.replying = notification;
       }
-      internal.frozen = internal.frozen.map(id => id === old.id ? notification.id : id);
+      internal.frozen = internal.frozen.filter(id => id !== notification.id).map(id => id === old.id ? notification.id : id);
       internal.replaced[old.id] = true;
       old.expire();
     }
@@ -418,10 +438,8 @@ Plugin {
   // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing ends the reply, your text to the clipboard, so none is lost.
   function leave(notification) {
     if (notification === internal.replying) {
-      if (draftOf(notification)) {
-        Quickshell.clipboardText = draftOf(notification);
-        copyNotice.restart();
-      }
+      if (draftOf(notification)) Quickshell.clipboardText = draftOf(notification);
+      internal.notice = draftOf(notification) ? words.replyCopied : words.cardClosed;
       internal.replying = null;
     }
     if (!(notification.id in internal.replaced)) keepClosed(notification);
@@ -435,7 +453,7 @@ Plugin {
     if (internal.picked !== notification) return;
     // One gone off screen leaves the pick to the first shown; with none shown, the keys go.
     internal.picked = shown[at < 0 ? 0 : Math.min(at, shown.length - 1)] ?? null;
-    if (internal.picked === null) release();
+    if (internal.picked === null && !internal.notice) release();
   }
 
   // Kept to bring back (C-r), unless its sender marked it passing (transient) or it was brought back already.
@@ -490,6 +508,7 @@ Plugin {
     // The order they came in, by id, one brought back coming again: the newest goes by the corner.
     property var came: ({})
     property int seq: 0
+    property string notice: ""
     // The first shown, summoned, past those scrolled by.
     property int offset: 0
     property string error: ""
@@ -512,11 +531,6 @@ Plugin {
   }
 
   // Away from the keyboard, no time runs: with no history, one shown meanwhile would be gone unseen.
-  Timer {
-    id: copyNotice
-    interval: 3000
-  }
-
   IdleMonitor {
     id: idle
     enabled: root.settings.idle > 0
@@ -526,10 +540,10 @@ Plugin {
   Timer {
     interval: 200
     repeat: true
-    running: !root.still && !idle.isIdle && root.shown.some(notification => internal.left[notification.id] > 0)
+    running: !root.still && !idle.isIdle && root.shown.some(notification => internal.left[notification.id] > 0 && !root.draftOf(notification))
     onTriggered: {
       const left = Object.assign({}, internal.left);
-      const due = root.shown.filter(notification => left[notification.id] > 0 && (left[notification.id] -= interval) <= 0);
+      const due = root.shown.filter(notification => left[notification.id] > 0 && !root.draftOf(notification) && (left[notification.id] -= interval) <= 0);
       internal.left = left;
       for (const notification of due) notification.expire();
     }

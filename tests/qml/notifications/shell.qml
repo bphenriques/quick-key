@@ -341,7 +341,7 @@ ShellRoot {
         }
       },
       {
-        name: "one closed while replied to ends the reply, the text on the clipboard, the bar saying so",
+        name: "one closed while replied to ends the reply, the text on the clipboard, and the keys do nothing until ESC",
         start: () => {
           root.plugin.release();
           root.chatSend("Bea");
@@ -354,7 +354,10 @@ ShellRoot {
             root.plugin.keepDraft(bea, "Too late");
             bea.dismiss();
           }
-          return "bea" in root.marks && root.plugin.replying === null && !root.find("Bea") && root.plugin.copied && Quickshell.clipboardText === "Too late";
+          if (!("bea" in root.marks) || root.plugin.replying !== null || root.find("Bea") || root.plugin.notice !== root.plugin.words.replyCopied || Quickshell.clipboardText !== "Too late") return false;
+          const held = root.plugin.key("x") && root.plugin.summoned;
+          root.plugin.key("Escape");
+          return held && !root.plugin.summoned && root.plugin.notice === "";
         }
       },
       {
@@ -953,6 +956,85 @@ ShellRoot {
         }
       },
       {
+        name: "an empty reply sends nothing",
+        start: () => {
+          root.reset();
+          root.chatSend("Una blank");
+        },
+        until: () => {
+          const una = root.find("Una blank");
+          if (!una) return false;
+          root.plugin.reply(una);
+          const sent = root.plugin.sendReply("  ", false);
+          return !sent && root.plugin.replying === una && root.find("Una blank") !== null;
+        }
+      },
+      {
+        name: "held still, a card that came meanwhile keeps its place when its sender renews it",
+        start: () => {
+          root.plugin.endReply();
+          root.reset();
+          root.send("Base");
+        },
+        until: () => {
+          if (root.find("Base") && !("renewHeld" in root.marks)) {
+            root.mark("renewHeld");
+            root.plugin.summon();
+            root.sendId("held", "Held P1");
+          }
+          if (root.find("Held P1") && !("renewHeld2" in root.marks)) {
+            root.mark("renewHeld2");
+            root.send("Held Q");
+          }
+          if (root.find("Held Q") && !("renewHeld3" in root.marks)) {
+            root.mark("renewHeld3");
+            root.send("-r", root.ids.held, "Held P2");
+          }
+          if (!root.find("Held P2") || "renewHeld4" in root.marks) return "renewHeld4" in root.marks && root.plugin.ordered.map(each => each.summary).join() === "Base,Held P2,Held Q,Held Z";
+          root.mark("renewHeld4");
+          root.send("Held Z");
+          return false;
+        }
+      },
+      {
+        name: "a tag replacement that takes no reply leaves the reply to end, its text copied",
+        start: () => {
+          root.plugin.release();
+          root.reset();
+          root.chatSend("Tag talk", "@a{sv} {'x-dunst-stack-tag': <'talk'>}");
+        },
+        until: () => {
+          const talk = root.find("Tag talk");
+          if (talk && !("talk" in root.marks)) {
+            root.mark("talk");
+            root.plugin.reply(talk);
+            root.plugin.keepDraft(talk, "Keep me");
+            root.send("-a", "Chat", "-h", "string:x-dunst-stack-tag:talk", "Tag plain");
+          }
+          return root.find("Tag plain") !== null && root.plugin.replying === null && Quickshell.clipboardText === "Keep me";
+        }
+      },
+      {
+        name: "bringing a card back while replying leaves the replied card in view",
+        start: () => {
+          root.plugin.release();
+          root.reset();
+          ["E1", "E2", "E3"].forEach(summary => root.send(summary));
+        },
+        until: () => {
+          if (root.plugin.ordered.length === 3 && !("restoreReply" in root.marks)) {
+            root.mark("restoreReply");
+            root.chatSend("E reply");
+          }
+          const reply = root.find("E reply");
+          if (!reply || "restoreReply2" in root.marks) return "restoreReply2" in root.marks && root.plugin.shown.includes(root.plugin.replying);
+          root.mark("restoreReply2");
+          root.plugin.reply(reply);
+          root.plugin.restore();
+          return false;
+        }
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
           const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c", closes: "yes" }], run: 1 });
@@ -961,6 +1043,7 @@ ShellRoot {
           const extra = root.plugin.settings.problems();
           root.plugin.settings.timeout = ({ low: 1, normal: 30 });
           if (named.join() !== "actions[0] shows {nope}, which no group of its match names" || extra.join() !== "sets timeout.critical, none of low, normal") return false;
+          if (!Validation.pluginProblems({ notifications: { corners: ["x"] } }).includes("plugins.notifications.corners is not a setting")) return false;
           if (JSON.stringify(Config.over({ low: 3, normal: 8 }, { normal: 5 })) !== '{"low":3,"normal":5}' || Config.over([1], [2])[0] !== 2) return false;
           return root.plugin.settings.problems().length === 0 && problems.length === 11 && root.plugin.settings.groupNames("(a)(?:b)(?<c>[(]d)\\(").join() === ",c" && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
         }

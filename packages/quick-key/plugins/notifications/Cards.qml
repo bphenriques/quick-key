@@ -166,8 +166,8 @@ Scope {
               readonly property int place: view.plugin.showable.indexOf(notification)
               key: place >= 0 && place < 9 ? String(place + 1) : ""
               closeKey: "x"
-              // Replying, the prompt has the keys: the others would type.
-              keysShown: view.plugin.summoned && !view.plugin.replying
+              // Replying, the prompt has the keys: the others would type; after a closed reply, ESC alone.
+              keysShown: view.plugin.summoned && !view.plugin.replying && !view.plugin.notice
               current: view.plugin.summoned && notification === view.plugin.picked
               onActivated: view.plugin.open(notification)
               onDismissed: view.plugin.dismiss(notification)
@@ -261,14 +261,15 @@ Scope {
         KeyLegend {
           Layout.fillWidth: true
           clip: true
-          keys: view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendLeave }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
+          keys: view.plugin.notice ? [{ key: "Escape", what: view.plugin.words.letGo }]
+            : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendLeave }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
             : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }, { key: "?", what: Words.help }]
         }
 
         Label {
           visible: text !== ""
-          tone: "dim"
-          text: view.plugin.copied ? view.plugin.words.replyCopied : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? "+" + view.plugin.more : ""
+          tone: view.plugin.notice ? "warning" : "dim"
+          text: view.plugin.notice ? view.plugin.notice : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? "+" + view.plugin.more : ""
         }
       }
     }
