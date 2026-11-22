@@ -98,6 +98,8 @@ Scope {
       FocusScope {
         anchors.fill: parent
         focus: true
+        // Gone with the window, a hover it never saw end would hold the cards for good.
+        Component.onDestruction: view.plugin.hold(false)
         Keys.onPressed: event => event.accepted = view.plugin.key(MenuKeys.name(event))
 
         Column {
@@ -105,6 +107,11 @@ Scope {
           width: parent.width
           spacing: Config.theme.spacing
           opacity: fade.value
+
+          // Over the whole stack, its gaps too, so moving between cards never lets go.
+          HoverHandler {
+            onHoveredChanged: view.plugin.hold(hovered)
+          }
 
           Ends {
             visible: !view.top
@@ -120,11 +127,12 @@ Scope {
               readonly property var hint: notification?.hints.value
 
               width: stack.width
-              glyph: Glyphs.notifications
+              monochrome: Config.theme.monochromeTray
               icon: notification ? view.iconOf(notification) : ""
               image: notification ? view.pictureOf(notification) : ""
               title: notification?.summary || notification?.appName || ""
-              aside: notification?.gone ? view.plugin.words.closed : notification?.summary ? notification.appName : ""
+              // The app, unless the title already says it, and when it came once it has waited.
+              aside: !notification ? "" : [notification.appName.toLowerCase() === title.toLowerCase() ? "" : notification.appName, view.plugin.ageOf(notification)].filter(part => part).join(" · ")
               body: notification?.body ?? ""
               tone: notification && view.plugin.critical(notification) ? "alert" : ""
               dimmed: notification?.gone ?? false
@@ -135,33 +143,22 @@ Scope {
               lines: notification && notification === view.plugin.replying ? 1 : 2
               footer: !notification ? null : notification === view.plugin.replying ? reply : notification.id in view.plugin.sent ? sent : null
               actionSide: view.settings.actionSide
-              key: String(view.plugin.shown.indexOf(notification) + 1)
+              key: String(view.plugin.showable.indexOf(notification) + 1)
               closeKey: "x"
-              keysShown: view.plugin.summoned
+              // Replying, the prompt has the keys: the others would type.
+              keysShown: view.plugin.summoned && !view.plugin.replying
               current: view.plugin.summoned && notification === view.plugin.picked
               onActivated: view.plugin.open(notification)
               onDismissed: notification.dismiss()
-              onHoveredChanged: view.plugin.hold(hovered)
 
-              // What was sent, as your side of the exchange, on the right.
+              // What was sent, one dim line in the actions' place, so the card never grows.
               Component {
                 id: sent
 
-                RowLayout {
-                  Item {
-                    Layout.fillWidth: true
-                  }
-
-                  Bubble {
-                    mine: true
-                    maximumWidth: parent.width
-
-                    Label {
-                      Layout.fillWidth: true
-                      elide: Text.ElideRight
-                      text: view.plugin.sent[card.notification?.id] ?? ""
-                    }
-                  }
+                Label {
+                  elide: Text.ElideRight
+                  tone: "dim"
+                  text: view.plugin.words.you + view.plugin.sent[card.notification?.id] ?? ""
                 }
               }
             }
@@ -183,8 +180,6 @@ Scope {
       id: prompt
       maxLines: 2
       placeholder: view.plugin.replying?.inlineReplyPlaceholder || Words.replyPrompt
-      keys: text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }] : []
-      onPicked: stepBack()
       onBack: view.plugin.endReply()
       Component.onCompleted: set(view.plugin.draftOf(view.plugin.replying))
       onTextChanged: view.plugin.keepDraft(view.plugin.replying, text)
@@ -203,33 +198,58 @@ Scope {
     width: parent.width
     implicitHeight: view.plugin.summoned ? bar.implicitHeight : pills.implicitHeight
 
+    // Summoned: the keys the state changes on the left, what it reports on the right; `?` lists every key in its place.
     Surface {
       id: bar
       visible: view.plugin.summoned
       width: parent.width
       color: Tone.surface(1)
-      implicitHeight: legend.implicitHeight + Config.theme.padding / 2
+      implicitHeight: (view.plugin.help ? list.implicitHeight : barRow.implicitHeight) + Config.theme.padding / 2
 
-      KeyLegend {
-        id: legend
+      KeyList {
+        id: list
+        // One column: the stack is a card wide.
+        columns: 1
+        visible: view.plugin.help
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: Config.theme.padding
-        keys: view.plugin.replying?.gone ? [{ key: "Return", what: Words.copy }] : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendClose }] : view.plugin.shown.length === 0 ? [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }] : [
-          { key: "Return", what: Words.open },
-          { key: "Ctrl+Shift+x", what: view.plugin.words.clear },
-          { key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }
-        ]
+        anchors.right: parent.right
+        anchors.leftMargin: Config.theme.padding - Config.theme.itemPaddingX
+        anchors.rightMargin: Config.theme.padding
+        keys: view.plugin.keys
       }
 
-      // None to show, or how many are of all there are, as a filter says it.
-      Label {
-        visible: text !== ""
+      RowLayout {
+        id: barRow
+        visible: !view.plugin.help
         anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
         anchors.right: parent.right
+        // The keys' own padding, so they line up with the cards' digits.
+        anchors.leftMargin: Config.theme.padding - Config.theme.itemPaddingX
         anchors.rightMargin: Config.theme.padding
-        tone: "dim"
-        text: view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? Words.rangeOf(view.plugin.first, view.plugin.shown.length, view.plugin.showable.length) : ""
+        spacing: Config.theme.spacing
+
+        KeyLegend {
+          Layout.fillWidth: true
+          clip: true
+          keys: view.plugin.replying?.gone ? [{ key: "Return", what: view.plugin.words.copyReply }]
+            : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
+            : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }, { key: "?", what: Words.help }]
+        }
+
+        Icon {
+          visible: view.plugin.paused && !view.plugin.replying
+          size: Metrics.line
+          tone: "dim"
+          glyph: Glyphs.notificationsPaused
+        }
+
+        Label {
+          visible: text !== ""
+          tone: view.plugin.replying?.gone ? "warning" : "dim"
+          text: view.plugin.replying?.gone ? view.plugin.words.closedBySender : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.range
+        }
       }
     }
 
@@ -242,10 +262,9 @@ Scope {
       Pill {
         visible: view.settings.hint && view.plugin.shortcut !== ""
 
-        KeyHint {
-          anchors.verticalCenter: parent.verticalCenter
-          key: view.plugin.shortcut
-          chars: MenuKeys.label(view.plugin.shortcut).length
+        Label {
+          tone: "dim"
+          text: MenuKeys.label(view.plugin.shortcut)
         }
       }
 

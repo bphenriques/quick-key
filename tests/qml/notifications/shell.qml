@@ -469,13 +469,68 @@ ShellRoot {
             root.plugin.key("Up");
             root.plugin.key("Up");
           }
-          return root.plugin.summoned && root.plugin.shown.length === 3 && root.plugin.first === 1 && root.plugin.picked === root.plugin.shown[2];
+          return root.plugin.summoned && root.plugin.shown.length === 3 && root.plugin.range === "2-4 of 5" && root.plugin.picked === root.plugin.shown[2];
         }
       },
       {
         name: "and Down goes back toward the corner",
         start: () => root.plugin.key("Down"),
-        until: () => root.plugin.picked === root.plugin.shown[1] && root.plugin.first === 1
+        until: () => root.plugin.picked === root.plugin.shown[1] && root.plugin.range === "2-4 of 5"
+      },
+      {
+        name: "a digit is a card's place among all, so it holds still, and picking one scrolls it into view",
+        start: () => root.plugin.key("1"),
+        until: () => root.plugin.picked === root.plugin.showable[0] && root.plugin.range === "1-3 of 5" && root.plugin.shown[0] === root.plugin.showable[0]
+      },
+      {
+        name: "a critical card stays by the corner while the rest scroll",
+        start: () => root.send("-u", "critical", "Alarm two"),
+        until: () => {
+          if (root.find("Alarm two") && !("pinned" in root.marks)) {
+            root.mark("pinned");
+            for (let i = 0; i < 6; i++) root.plugin.key("Up");
+          }
+          return "pinned" in root.marks && root.plugin.shown[0]?.summary === "Alarm two" && root.plugin.range !== "" && !root.plugin.range.startsWith("1-");
+        }
+      },
+      {
+        name: "? lists the keys, and any key closes the list",
+        start: () => root.plugin.key("?"),
+        until: () => {
+          const listed = root.plugin.help && root.plugin.keys.some(hint => hint.key === "Ctrl+r");
+          if (listed) root.plugin.key("a");
+          return listed && !root.plugin.help;
+        }
+      },
+      {
+        name: "C-r brings back the last closed, to read, never the passing ones",
+        start: () => {
+          root.plugin.release();
+          root.plugin.settings.corner = "top-right";
+          root.plugin.clear();
+          root.send("Keep me");
+        },
+        until: () => {
+          const kept = root.find("Keep me");
+          if (kept && !kept.restored && !("restore" in root.marks)) {
+            root.mark("restore");
+            kept.dismiss();
+            root.send("--transient", "Passing");
+          }
+          const passing = root.find("Passing");
+          if (passing && !("passing" in root.marks)) {
+            root.mark("passing");
+            passing.dismiss();
+          }
+          if ("passing" in root.marks && !root.find("Passing") && !("back" in root.marks)) {
+            root.mark("back");
+            root.plugin.summon();
+            root.plugin.key("Ctrl+r");
+            root.plugin.key("Ctrl+r");
+          }
+          const back = root.find("Keep me");
+          return back?.restored === true && !root.find("Passing") && root.plugin.actionsOf(back).length === 0;
+        }
       },
       {
         name: "run runs for a new card, not again when it is replaced",

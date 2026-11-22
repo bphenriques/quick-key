@@ -26,7 +26,7 @@ PluginSettings {
   readonly property var sides: ["right", "left"]
   readonly property var fields: ["app", "summary", "body", "category", "urgency", "desktopEntry"]
   readonly property var ruleKeys: ["match", "hide", "timeout", "urgency", "ignorePause", "actions", "default", "run"]
-  readonly property var actionKeys: ["key", "desc", "icon", "cmd", "closes"]
+  readonly property var actionKeys: ["key", "desc", "cmd", "closes"]
   // What its commands get as NOTIFICATION_<NAME>, so a group by one of these names would hide it.
   readonly property var given: ["app", "summary", "body", "urgency", "id", "icon"]
   readonly property var urgencies: ["low", "normal", "critical"]
@@ -35,7 +35,7 @@ PluginSettings {
     const found = [];
     if (!corners.includes(corner)) found.push("sets corner to '" + corner + "', none of " + corners.join(", "));
     if (!sides.includes(actionSide)) found.push("sets actionSide to '" + actionSide + "', none of " + sides.join(", "));
-    if (limit < 1) found.push("sets limit below 1");
+    if (limit < 1 || limit > 9) found.push("sets limit to " + limit + ", not 1 to 9, as many as there are digits");
     if (idle < 0) found.push("sets idle below 0");
     for (const urgency of ["low", "normal"]) {
       if (typeof timeout?.[urgency] !== "number" || timeout[urgency] < 0) found.push("sets timeout." + urgency + " to no number of seconds");

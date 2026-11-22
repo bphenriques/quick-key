@@ -2,13 +2,15 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A card that comes and goes on its own (a notification): its icon or a picture, its title and what it is from, a body of up to `lines`, a meter, actions on one side; a click activates it, a right click or its ✕ dismisses it. Its keys have their room at rest, so showing them moves nothing.
+// A card that comes and goes on its own (a notification): its icon, its title and what it is from, a body of up to `lines`, a meter, a picture on its right, actions below; a click activates it, a right click or its ✕ dismisses it. Its keys have their room at rest, so showing them moves nothing.
 Surface {
   id: root
 
   property string glyph: ""
-  // An app's icon in the glyph's place, at its size; a picture (album art, a screenshot) three lines tall instead.
+  // An app's icon in the glyph's place, at its size, in greys when `monochrome`; the column stays when there is neither, so every card's text starts in one place.
   property string icon: ""
+  property bool monochrome: false
+  // A picture (album art, a screenshot) on the right, square and three lines tall.
   property string image: ""
   property string title: ""
   // Who or what it is from, on the title's right.
@@ -18,7 +20,7 @@ Surface {
   // From 0 to 1, with `meterText` beside it; below 0, none.
   property real meter: -1
   property string meterText: ""
-  // Each { desc, key, run }, in order, on the side `actionSide` names.
+  // Each { desc, key, run }, in order, on the side `actionSide` names, from the glyph's column to the edge.
   property var actions: []
   property string actionSide: "right"
   // In the actions' place while set (a reply's prompt, what was sent), so the card never grows; it has the keys.
@@ -35,6 +37,14 @@ Surface {
   readonly property bool hovered: mouse.containsMouse
   readonly property bool acting: keysShown && current
   readonly property string textTone: dimmed ? "dim" : "normal"
+  // Each action's width in characters: whole while they fit, else the longest shortened first, so short ones stay whole.
+  readonly property var widths: {
+    const natural = actions.map(action => (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0));
+    const room = Math.floor(actionRow.width / Metrics.cell) - actions.length;
+    let longest = Math.max(0, ...natural);
+    while (longest > 1 && natural.reduce((sum, chars) => sum + Math.min(chars, longest), 0) > room) longest--;
+    return natural.map(chars => Math.min(chars, longest));
+  }
 
   signal activated
   signal dismissed
@@ -58,193 +68,204 @@ Surface {
     onClicked: event => event.button === Qt.RightButton ? root.dismissed() : root.activated()
   }
 
-  RowLayout {
+  ColumnLayout {
     id: layout
     anchors.fill: parent
     anchors.margins: Config.theme.padding
-    spacing: Config.theme.spacing
+    spacing: Config.theme.itemPaddingY
 
-    Label {
-      Layout.alignment: Qt.AlignTop
-      Layout.preferredWidth: Metrics.cell
-      tone: "primary"
-      text: root.keysShown ? root.key : ""
-    }
-
-    Icon {
-      Layout.alignment: Qt.AlignTop
-      visible: root.image === ""
-      glyph: root.glyph
-      source: root.icon
-      tone: root.textTone
-    }
-
-    // Square and three lines tall, cropped to fill, so the text starts in one place whatever the picture's shape.
-    Image {
-      Layout.alignment: Qt.AlignTop
-      Layout.preferredWidth: 3 * Metrics.line
-      Layout.preferredHeight: 3 * Metrics.line
-      visible: root.image !== ""
-      source: root.image
-      sourceSize: Qt.size(6 * Metrics.line, 6 * Metrics.line)
-      fillMode: Image.PreserveAspectCrop
-      mipmap: true
-    }
-
-    ColumnLayout {
+    RowLayout {
       Layout.fillWidth: true
-      Layout.alignment: Qt.AlignTop
-      spacing: Config.theme.itemPaddingY
-
-      RowLayout {
-        Layout.fillWidth: true
-        spacing: Config.theme.spacing
-
-        Label {
-          Layout.fillWidth: true
-          elide: Text.ElideRight
-          strong: true
-          tone: root.textTone
-          text: root.title
-        }
-
-        Icon {
-          visible: root.tone !== ""
-          size: Metrics.line
-          tone: root.tone
-          glyph: Glyphs.urgent
-        }
-
-        // A third of the width at most, so a long app name never takes the title's room.
-        Label {
-          Layout.maximumWidth: root.width / 3
-          elide: Text.ElideRight
-          tone: "dim"
-          text: root.aside
-        }
-      }
+      spacing: Config.theme.spacing
 
       Label {
-        Layout.fillWidth: true
-        visible: root.body !== ""
-        wrapMode: Text.Wrap
-        maximumLineCount: root.lines
-        elide: Text.ElideRight
-        tone: root.textTone
-        text: root.body
-      }
-
-      RowLayout {
-        Layout.fillWidth: true
-        visible: root.meter >= 0
-        spacing: Config.theme.spacing
-
-        Meter {
-          Layout.fillWidth: true
-          tone: root.tone || "primary"
-          value: root.meter
-        }
-
-        Label {
-          tone: root.tone || root.textTone
-          text: root.meterText
-        }
-      }
-
-      RowLayout {
-        id: actionRow
-        // An equal share each, labels shortened to fit, so every action and its key shows.
-        readonly property real share: (width - root.actions.length * spacing) / Math.max(1, root.actions.length)
-        Layout.fillWidth: true
-        // The card's width, never its own: actions asking for theirs would widen the card past its edge.
-        Layout.preferredWidth: 0
-        visible: root.actions.length > 0 && root.footer === null
-        spacing: 2 * Metrics.cell
-
-        // Only on the open side: a hidden one takes no spacing, so the actions meet the edge.
-        Item {
-          visible: root.actionSide !== "left"
-          Layout.fillWidth: true
-        }
-
-        Repeater {
-          model: root.actions.length
-
-          Item {
-            id: action
-            required property int index
-            readonly property var entry: root.actions[index] ?? ({})
-            implicitWidth: entryRow.implicitWidth
-            implicitHeight: entryRow.implicitHeight
-
-            Row {
-              id: entryRow
-
-              KeyCell {
-                id: actionKey
-                key: action.entry.key ?? ""
-              }
-
-              // Dim only on the cards the keys are not on, while summoned: dim says it cannot run now.
-              Label {
-                width: Math.min(implicitWidth, actionRow.share - actionKey.implicitWidth)
-                elide: Text.ElideRight
-                tone: hover.containsMouse ? "primary" : root.keysShown && !root.current ? "dim" : root.textTone
-                text: action.entry.desc ?? ""
-              }
-            }
-
-            MouseArea {
-              id: hover
-              anchors.fill: parent
-              hoverEnabled: true
-              onClicked: if (action.entry.run) action.entry.run()
-            }
-          }
-        }
-
-        Item {
-          visible: root.actionSide === "left"
-          Layout.fillWidth: true
-        }
-      }
-
-      Loader {
-        Layout.fillWidth: true
-        active: root.footer !== null
-        visible: active
-        focus: active
-        sourceComponent: root.footer
-      }
-    }
-
-    // Its ✕ and its key in a column of their own, mirroring the digit's, so the text ends on one edge.
-    Row {
-      Layout.alignment: Qt.AlignTop
-
-      KeyCell {
-        key: root.closeKey
+        id: gutter
+        Layout.alignment: Qt.AlignTop
+        Layout.preferredWidth: Metrics.cell
+        tone: "primary"
+        text: root.keysShown ? root.key : ""
       }
 
       Item {
-        implicitWidth: Metrics.line
-        implicitHeight: Metrics.line
+        Layout.alignment: Qt.AlignTop
+        implicitWidth: Config.theme.iconSize
+        implicitHeight: Config.theme.iconSize
 
         Icon {
           anchors.centerIn: parent
-          visible: root.hovered || root.acting
-          size: Metrics.line
-          tone: close.containsMouse ? "primary" : "dim"
-          glyph: Glyphs.close
-        }
-
-        MouseArea {
-          id: close
-          anchors.fill: parent
-          hoverEnabled: true
-          onClicked: root.dismissed()
+          glyph: root.glyph
+          source: root.icon
+          monochrome: root.monochrome
+          tone: root.textTone
         }
       }
+
+      ColumnLayout {
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        spacing: Config.theme.itemPaddingY
+
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: Config.theme.spacing
+
+          Label {
+            Layout.fillWidth: true
+            elide: Text.ElideRight
+            strong: true
+            tone: root.textTone
+            text: root.title
+          }
+
+          Icon {
+            visible: root.tone !== ""
+            size: Metrics.line
+            tone: root.tone
+            glyph: Glyphs.urgent
+          }
+
+          // A third of the width at most, so a long app name never takes the title's room.
+          Label {
+            Layout.maximumWidth: root.width / 3
+            elide: Text.ElideRight
+            tone: "dim"
+            text: root.aside
+          }
+        }
+
+        Label {
+          Layout.fillWidth: true
+          visible: root.body !== ""
+          wrapMode: Text.Wrap
+          maximumLineCount: root.lines
+          elide: Text.ElideRight
+          tone: root.textTone
+          text: root.body
+        }
+
+        RowLayout {
+          Layout.fillWidth: true
+          visible: root.meter >= 0
+          spacing: Config.theme.spacing
+
+          Meter {
+            Layout.fillWidth: true
+            tone: root.tone || "primary"
+            value: root.meter
+          }
+
+          Label {
+            tone: root.tone || root.textTone
+            text: root.meterText
+          }
+        }
+      }
+
+      Image {
+        Layout.alignment: Qt.AlignTop
+        Layout.preferredWidth: 3 * Metrics.line
+        Layout.preferredHeight: 3 * Metrics.line
+        visible: root.image !== ""
+        source: root.image
+        sourceSize: Qt.size(6 * Metrics.line, 6 * Metrics.line)
+        fillMode: Image.PreserveAspectCrop
+        mipmap: true
+      }
+
+      // Its ✕ and its key in a column of their own, mirroring the digit's, so the text ends on one edge.
+      Row {
+        Layout.alignment: Qt.AlignTop
+
+        KeyCell {
+          key: root.closeKey
+        }
+
+        Item {
+          implicitWidth: Metrics.line
+          implicitHeight: Metrics.line
+
+          Icon {
+            anchors.centerIn: parent
+            visible: root.hovered || root.acting
+            size: Metrics.line
+            tone: close.containsMouse ? "primary" : "dim"
+            glyph: Glyphs.close
+          }
+
+          MouseArea {
+            id: close
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: root.dismissed()
+          }
+        }
+      }
+    }
+
+    RowLayout {
+      id: actionRow
+      Layout.fillWidth: true
+      Layout.leftMargin: gutter.width + Config.theme.spacing
+      // The card's width, never its own: actions asking for theirs would widen the card past its edge.
+      Layout.preferredWidth: 0
+      visible: root.actions.length > 0 && root.footer === null
+      spacing: Metrics.cell
+
+      // Only on the open side: a hidden one takes no spacing, so the actions meet the edge.
+      Item {
+        visible: root.actionSide !== "left"
+        Layout.fillWidth: true
+      }
+
+      Repeater {
+        model: root.actions.length
+
+        Item {
+          id: action
+          required property int index
+          readonly property var entry: root.actions[index] ?? ({})
+          implicitWidth: entryRow.implicitWidth
+          implicitHeight: entryRow.implicitHeight
+
+          Row {
+            id: entryRow
+
+            KeyCell {
+              id: actionKey
+              key: action.entry.key ?? ""
+            }
+
+            Label {
+              width: Math.min(implicitWidth, (root.widths[action.index] ?? 0) * Metrics.cell - actionKey.implicitWidth)
+              elide: Text.ElideRight
+              tone: hover.containsMouse ? "primary" : root.textTone
+              text: action.entry.desc ?? ""
+            }
+          }
+
+          MouseArea {
+            id: hover
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: if (action.entry.run) action.entry.run()
+          }
+        }
+      }
+
+      Item {
+        visible: root.actionSide === "left"
+        Layout.fillWidth: true
+      }
+    }
+
+    Loader {
+      Layout.fillWidth: true
+      Layout.leftMargin: gutter.width + Config.theme.spacing
+      Layout.preferredWidth: 0
+      active: root.footer !== null
+      visible: active
+      focus: active
+      sourceComponent: root.footer
     }
   }
 

@@ -25,12 +25,30 @@ Plugin {
   readonly property var ordered: internal.list.slice().sort(still ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || b.id - a.id)
   // Summoned, the held ones show too.
   readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
-  // `limit` at a time; summoned, the arrows scroll past them, digits following what shows.
-  readonly property var shown: showable.slice(internal.offset, internal.offset + settings.limit)
-  readonly property int first: internal.offset
+  // Critical ones stay by the corner; the rest show `limit` at a time, summoned the arrows scrolling past them. A card's digit is its place among all, so it holds still.
+  readonly property var pinned: showable.filter(notification => critical(notification))
+  readonly property var rest: showable.filter(notification => !critical(notification))
+  readonly property int room: Math.max(0, settings.limit - pinned.length)
+  readonly property var shown: pinned.slice(0, settings.limit).concat(rest.slice(internal.offset, internal.offset + room))
   // Those not shown, and those pause or a fullscreen window holds.
   readonly property int more: showable.length - shown.length
   readonly property int held: ordered.length - showable.length
+  // Where the ones shown sit among all, as a filter says it (3-6 of 8); "" while all show.
+  readonly property string range: more > 0 ? Words.rangeOf(pinned.length + internal.offset, Math.max(1, shown.length - Math.min(pinned.length, settings.limit)), showable.length) : ""
+  // The keys, listed while `?` holds them, as the menu lists its own.
+  readonly property bool help: internal.help
+  readonly property var keys: [
+    { key: "1-9", desc: words.helpPick },
+    { key: ["Up", "Down"], desc: words.helpMove },
+    { key: "Return", desc: words.helpOpen },
+    { key: "x", desc: words.helpDismiss },
+    { key: "Tab", desc: words.helpReply },
+    { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
+    { key: "Ctrl+Shift+x", desc: words.helpClear },
+    { key: "Ctrl+r", desc: words.helpRestore },
+    { key: "Ctrl+p", desc: words.helpPause },
+    { key: "Escape", desc: Words.helpEscape }
+  ]
   // The card the keys act on while summoned.
   readonly property var picked: internal.picked
   // The card being replied to, its prompt in its actions' place; and what was sent, by id, shown until it goes.
@@ -48,15 +66,25 @@ Plugin {
       resume: "resume",
       none: "No notifications",
       send: "send",
-      sendClose: "send and close",
-      closed: "closed"
+      copyReply: "copy reply",
+      you: "You: ",
+      closedBySender: "closed by sender",
+      helpPick: "Pick that card",
+      helpMove: "Move the pick, scrolling",
+      helpOpen: "Open it, and let go",
+      helpDismiss: "Dismiss it",
+      helpReply: "Reply, where it takes one",
+      helpClear: "Clear all",
+      helpRestore: "Bring back the last closed",
+      helpPause: "Pause or resume"
     })
   actions: ({
       summon: { icon: () => Glyphs.notifications, available: () => true, run: () => root.summon() },
       pause: { icon: () => root.glyph, state: root.name, available: () => true, run: () => root.togglePause() },
       clear: { icon: () => Glyphs.close, available: () => internal.list.length > 0, run: () => root.clear() },
       dismiss: { icon: () => Glyphs.close, available: () => root.newest() !== null, run: () => root.newest().dismiss() },
-      invoke: { icon: () => Glyphs.notifications, available: () => root.newest() !== null, run: () => root.open(root.newest()) }
+      invoke: { icon: () => Glyphs.notifications, available: () => root.newest() !== null, run: () => root.open(root.newest()) },
+      restore: { icon: () => Glyphs.notifications, available: () => internal.closed.length > 0, run: () => root.restore() }
     })
 
   function critical(notification) {
@@ -125,13 +153,11 @@ Plugin {
 
   // Its reply first, on TAB, then its rules' actions on their keys, then its sender's but the default, each with a letter its label offers, else any, that neither those nor `x`, which dismisses, take; none once a reply shows in their place.
   function actionsOf(notification) {
-    if (!notification || notification.gone || notification.id in internal.sent) return [];
+    if (!notification || notification.gone || notification.restored || notification.id in internal.sent) return [];
     const values = valuesOf(notification);
     const ruled = Array.from(internal.applied[notification.id]?.actions ?? []).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => {
         root.runFor(notification, action.cmd);
-        if (action.closes === false) return;
-        notification.dismiss();
-        root.release();
+        if (action.closes !== false) notification.dismiss();
       } }));
     const actions = Array.from(notification.actions).filter(action => action.identifier !== "default");
     const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwyz");
@@ -169,6 +195,7 @@ Plugin {
     if (!notification || notification.gone) return false;
     internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
     internal.drafts = without(internal.drafts, notification.id);
+    internal.arrived = without(internal.arrived, notification.id);
     notification.sendInlineReply(text);
     if (close || !notification.resident) release();
     else endReply();
@@ -182,23 +209,56 @@ Plugin {
     endReply();
   }
 
-  // ↑↓ as they show: newest by the corner, so at a bottom one Down goes toward it; past the last shown they scroll.
+  // ↑↓ as they show: newest by the corner, so at a bottom one Down goes toward it; past the last shown, or back past the first of the rest, they scroll.
   function move(down) {
     const by = down === settings.corner.startsWith("top") ? 1 : -1;
-    const next = shown.indexOf(internal.picked) + by;
-    if (next >= 0 && next < shown.length) internal.picked = shown[next];
-    else if (next >= shown.length && internal.offset + shown.length < showable.length) {
+    const at = shown.indexOf(internal.picked);
+    const first = Math.min(pinned.length, settings.limit);
+    if (by < 0 && at === first && internal.offset > 0) {
+      internal.offset--;
+      internal.picked = shown[first];
+    } else if (by > 0 && at === shown.length - 1 && internal.offset + room < rest.length) {
       internal.offset++;
       internal.picked = shown[shown.length - 1];
-    } else if (next < 0 && internal.offset > 0) {
-      internal.offset--;
-      internal.picked = shown[0];
+    } else if (at + by >= 0 && at + by < shown.length) {
+      internal.picked = shown[at + by];
     }
   }
 
-  // A key while summoned: a digit picks a card, ↑↓ move the pick, its letters run its actions, RET opens it and lets go of the keys, x dismisses it; C-X clears all, C-p pauses, ESC lets go.
+  // A card by its digit, its place among all, scrolled into view.
+  function pick(notification) {
+    if (!notification) return false;
+    const at = rest.indexOf(notification);
+    if (at >= 0 && at < internal.offset) internal.offset = at;
+    else if (at >= internal.offset + room) internal.offset = at - room + 1;
+    internal.picked = notification;
+    return true;
+  }
+
+  // The last card that closed, back in the stack, only to read: its sender is done with it.
+  function restore() {
+    const last = internal.closed[internal.closed.length - 1];
+    if (!last) return;
+    internal.closed = internal.closed.slice(0, -1);
+    const card = Object.assign({}, last, { restored: true });
+    card.dismiss = card.expire = () => root.leave(card);
+    internal.list = internal.list.concat([card]);
+    internal.left = Object.assign({}, internal.left, { [card.id]: 1000 * settings.timeout.normal });
+    internal.arrived = Object.assign({}, internal.arrived, { [card.id]: last.arrived });
+    if (summoned) internal.picked = card;
+  }
+
+  // When it came, once it has waited a minute or more (held by pause, idle or a fullscreen window): so an old one never reads as new.
+  function ageOf(notification) {
+    const since = internal.arrived[notification.id];
+    return since && Clock.date - since >= 60000 ? Clock.time(new Date(since)) : "";
+  }
+
+  // A key while summoned: a digit picks a card, ↑↓ move the pick, its letters run its actions, RET opens it and lets go of the keys, x dismisses it; C-X clears all, C-r brings back the last closed, C-p pauses, ? lists the keys and any key closes the list, ESC lets go.
   function key(name) {
-    if (/^[1-9]$/.test(name) && shown[Number(name) - 1]) internal.picked = shown[Number(name) - 1];
+    if (internal.help) internal.help = false;
+    else if (name === "?") internal.help = true;
+    else if (/^[1-9]$/.test(name)) return pick(showable[Number(name) - 1]);
     else if (name === "Up" || name === "Down") move(name === "Down");
     else if (name === "Return" && internal.picked) {
       open(internal.picked);
@@ -206,6 +266,7 @@ Plugin {
     } else if (name === "x" && internal.picked) internal.picked.dismiss();
     else if (name === "Ctrl+X") clear();
     else if (name === "Ctrl+p") togglePause();
+    else if (name === "Ctrl+r") restore();
     else if (name === "Escape") release();
     else {
       const action = actionsOf(internal.picked).find(action => action.key && action.key === name);
@@ -296,6 +357,7 @@ Plugin {
     const applied = ruled(notification);
     if (applied.hide) return;
     const known = internal.list.includes(notification);
+    if (!known) internal.arrived = Object.assign({}, internal.arrived, { [notification.id]: Date.now() });
     internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
     if (applied.run && !known) runFor(notification, applied.run);
     notification.tracked = true;
@@ -312,11 +374,13 @@ Plugin {
   // The pick moves to the card that takes its place; the last one gone lets go of the keys. One closing while replied to stays as a placeholder, its slot and the text kept, until the reply ends.
   function leave(notification) {
     if (notification === internal.replying && !notification.gone) {
-      const ghost = { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image, urgency: notification.urgency, hints: ({}), actions: [], gone: true, dismiss: () => root.endReply() };
+      const ghost = Object.assign(snapshot(notification), { gone: true, dismiss: () => root.endReply() });
       internal.list = internal.list.map(each => each === notification ? ghost : each);
       internal.replying = internal.picked = ghost;
       return;
     }
+    // Kept to bring back (C-r), unless its sender marked it passing (transient) or it is a placeholder already.
+    if (!notification.gone && !notification.restored && !notification.transient) internal.closed = internal.closed.slice(-19).concat([snapshot(notification)]);
     const at = shown.indexOf(notification);
     internal.list = internal.list.filter(each => each !== notification);
     internal.left = without(internal.left, notification.id);
@@ -327,6 +391,11 @@ Plugin {
     if (internal.picked !== notification) return;
     internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
     if (internal.picked === null) release();
+  }
+
+  // What a card shows, kept once its sender is done with it: a placeholder that reads as it did and runs nothing.
+  function snapshot(notification) {
+    return { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image, urgency: notification.urgency, hints: ({ "image-path": notification.hints["image-path"] }), actions: [], arrived: internal.arrived[notification.id] };
   }
 
   function without(map, id) {
@@ -348,6 +417,10 @@ Plugin {
     property var replying: null
     property var sent: ({})
     property var drafts: ({})
+    // The last closed, to bring back, and when each came, by id.
+    property var closed: []
+    property var arrived: ({})
+    property bool help: false
     // What the rules matching it set, by id.
     property var applied: ({})
     // The order as it was when it held still, by id.
