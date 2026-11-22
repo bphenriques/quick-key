@@ -16,24 +16,19 @@ Plugin {
 
   // Kept over a reload, as keep awake is.
   readonly property bool paused: Kept.values[name + ".paused"] ?? false
-  // A focused fullscreen window holds them as pause does: under it they would expire unseen.
-  readonly property bool fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
   // The cards have the keys (s-n), one surface at a time with the menu and panels.
   readonly property bool summoned: Panels.top === root
   // Summoned or under the pointer, nothing moves and no time runs: the order holds, one that comes meanwhile going last.
   readonly property bool still: summoned || internal.hovered
   readonly property var ordered: internal.list.slice().sort(still ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || b.id - a.id)
   // Summoned, the held ones show too.
-  readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
-  // Critical ones stay by the corner; the rest show `limit` at a time, summoned the arrows scrolling past them. A card's digit is its place among all, so it holds still.
-  readonly property var pinned: showable.filter(notification => critical(notification))
-  readonly property var rest: showable.filter(notification => !critical(notification))
-  readonly property int room: Math.max(0, settings.limit - pinned.length)
-  readonly property var shown: pinned.slice(0, settings.limit).concat(rest.slice(internal.offset, internal.offset + room))
-  // Those not shown, and those pause or a fullscreen window holds.
+  readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !internal.fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
+  // Critical ones by the corner, then the rest `limit` at a time, summoned the arrows scrolling past them; a card's digit is its place among all, so it holds still.
+  readonly property var shown: internal.pinned.slice(0, settings.limit).concat(internal.rest.slice(internal.offset, internal.offset + internal.room))
+  // Those showable but not shown.
   readonly property int more: showable.length - shown.length
   // None under a fullscreen window: the count would sit over it.
-  readonly property int held: fullscreen ? 0 : ordered.length - showable.length
+  readonly property int held: internal.fullscreen ? 0 : ordered.length - showable.length
   // The keys, listed while `?` holds them, as the menu lists its own.
   readonly property bool help: internal.help
   readonly property var keys: [
@@ -216,11 +211,11 @@ Plugin {
   function move(down) {
     const by = down === settings.corner.startsWith("top") ? 1 : -1;
     const at = shown.indexOf(internal.picked);
-    const first = Math.min(pinned.length, settings.limit);
+    const first = Math.min(internal.pinned.length, settings.limit);
     if (by < 0 && at === first && internal.offset > 0) {
       internal.offset--;
       internal.picked = shown[first];
-    } else if (by > 0 && at === shown.length - 1 && internal.offset + room < rest.length) {
+    } else if (by > 0 && at === shown.length - 1 && internal.offset + internal.room < internal.rest.length) {
       internal.offset++;
       internal.picked = shown[shown.length - 1];
     } else if (at + by >= 0 && at + by < shown.length) {
@@ -231,9 +226,9 @@ Plugin {
   // A card by its digit, its place among all, scrolled into view.
   function pick(notification) {
     if (!notification) return false;
-    const at = rest.indexOf(notification);
+    const at = internal.rest.indexOf(notification);
     if (at >= 0 && at < internal.offset) internal.offset = at;
-    else if (at >= internal.offset + room) internal.offset = at - room + 1;
+    else if (at >= internal.offset + internal.room) internal.offset = at - internal.room + 1;
     internal.picked = notification;
     return true;
   }
@@ -390,7 +385,7 @@ Plugin {
     internal.applied = without(internal.applied, notification.id);
     internal.drafts = without(internal.drafts, notification.id);
     internal.arrived = without(internal.arrived, notification.id);
-    if (internal.offset > 0 && internal.offset + room > rest.length) internal.offset--;
+    if (internal.offset > 0 && internal.offset + internal.room > internal.rest.length) internal.offset--;
     if (internal.picked !== notification) return;
     internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
     if (internal.picked === null) release();
@@ -412,6 +407,11 @@ Plugin {
   QtObject {
     id: internal
 
+    // A focused fullscreen window holds them as pause does: under it they would expire unseen.
+    readonly property bool fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
+    readonly property var pinned: root.showable.filter(notification => root.critical(notification))
+    readonly property var rest: root.showable.filter(notification => !root.critical(notification))
+    readonly property int room: Math.max(0, root.settings.limit - pinned.length)
     property var list: []
     // Milliseconds left by id, counted only while shown and nothing holds them; 0 never expires.
     property var left: ({})

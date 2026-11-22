@@ -15,7 +15,6 @@ Surface {
   // Who or what it is from, on the title's right.
   property string aside: ""
   property string body: ""
-  property int lines: 2
   // From 0 to 1, with `meterText` beside it; below 0, none.
   property real meter: -1
   property string meterText: ""
@@ -28,7 +27,7 @@ Surface {
   property string tone: ""
   // What can no longer run (a card its sender closed), dim whole.
   property bool dimmed: false
-  // Its digit in the gutter, the keys on its actions and `closeKey` by its ✕, shown while `keysShown`; an action's and the ✕'s only while `current`.
+  // Its digit in the gutter, the keys on its actions and `closeKey` in its ✕'s place, shown while `keysShown`; an action's and the close key only while `current`.
   property string key: ""
   property string closeKey: ""
   property bool keysShown: false
@@ -143,7 +142,7 @@ Surface {
           Layout.fillWidth: true
           visible: root.body !== ""
           wrapMode: Text.Wrap
-          maximumLineCount: root.lines
+          maximumLineCount: 2
           elide: Text.ElideRight
           tone: root.textTone
           text: root.body
@@ -178,32 +177,31 @@ Surface {
         mipmap: true
       }
 
-      // Its ✕ and its key in a column of their own, mirroring the digit's, so the text ends on one edge.
-      Row {
+      // Its ✕ in a column of its own, mirroring the digit's, so the text ends on one edge; its key in the ✕'s place while the keys are on it.
+      Item {
         Layout.alignment: Qt.AlignTop
+        implicitWidth: Metrics.line
+        implicitHeight: Metrics.line
 
-        KeyCell {
+        KeyHint {
+          anchors.centerIn: parent
+          visible: root.acting && !close.containsMouse
           key: root.closeKey
         }
 
-        Item {
-          implicitWidth: Metrics.line
-          implicitHeight: Metrics.line
+        Icon {
+          anchors.centerIn: parent
+          visible: close.containsMouse || root.hovered && !root.acting
+          size: Metrics.line
+          tone: close.containsMouse ? "primary" : "dim"
+          glyph: Glyphs.close
+        }
 
-          Icon {
-            anchors.centerIn: parent
-            visible: root.hovered || root.acting
-            size: Metrics.line
-            tone: close.containsMouse ? "primary" : "dim"
-            glyph: Glyphs.close
-          }
-
-          MouseArea {
-            id: close
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: root.dismissed()
-          }
+        MouseArea {
+          id: close
+          anchors.fill: parent
+          hoverEnabled: true
+          onClicked: root.dismissed()
         }
       }
     }

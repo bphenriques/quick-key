@@ -138,12 +138,11 @@ Scope {
               meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
               meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
               actions: view.plugin.actionsOf(notification)
-              // Replying, the body takes a line and the prompt two, so the card keeps its height.
-              lines: notification && notification === view.plugin.replying ? 1 : 2
               footer: !notification ? null : notification === view.plugin.replying ? reply : notification.id in view.plugin.sent ? sent : null
               actionSide: view.settings.actionSide
               // Its place among all, while a digit reaches it.
-              key: notification && view.plugin.showable.indexOf(notification) < 9 ? String(view.plugin.showable.indexOf(notification) + 1) : ""
+              readonly property int place: view.plugin.showable.indexOf(notification)
+              key: place >= 0 && place < 9 ? String(place + 1) : ""
               closeKey: "x"
               // Replying, the prompt has the keys: the others would type.
               keysShown: view.plugin.summoned && !view.plugin.replying
@@ -158,6 +157,8 @@ Scope {
                 Label {
                   elide: Text.ElideRight
                   tone: "dim"
+                  // In the text's column, as the prompt's glyph takes the icon's.
+                  leftPadding: Config.theme.iconSize + Config.theme.spacing
                   text: view.plugin.words.you + (view.plugin.sent[card.notification?.id] ?? "")
                 }
               }
@@ -178,7 +179,8 @@ Scope {
 
     Prompt {
       id: prompt
-      maxLines: 2
+      // One line, scrolling, in the actions' place: the card keeps its height.
+      maxLines: 1
       placeholder: view.plugin.replying?.inlineReplyPlaceholder || Words.replyPrompt
       onBack: view.plugin.endReply()
       Component.onCompleted: set(view.plugin.draftOf(view.plugin.replying))

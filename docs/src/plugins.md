@@ -151,11 +151,10 @@ Cards never take the keys on their own, so a notification never takes your typin
 
 A key path runs as typing it would: `notifications press "2 x"`.
 
-A card whose sender takes a reply offers it first among its actions, on `TAB`. The prompt takes the actions' place and the body a line, so the card keeps its height. `RET` sends it and lets go, as the reply closes the card; the keys stay only on a card its sender keeps (`resident`), which shows what you sent on one line. `C-S-RET` sends it and lets go always. `ESC` clears it; empty, `ESC` goes back to the card's keys. A card keeps its own unsent reply until it goes. A card its sender closes while you type stays, the bar saying so, until you leave the prompt: `RET` then copies your text, so none is lost.
+A card whose sender takes a reply offers it first among its actions, on `TAB`. The prompt takes the actions' place, one line that scrolls, so the card keeps its height. `RET` sends it and lets go, as the reply closes the card; the keys stay only on a card its sender keeps (`resident`), which shows what you sent on one line. `C-S-RET` sends it and lets go always. `ESC` clears it; empty, `ESC` goes back to the card's keys. A card keeps its own unsent reply until it goes. A card its sender closes while you type stays, the bar saying so, until you leave the prompt: `RET` then copies your text, so none is lost.
 
 Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `summon` gives the cards the keys, `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `restore` brings back the last closed, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
 
-`width` sets the cards' width (480).
 
 ## Writing one in QML
 
