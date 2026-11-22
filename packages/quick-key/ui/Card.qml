@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A card that comes and goes on its own (a notification): its icon or a picture three lines tall, title and what it is from, a body of up to `lines`, a meter, actions on one side; a click activates it, a right click or its ✕ dismisses it. Its keys have their room at rest, so showing them moves nothing.
+// A card that comes and goes on its own (a notification): its icon or a picture, its title and what it is from, a body of up to `lines`, a meter, actions on one side; a click activates it, a right click or its ✕ dismisses it. Its keys have their room at rest, so showing them moves nothing.
 Surface {
   id: root
 
@@ -23,8 +23,10 @@ Surface {
   property string actionSide: "right"
   // In the actions' place while set (a reply's prompt, what was sent), so the card never grows; it has the keys.
   property Component footer: null
-  // Alert for what must not be missed: its border, icon, title and meter, and a glyph beside `aside`.
+  // Alert for what must not be missed: its border, the glyph beside `aside` and the meter, so colour is not all that says so.
   property string tone: ""
+  // What can no longer run (a card its sender closed), dim whole.
+  property bool dimmed: false
   // Its digit in the gutter, the keys on its actions and `closeKey` by its ✕, shown while `keysShown`; an action's and the ✕'s only while `current`.
   property string key: ""
   property string closeKey: ""
@@ -32,11 +34,14 @@ Surface {
   property bool current: false
   readonly property bool hovered: mouse.containsMouse
   readonly property bool acting: keysShown && current
+  readonly property string textTone: dimmed ? "dim" : "normal"
 
   signal activated
   signal dismissed
 
   implicitHeight: layout.implicitHeight + 2 * Config.theme.padding
+  // Opaque: cards sit over working text, which would show through.
+  color: Tone.surface(1)
   border.color: tone ? Tone.color(tone) : current ? Tone.color("primary") : Config.colors.border
 
   Rectangle {
@@ -71,18 +76,19 @@ Surface {
       visible: root.image === ""
       glyph: root.glyph
       source: root.icon
-      tone: root.tone || "normal"
+      tone: root.textTone
     }
 
-    // Three lines tall and as wide as its shape, up to twice that, so album art and screenshots read.
+    // Square and three lines tall, cropped to fill, so the text starts in one place whatever the picture's shape.
     Image {
       Layout.alignment: Qt.AlignTop
+      Layout.preferredWidth: 3 * Metrics.line
       Layout.preferredHeight: 3 * Metrics.line
-      Layout.preferredWidth: implicitHeight > 0 ? Math.min(2, implicitWidth / implicitHeight) * Layout.preferredHeight : Layout.preferredHeight
       visible: root.image !== ""
       source: root.image
+      sourceSize: Qt.size(6 * Metrics.line, 6 * Metrics.line)
+      fillMode: Image.PreserveAspectCrop
       mipmap: true
-      fillMode: Image.PreserveAspectFit
     }
 
     ColumnLayout {
@@ -98,7 +104,7 @@ Surface {
           Layout.fillWidth: true
           elide: Text.ElideRight
           strong: true
-          tone: root.tone || "normal"
+          tone: root.textTone
           text: root.title
         }
 
@@ -109,33 +115,12 @@ Surface {
           glyph: Glyphs.urgent
         }
 
+        // A third of the width at most, so a long app name never takes the title's room.
         Label {
-          tone: root.tone ? root.tone : "dim"
+          Layout.maximumWidth: root.width / 3
+          elide: Text.ElideRight
+          tone: "dim"
           text: root.aside
-        }
-
-        KeyCell {
-          key: root.closeKey
-        }
-
-        Item {
-          implicitWidth: Metrics.line
-          implicitHeight: Metrics.line
-
-          Icon {
-            anchors.centerIn: parent
-            visible: root.hovered || root.acting
-            size: Metrics.line
-            tone: close.containsMouse ? "primary" : "dim"
-            glyph: Glyphs.close
-          }
-
-          MouseArea {
-            id: close
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: root.dismissed()
-          }
         }
       }
 
@@ -145,6 +130,7 @@ Surface {
         wrapMode: Text.Wrap
         maximumLineCount: root.lines
         elide: Text.ElideRight
+        tone: root.textTone
         text: root.body
       }
 
@@ -160,7 +146,7 @@ Surface {
         }
 
         Label {
-          tone: root.tone || "normal"
+          tone: root.tone || root.textTone
           text: root.meterText
         }
       }
@@ -170,6 +156,8 @@ Surface {
         // An equal share each, labels shortened to fit, so every action and its key shows.
         readonly property real share: (width - root.actions.length * spacing) / Math.max(1, root.actions.length)
         Layout.fillWidth: true
+        // The card's width, never its own: actions asking for theirs would widen the card past its edge.
+        Layout.preferredWidth: 0
         visible: root.actions.length > 0 && root.footer === null
         spacing: 2 * Metrics.cell
 
@@ -186,21 +174,22 @@ Surface {
             id: action
             required property int index
             readonly property var entry: root.actions[index] ?? ({})
-            implicitWidth: actionRow.implicitWidth
-            implicitHeight: actionRow.implicitHeight
+            implicitWidth: entryRow.implicitWidth
+            implicitHeight: entryRow.implicitHeight
 
             Row {
-              id: actionRow
+              id: entryRow
 
               KeyCell {
                 id: actionKey
                 key: action.entry.key ?? ""
               }
 
+              // Dim only on the cards the keys are not on, while summoned: dim says it cannot run now.
               Label {
                 width: Math.min(implicitWidth, actionRow.share - actionKey.implicitWidth)
                 elide: Text.ElideRight
-                tone: hover.containsMouse ? "primary" : root.current ? "normal" : "dim"
+                tone: hover.containsMouse ? "primary" : root.keysShown && !root.current ? "dim" : root.textTone
                 text: action.entry.desc ?? ""
               }
             }
@@ -228,6 +217,35 @@ Surface {
         sourceComponent: root.footer
       }
     }
+
+    // Its ✕ and its key in a column of their own, mirroring the digit's, so the text ends on one edge.
+    Row {
+      Layout.alignment: Qt.AlignTop
+
+      KeyCell {
+        key: root.closeKey
+      }
+
+      Item {
+        implicitWidth: Metrics.line
+        implicitHeight: Metrics.line
+
+        Icon {
+          anchors.centerIn: parent
+          visible: root.hovered || root.acting
+          size: Metrics.line
+          tone: close.containsMouse ? "primary" : "dim"
+          glyph: Glyphs.close
+        }
+
+        MouseArea {
+          id: close
+          anchors.fill: parent
+          hoverEnabled: true
+          onClicked: root.dismissed()
+        }
+      }
+    }
   }
 
   // A key and a space after it, its room kept while hidden.
@@ -236,11 +254,11 @@ Surface {
     implicitWidth: key ? hint.implicitWidth + Metrics.cell : 0
     implicitHeight: hint.implicitHeight
 
-    Label {
+    KeyHint {
       id: hint
       visible: root.acting
-      tone: "primary"
-      text: MenuKeys.label(parent.key)
+      key: parent.key
+      chars: MenuKeys.label(parent.key).length
     }
   }
 }

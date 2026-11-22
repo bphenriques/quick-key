@@ -127,6 +127,7 @@ Scope {
               aside: notification?.gone ? view.plugin.words.closed : notification?.summary ? notification.appName : ""
               body: notification?.body ?? ""
               tone: notification && view.plugin.critical(notification) ? "alert" : ""
+              dimmed: notification?.gone ?? false
               meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
               meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
               actions: view.plugin.actionsOf(notification)
@@ -206,6 +207,7 @@ Scope {
       id: bar
       visible: view.plugin.summoned
       width: parent.width
+      color: Tone.surface(1)
       implicitHeight: legend.implicitHeight + Config.theme.padding / 2
 
       KeyLegend {
@@ -215,7 +217,7 @@ Scope {
         anchors.leftMargin: Config.theme.padding
         keys: view.plugin.replying?.gone ? [{ key: "Return", what: Words.copy }] : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendClose }] : view.plugin.shown.length === 0 ? [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }] : [
           { key: "Return", what: Words.open },
-          { key: "Ctrl+X", what: view.plugin.words.clear },
+          { key: "Ctrl+Shift+x", what: view.plugin.words.clear },
           { key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }
         ]
       }
@@ -268,6 +270,13 @@ Scope {
           text: view.plugin.held
         }
       }
+    }
+
+    // A click on a pill summons the cards, the held ones with them.
+    MouseArea {
+      anchors.fill: pills
+      enabled: pills.visible
+      onClicked: view.plugin.summon()
     }
   }
 }
