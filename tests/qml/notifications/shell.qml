@@ -301,10 +301,40 @@ ShellRoot {
         until: () => !root.find("Bea") && root.plugin.replying === null
       },
       {
+        name: "a rule sets the urgency, so its card is critical, first and never expiring",
+        start: () => {
+          root.plugin.release();
+          Kept.set("notifications.paused", false);
+          root.plugin.clear();
+          root.send("-a", "urgent", "-t", "300", "Urgent");
+        },
+        until: () => root.find("Urgent") !== null && root.plugin.critical(root.find("Urgent")) && root.plugin.ordered[0]?.summary === "Urgent" && root.mark("urgent") > 1000
+      },
+      {
+        name: "a rule sets the time it shows, over its sender's: briefer, or never",
+        start: () => {
+          root.send("-a", "brief", "Brief rule");
+          root.send("-a", "sticky", "-t", "300", "Sticky");
+        },
+        until: () => {
+          if (root.find("Brief rule")) root.mark("briefRule");
+          return "briefRule" in root.marks && !root.find("Brief rule") && root.find("Sticky") !== null && root.mark("sticky") > 1000;
+        }
+      },
+      {
+        name: "a rule lets one through a pause, which holds the rest",
+        start: () => {
+          Kept.set("notifications.paused", true);
+          root.send("-a", "loud", "Loud");
+          root.send("-a", "quiet", "Quiet");
+        },
+        until: () => root.plugin.shown.some(notification => notification.summary === "Loud") && root.find("Quiet") !== null && !root.plugin.shown.some(notification => notification.summary === "Quiet")
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
-          const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(" }, extra: 1 });
-          return root.plugin.settings.problems().length === 0 && problems.length === 3 && problems.some(problem => problem.startsWith("matches body with '('"));
+          const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes" });
+          return root.plugin.settings.problems().length === 0 && problems.length === 6 && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
         }
       }
     ]

@@ -2,9 +2,41 @@
   "plugins": {
     "notifications": {
       "limit": 3,
-      "timeout": { "low": 1, "normal": 30 },
+      "timeout": {
+        "low": 1,
+        "normal": 30
+      },
       "rules": [
-        { "match": { "app": "^hidden$" }, "hide": true }
+        {
+          "match": {
+            "app": "^hidden$"
+          },
+          "hide": true
+        },
+        {
+          "match": {
+            "app": "^urgent$"
+          },
+          "urgency": "critical"
+        },
+        {
+          "match": {
+            "app": "^brief$"
+          },
+          "timeout": 0.3
+        },
+        {
+          "match": {
+            "app": "^sticky$"
+          },
+          "timeout": 0
+        },
+        {
+          "match": {
+            "app": "^loud$"
+          },
+          "ignorePause": true
+        }
       ]
     }
   }

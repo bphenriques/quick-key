@@ -23,7 +23,7 @@ Plugin {
   // Critical ones first, then the newest; a replaced one keeps its place. Summoned, the order holds, so digits do, one that comes meanwhile going last.
   readonly property var ordered: internal.list.slice().sort(summoned ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || b.id - a.id)
   // Summoned, every one shows, those held too, as many as there are digits.
-  readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !paused && !fullscreen)
+  readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
   readonly property var shown: showable.slice(0, summoned ? 9 : settings.limit)
   // Those over the limit, and those pause or a fullscreen window holds.
   readonly property int more: showable.length - shown.length
@@ -62,7 +62,12 @@ Plugin {
     })
 
   function critical(notification) {
-    return notification.urgency === NotificationUrgency.Critical;
+    return urgencyOf(notification) === "critical";
+  }
+
+  // Its sender's, unless a rule sets another.
+  function urgencyOf(notification) {
+    return internal.applied[notification.id]?.urgency ?? ["low", "normal", "critical"][notification.urgency];
   }
 
   function togglePause() {
@@ -196,11 +201,13 @@ Plugin {
       .reduce((applied, rule) => Object.assign(applied, rule), {});
   }
 
-  // Milliseconds it shows: its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's; 0 for never.
+  // Milliseconds it shows: a rule's, else its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's; 0 for never, as for a critical one.
   function timeoutOf(notification) {
-    if (critical(notification) || notification.expireTimeout === 0) return 0;
-    if (notification.expireTimeout > 0) return notification.expireTimeout;
-    return 1000 * (notification.urgency === NotificationUrgency.Low ? settings.timeout.low : settings.timeout.normal);
+    const rule = internal.applied[notification.id]?.timeout;
+    if (critical(notification)) return 0;
+    if (rule !== undefined) return rule * 1000;
+    if (notification.expireTimeout >= 0) return notification.expireTimeout;
+    return 1000 * (urgencyOf(notification) === "low" ? settings.timeout.low : settings.timeout.normal);
   }
 
   // Volume and brightness tools replace their last one by a tag.
@@ -210,7 +217,9 @@ Plugin {
 
   // A hidden one is left untracked, so Quickshell drops it; a replaced one, by id or tag, starts its time again.
   function arrive(notification) {
-    if (ruled(notification).hide) return;
+    const applied = ruled(notification);
+    if (applied.hide) return;
+    internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
     notification.tracked = true;
     const tag = tagOf(notification);
     for (const old of internal.list) {
@@ -232,18 +241,19 @@ Plugin {
     }
     const at = shown.indexOf(notification);
     internal.list = internal.list.filter(each => each !== notification);
-    const left = Object.assign({}, internal.left);
-    delete left[notification.id];
-    internal.left = left;
-    if (notification.id in internal.sent) {
-      const sent = Object.assign({}, internal.sent);
-      delete sent[notification.id];
-      internal.sent = sent;
-    }
+    internal.left = without(internal.left, notification.id);
+    internal.sent = without(internal.sent, notification.id);
+    internal.applied = without(internal.applied, notification.id);
     if (internal.held === notification) internal.held = null;
     if (internal.picked !== notification) return;
     internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
     if (internal.picked === null) release();
+  }
+
+  function without(map, id) {
+    const rest = Object.assign({}, map);
+    delete rest[id];
+    return rest;
   }
 
   Component.onCompleted: check()
@@ -258,6 +268,8 @@ Plugin {
     property var picked: null
     property var replying: null
     property var sent: ({})
+    // What the rules matching it set, by id.
+    property var applied: ({})
     // The order as it was summoned, by id.
     property var frozen: []
     property string error: ""
