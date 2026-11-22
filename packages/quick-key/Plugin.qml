@@ -129,11 +129,9 @@ Scope {
       if (then) then(127, "");
       return;
     }
-    const process = job.createObject(root, { command: commandLine(shell, ...args), then: then ?? null });
-    process.running = true;
+    job.createObject(root, { then: then ?? null }).exec(commandLine(shell, ...args));
   }
 
-  // `running` is set after creation, never declared: a running that turns true before `command` is set starts nothing (see services/CommandReader.qml).
   Component {
     id: job
 

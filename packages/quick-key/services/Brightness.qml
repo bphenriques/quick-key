@@ -41,8 +41,7 @@ Singleton {
 
     function write() {
       writing = internal.wanted;
-      command = Commands.line(Config.brightness.set, root.name, String(writing));
-      running = true;
+      exec(Commands.line(Config.brightness.set, root.name, String(writing)));
     }
 
     onExited: code => {

@@ -140,10 +140,11 @@ Scope {
     return own.concat(numbered(level.entry.list, level.entry.pins));
   }
 
-  // A bar slot's items: a name is a status or plugin to show, an entry with a list each of its items, any other entry itself.
+  // A bar slot's items: a name is a status or plugin to show, an entry with a list each of its items, any other entry itself; each with a `uid`, what it is, for the view to follow it by.
   function barOf(slot) {
-    return Array.from(slot ?? []).reduce((items, part) => items.concat(typeof part === "string" ? [{ key: "", desc: part, status: part }]
-      : part.list ? barList(part) : [itemOf(part)]), []);
+    return Array.from(slot ?? []).reduce((items, part) => items.concat(typeof part === "string" ? [{ key: "", desc: part, status: part, uid: part }]
+      : part.list ? barList(part).map(item => Object.assign({}, item, { uid: part.list + ":" + (item.id ?? "more") }))
+      : [Object.assign(itemOf(part), { uid: part.key || part.desc })]), []);
   }
 
   // A bar item's compositor key: its entry's `shortcut`, or a plugin's.

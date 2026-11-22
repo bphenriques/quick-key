@@ -12,15 +12,10 @@ CommandProcess {
 
   signal read(string text)
 
-  // The command is set here rather than by a binding: a running binding can turn true before a command binding has it.
   function refresh() {
     if (!shell) return;
-    command = ["sh", "-c", shell];
-    if (running) {
-      pending = true;
-    } else {
-      running = true;
-    }
+    if (running) pending = true;
+    else exec(["sh", "-c", shell]);
   }
 
   // Both fire as it starts; callLater runs the read once.
@@ -29,7 +24,7 @@ CommandProcess {
 
   onExited: if (pending) {
     pending = false;
-    running = true;
+    exec(["sh", "-c", shell]);
   }
 
   stdout: StdioCollector {

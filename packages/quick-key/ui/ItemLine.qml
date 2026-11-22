@@ -1,5 +1,4 @@
 import QtQuick
-import qs
 
 // A listed item's line (a task, a device): lit and bold while in use, dim and struck through once done, its value in its own tone when it needs attention.
 StatusLine {

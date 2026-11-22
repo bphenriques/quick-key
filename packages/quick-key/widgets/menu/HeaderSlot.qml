@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 // A third of a bar; sides get at least their items' width so the clock is never cut, the centre shortens its text.
 Item {
@@ -37,11 +38,15 @@ Item {
     spacing: 0
 
     Repeater {
-      model: slot.items.length
+      // By what each item is, so a tray icon's hover and tip follow it as others come and go.
+      model: ScriptModel {
+        values: slot.items
+        objectProp: "uid"
+      }
 
       HeaderItem {
-        required property int index
-        item: slot.items[index] ?? ({})
+        required property var modelData
+        item: modelData
         menu: slot.menu
       }
     }

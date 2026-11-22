@@ -26,10 +26,9 @@ Singleton {
 
   // Runs it with these variables beside the environment (a notification's NOTIFICATION_*), so what they hold is never read as a command.
   function runWith(shell, environment) {
-    if (shell) withEnvironment.createObject(root, { command: ["sh", "-c", shell], environment: environment }).running = true;
+    if (shell) withEnvironment.createObject(root).exec({ command: ["sh", "-c", shell], environment: environment });
   }
 
-  // `running` is set once made, never declared: one that turns true before `command` is set starts nothing.
   Component {
     id: withEnvironment
 

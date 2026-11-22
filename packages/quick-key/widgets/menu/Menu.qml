@@ -7,7 +7,6 @@ import Quickshell.Io
 import qs
 import qs.services
 import qs.ui
-import qs.builtins
 import qs.widgets.menu.calendar
 
 // The keyboard menu with live status: entries come from programs.quick-key.settings.menu.entries.

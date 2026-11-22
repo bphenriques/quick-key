@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import qs
 
 // The words the surfaces share, one per meaning, so a state or a key is never named two ways (AGENTS.md rules 6 and 7).
 Singleton {

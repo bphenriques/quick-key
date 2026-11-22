@@ -9,11 +9,9 @@ CommandProcess {
 
   signal read(string line)
 
-  // The command is set here rather than by a binding: a running binding can turn true before a command binding has it.
   function start() {
     if (!shell || running) return;
-    command = ["sh", "-c", shell];
-    running = true;
+    exec(["sh", "-c", shell]);
   }
 
   Component.onCompleted: start()
