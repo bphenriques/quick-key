@@ -12,17 +12,21 @@ Singleton {
   readonly property string configDir: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/quick-key"
   readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/quick-key"
 
-  // A colour set in theme wins over theme.name's file (the user's, then the shipped preset), which wins over the default.
+  // A colour set in theme wins over theme.name's file (the user's, then the shipped preset), which wins over `fallback`.
+  function colorOf(name, fallback) {
+    return adapter.theme[name] || userTheme.palette[name] || shippedTheme.palette[name] || fallback;
+  }
+
   readonly property QtObject colors: QtObject {
-    readonly property color background: adapter.theme.background || userTheme.palette.background || shippedTheme.palette.background || "#1d1f21"
-    readonly property color foreground: adapter.theme.foreground || userTheme.palette.foreground || shippedTheme.palette.foreground || "#c5c8c6"
-    readonly property color primary: adapter.theme.primary || userTheme.palette.primary || shippedTheme.palette.primary || "#61afef"
-    readonly property color alert: adapter.theme.alert || userTheme.palette.alert || shippedTheme.palette.alert || "#cc6666"
-    readonly property color warning: adapter.theme.warning || userTheme.palette.warning || shippedTheme.palette.warning || "#f0c674"
-    readonly property color border: adapter.theme.border || userTheme.palette.border || shippedTheme.palette.border || Qt.alpha(foreground, adapter.theme.disabledOpacity)
+    readonly property color background: root.colorOf("background", "#1d1f21")
+    readonly property color foreground: root.colorOf("foreground", "#c5c8c6")
+    readonly property color primary: root.colorOf("primary", "#61afef")
+    readonly property color alert: root.colorOf("alert", "#cc6666")
+    readonly property color warning: root.colorOf("warning", "#f0c674")
+    readonly property color border: root.colorOf("border", Qt.alpha(foreground, adapter.theme.disabledOpacity))
     // Your messages in a conversation; unset, the foreground at 0.15, which keeps its text near WCAG AA's 4.5:1.
-    readonly property color bubble: adapter.theme.bubble || userTheme.palette.bubble || shippedTheme.palette.bubble || Qt.alpha(foreground, 0.15)
-    readonly property color bubbleText: adapter.theme.bubbleText || userTheme.palette.bubbleText || shippedTheme.palette.bubbleText || foreground
+    readonly property color bubble: root.colorOf("bubble", Qt.alpha(foreground, 0.15))
+    readonly property color bubbleText: root.colorOf("bubbleText", foreground)
   }
 
   readonly property alias theme: adapter.theme
