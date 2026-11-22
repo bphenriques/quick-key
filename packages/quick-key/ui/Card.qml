@@ -41,15 +41,17 @@ Surface {
     actions.forEach((action, i) => {
       // An icon takes a glyph's width, about two characters, and one after it.
       const chars = (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0) + (action.glyph || action.source ? 3 : 0);
-      if (used + 1 + chars > room) {
+      if (used + actionGap + chars > room) {
         rows.push([]);
-        used = -1;
+        used = -actionGap;
       }
-      used += 1 + chars;
+      used += actionGap + chars;
       rows[rows.length - 1].push(i);
     });
     return rows;
   }
+  // Characters between two actions: twice the one between a key and its label, so each key reads with its own, as in a legend.
+  readonly property int actionGap: 2
 
   signal activated
   signal dismissed
@@ -229,7 +231,7 @@ Surface {
           required property int index
           readonly property var row: root.rows[index] ?? []
           Layout.fillWidth: true
-          spacing: Metrics.cell
+          spacing: root.actionGap * Metrics.cell
 
           // Only on the open side: a hidden one takes no spacing, so the actions meet the edge.
           Item {
