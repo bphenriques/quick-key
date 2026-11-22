@@ -187,7 +187,8 @@ Scope {
             item: root.menu.rows[index] ?? ({})
             menu: root.menu
             Layout.fillWidth: true
-            chars: root.menu.keyChars(root.menu.rows)
+            // As wide as the first column of actions too, so a list's labels start with theirs.
+            chars: Math.max(root.menu.keyChars(root.menu.rows), root.menu.bodyActions.length ? root.menu.columnChars(0, actionsGrid.columns) : 1)
           }
         }
 
@@ -256,7 +257,7 @@ Scope {
             menu: root.menu
             Layout.fillWidth: !hugs
             Layout.preferredWidth: hugs ? -1 : 1
-            chars: root.menu.columnChars(index, actionsGrid.columns)
+            chars: index % actionsGrid.columns === 0 && root.menu.rows.length ? Math.max(root.menu.columnChars(index, actionsGrid.columns), root.menu.keyChars(root.menu.rows)) : root.menu.columnChars(index, actionsGrid.columns)
           }
         }
       }
