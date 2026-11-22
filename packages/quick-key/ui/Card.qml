@@ -19,6 +19,8 @@ Surface {
   // Each { desc, key, run }, in order, on the side `actionSide` names.
   property var actions: []
   property string actionSide: "right"
+  // In the actions' place while set (a reply's prompt, what was sent), so the card never grows; it has the keys.
+  property Component footer: null
   // Alert for what must not be missed: its border, icon, title and meter, and a glyph beside `aside`.
   property string tone: ""
   // Its digit in the gutter, the keys on its actions and `closeKey` by its ✕, shown while `keysShown`; an action's and the ✕'s only while `current`.
@@ -162,7 +164,7 @@ Surface {
 
       RowLayout {
         Layout.fillWidth: true
-        visible: root.actions.length > 0
+        visible: root.actions.length > 0 && root.footer === null
         clip: true
         spacing: 2 * Metrics.cell
 
@@ -205,6 +207,14 @@ Surface {
         Item {
           Layout.fillWidth: root.actionSide === "left"
         }
+      }
+
+      Loader {
+        Layout.fillWidth: true
+        active: root.footer !== null
+        visible: active
+        focus: active
+        sourceComponent: root.footer
       }
     }
   }
