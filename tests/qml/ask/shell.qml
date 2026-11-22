@@ -62,6 +62,17 @@ ShellRoot {
         until: () => Markup.plain("  ## Setup\n##not one") === "Setup\n##not one"
       },
       {
+        name: "waiting, a chord runs by its letter too and the legend says so, but C-y, as a bare y copies",
+        until: () => {
+          const ask = Plugins.get("keyed");
+          if (!ask) return false;
+          ask.typing = false;
+          ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
+          const named = ask.typedAs("Ctrl+l") === "l" && ask.typedAs("Ctrl+y") === "Ctrl+y" && ask.keys.some(entry => entry.key === "Ctrl+l");
+          return named && ask.act("l") && ask.exchanges.length === 0;
+        }
+      },
+      {
         name: "an answer renders as rich text of the kit's own: its HTML escaped, a link and an image by their text, a table's header bold",
         until: () => {
           const html = Markup.html("<img src=x onerror=y> [site](https://example.com) ![pic](https://example.com/a.png)\n\n| A | B |\n|---|---|\n| 1 | 2 |");

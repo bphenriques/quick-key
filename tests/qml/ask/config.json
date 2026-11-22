@@ -109,6 +109,11 @@
       "type": "ask",
       "ask": "true",
       "notify": ""
+    },
+    "keyed": {
+      "type": "ask",
+      "ask": "true",
+      "notify": ""
     }
   }
 }

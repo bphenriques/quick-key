@@ -16,21 +16,8 @@ Scope {
   property real inputExtra: 0
   // The conversation's width, which a bubble takes most of at most: read from the conversation, not the exchange, whose width its bubbles make.
   property real threadWidth: 0
-  // Every key the panel takes, for `?`.
-  readonly property var help: [
-    { key: "Tab", desc: Words.helpTab },
-    { key: "Shift+Return", desc: Words.helpNewline },
-    { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
-    { key: "Ctrl+y", desc: Words.helpAllow },
-    { key: "Ctrl+c", desc: Words.helpStop },
-    { key: "y", desc: Words.helpCopy },
-    { key: "Ctrl+l", desc: Words.helpNew },
-    ...(plugin.settings.open ? [{ key: "Ctrl+o", desc: Words.helpMoveTerminal }] : []),
-    { key: "Ctrl+r", desc: Words.helpRecall },
-    { key: "Ctrl+v", desc: Words.helpAttach },
-    { key: "1-9", desc: Words.helpOptions },
-    { key: "Escape", desc: Words.helpEscape }
-  ]
+  // Every key the panel takes, for `?`: Ask's table, the one its legend and its keys read too.
+  readonly property var help: plugin.keys
   // The last turn as drawn, for what Return does next.
   readonly property var last: plugin.exchanges.length > 0 ? plugin.describe(plugin.exchanges[plugin.exchanges.length - 1]) : null
   // An answer's selection, kept while its turn is scrolled away or the panel hidden: { turn, piece, start, end }; another conversation drops it.
@@ -166,16 +153,9 @@ Scope {
     bar: RowLayout {
       // Only what the state changes, each while it applies; the fixed keys are `?`'s.
       KeyLegend {
-        // Typing, its letters take Ctrl; waiting, they are plain.
-        readonly property string chord: panel.plugin.typing ? "Ctrl+" : ""
-        keys: (panel.plugin.approval ? [{ key: "Ctrl+y", what: Words.allow, clickable: true }] : [])
-          .concat(!panel.plugin.typing && panel.plugin.exchanges[panel.plugin.exchanges.length - 1]?.reply ? [{ key: "y", what: Words.copy, clickable: true }] : [])
-          .concat(panel.plugin.exchanges.length > 0 ? [{ key: chord + "l", what: Words.newChat, clickable: true }] : [])
-          // Where an earlier conversation is wanted most: before this one starts.
-          .concat(panel.plugin.exchanges.length === 0 && panel.plugin.recalls ? [{ key: chord + "r", what: Words.history, clickable: true }] : [])
+        // Each key as it runs now (Ask.typedAs): waiting, a chord's letter alone.
+        keys: panel.plugin.keys.filter(entry => entry.what && entry.shows()).map(entry => ({ key: panel.plugin.typedAs(entry.key), what: entry.what, clickable: true }))
           .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: Words.choose }] : [])
-          .concat(panel.plugin.canMove ? [{ key: chord + "o", what: Words.terminal, clickable: true }] : [])
-          .concat(panel.plugin.busy ? [{ key: chord + "c", what: Words.stop, clickable: true }] : [])
           .concat(!panel.plugin.typing ? [{ key: "?", what: Words.help, clickable: true }] : [])
           .concat(panel.plugin.typing && (panel.plugin.draft || panel.plugin.image) ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
         onPicked: key => {

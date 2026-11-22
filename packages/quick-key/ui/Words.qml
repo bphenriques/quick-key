@@ -79,7 +79,6 @@ Singleton {
   }
 
   // What a key does, in a legend: a lowercase word or two.
-  readonly property string allow: "allow"
   readonly property string appMenu: "app menu"
   readonly property string choose: "choose"
   readonly property string clear: "clear"
@@ -92,11 +91,8 @@ Singleton {
   readonly property string menu: "menu"
   readonly property string month: "month"
   readonly property string move: "move"
-  readonly property string newChat: "new"
   readonly property string open: "open"
   readonly property string pick: "pick"
-  readonly property string stop: "stop"
-  readonly property string terminal: "terminal" + ellipsis
   readonly property string today: "today"
   readonly property string week: "week"
   readonly property string year: "year"
@@ -107,15 +103,7 @@ Singleton {
   readonly property string helpItemMenu: "An item's own menu"
   readonly property string helpFilter: "Filter the list"
   readonly property string helpTab: "The input, and back"
-  readonly property string helpNewline: "A new line"
   readonly property string helpBackground: "Send in the background"
-  readonly property string helpAllow: "Allow what it asks"
-  readonly property string helpStop: "Stop the answer"
-  readonly property string helpCopy: "Copy the last answer"
-  readonly property string helpNew: "A new conversation"
-  readonly property string helpMoveTerminal: "Move it to a terminal"
   readonly property string helpRecall: "An earlier conversation"
-  readonly property string helpAttach: "Attach the clipboard's image"
-  readonly property string helpOptions: "Pick an option"
   readonly property string helpEscape: "Clear, else back"
 }

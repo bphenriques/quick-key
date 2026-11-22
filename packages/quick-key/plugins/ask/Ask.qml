@@ -20,8 +20,27 @@ Plugin {
     noAnswer: "No answer",
     noImage: "Could not read the image",
     openTerminal: "Terminal" + Words.ellipsis,
-    approval: (allowed, what) => (allowed ? "Allowed: " : "Denied: ") + what
+    approval: (allowed, what) => (allowed ? "Allowed: " : "Denied: ") + what,
+    allow: "allow",
+    stop: "stop",
+    newChat: "new",
+    terminal: "terminal" + Words.ellipsis
   })
+  // Its keys, each once: what `?` lists (`desc`), the legend's word while it applies (`what`, `shows`), and what one it handles runs (`run`, false when it leaves the key to the prompt).
+  readonly property var keys: [
+    { key: "Tab", desc: Words.helpTab },
+    { key: "Shift+Return", desc: "A new line" },
+    { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
+    { key: "Ctrl+y", desc: "Allow what it asks", what: words.allow, shows: () => approval !== "", run: () => answerApproval(true) },
+    { key: "Ctrl+c", desc: "Stop the answer", what: words.stop, shows: () => busy, run: () => busy && stop() },
+    { key: "y", desc: "Copy the last answer", what: Words.copy, shows: () => !typing && !!exchanges[exchanges.length - 1]?.reply, run: () => !typing && copy() },
+    { key: "Ctrl+l", desc: "A new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
+    { key: "Ctrl+o", desc: "Move it to a terminal", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
+    { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => exchanges.length === 0 && recalls, run: () => recall(() => show()) },
+    { key: "Ctrl+v", desc: "Attach the clipboard's image", run: () => pasteImage() },
+    { key: "1-9", desc: "Pick an option" },
+    { key: "Escape", desc: Words.helpEscape }
+  ].filter(entry => entry.when !== false)
 
   // [{ prompt, image, reply, error, stopped, after, input, options, table, steps }], the last one streaming in while busy; `input` when a level's input sent it, or its panel while expanded from one.
   property var exchanges: []
@@ -362,21 +381,14 @@ Plugin {
     }
     // A waiting choice takes the digits while the prompt is empty, a digit picking and never typing.
     if (/^[1-9]$/.test(key) && !draft && !image && Number(key) <= choices.length) return pick(Number(key) - 1);
-    // A bare `y` copies the last answer, as in the menu, and never allows: allowing takes its chord, so a key learned as harmless never approves.
-    if (!typing && key === "y") return copy();
-    switch (!typing && /^[a-z]$/.test(key) ? "Ctrl+" + key : key) {
-    case "Escape": return stepBack();
-    case "Ctrl+c":
-      if (!busy) return false;
-      stop();
-      return true;
-    case "Ctrl+y": answerApproval(true); return true;
-    case "Ctrl+l": reset(); return true;
-    case "Ctrl+o": moveToTerminal(); return true;
-    case "Ctrl+r": return recall(() => show());
-    case "Ctrl+v": return pasteImage();
-    }
-    return false;
+    if (key === "Escape") return stepBack();
+    const entry = keys.find(entry => entry.run && (entry.key === key || typedAs(entry.key) === key));
+    return !!entry && entry.run() !== false;
+  }
+
+  // The key that runs one of its keys now: waiting, a chord's letter alone, but `C-y`'s, as a bare `y` copies: a key learned as harmless never approves.
+  function typedAs(key) {
+    return !typing && /^Ctrl\+[a-z]$/.test(key) && key !== "Ctrl+y" ? key.slice(5) : key;
   }
 
   // With the prompt dim, Escape leaves, the conversation kept; typing, clearing first is the prompt's (Prompt.stepBack), so false leaves it to it.
