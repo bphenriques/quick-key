@@ -222,6 +222,7 @@ Scope {
     // Sources without change events are read as the menu opens.
     Compositor.refresh();
     Plugins.refresh();
+    Daemons.refresh();
     Panels.open(root);
   }
 

@@ -39,6 +39,7 @@ Singleton {
   readonly property alias brightness: adapter.brightness
   readonly property alias keyboardLayout: adapter.keyboardLayout
   readonly property alias battery: adapter.battery
+  readonly property alias daemons: adapter.daemons
   readonly property alias music: adapter.music
   readonly property alias plugins: adapter.plugins
   readonly property alias glyphs: adapter.glyphs
@@ -244,6 +245,11 @@ Singleton {
       property JsonObject keyboardLayout: JsonObject {
         // A short label per layout, in the compositor's order; unset, the first letters of its name.
         property var labels: []
+      }
+
+      property JsonObject daemons: JsonObject {
+        // Prints the names on the system bus, running or started on demand, the first on each line: what a built-in that needs a daemon looks for (power profiles).
+        property string list: "busctl --system list --no-legend --no-pager"
       }
 
       property JsonObject battery: JsonObject {

@@ -60,6 +60,12 @@ Singleton {
   readonly property string link: Config.glyphs.link ?? "\u{F0337}" // md-link
   readonly property string copy: Config.glyphs.copy ?? "\u{F0C5}" // fa-copy
   readonly property string failed: Config.glyphs.failed ?? "\u{F05D6}" // md-alert_circle_outline
+  // A power profile by its name.
+  readonly property var powerProfiles: Object.assign({
+    "power-saver": "\u{F032A}", // md-leaf
+    balanced: "\u{F05D1}", // md-scale_balance
+    performance: "\u{F04C5}" // md-speedometer
+  }, Config.glyphs.powerProfiles ?? {})
   readonly property var audioDevices: Object.assign({
     headphones: "\u{F02CB}", // md-headphones
     headset: "\u{F02CE}", // md-headset

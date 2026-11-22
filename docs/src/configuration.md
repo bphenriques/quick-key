@@ -37,6 +37,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | Brightness | the first `/sys/class/backlight` device, `busctl` |
 | Bluetooth, when rfkill blocks it | `rfkill` |
 | Keep awake | none: Wayland's idle inhibitor, which the compositor holds for every idle daemon |
+| Power profiles, where their daemon is | `busctl`, to see it on the system bus |
 | Session | `loginctl`, `systemctl` |
 | Calendar reminders | `notify-send` |
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |

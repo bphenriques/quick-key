@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs
+import qs.builtins
 import qs.services
 import qs.ui
 
@@ -34,6 +35,11 @@ ShellRoot {
       {
         name: "a phase or kind it does not know is idle and none",
         until: () => Plugins.get("later")?.phase === "idle" && Plugins.get("later").kind === "" && !Plugins.get("later").busy
+      },
+      {
+        name: "with its daemon on the bus, power profiles are offered: the ones the machine has, the one in use lit",
+        until: () => Power.profilesPresent && Power.profiles.join() === "power-saver,balanced" && Power.profile === "balanced" && Actions.builtin.powerProfile.available()
+          && Lists.items("powerProfiles").map(item => item.desc + (item.active ? "*" : "")).join() === "Power saver,Balanced*"
       },
       {
         name: "a command that fails keeps its last word on stderr, which it logs",

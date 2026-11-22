@@ -34,6 +34,11 @@ Singleton {
         select: () => root.toggle(device)
       })).sort((a, b) => a.desc.localeCompare(b.desc))
     },
+    powerProfiles: {
+      icon: Glyphs.powerProfiles.balanced,
+      empty: () => Words.noPowerProfiles,
+      items: () => Power.profiles.map(name => ({ id: name, desc: Words.powerProfiles[name], icon: Glyphs.powerProfiles[name], active: name === Power.profile, select: () => Power.setProfile(name) }))
+    },
     sinks: {
       icon: Glyphs.audioDevice("external"),
       empty: () => Words.emptyOutputs,

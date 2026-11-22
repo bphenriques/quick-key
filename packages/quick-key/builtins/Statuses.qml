@@ -93,6 +93,12 @@ Singleton {
       format: "{layout}",
       popupWidth: () => Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length))
     },
+    // Where its daemon is (Power.profilesPresent); else nothing, so the row dims and a bar hides it.
+    powerProfile: {
+      glyph: () => Glyphs.powerProfiles[Power.profile] ?? "",
+      fields: () => Power.profile ? { profile: Words.powerProfiles[Power.profile].toLowerCase() } : {},
+      format: "|{profile}"
+    },
     keepAwake: {
       glyph: () => Glyphs.keepAwake,
       fields: () => ({}),

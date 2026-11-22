@@ -128,5 +128,8 @@
       "type": "command",
       "read": "echo '{\"phase\":\"later\",\"kind\":\"nope\"}'"
     }
+  },
+  "daemons": {
+    "list": "echo org.freedesktop.UPower.PowerProfiles"
   }
 }

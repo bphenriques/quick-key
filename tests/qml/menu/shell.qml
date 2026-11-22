@@ -34,6 +34,11 @@ ShellRoot {
         until: () => probe.rows.some(row => row.current && row.id === probe.item.id)
       },
       {
+        name: "without its daemon, power profiles are offered nowhere: the action dims, the list is empty, the status shows nothing",
+        until: () => !Power.profilesPresent && !Actions.builtin.powerProfile.available() && Lists.items("powerProfiles").length === 0 && Lists.empty("powerProfiles") === Words.noPowerProfiles
+          && Statuses.builtin.powerProfile.glyph() === "" && Statuses.value(Statuses.builtin.powerProfile, Statuses.builtin.powerProfile.fields()).detail === ""
+      },
+      {
         name: "a bar list's +N counts only what the bar leaves out and its picker shows, never a hidden item",
         until: () => Lists.items("hides").length === 2 && menu.barOf([{ desc: "H", list: "hides", limit: 1 }]).length === 1
       },

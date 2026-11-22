@@ -56,6 +56,9 @@ Singleton {
   readonly property string noSong: "No song playing"
   readonly property string noDevice: "No device connected"
   readonly property string noEvents: "No events"
+  readonly property string noPowerProfiles: "No power profiles"
+  // A power profile by its name, as a row says it; lowercase on a row's right.
+  readonly property var powerProfiles: ({ "power-saver": "Power saver", balanced: "Balanced", performance: "Performance" })
 
   function devicesConnected(count) {
     return count + " devices connected";
