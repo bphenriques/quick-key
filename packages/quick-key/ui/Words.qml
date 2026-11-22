@@ -57,6 +57,12 @@ Singleton {
   readonly property string noDevice: "No device connected"
   readonly property string noEvents: "No events"
   readonly property string noPowerProfiles: "No power profiles"
+  // A battery warning: its title, and how much is left.
+  readonly property string batteryLow: "Battery low"
+  readonly property string batteryCritical: "Battery critical"
+  function batteryLeft(percentage) {
+    return percentage + "% left";
+  }
   // A power profile by its name, as a row says it; lowercase on a row's right.
   readonly property var powerProfiles: ({ "power-saver": "Power saver", balanced: "Balanced", performance: "Performance" })
 

@@ -42,6 +42,11 @@ ShellRoot {
           && Lists.items("powerProfiles").map(item => item.desc + (item.active ? "*" : "")).join() === "Power saver,Balanced*"
       },
       {
+        name: "a battery warns as its charge falls to low or critical, once each, and never as it rises; plugging in or out is its pop-up's change",
+        until: () => Power.warns("normal", "low") === "low" && Power.warns("low", "critical") === "critical" && Power.warns("normal", "critical") === "critical"
+          && Power.warns("critical", "low") === "" && Power.warns("low", "normal") === "" && Power.warns("low", "low") === "" && typeof Statuses.builtin.battery.change === "function"
+      },
+      {
         name: "a command that fails keeps its last word on stderr, which it logs",
         start: () => complainer.running = true,
         until: () => !complainer.running && complainer.complaint === "bad"

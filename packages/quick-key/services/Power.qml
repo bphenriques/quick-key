@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.UPower
 import qs
+import qs.ui
 
 // Plugged in is read from the battery's own state, the same source as its percentage, not UPower's separate onBattery flag.
 Singleton {
@@ -16,6 +17,19 @@ Singleton {
     : percentage <= Config.battery.critical ? "critical"
     : percentage <= Config.battery.low ? "low"
     : "normal"
+
+  // A warning as the charge falls to low or critical on battery (Config.battery.warn), once each and never for the state at start: what it was told last.
+  onLevelChanged: {
+    const warning = warns(internal.level, level);
+    internal.level = level;
+    if (warning && Startup.settled) Commands.run(Config.battery.warn, warning === "critical" ? Words.batteryCritical : Words.batteryLow, Words.batteryLeft(percentage));
+  }
+
+  // The warning a change of level calls for: a worse one, never a better one (charging, or plugged in).
+  function warns(from, to) {
+    const rank = { normal: 0, low: 1, critical: 2 };
+    return rank[to] > (rank[from] ?? 0) ? to : "";
+  }
 
   // Power profiles, only where their daemon is (power-profiles-daemon, tuned-ppd): without it Quickshell still reads one, balanced, that nothing applies.
   readonly property bool profilesPresent: Daemons.has("org.freedesktop.UPower.PowerProfiles")
@@ -35,5 +49,6 @@ Singleton {
     id: internal
     readonly property var ids: [PowerProfile.PowerSaver, PowerProfile.Balanced, PowerProfile.Performance]
     readonly property var names: ["power-saver", "balanced", "performance"]
+    property string level: "normal"
   }
 }

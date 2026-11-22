@@ -10,7 +10,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own).
+  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own); change() what is a change worth a pop-up (else all it shows).
   readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -85,7 +85,9 @@ Singleton {
       glyph: () => Power.present ? Glyphs.battery(Power.percentage, Power.pluggedIn) : "",
       fields: () => !Power.present ? {} : { level: Power.percentage + "%" },
       format: "{level}",
-      tone: () => Power.level === "critical" ? "alert" : Power.level === "low" ? "warning" : ""
+      tone: () => Power.level === "critical" ? "alert" : Power.level === "low" ? "warning" : "",
+      // A pop-up when it is plugged in or out, not at every percent; a low charge warns through battery.warn instead.
+      change: () => Power.present && Power.pluggedIn
     },
     keyboardLayout: {
       glyph: () => Glyphs.keyboard,

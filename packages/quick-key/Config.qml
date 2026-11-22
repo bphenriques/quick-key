@@ -255,6 +255,8 @@ Singleton {
       property JsonObject battery: JsonObject {
         property int low: 20
         property int critical: 5
+        // Given a title and a line, as the charge falls to low or critical on battery, once each; empty, no warnings.
+        property string warn: "notify-send --app-name=Battery --icon=battery-caution"
       }
 
       property JsonObject music: JsonObject {

@@ -40,8 +40,11 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | Power profiles, where their daemon is | `busctl`, to see it on the system bus |
 | Session | `loginctl`, `systemctl` |
 | Calendar reminders | `notify-send` |
+| Battery warnings | `notify-send` |
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
 
-`popups.show` lists the statuses or plugins whose changes pop up (`sink`, `source`, `brightness`, `keyboardLayout`, `keepAwake`; all by default), so another on-screen display can take any of them over. A plugin shows as a pill with its glyph and text; one whose text changes constantly (a recording's timer) pops up on every change, so list only plugins that change rarely.
+`popups.show` lists the statuses or plugins whose changes pop up (`sink`, `source`, `brightness`, `keyboardLayout`, `keepAwake` by default), so another on-screen display can take any of them over; `battery` pops up as it is plugged in or out, not at every percent. A plugin shows as a pill with its glyph and text; one whose text changes constantly (a recording's timer) pops up on every change, so list only plugins that change rarely.
+
+As the charge falls to `battery.low` or `battery.critical` on battery, `battery.warn` is given a title and a line (`Battery low`, `18% left`), once each, never for the charge the shell starts with; empty, no warnings.
 
 Setting `menu.entries` replaces the starter menu whole. To start from it, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json): it is a valid `config.json`. Do-not-disturb (the `dunst` plugin, or your own) and display layouts are plugins you list ([Plugins](plugins.md)).

@@ -41,9 +41,9 @@ Scope {
       readonly property var status: Statuses.builtin[modelData] ?? null
       readonly property var plugin: status === null ? Plugins.get(modelData) : null
       readonly property var fields: status ? status.fields((id, name) => name) : ({})
-      // Glyph, fields, meter, muted and text together: a toggle's glyph never moves, so its text says the change.
+      // What the status calls a change (change()), else glyph, fields, meter, muted and text together: a toggle's glyph never moves, so its text says the change.
       readonly property string signature: JSON.stringify(status
-        ? [status.glyph(), fields, status.meter ? status.meter() : -1, status.muted ? status.muted() : false, status.popup ? status.popup() : Statuses.value(status, fields).text]
+        ? status.change ? [status.change()] : [status.glyph(), fields, status.meter ? status.meter() : -1, status.muted ? status.muted() : false, status.popup ? status.popup() : Statuses.value(status, fields).text]
         : plugin ? [plugin.glyph, plugin.text, plugin.detail, plugin.active, plugin.tone] : [])
 
       onSignatureChanged: root.show(modelData)
