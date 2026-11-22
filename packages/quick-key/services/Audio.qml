@@ -27,22 +27,29 @@ Singleton {
   readonly property bool sinkMuted: sink?.audio?.muted ?? false
   readonly property bool sourceMuted: source?.audio?.muted ?? false
 
+  // What apps play, each a stream with its own volume; the one picked, which the stream actions change, else the first.
+  readonly property var streams: internal.streams.filter(node => node.properties["application.name"])
+  readonly property PwNode stream: streams.find(node => node.id === internal.picked) ?? streams[0] ?? null
+  readonly property bool streamMuted: stream?.audio?.muted ?? false
+
   // A device's volume as said beside it: muted, else its percentage.
   function level(node) {
     return node?.audio?.muted ? Words.muted : Math.round((node?.audio?.volume ?? 0) * 100) + "%";
   }
 
-  // The output's or input's volume a step down or up (Config.audio.step), never past Config.audio.max.
-  function adjust(kind, up) {
-    const node = kind === "sink" ? sink : source;
+  // A device's or stream's volume a step down or up (Config.audio.step), never past Config.audio.max.
+  function adjust(node, up) {
     if (!node?.audio) return;
     const step = Config.audio.step / 100;
     node.audio.volume = Math.max(0, Math.min(Config.audio.max / 100, Math.round((node.audio.volume + (up ? step : -step)) / step) * step));
   }
 
-  function toggleMute(kind) {
-    const node = kind === "sink" ? sink : source;
+  function toggleMute(node) {
     if (node?.audio) node.audio.muted = !node.audio.muted;
+  }
+
+  function pick(node) {
+    internal.picked = node.id;
   }
 
   // WirePlumber moves the streams that follow the default.
@@ -71,6 +78,9 @@ Singleton {
     id: internal
     // A node's properties arrive once it is tracked; virtual ones have no device.
     readonly property var nodes: Pipewire.nodes.values.filter(node => !node.isStream && node.audio)
+    // Playback streams; an app's carries its name, which WirePlumber's own loopbacks lack.
+    readonly property var streams: Pipewire.nodes.values.filter(node => node.isStream && node.isSink && node.audio)
+    property int picked: -1
     readonly property var devices: nodes.filter(node => node.properties["device.id"]).map(node => root.describe(node))
       .sort((a, b) => a.kind.localeCompare(b.kind) || rank(a) - rank(b) || a.label.localeCompare(b.label))
     readonly property var sinkDevice: root.sinks.find(device => device.name === root.sink?.name) ?? null
@@ -82,6 +92,6 @@ Singleton {
   }
 
   PwObjectTracker {
-    objects: internal.nodes
+    objects: internal.nodes.concat(internal.streams)
   }
 }

@@ -84,6 +84,7 @@ Each field takes one of its column's names, or a plugin's. A plugin's status giv
 |---|---|---|---|---|---|
 | Audio output | `sink` | `device`, `volume` | `sinks` | `sinkVolume`, `sinkMute` | `sinkMuted` |
 | Audio input | `source` | `device`, `volume` | `sources` | `sourceVolume`, `sourceMute` | `sourceMuted` |
+| App volume | | | `streams` | `streamVolume`, `streamMute` | `streamMuted` |
 | Network | `network` | `name`, `wifi` | `wifi` | `wifi` | `wifi` |
 | Bluetooth | `bluetooth` | `device`, `battery`, `state` | `bluetooth` | `bluetooth` | `bluetooth` |
 | Backlight | `brightness` | `level` | | `brightness` | |
@@ -97,6 +98,6 @@ Each field takes one of its column's names, or a plugin's. A plugin's status giv
 | Keep awake | `keepAwake` | | | `keepAwake` | `keepAwake` |
 | Any list | | | | `pick` | |
 
-Volume steps by `audio.step` up to `audio.max`. The backlight steps by `brightness.step` through logind; set `brightness.set` for another tool. Power profiles (power saver, balanced, performance where the machine has it) are offered only where their daemon is on the system bus, power-profiles-daemon or tuned-ppd, which `daemons.list` reads as the menu opens; without it the action dims, the list says so and the status shows nothing. Music reads song and artist out of the XML some radio streams (Bauer Media) send as their title, since MPRIS leaves no glue to do it in.
+Volume steps by `audio.step` up to `audio.max`. A digit on `streams` picks the app `streamVolume` and `streamMute` change, the first until you pick; the starter gives them Left and Right. The wheel over a device or an app changes its own volume. The backlight steps by `brightness.step` through logind; set `brightness.set` for another tool. Power profiles (power saver, balanced, performance where the machine has it) are offered only where their daemon is on the system bus, power-profiles-daemon or tuned-ppd, which `daemons.list` reads as the menu opens; without it the action dims, the list says so and the status shows nothing. Music reads song and artist out of the XML some radio streams (Bauer Media) send as their title, since MPRIS leaves no glue to do it in.
 
 A level lists up to nine items on fixed digits. `/` filters its list in place, as in a pager or a browser, unless the level binds `/` itself, the legend saying how many rows show at rest of all the list holds while it holds more (`/ 1-9 of 14`); `pick` does it on any other key, its row saying the same: the filter takes the level's island and keeps the items whose label holds every word typed, hidden ones too, in the rows' place, as many at a time as the level showed (nine on a level of their own), so nothing moves. Digits pick from the rows shown, following them, and never type; `↑↓` move the cursor, `RET` runs its item as its digit would and `M-RET` opens its own menu, the filter's range on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, or a level of its own with it. A level's other pickers take any free key (`.` or a letter), their labels ending in `...`. An empty list says why: off, or nothing found.

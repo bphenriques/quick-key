@@ -34,6 +34,19 @@ ShellRoot {
         until: () => probe.rows.some(row => row.current && row.id === probe.item.id)
       },
       {
+        name: "an app's stream lists as a device does: its name, its volume and meter, the wheel over it a step, its mute said beside it; with none playing, nothing to pick or change",
+        until: () => {
+          const node = { id: 7, properties: { "application.name": "Player" }, audio: { volume: 0.4, muted: false } };
+          const item = Lists.stream(node, node);
+          item.adjust(true);
+          Audio.toggleMute(node);
+          const after = Lists.stream(node, null);
+          return item.desc === "Player" && item.active && item.detail === "40%" && item.meter === 0.4 && Math.abs(node.audio.volume - 0.45) < 1e-9
+            && after.detail === Words.muted && !after.active && Lists.items("streams").length === 0 && Lists.empty("streams") === Words.emptyStreams
+            && !Actions.builtin.streamVolume.available() && !Actions.builtin.streamMute.available();
+        }
+      },
+      {
         name: "without its daemon, power profiles are offered nowhere: the action dims, the list is empty, the status shows nothing",
         until: () => !Power.profilesPresent && !Actions.builtin.powerProfile.available() && Lists.items("powerProfiles").length === 0 && Lists.empty("powerProfiles") === Words.noPowerProfiles
           && Statuses.builtin.powerProfile.glyph() === "" && Statuses.value(Statuses.builtin.powerProfile, Statuses.builtin.powerProfile.fields()).detail === ""

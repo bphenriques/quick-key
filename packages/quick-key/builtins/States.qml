@@ -13,6 +13,7 @@ Singleton {
     shuffle: () => Music.shuffle,
     sinkMuted: () => Audio.sinkMuted,
     sourceMuted: () => Audio.sourceMuted,
+    streamMuted: () => Audio.streamMuted,
     keepAwake: () => KeepAwake.enabled
   })
 }

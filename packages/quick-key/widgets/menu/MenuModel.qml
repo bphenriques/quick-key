@@ -374,8 +374,9 @@ Scope {
     else if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, image: item.image ?? "", handle: item.app.menu, width: width });
   }
 
-  // The mouse wheel on a row: a pair runs itself; an entry runs the action of its own on that key, e.g. volume.
+  // The mouse wheel on a row: a listed item adjusts itself (a device's volume); a pair runs itself; an entry runs the action of its own on that key, e.g. volume.
   function act(item, name) {
+    if (item.adjust) return item.adjust(name === "Up");
     const action = item.entry?.submenu ? find(Array.from(item.entry.submenu), name) : MenuKeys.matches(item.entry?.key ?? [], name) ? item.entry : null;
     if (action && available(action)) run(action, name);
   }

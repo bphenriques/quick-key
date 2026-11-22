@@ -18,6 +18,27 @@
             "key": "m",
             "desc": "Mute",
             "action": "sinkMute"
+          },
+          {
+            "key": "a",
+            "desc": "Apps",
+            "icon": "󰀻",
+            "list": "streams",
+            "submenu": [
+              {
+                "key": [
+                  "Left",
+                  "Right"
+                ],
+                "desc": "Volume",
+                "action": "streamVolume"
+              },
+              {
+                "key": "m",
+                "desc": "Mute",
+                "action": "streamMute"
+              }
+            ]
           }
         ]
       },

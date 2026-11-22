@@ -9,7 +9,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: items() as { id, desc, select, closes, detail, meter, ... }, the icon a pin shows while absent, why it is empty, extra keys.
+  // Each: items() as { id, desc, select, closes, detail, meter, adjust(up) for the wheel, ... }, the icon a pin shows while absent, why it is empty, extra keys.
   readonly property var builtin: Object.assign(Object.create(null), {
     tray: {
       icon: Glyphs.tray,
@@ -48,6 +48,12 @@ Singleton {
       icon: Glyphs.microphone,
       empty: () => Words.emptyInputs,
       items: () => root.audio(Audio.sources, Audio.source?.name)
+    },
+    // What apps play: a digit picks the one the stream actions change.
+    streams: {
+      icon: Glyphs.volume,
+      empty: () => Words.emptyStreams,
+      items: () => Audio.streams.map(node => root.stream(node, Audio.stream))
     }
   })
 
@@ -81,7 +87,7 @@ Singleton {
     return builtin[list]?.empty() ?? Plugins.get(list)?.empty ?? "";
   }
 
-  // Each device with its own volume and meter.
+  // Each device with its own volume and meter, which the wheel over it changes.
   function audio(devices, current) {
     return devices.map(device => {
       const audio = device.node.audio;
@@ -92,9 +98,25 @@ Singleton {
         active: device.name === current,
         detail: Audio.level(device.node),
         meter: audio?.volume ?? 0,
+        adjust: up => Audio.adjust(device.node, up),
         select: () => Audio.select(device)
       };
     });
+  }
+
+  // An app's stream, by its name and icon (else the volume's glyph), as a device is.
+  function stream(node, picked) {
+    return {
+      id: String(node.id),
+      desc: node.properties["application.name"],
+      image: Quickshell.iconPath(node.properties["application.icon-name"] ?? "", true),
+      icon: Glyphs.volume,
+      active: node === picked,
+      detail: Audio.level(node),
+      meter: node.audio?.volume ?? 0,
+      adjust: up => Audio.adjust(node, up),
+      select: () => Audio.pick(node)
+    };
   }
 
   // A device or network: connects it, or disconnects it when connected.

@@ -10,11 +10,13 @@ import qs.ui
 Singleton {
   // Each: run(second, list, menu), told whether a pair's second key was pressed, given its level's list and the menu; detail(list), a value beside it; available(list); icon(), showing its state where it has one; the state lighting it; pair; closes, to hide the menu first.
   readonly property var builtin: Object.assign(Object.create(null), {
-    sinkVolume: { pair: true, icon: () => Glyphs.volume, available: () => Audio.sink !== null, run: up => Audio.adjust("sink", up) },
-    sinkMute: { icon: () => Glyphs.volumeOff, state: "sinkMuted", available: () => Audio.sink !== null, run: () => Audio.toggleMute("sink") },
-    sourceVolume: { pair: true, icon: () => Glyphs.microphone, available: () => Audio.source !== null, run: up => Audio.adjust("source", up) },
+    sinkVolume: { pair: true, icon: () => Glyphs.volume, available: () => Audio.sink !== null, run: up => Audio.adjust(Audio.sink, up) },
+    sinkMute: { icon: () => Glyphs.volumeOff, state: "sinkMuted", available: () => Audio.sink !== null, run: () => Audio.toggleMute(Audio.sink) },
+    sourceVolume: { pair: true, icon: () => Glyphs.microphone, available: () => Audio.source !== null, run: up => Audio.adjust(Audio.source, up) },
     brightness: { pair: true, icon: () => Glyphs.brightnessLevels[1], available: () => Brightness.lit, run: up => Brightness.adjust(up) },
-    sourceMute: { icon: () => Glyphs.microphoneOff, state: "sourceMuted", available: () => Audio.source !== null, run: () => Audio.toggleMute("source") },
+    sourceMute: { icon: () => Glyphs.microphoneOff, state: "sourceMuted", available: () => Audio.source !== null, run: () => Audio.toggleMute(Audio.source) },
+    streamVolume: { pair: true, icon: () => Glyphs.volume, available: () => Audio.stream !== null, run: up => Audio.adjust(Audio.stream, up) },
+    streamMute: { icon: () => Glyphs.volumeOff, state: "streamMuted", available: () => Audio.stream !== null, run: () => Audio.toggleMute(Audio.stream) },
     wifi: { icon: () => Network.wifiEnabled ? Glyphs.wifi : Glyphs.disconnected, state: "wifi", available: () => Network.wifiPresent, run: () => Network.toggleWifi() },
     bluetooth: { icon: () => Bluez.enabled ? Glyphs.bluetooth : Glyphs.bluetoothOff, state: "bluetooth", available: () => Bluez.present, run: () => Bluez.toggle() },
     playPause: { icon: () => Glyphs.playPause, available: () => Music.present, run: () => Music.togglePlaying() },
