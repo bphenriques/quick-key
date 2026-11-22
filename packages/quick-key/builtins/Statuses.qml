@@ -97,9 +97,9 @@ Singleton {
       glyph: () => Glyphs.keepAwake,
       fields: () => ({}),
       format: "",
-      tone: () => IdleInhibit.enabled ? "primary" : "",
-      muted: () => !IdleInhibit.enabled,
-      popup: () => Words.keepAwakeState(IdleInhibit.enabled),
+      tone: () => KeepAwake.enabled ? "primary" : "",
+      muted: () => !KeepAwake.enabled,
+      popup: () => Words.keepAwakeState(KeepAwake.enabled),
       popupWidth: () => Words.keepAwakeState(false).length
     }
   })

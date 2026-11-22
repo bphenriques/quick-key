@@ -21,7 +21,7 @@ Singleton {
     track: { pair: true, icon: () => Glyphs.track, available: () => Music.present, run: forward => Music.skip(forward) },
     repeat: { icon: () => Glyphs.repeat, state: "repeat", available: () => Music.present, run: () => Music.toggleRepeat() },
     shuffle: { icon: () => Glyphs.shuffle, state: "shuffle", available: () => Music.present, run: () => Music.toggleShuffle() },
-    keepAwake: { icon: () => Glyphs.keepAwake, state: "keepAwake", available: () => true, run: () => IdleInhibit.toggle() },
+    keepAwake: { icon: () => Glyphs.keepAwake, state: "keepAwake", available: () => true, run: () => KeepAwake.toggle() },
     keyboardLayout: { icon: () => Glyphs.keyboard, available: () => KeyboardLayout.names.length > 1, run: () => KeyboardLayout.next() },
     // Filters the level's list in place; beside it, the nine rows at rest of all it can show, when there are more (1-9 of 14).
     pick: {

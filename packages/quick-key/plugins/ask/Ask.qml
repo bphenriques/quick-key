@@ -270,10 +270,16 @@ Plugin {
     finish({ reply: shaped.text, options: shaped.options, table: Markup.hasTable(text) });
   }
 
+  // The last exchange with `fields` changed, the list replaced so what draws it hears; that exchange as it is now.
+  function setLast(fields) {
+    const last = Object.assign({}, exchanges[exchanges.length - 1], fields);
+    exchanges = exchanges.slice(0, -1).concat([last]);
+    return last;
+  }
+
   function flush() {
     if (!streamed) return;
-    const last = exchanges[exchanges.length - 1];
-    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { reply: last.reply + streamed })]);
+    setLast({ reply: exchanges[exchanges.length - 1].reply + streamed });
     streamed = "";
     report();
   }
@@ -283,8 +289,7 @@ Plugin {
   }
 
   function finish(answer) {
-    const last = Object.assign({}, exchanges[exchanges.length - 1], { reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? words.noAnswer, stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
-    exchanges = exchanges.slice(0, -1).concat([last]);
+    const last = setLast({ reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? words.noAnswer, stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
     busy = false;
     approval = "";
     if (seen(last)) report();
@@ -325,8 +330,7 @@ Plugin {
   function answerApproval(allowed) {
     if (!approval) return;
     agent.answer(allowed);
-    const last = exchanges[exchanges.length - 1];
-    exchanges = exchanges.slice(0, -1).concat([Object.assign({}, last, { steps: (last.steps ?? []).concat([words.approval(allowed, approval)]) })]);
+    setLast({ steps: (exchanges[exchanges.length - 1].steps ?? []).concat([words.approval(allowed, approval)]) });
     approval = "";
   }
 
