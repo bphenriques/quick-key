@@ -15,6 +15,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | text to type or send | `TextField`, `TextArea`, `Prompt` |
 | a conversation | `Exchange`, `Bubble` and `Markdown` in it; an answer's Markdown read through `Markup` |
 | a surface, an outline | `Panel`, `Surface`, `Pill`, `Divider` |
+| a card that comes and goes (a notification) | `Card` |
 
 | Component | Use |
 |---|---|
@@ -43,6 +44,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined the same, or in its `tone` for a state (recording) |
+| `Card` | a surface that comes and goes on its own: its icon or image, its `title` bold on one line and what it is from (`aside`) on the right, a `body` of up to `lines`, a `meter` with its `meterText`, its `actions` (`{ desc, run }`) on its `actionSide`; `tone` alert outlines it and marks it with a glyph, so colour is not all that says so; a click is `activated`, a right click or its ✕, shown under the pointer, `dismissed` |
 | `Panel` | a surface the keyboard opens, the menu or a plugin's: at the bottom centre, its `bar` at the edge (with the top level's right slot on its right when `statuses`), its `body` over it and its `input` over the body (`inputOver`, a level's island) or between the body and the bar (with the keys while `inputFocused`), one open at a time, dismissed by a click anywhere else; keys its body leaves reach `keyPressed` |
 | `Panels` | the surfaces the keyboard opens as one stack of their owners: the top one shows, `open` covers or brings one back, `back` shows what it covered, `close` hides them all; and the top level's right slot a plugin's panel's bar repeats |
 | `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |
