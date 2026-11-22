@@ -311,7 +311,7 @@ ShellRoot {
         start: () => {
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"", after: "echo \"done $#\" > \"$XDG_RUNTIME_DIR/followed\"" } } });
           menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
-          menu.submit("  typed  ", false);
+          menu.island.submit("  typed  ", false);
         },
         until: () => menu.inputFocused && Plugins.get("picked")?.text === "typed" && Plugins.get("followed")?.text === "done 0"
       },
@@ -322,7 +322,7 @@ ShellRoot {
           menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}." } } });
           menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
           root.typingLegend = menu.legend.map(key => MenuKeys.label(key.key));
-          menu.submit("typed", true);
+          menu.island.submit("typed", true);
         },
         until: () => root.typingLegend.length > 0 && !root.typingLegend.includes("ESC") && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.reply === "Add: typed."
       },
@@ -331,7 +331,7 @@ ShellRoot {
         until: () => {
           menu.stack = [];
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "gone" } } });
-          return menu.submit("kept", true) === false && menu.stack.length === 1;
+          return menu.island.submit("kept", true) === false && menu.stack.length === 1;
         }
       },
       {
@@ -339,7 +339,7 @@ ShellRoot {
         until: () => {
           menu.stack = [];
           menu.push({ kind: "entry", entry: { list: "devices", input: { desc: "Add" } } });
-          return Plugins.get("devices") !== null && menu.submit("kept", true) === false && menu.stack.length === 1;
+          return Plugins.get("devices") !== null && menu.island.submit("kept", true) === false && menu.stack.length === 1;
         }
       },
       {
@@ -361,26 +361,24 @@ ShellRoot {
           case 0:
             menu.show();
             menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", format: "Add: {text}." } } }];
-            Plugins.watching = menu.watching;
-            root.visitStep = menu.submit("one", false) ? 1 : -1;
+            root.visitStep = menu.island.submit("one", false) ? 1 : -1;
             return false;
           case 1:
-            root.visitStep = agent.turn?.text === "Add: one." && menu.submit("two", false) ? 2 : -1;
+            root.visitStep = agent.turn?.text === "Add: one." && menu.island.submit("two", false) ? 2 : -1;
             return false;
           case 2:
             if (agent.turn?.text !== "two") return false;
-            const token = menu.watching;
+            const token = menu.island.visit;
             menu.answerFocused = true;
             menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r" });
             // Under the panel, the menu keeps its level and the visit.
-            const held = agent.shown && !menu.open && menu.inStack && menu.watching === token;
+            const held = agent.shown && !menu.open && menu.inStack && menu.island.visit === token;
             agent.typing = false;
             agent.act("Escape");
-            root.visitStep = held && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.watching === token && agent.turn?.text === "two" ? 3 : -1;
+            root.visitStep = held && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.island.visit === token && agent.turn?.text === "two" ? 3 : -1;
             return false;
           }
           menu.hide();
-          Plugins.watching = "";
           return root.visitStep === 3;
         }
       },
@@ -389,11 +387,11 @@ ShellRoot {
         until: () => {
           const first = { kind: "entry", entry: { submenu: [], input: { desc: "First", cmd: "true" } } };
           menu.stack = [first];
-          menu.keepDraft("one");
+          menu.island.keepDraft("one");
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Second", cmd: "true" } } });
-          const second = menu.draft;
+          const second = menu.island.draft;
           menu.stack = [first];
-          return second === "" && menu.draft === "one";
+          return second === "" && menu.island.draft === "one";
         }
       },
       {
@@ -402,7 +400,7 @@ ShellRoot {
           menu.hide();
           menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Ask", plugin: "agent" } } }];
           const named = menu.help.some(key => key.key === "Ctrl+r");
-          return named && menu.recall() && menu.stack.length === 2 && menu.level.picking && menu.level.entry.list === "agent" && menu.filtering;
+          return named && menu.island.recall() && menu.stack.length === 2 && menu.level.picking && menu.level.entry.list === "agent" && menu.filtering;
         }
       },
       {

@@ -42,8 +42,14 @@ Scope {
   property var fieldTones: state.fieldTones ?? ({})
   // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
-  // Whether the menu shows an input giving it text.
-  readonly property bool watched: Plugins.watching.startsWith(name + "\n")
+  // Whether the menu shows an input giving it text: set as a visit starts (InputModel), and cleared by `endVisit` as it ends, a change of the input or the menu closing.
+  property bool watched: false
+  signal visitEnded
+
+  function endVisit() {
+    watched = false;
+    visitEnded();
+  }
   // The turn of the conversation that text started, as the menu draws it while watched (Exchange): { question, context, text, phase, kind, activity, options, table, steps }, `context` the answer a working turn follows, `steps` what you answered on the way, `phase` as Phase names it: working, done, blocked on a question (`options` a digit picks) or for permission, error (the input gets the text back) or idle (stopped); null before the first.
   property var turn: null
   // Whether it takes no text now, a run under way, working or blocked on you; an input giving it text shows a spinner meanwhile and sends nothing.

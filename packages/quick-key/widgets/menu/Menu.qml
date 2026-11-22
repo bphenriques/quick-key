@@ -18,9 +18,6 @@ Scope {
   // While a held modifier lists keys in place of the body.
   readonly property bool hinting: menu.hints.length > 0
 
-  // A key of the input's clicked in the legend, for the prompt, which lives in the panel's input.
-  signal inputPicked(var key)
-
   // The modifier whose keys show when held: Ctrl the bar's, Super the compositor's.
   function modifier(event) {
     if (event.key === Qt.Key_Control) return "Ctrl";
@@ -32,12 +29,6 @@ Scope {
     target: Plugins
     property: "menuOpen"
     value: root.menu.open
-  }
-
-  Binding {
-    target: Plugins
-    property: "watching"
-    value: root.menu.watching
   }
 
   Component {
@@ -111,142 +102,14 @@ Scope {
     bar: MenuHeader {
       menu: root.menu
       // Filtering, the filter's keys; else as typed.
-      onPicked: key => root.menu.filtering ? (key === "Escape" ? root.inputPicked(key) : root.menu.filterKey(key)) : root.menu.handleName(key)
+      onPicked: key => root.menu.filtering ? (key === "Escape" ? root.menu.island.picked(key) : root.menu.filterKey(key)) : root.menu.handleName(key)
     }
 
     // Filtering, the filter takes the island, the level's input waiting under it.
-    inputShown: root.menu.input !== null || root.menu.filtering
+    inputShown: root.menu.island.input !== null || root.menu.filtering
     inputFocused: root.menu.inputFocused || root.menu.filtering
-    // The conversation's last turn (Exchange, drawn by its state) over the line to send: Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background.
-    input: ColumnLayout {
-      id: island
-      spacing: Config.theme.spacing / 2
-
-      // Lit while Tab has it; a click, or Return then, opens the plugin's panel on the whole conversation.
-      ListItem {
-        id: last
-        // The tallest turn of the visit, which the island keeps so it grows and never shrinks within it.
-        property real tallest: 0
-        // A turn it cannot hold opens the plugin's panel by itself, once, as its answer ends: while it streams in, its size is not known.
-        readonly property bool expands: visible && exchange.overflows && root.menu.turn !== root.menu.expandedTurn && root.menu.turn?.phase !== "working"
-        visible: root.menu.turn !== null && !root.menu.filtering
-        Layout.fillWidth: true
-        // The height held sits above, outside what Tab lights, so the turn stays next to the prompt.
-        Layout.topMargin: Math.max(0, last.tallest - exchange.implicitHeight)
-        // Outset by its padding, so the turn lines up with the prompt.
-        Layout.leftMargin: -Config.theme.itemPaddingX
-        Layout.rightMargin: -Config.theme.itemPaddingX
-        onVisibleChanged: if (!visible) last.tallest = 0
-        onExpandsChanged: if (expands) settle.restart()
-        verticalPadding: Config.theme.itemPaddingY / 2
-        current: root.menu.answerFocused
-        onActivated: root.menu.expand()
-
-        // Decided once the turn is laid out, so a line cut only for a moment opens nothing, and outside the binding that noticed it.
-        Timer {
-          id: settle
-          interval: 100
-          onTriggered: if (last.expands) root.menu.overflowed()
-        }
-
-        // Held once laid out, so a height the text has only for a moment, before it has its width, is not kept.
-        Timer {
-          id: latch
-          interval: 100
-          onTriggered: last.tallest = Math.max(last.tallest, exchange.implicitHeight)
-        }
-
-        Exchange {
-          id: exchange
-          Layout.fillWidth: true
-          onImplicitHeightChanged: latch.restart()
-          lines: 3
-          maximumWidth: island.width * 0.85
-          question: root.menu.turn?.question ?? ""
-          context: root.menu.turn?.context ?? ""
-          text: root.menu.turn?.text ?? ""
-          phase: root.menu.turn?.phase ?? "done"
-          kind: root.menu.turn?.kind ?? ""
-          activity: root.menu.turn?.activity ?? ""
-          options: root.menu.choices
-          table: !!root.menu.turn?.table
-          picking: root.menu.turn?.kind === "question" && fits
-        }
-      }
-
-      Prompt {
-        id: prompt
-        Layout.fillWidth: true
-        // Filtering, it is the filter: its glyph, its range on the right.
-        readonly property bool filter: root.menu.filtering
-        active: root.menu.inputFocused || filter
-        // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
-        busy: root.menu.inputBusy && root.menu.turn === null && !filter
-        key: filter ? "" : "Tab"
-        glyph: filter ? Glyphs.search : Glyphs.prompt
-        detail: filter ? root.menu.filter.count : ""
-        placeholder: filter ? Words.filterPrompt : root.menu.turn ? exchange.next : root.menu.input?.desc ?? ""
-        // The turn's own keys while Tab has it; focused, Escape while it clears, else, before a conversation starts, its plugin's past ones.
-        keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }]
-          : filter || !root.menu.inputFocused ? []
-          : text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }]
-          : !root.menu.turn && root.menu.inputPlugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
-        onPicked: key => key === "Ctrl+r" ? root.menu.recall() : key === "Escape" ? stepBack() : root.menu.answerKey(key)
-        maxLines: 1
-        onTapped: root.menu.inputFocused = true
-        onBack: root.menu.stepBack()
-        // The level's own unsent text, as it opens or moves to another input; filtering, the filter's.
-        readonly property var owner: root.menu.input
-        onOwnerChanged: if (!filter) set(root.menu.draftOf(owner))
-        onFilterChanged: set(filter ? "" : root.menu.draftOf(owner))
-        Component.onCompleted: set(filter ? "" : root.menu.draftOf(owner))
-        onTextChanged: filter ? root.menu.filter.query = text : root.menu.keepDraft(text)
-        // Tab moves on to the turn, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits.
-        onKeyPressed: event => {
-          const send = MenuKeys.sends(event);
-          const name = MenuKeys.name(event);
-          // A choice waiting takes the digits whether or not they all show here, so they never type.
-          const waiting = !prompt.filter && root.menu.turn?.kind === "question" && prompt.text === "";
-          if (prompt.filter) {
-            if (!root.menu.filterKey(name)) return;
-          } else if (send) prompt.send(send === "background");
-          else if (waiting && /^[1-9]$/.test(name)) {
-            if (exchange.picking) root.menu.pick(Number(name) - 1);
-          } else if (name === "Ctrl+r") {
-            if (!root.menu.recall()) return;
-          } else if (name === "Tab" && last.visible) {
-            root.menu.inputFocused = false;
-            root.menu.answerFocused = true;
-          } else if (name === "Tab" || name === "Backtab") root.menu.inputFocused = false;
-          else return;
-          event.accepted = true;
-        }
-
-        function send(background) {
-          // Cleared first: sending may close the menu, and the prompt with it.
-          const text = prompt.text;
-          prompt.clear();
-          if (!root.menu.submit(text, background)) prompt.set(text);
-        }
-
-        Connections {
-          target: root
-
-          function onInputPicked(key) {
-            if (key === "Escape") prompt.stepBack();
-            else prompt.send(true);
-          }
-        }
-
-        // A failed turn gives back what was sent, so Return retries it.
-        Connections {
-          target: root.menu.inputPlugin
-
-          function onTurnChanged() {
-            if (root.menu.inputPlugin.turn?.phase === "error" && prompt.text === "") prompt.set(root.menu.lastSent);
-          }
-        }
-      }
+    input: Island {
+      menu: root.menu
     }
 
     body: ColumnLayout {

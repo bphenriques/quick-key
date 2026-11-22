@@ -420,13 +420,9 @@ Plugin {
   }
 
   // The menu left the input, or closed: the visit ends, and its answer with it.
-  Connections {
-    target: Plugins
-
-    function onWatchingChanged() {
-      root.visited = false;
-      root.turn = null;
-    }
+  onVisitEnded: {
+    visited = false;
+    turn = null;
   }
 
   Timer {

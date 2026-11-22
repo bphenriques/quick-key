@@ -24,29 +24,15 @@ Scope {
   property bool inputFocused: false
   // Whether Tab moved the keys on to the answer over the input, where Return opens the plugin's panel.
   property bool answerFocused: false
-  // Each input's unsent text, by the input, kept as the menu closes and over a reload (Kept), as Ask keeps its draft.
-  readonly property var drafts: Kept.values.drafts ?? ({})
-  readonly property string draft: draftOf(input)
   readonly property CalendarModel calendar: CalendarModel {}
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
   readonly property bool inCalendar: level?.entry?.view === "calendar"
-  // The text a level takes under its body (an entry's `input`, or `menu.input` at the top level): { desc, cmd, plugin, format, after }.
-  readonly property var input: level === null ? Config.menu.input ?? null : level.kind === "entry" ? level.entry.input ?? null : null
-  // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
-  readonly property var inputPlugin: input && !input.cmd ? Plugins.get(input.plugin ?? level?.entry?.list ?? "") : null
-  readonly property bool inputBusy: inputPlugin?.busy ?? false
-  // The plugin and the input on show, so an answer shows there; a change of either, or the menu leaving the stack, ends a visit.
-  readonly property string inputToken: inputPlugin ? inputPlugin.name + "\n" + JSON.stringify(input) : ""
-  // What Plugins.watching is set to.
-  readonly property string watching: inStack ? inputToken : ""
-  // The turn of the conversation the input started (Plugin.turn), its options a digit picks.
-  readonly property var turn: inputPlugin?.turn ?? null
-  readonly property var choices: turn?.options ?? []
-  onTurnChanged: if (!turn) answerFocused = false
-  // The text last sent, which a failed turn gives back to the input.
-  property string lastSent: ""
+  // The level's input and what it starts: its plugin, turn, drafts and visit.
+  readonly property InputModel island: InputModel {
+    menu: root
+  }
   // Whether `/` filters the level's list in place (pick); a level opened to pick from (Picker, a bar's +N) always does.
   property bool filterOn: false
   readonly property bool filtering: (filterOn || !!level?.picking) && !!level?.entry?.list
@@ -85,7 +71,7 @@ Scope {
     { key: "Ctrl+", desc: Words.helpBarKeys },
     { key: "Super+", desc: Words.helpCompositor },
     { key: "Alt+1", desc: Words.helpItemMenu }
-  ].concat(slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [], input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpBackground }] : [], inputPlugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [], [
+  ].concat(slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [], island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpBackground }] : [], island.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [], [
     { key: "Escape", desc: Words.helpEscape }
   ])
   // `/` filters the level's list, unless the level binds it itself.
@@ -314,25 +300,6 @@ Scope {
     Commands.run(cmd);
   }
 
-  // The input's text, to its command as $1, else its plugin; whether it was taken, so the input keeps it if not.
-  function submit(text, background) {
-    text = text.trim();
-    if (!text || !input || inputBusy) return false;
-    // The format wraps what starts a conversation; once the plugin has answered, the next send answers it as typed.
-    const sent = input.format && (!turn || turn.phase === "error") ? input.format.replace(/\{text\}/g, () => text) : text;
-    if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
-    // A plugin that failed to load takes nothing.
-    else if (!inputPlugin || inputPlugin.submit(sent, background, input.after ?? "") === false) return false;
-    lastSent = text;
-    if (background) hide();
-    return true;
-  }
-
-  // The input's plugin's past conversations (C-r), on a level over this one; whether it has any to show.
-  function recall() {
-    return !!inputPlugin?.recall();
-  }
-
   // The level's list filtered in place, the filter in its island with the keys; as many rows held as it shows.
   function startFilter() {
     if (!level?.entry?.list) return;
@@ -384,47 +351,6 @@ Scope {
     activate(item, item.key);
   }
 
-  // An option of the answer, sent as the next message.
-  function pick(index) {
-    const option = choices[index];
-    return option !== undefined && submit(option, false);
-  }
-
-  // The plugin's own panel on the conversation, over the menu: stepping back from it shows this level again with its input focused, the visit going on.
-  function expand() {
-    inputFocused = true;
-    answerFocused = false;
-    inputPlugin?.expand();
-  }
-
-  // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
-  property var expandedTurn: null
-  function overflowed() {
-    if (turn === expandedTurn || turn?.phase === "working") return;
-    expandedTurn = turn;
-    expand();
-  }
-
-  // Keys while the answer has them: Return opens the plugin's panel, y copies the answer, Tab gives them to the body, Shift+Tab back to the input.
-  function answerKey(name) {
-    if (name === "Return") expand();
-    else if (name === "y") Quickshell.clipboardText = turn?.text ?? "";
-    else if (name === "Tab") answerFocused = false;
-    else if (name === "Backtab") {
-      answerFocused = false;
-      inputFocused = true;
-    } else return false;
-    return true;
-  }
-
-  function draftOf(of) {
-    return of ? drafts[JSON.stringify(of)] ?? "" : "";
-  }
-
-  function keepDraft(text) {
-    if (input && text !== draft) Kept.set("drafts", Object.assign({}, drafts, { [JSON.stringify(input)]: text }));
-  }
-
   // A listed item does what it says; an entry with a level below opens it, any other runs; a plugin's name in a bar activates it.
   function activate(item, name) {
     if (item.enabled === false) return;
@@ -469,10 +395,10 @@ Scope {
     // Any key closes the help, which only lists keys.
     if (held === "Help") held = "";
     else if (name === "?") held = "Help";
-    else if (answerFocused && answerKey(name)) return true;
+    else if (answerFocused && island.answerKey(name)) return true;
     else if (name === "Escape") stepBack();
     else if (inCalendar && calendar.handleKey(name)) return true;
-    else if (input && name === "Tab") inputFocused = true;
+    else if (island.input && name === "Tab") inputFocused = true;
     else if (own) activate(own, name);
     else if (name === "/" && slashFilters) startFilter();
     else if (target) openMenu(target);

@@ -10,8 +10,6 @@ Singleton {
 
   // Set by the menu while it is open, when plugins with `every` read again.
   property bool menuOpen: false
-  // Set by the menu: the plugin whose input it shows, and that input, so a change of either ends a visit; "" while none shows.
-  property string watching: ""
 
   function get(name) {
     return internal.loaded[name] ?? null;

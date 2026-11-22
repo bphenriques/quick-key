@@ -178,13 +178,13 @@ ShellRoot {
           const ask = Plugins.get("visitor");
           if (!ask) return false;
           if (root.visitStep === 0) {
-            Plugins.watching = "visitor\n{}";
+            ask.watched = true;
             root.visitStep = ask.submit("one", false, "") ? 1 : 0;
           } else if (root.visitStep === 1 && ask.turn?.text === "one") {
             root.visitStep = ask.submit("two", false, "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" && ask.turn.context === "one" ? 2 : -1;
           } else if (root.visitStep === 2 && ask.turn?.text === "two" && ask.turn.phase === "done") {
             root.visitStep = ask.exchanges.length === 2 && !ask.unread ? 3 : -1;
-            Plugins.watching = "";
+            ask.endVisit();
             root.visitStep = ask.turn === null && ask.submit("three", true, "") ? root.visitStep + 1 : -1;
           }
           return root.visitStep === 4 && !ask.busy && ask.exchanges.length === 1 && ask.unread;
@@ -196,11 +196,11 @@ ShellRoot {
           const ask = Plugins.get("unanswered");
           if (!ask) return false;
           if (!root.failedSent) {
-            Plugins.watching = "unanswered\n{}";
+            ask.watched = true;
             root.failedSent = ask.submit("lost", false, "");
           }
           const done = ask.turn?.phase === "error" && ask.draft === "";
-          if (done) Plugins.watching = "";
+          if (done) ask.endVisit();
           return done;
         }
       },
@@ -211,7 +211,7 @@ ShellRoot {
           if (!ask || ask.busy) return false;
           switch (root.chooseStep) {
           case 0:
-            Plugins.watching = "chooser\n{}";
+            ask.watched = true;
             root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
             return false;
           case 1:
@@ -222,7 +222,7 @@ ShellRoot {
             return false;
           }
           const done = root.chooseStep === 4 && ask.turn?.table === true && ask.turn.phase === "done" && ask.turn.options.length === 0;
-          if (done) Plugins.watching = "";
+          if (done) ask.endVisit();
           return done;
         }
       },
