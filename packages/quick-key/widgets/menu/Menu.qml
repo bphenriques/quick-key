@@ -165,11 +165,12 @@ Scope {
           question: root.menu.turn?.question ?? ""
           context: root.menu.turn?.context ?? ""
           text: root.menu.turn?.text ?? ""
-          phase: root.menu.turn?.phase ?? "answered"
+          phase: root.menu.turn?.phase ?? "done"
+          kind: root.menu.turn?.kind ?? ""
           activity: root.menu.turn?.activity ?? ""
           options: root.menu.choices
           table: !!root.menu.turn?.table
-          picking: root.menu.turn?.phase === "choosing" && fits
+          picking: root.menu.turn?.kind === "question" && fits
         }
       }
 
@@ -205,7 +206,7 @@ Scope {
           const send = MenuKeys.sends(event);
           const name = MenuKeys.name(event);
           // A choice waiting takes the digits whether or not they all show here, so they never type.
-          const waiting = !prompt.filter && root.menu.turn?.phase === "choosing" && prompt.text === "";
+          const waiting = !prompt.filter && root.menu.turn?.kind === "question" && prompt.text === "";
           if (prompt.filter) {
             if (!root.menu.filterKey(name)) return;
           } else if (send) prompt.send(send === "background");
@@ -242,7 +243,7 @@ Scope {
           target: root.menu.inputPlugin
 
           function onTurnChanged() {
-            if (root.menu.inputPlugin.turn?.phase === "failed" && prompt.text === "") prompt.set(root.menu.lastSent);
+            if (root.menu.inputPlugin.turn?.phase === "error" && prompt.text === "") prompt.set(root.menu.lastSent);
           }
         }
       }

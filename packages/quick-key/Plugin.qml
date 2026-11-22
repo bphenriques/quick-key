@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.ui
 
 // The root of every plugin (see docs/src/plugins.md).
 Scope {
@@ -24,8 +25,11 @@ Scope {
   property string text: state.text ?? ""
   property string detail: state.detail ?? ""
   property bool active: state.active ?? false
-  // The status's tone when it needs one (warning on a late count); unset, lit by active.
+  // Its value's own tone when it needs one (warning on a late count); unset, its phase's, else lit by active.
   property string tone: state.tone ?? ""
+  // Its work (Phase): idle, working, blocked on you with its `kind`, done or error; by default its state's, an unknown word idle.
+  property string phase: Phase.of(state.phase)
+  property string kind: Phase.kinds.includes(state.kind) ? state.kind : ""
   // Why it failed, its source's `error` or its own; a level listing it shows it under its keys.
   property string error: state.error ?? ""
   // Why its list is empty, shown in its place (No tasks); by default, its state's own `empty`.
@@ -40,10 +44,10 @@ Scope {
   property string shortcut: settings.shortcut
   // Whether the menu shows an input giving it text.
   readonly property bool watched: Plugins.watching.startsWith(name + "\n")
-  // The turn of the conversation that text started, as the menu draws it while watched (Exchange): { question, context, text, phase, activity, options, table, steps }, `context` the answer a working turn follows, `steps` what you answered on the way, `phase` one of working, answered, choosing (`options` a digit picks), waiting (on you), failed (the input gets the text back) or stopped; null before the first.
+  // The turn of the conversation that text started, as the menu draws it while watched (Exchange): { question, context, text, phase, kind, activity, options, table, steps }, `context` the answer a working turn follows, `steps` what you answered on the way, `phase` as Phase names it: working, done, blocked on a question (`options` a digit picks) or for permission, error (the input gets the text back) or idle (stopped); null before the first.
   property var turn: null
-  // Whether it takes no text now; an input giving it text shows a spinner meanwhile and sends nothing.
-  property bool busy: false
+  // Whether it takes no text now, a run under way, working or blocked on you; an input giving it text shows a spinner meanwhile and sends nothing.
+  readonly property bool busy: phase === "working" || phase === "blocked"
 
   // What a menu entry with `list` set to its name shows, each { id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone, verb, closes, actions }: `verb` names what choosing it does, `closes` hides the surface first, `actions` ([{ key, desc, icon, closes }]) are its own menu.
   property var items: state.items ?? []

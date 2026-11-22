@@ -10,7 +10,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own).
+  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own).
   readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -69,7 +69,7 @@ Singleton {
     calendar: {
       glyph: () => Glyphs.calendar,
       fields: () => root.calendar(),
-      busy: () => Calendar.syncing,
+      phase: () => Calendar.syncing ? "working" : Calendar.error ? "error" : "idle",
       // A sync older than calendar.staleAfter warns, a format showing it or not.
       fieldTones: () => ({ updated: !Calendar.syncing && Clock.stale(Calendar.updated, Config.calendar.staleAfter) ? "warning" : "" }),
       format: "|{when}"

@@ -14,6 +14,8 @@ ShellRoot {
   property string leftRunning: ""
   // Whether a bare y, waiting on an approval, left it alone.
   property string bareY: ""
+  // Whether, waiting on an approval, it said it was blocked on permission.
+  property bool blocked: false
   property bool renewed: false
   property bool wasReset: false
   property int visitStep: 0
@@ -88,14 +90,15 @@ ShellRoot {
         }
       },
       {
-        name: "the session it opens is kept, and an approval is answered by the user, never by a bare y, and stays as a step",
+        name: "the session it opens is kept, and an approval, which blocks it on permission, is answered by the user, never by a bare y, and stays as a step",
         until: () => root.asked("approved", ask => {
           if (ask.approval === "rm") {
             ask.typing = false;
+            root.blocked = ask.phase === "blocked" && ask.kind === "permission" && ask.busy && ask.describe(ask.exchanges[0]).kind === "permission";
             root.bareY = ask.act("y") || ask.approval !== "rm" ? "allowed" : "kept";
             ask.answerApproval(true);
           }
-          return root.bareY === "kept" && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";
+          return root.blocked && root.bareY === "kept" && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";
         })
       },
       {
@@ -179,7 +182,7 @@ ShellRoot {
             root.visitStep = ask.submit("one", false, "") ? 1 : 0;
           } else if (root.visitStep === 1 && ask.turn?.text === "one") {
             root.visitStep = ask.submit("two", false, "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" && ask.turn.context === "one" ? 2 : -1;
-          } else if (root.visitStep === 2 && ask.turn?.text === "two" && ask.turn.phase === "answered") {
+          } else if (root.visitStep === 2 && ask.turn?.text === "two" && ask.turn.phase === "done") {
             root.visitStep = ask.exchanges.length === 2 && !ask.unread ? 3 : -1;
             Plugins.watching = "";
             root.visitStep = ask.turn === null && ask.submit("three", true, "") ? root.visitStep + 1 : -1;
@@ -196,7 +199,7 @@ ShellRoot {
             Plugins.watching = "unanswered\n{}";
             root.failedSent = ask.submit("lost", false, "");
           }
-          const done = ask.turn?.phase === "failed" && ask.draft === "";
+          const done = ask.turn?.phase === "error" && ask.draft === "";
           if (done) Plugins.watching = "";
           return done;
         }
@@ -212,13 +215,13 @@ ShellRoot {
             root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
             return false;
           case 1:
-            root.chooseStep = ask.turn?.phase === "choosing" && ask.turn.options.length === 2 && !ask.act("Escape") && ask.choices.length === 2 && ask.act("2") ? 3 : -1;
+            root.chooseStep = ask.turn?.kind === "question" && ask.turn.options.length === 2 && !ask.act("Escape") && ask.choices.length === 2 && ask.act("2") ? 3 : -1;
             return false;
           case 3:
             root.chooseStep = ask.exchanges[ask.exchanges.length - 1].prompt === "b" && ask.exchanges[ask.exchanges.length - 1].reply === "b" && ask.submit("a table", false, "") ? 4 : -1;
             return false;
           }
-          const done = root.chooseStep === 4 && ask.turn?.table === true && ask.turn.phase === "answered" && ask.turn.options.length === 0;
+          const done = root.chooseStep === 4 && ask.turn?.table === true && ask.turn.phase === "done" && ask.turn.options.length === 0;
           if (done) Plugins.watching = "";
           return done;
         }

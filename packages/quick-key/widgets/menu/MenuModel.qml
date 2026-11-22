@@ -319,7 +319,7 @@ Scope {
     text = text.trim();
     if (!text || !input || inputBusy) return false;
     // The format wraps what starts a conversation; once the plugin has answered, the next send answers it as typed.
-    const sent = input.format && (!turn || turn.phase === "failed") ? input.format.replace(/\{text\}/g, () => text) : text;
+    const sent = input.format && (!turn || turn.phase === "error") ? input.format.replace(/\{text\}/g, () => text) : text;
     if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
     // A plugin that failed to load takes nothing.
     else if (!inputPlugin || inputPlugin.submit(sent, background, input.after ?? "") === false) return false;

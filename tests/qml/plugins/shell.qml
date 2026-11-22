@@ -27,6 +27,15 @@ ShellRoot {
 
     cases: [
       {
+        name: "a watch that ends takes its work with it, and leaves its result to be seen, as Rex has it",
+        until: () => Plugins.get("finisher")?.phase === "done" && Plugins.get("finisher").text === "built" && !Plugins.get("finisher").busy
+          && Plugins.get("worker")?.phase === "idle" && Plugins.get("worker").text === ""
+      },
+      {
+        name: "a phase or kind it does not know is idle and none",
+        until: () => Plugins.get("later")?.phase === "idle" && Plugins.get("later").kind === "" && !Plugins.get("later").busy
+      },
+      {
         name: "a command that fails keeps its last word on stderr, which it logs",
         start: () => complainer.running = true,
         until: () => !complainer.running && complainer.complaint === "bad"

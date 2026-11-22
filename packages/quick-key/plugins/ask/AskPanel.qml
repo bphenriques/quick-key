@@ -102,7 +102,8 @@ Scope {
       image: turn.drawn.image ?? ""
       // A line that is only a link shows once, as its row below.
       text: (turn.drawn.text ?? "").split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
-      phase: turn.drawn.phase ?? "answered"
+      phase: turn.drawn.phase ?? "done"
+      kind: turn.drawn.kind ?? ""
       // The time too, once the wait is noticeable, which only the panel's clock counts.
       activity: [turn.drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
       options: turn.drawn.options ?? []
@@ -294,7 +295,7 @@ Scope {
         Layout.fillWidth: true
         glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
         // Who it asks until a turn says what Return does next, as the menu's input does.
-        placeholder: panel.last ? Words.next(panel.last.phase, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
+        placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
         active: panel.plugin.typing
         key: "Tab"
         onTapped: panel.plugin.typing = true

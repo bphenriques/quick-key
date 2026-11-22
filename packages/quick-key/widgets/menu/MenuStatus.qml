@@ -29,7 +29,9 @@ ItemLine {
   readonly property var fields: builtin ? builtin.fields((id, name) => root.pinned(id, name)) : Object.assign({ text: plugin?.text ?? "", detail: plugin?.detail ?? "" }, plugin?.fields ?? {})
   readonly property var value: builtin || format ? Statuses.value(builtin ?? {}, fields, format) : { text: plugin?.text ?? "", detail: plugin?.detail ?? "", glyphs: Array.from(plugin?.glyphs ?? []) }
   readonly property string statusTone: plugin?.tone || (builtin?.tone ? builtin.tone() : "")
-  readonly property bool statusBusy: builtin?.busy ? builtin.busy() : plugin?.busy ?? false
+  // Its work (Phase), drawn as every surface draws it: a spinner while working, its tone otherwise.
+  readonly property string statusPhase: builtin?.phase ? builtin.phase() : plugin?.phase ?? "idle"
+  readonly property bool statusBusy: statusPhase === "working"
   readonly property bool blank: glyph === "" && text === "" && detail === ""
 
   glyph: icon || (builtin ? builtin.glyph() : plugin?.glyph ?? "")
@@ -44,9 +46,9 @@ ItemLine {
   meter: itemMeter !== undefined ? itemMeter : inLevel && builtin?.meter ? builtin.meter() : -1
   meterTone: itemMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
   // In a bar: its own tone (over a format, a field's it shows), else lit while on; what is not lit dims, but for the strong one.
-  readonly property string barTone: (format ? formatTone : statusTone) || (active || plugin?.active ? "primary" : strong ? "normal" : "dim")
+  readonly property string barTone: (format ? formatTone : statusTone) || Phase.tone(statusPhase) || (active || plugin?.active ? "primary" : strong ? "normal" : "dim")
   // A status's tone is its own value's, but not over a format, which shows other fields.
-  readonly property string ownValueTone: itemTone || (format ? formatTone : statusTone)
+  readonly property string ownValueTone: itemTone || (format ? formatTone : statusTone) || Phase.tone(statusPhase)
   // Under a format, the tone of a field it shows, when one has its own.
   readonly property var fieldTones: builtin?.fieldTones ? builtin.fieldTones() : plugin?.fieldTones ?? {}
   readonly property string formatTone: format ? (format.match(/\{\w+\}/g) ?? []).map(field => fieldTones[field.slice(1, -1)]).find(tone => tone) ?? "" : ""

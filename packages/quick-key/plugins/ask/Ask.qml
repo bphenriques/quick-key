@@ -54,6 +54,8 @@ Plugin {
   // Whether the prompt has the keys; it does as the panel opens, and Tab moves them.
   property bool typing: true
   property bool unread: false
+  // A turn, or a load replaying an earlier conversation, under way.
+  property bool running: false
   // Whether this visit (the menu showing its input) sent it a turn, so the next send continues that conversation.
   property bool visited: false
   // `?` with the prompt dim: the panel's keys in place of the conversation, until the next key.
@@ -83,10 +85,10 @@ Plugin {
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText
 
-  // Its status shows only while it has something to report: a run, an answer unread, a question for you.
-  glyph: busy || unread || approval ? settings.glyph : ""
-  active: busy || unread
-  tone: approval ? "warning" : ""
+  // Its work (Phase): a run, blocked on an approval, else what you have not seen (an answer done, a failure); its status shows only while it has one to report.
+  phase: running ? (approval ? "blocked" : "working") : unread ? (exchanges[exchanges.length - 1]?.error ? "error" : "done") : "idle"
+  kind: approval ? "permission" : ""
+  glyph: phase !== "idle" ? settings.glyph : ""
   error: failure
   views: ["AskPanel.qml"]
   recalls: settings.ask !== ""
@@ -132,7 +134,7 @@ Plugin {
       reset();
       recalled = [];
       resuming = true;
-      busy = true;
+      running = true;
       agent.load(id);
     }
     show();
@@ -141,7 +143,7 @@ Plugin {
   // The history replayed, as exchanges, the last one's options waiting as a fresh answer's do; stopped or failed, none.
   function resumed(outcome) {
     resuming = false;
-    busy = false;
+    running = false;
     failure = outcome.error ?? "";
     exchanges = !outcome.loaded ? [] : recalled.map(entry => {
       const shaped = Markup.options(entry.reply);
@@ -199,20 +201,22 @@ Plugin {
     return exchange ? [exchange.reply, (exchange.options ?? []).join(" · ")].filter(part => part).join(" ") : "";
   }
 
-  // An exchange by its phase, as an Exchange draws it: the last one working, or waiting on you, while busy, and choosing while its options wait.
+  // An exchange by its phase (Phase), as an Exchange draws it: the last one working, or blocked on an approval, while running, and blocked on a question while its options wait; a stopped one idle.
   function describe(exchange) {
     const latest = exchange === exchanges[exchanges.length - 1];
-    const phase = latest && busy ? (approval ? "waiting" : "working")
-      : exchange.stopped ? "stopped" : exchange.error ? "failed" : latest && choices.length > 0 ? "choosing" : "answered";
+    const phase = latest && running ? (approval ? "blocked" : "working")
+      : exchange.stopped ? "idle" : exchange.error ? "error" : latest && choices.length > 0 ? "blocked" : "done";
+    const kind = phase !== "blocked" ? "" : latest && running ? "permission" : "question";
     return {
       question: exchange.prompt,
       image: exchange.image,
-      text: phase === "waiting" ? Words.allowQuestion(approval) : exchange.error || exchange.reply,
+      text: kind === "permission" ? Words.allowQuestion(approval) : exchange.error || exchange.reply,
       phase: phase,
+      kind: kind,
       activity: phase === "working" ? activity : "",
       // While it works, the answer it follows with the options it gave, so the question shows what it answers.
       context: phase === "working" ? followed(exchanges[exchanges.indexOf(exchange) - 1]) : "",
-      options: phase === "choosing" ? choices : [],
+      options: kind === "question" ? choices : [],
       table: !!exchange.table,
       steps: exchange.steps ?? []
     };
@@ -234,7 +238,7 @@ Plugin {
     const kept = retried ? exchanges.slice(0, -1) : exchanges;
     exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || watched }]);
     if (image === root.image) root.image = "";
-    busy = true;
+    running = true;
     approval = "";
     activity = "";
     touched = false;
@@ -276,7 +280,7 @@ Plugin {
 
   function finish(answer) {
     const last = setLast({ reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? words.noAnswer, stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
-    busy = false;
+    running = false;
     approval = "";
     if (seen(last)) report();
     else notify(last.error || [last.reply].concat(last.options).join(" · "));

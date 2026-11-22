@@ -21,8 +21,8 @@ Singleton {
   readonly property string filterPrompt: "Filter" + ellipsis
 
   // What Return does after a turn in `phase`, for the prompt under it: nothing while it works, where the answer says so and typing ahead is free.
-  function next(phase, picking, options) {
-    return phase === "working" ? "" : phase === "waiting" ? approvePrompt : picking && options > 0 ? pickPrompt : replyPrompt;
+  function next(phase, kind, picking, options) {
+    return phase === "working" ? "" : kind === "permission" ? approvePrompt : picking && options > 0 ? pickPrompt : replyPrompt;
   }
 
   // A list's rows at rest of all it holds, when it holds more (1-9 of 14).

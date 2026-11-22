@@ -43,15 +43,21 @@ Scope {
     }
   }
 
+  // Its watch ended: work under way (working, blocked) goes with it, as Rex has it, and a result (done, error) stays to be seen.
+  function ended() {
+    internal.line = "";
+    if (state.phase !== "done" && state.phase !== "error") state = {};
+  }
+
   function lastLine(text) {
     return text.trim().split("\n").pop().trim();
   }
 
-  // Its state lasts as long as it runs, so a command that dies leaves nothing stale on screen.
+  // Its work lasts as long as it runs, so a command that dies leaves nothing stale on screen, but a result to see.
   CommandWatcher {
     shell: root.watch
     onRead: line => root.apply(line.trim())
-    onRunningChanged: if (!running && root.watch) root.apply("")
+    onRunningChanged: if (!running && root.watch) root.ended()
   }
 
   CommandReader {

@@ -115,6 +115,18 @@
     "repeated": {
       "type": "command",
       "watch": "echo same; echo same; echo same; sleep 60"
+    },
+    "finisher": {
+      "type": "command",
+      "watch": "echo '{\"phase\":\"done\",\"text\":\"built\"}'"
+    },
+    "worker": {
+      "type": "command",
+      "watch": "echo '{\"phase\":\"working\",\"text\":\"building\"}'"
+    },
+    "later": {
+      "type": "command",
+      "read": "echo '{\"phase\":\"later\",\"kind\":\"nope\"}'"
     }
   }
 }

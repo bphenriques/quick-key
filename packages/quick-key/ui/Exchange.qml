@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs
 
-// One turn of a conversation, the question a bubble on the right and the answer on the left in Markdown, streaming in while it works, drawn by its `phase` (working, answered, choosing, waiting, failed, stopped); with `lines` it is compact, `overflows` saying what it cannot hold.
+// One turn of a conversation, the question a bubble on the right and the answer on the left in Markdown, streaming in while it works, drawn by its `phase` and `kind` as Phase names them (working; done; blocked on a question, options a digit picks, or for permission; error; idle once stopped); with `lines` it is compact, `overflows` saying what it cannot hold.
 ColumnLayout {
   id: root
 
@@ -16,7 +16,8 @@ ColumnLayout {
   property string image
   // The answer in Markdown, as ACP sends text; compact, shown plain.
   property string text
-  property string phase: "answered"
+  property string phase: "done"
+  property string kind: ""
   property string activity
   property var options: []
   // The text is a table's rows: kept whole, so its columns line up.
@@ -31,12 +32,12 @@ ColumnLayout {
 
   readonly property bool compact: lines > 0
   readonly property bool fits: options.length <= 9 && choices.implicitWidth <= maximumWidth - 2 * Config.theme.itemPaddingX
-  readonly property bool overflows: compact && (phase === "waiting" || table || brief.width > 0 && brief.truncated || (options.length > 0 && !fits))
+  readonly property bool overflows: compact && (kind === "permission" || table || brief.width > 0 && brief.truncated || (options.length > 0 && !fits))
   // What Return does next, for the prompt under the exchange.
-  readonly property string next: Words.next(phase, picking, options.length)
+  readonly property string next: Words.next(phase, kind, picking, options.length)
   // The answer's selection to show again (Markdown.kept).
   property alias kept: answer.kept
-  readonly property string tone: phase === "failed" ? "alert" : phase === "waiting" ? "warning" : phase === "stopped" ? "dim" : ""
+  readonly property string tone: phase === "error" ? "alert" : kind === "permission" ? "warning" : phase === "idle" ? "dim" : ""
 
   signal picked(int index)
   // The answer's selection made or cleared (Markdown.selected).
@@ -62,7 +63,7 @@ ColumnLayout {
   Bubble {
     mine: true
     // Its text is back in the prompt, to send again.
-    faded: root.phase === "failed"
+    faded: root.phase === "error"
     maximumWidth: root.maximumWidth
 
     Thumbnail {
@@ -127,7 +128,7 @@ ColumnLayout {
 
         Icon {
           Layout.alignment: Qt.AlignTop
-          visible: root.phase === "failed"
+          visible: root.phase === "error"
           tone: "alert"
           glyph: Glyphs.failed
           size: Metrics.line
@@ -191,7 +192,7 @@ ColumnLayout {
     // Copies the whole answer; a selection copies its part. At its end, so it reads as the answer's and not its first line's.
     ListItem {
       Layout.alignment: Qt.AlignBottom
-      visible: root.copyable && (root.phase === "answered" || root.phase === "choosing")
+      visible: root.copyable && (root.phase === "done" || root.kind === "question")
       onActivated: Quickshell.clipboardText = root.text
 
       Icon {
