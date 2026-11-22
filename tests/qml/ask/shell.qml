@@ -58,8 +58,9 @@ ShellRoot {
         }
       },
       {
-        name: "a heading is plain in a compact line wherever it is one in the answer, indented too",
+        name: "a compact line is the answer's blocks as plain text: a heading indented too, code as written, a table's rows as columns, a rule dropped",
         until: () => Markup.plain("  ## Setup\n##not one") === "Setup\n##not one"
+          && Markup.plain("Use **this**:\n\n```sh\nmake `x`\n```\n\n| A | B |\n|---|---|\n| [one](u) | 2 |\n\n---\n\n> quoted *word*") === "Use this:\nmake `x`\nA  B\none  2\nquoted word"
       },
       {
         name: "waiting, a chord runs by its letter too and the legend says so, but C-y, as a bare y copies",

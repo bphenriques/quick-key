@@ -12,10 +12,27 @@ Singleton {
   readonly property var ruleLine: /^\s{0,3}([-*_])(\s*\1){2,}\s*$/
   readonly property var quoteLine: /^\s{0,3}>/
 
-  // As compact lines show it: its marks gone, an image or a link by its text, a table's rows as columns.
+  // As compact lines show it, from the blocks html() renders, so the two never disagree on what a block is: marks gone, code as written, a table's rows as columns, a rule dropped.
   function plain(markdown) {
-    return markdown.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1").replace(/^ {0,3}#{1,6}\s+/gm, "")
-      .split("\n").filter(line => !tableSeparator.test(line.trim())).join("\n").replace(/^\|\s*|\s*\|\s*$/gm, "").replace(/\s*\|\s*/g, "  ");
+    const lines = linesOf(markdown);
+    return spans(lines).map(([start, end]) => plainBlock(lines.slice(start, end))).filter(text => text !== "").join("\n");
+  }
+
+  function plainBlock(lines) {
+    const line = lines[0];
+    const fence = line.match(fenceLine);
+    if (fence) return lines.slice(1, lines.length > 1 && lines[lines.length - 1].trim().startsWith(fence[1]) ? -1 : lines.length).join("\n");
+    if (startsTable(lines, 0)) return [line].concat(lines.slice(2)).map(row => cells(row).map(bare).join("  ")).join("\n");
+    if (headingLine.test(line)) return bare(line.replace(/^\s*#+\s+/, "").replace(/\s+#+\s*$/, ""));
+    if (ruleLine.test(line)) return "";
+    if (quoteLine.test(line)) return plain(lines.map(quoted => quoted.replace(/^\s{0,3}>\s?/, "")).join("\n"));
+    if (listItem.test(line)) return lines.filter(each => each.trim()).map(bare).join("\n");
+    return bare(lines.map(joined => joined.trim()).join(" "));
+  }
+
+  // A line's inline marks dropped: a link or an image by its text, emphasis and code by theirs.
+  function bare(text) {
+    return text.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1");
   }
 
   // As `Markdown` renders it: rich text of the kit's own making (AGENTS.md rule 9), the answer's text escaped and an image or a link by its text, so nothing is fetched and no HTML runs.
