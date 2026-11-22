@@ -200,7 +200,7 @@ Scope {
       // The month, and the events from its selected day beside it as tall as the month, 2 to 3; built only while shown, as it is most of what an opening builds.
       Loader {
         Layout.fillWidth: true
-        active: root.menu.inCalendar
+        active: root.menu.viewModel === root.menu.calendar
         visible: !root.hinting && active
 
         sourceComponent: RowLayout {

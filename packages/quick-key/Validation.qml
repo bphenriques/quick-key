@@ -39,7 +39,6 @@ Singleton {
     property var problems: null
   }
 
-  readonly property var views: ["calendar"]
   // Esc steps back, ? lists the keys no row shows, Tab moves to the input and Shift+Tab back.
   readonly property var reservedKeys: ["Escape", "?", "Tab", "Backtab"]
 
@@ -185,7 +184,7 @@ Singleton {
       columns: { level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 ? "" : "sets columns, which only a level of 1 or more columns takes" },
       list: { names: Lists.builtin },
       pins: { needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits" : "" },
-      view: { excludes: ["list"], invalid: view => root.views.includes(view) ? "" : "shows view '" + view + "', which is not built in" },
+      view: { excludes: ["list"], invalid: view => view in Views.builtin ? "" : "shows view '" + view + "', which is not built in" },
       status: { names: Statuses.builtin },
       format: { needs: ["status"] },
       header: { level: true },

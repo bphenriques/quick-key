@@ -10,7 +10,7 @@ QtObject {
   required property MenuModel menu
 
   // The text a level takes under its body (an entry's `input`, or `menu.input` at the top level): { desc, cmd, plugin, format, after }.
-  readonly property var input: menu.level === null ? Config.menu.input ?? null : menu.level.kind === "entry" ? menu.level.entry.input ?? null : null
+  readonly property var input: menu.level === null ? Config.menu.input ?? null : menu.level.entry?.input ?? null
   // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
   readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.level?.entry?.list ?? "") : null
   readonly property bool busy: plugin?.busy ?? false

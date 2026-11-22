@@ -24,11 +24,14 @@ Scope {
   property bool inputFocused: false
   // Whether Tab moved the keys on to the answer over the input, where Return opens the plugin's panel.
   property bool answerFocused: false
-  readonly property CalendarModel calendar: CalendarModel {}
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
-  readonly property bool inCalendar: level?.entry?.view === "calendar"
+  readonly property CalendarModel calendar: CalendarModel {}
+  // Each view's model, by its name in Views; the view the level shows in place of a menu, and its model, else null.
+  readonly property var viewModels: ({ calendar: calendar })
+  readonly property var viewModel: viewModels[level?.entry?.view] ?? null
+  readonly property var view: viewModel ? Views.builtin[level.entry.view] : null
   // The level's input and what it starts: its plugin, turn, drafts and visit.
   readonly property InputModel island: InputModel {
     menu: root
@@ -47,7 +50,7 @@ Scope {
   readonly property var items: itemsOf(level)
   readonly property var actions: items.filter(item => !item.listed)
   // A level with a list or a view is its content, its actions on its bar (rule 4); any other is a menu, its actions its rows.
-  readonly property bool content: level?.kind === "entry" && !!(level.entry.list || level.entry.view)
+  readonly property bool content: level !== null && kinds[level.kind].content(level)
   readonly property var bodyActions: content ? [] : actions
   readonly property var barActions: content && !filtering ? actions : []
   readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed)
@@ -57,12 +60,8 @@ Scope {
   // Why a level's list is empty, in its place; "" while it lists something.
   readonly property string emptyText: level?.entry?.list && rows.length === 0 ? (filtering && filter.emptyText) || Lists.empty(level.entry.list) : ""
   readonly property var topBar: ({ left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") })
-  // The level's bar by slot: the top level's is menu.header, else the starter's, an entry's its own `header`, an app's menu the app and the way into it (blueman › Plugins).
-  readonly property var bar: level === null ? topBar
-    : level.kind === "entry" ? level.entry.header ?? {} : {}
-  readonly property var barSlots: level?.kind === "menu" ? { left: [appOf(stack.filter(level => level.kind === "menu"))], center: [], right: [] }
-    : level?.kind === "actions" ? { left: [{ key: "", desc: level.title, icon: level.icon, named: true }], center: [], right: [] }
-    : { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) }
+  // The level's bar by slot: the top level's is menu.header, else the starter's; any other level's as its kind has it.
+  readonly property var barSlots: level === null ? slotsOf(topBar) : kinds[level.kind].bar(level)
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
   // A level with nothing for its bar is its body alone.
   readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > 0
@@ -81,11 +80,11 @@ Scope {
   readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name)))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
   // Keys a level takes beyond its rows, after its actions on its bar (KeyLegend): { key, what }, only what the state changes (fixed keys are `?`'s), and `/` while the list holds more than its rows.
-  readonly property var levelLegend: (inCalendar ? calendar.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
+  readonly property var levelLegend: (view ? view.legend(viewModel) : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend : levelLegend
-  // Why a level's source failed, at the end of its body: the calendar's sync, or the plugin it lists.
-  readonly property string error: inCalendar ? (Calendar.syncing ? "" : Calendar.error) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
+  // Why a level's source failed, at the end of its body: its view's (the calendar's sync), or the plugin it lists'.
+  readonly property string error: view ? view.error(viewModel) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
 
   // An entry as a row or a bar item shows it.
   function itemOf(entry) {
@@ -104,40 +103,61 @@ Scope {
     };
   }
 
-  function itemsOf(level) {
-    if (level === null) return entries.map(itemOf);
-    if (level.kind === "menu") {
-      const children = Array.from(menuOpener.children.values).filter(child => !child.isSeparator && child.enabled);
-      const labels = children.map(child => child.text.replace(/_/g, ""));
-      const keys = MenuKeys.assign(labels);
-      return children.map((child, i) => ({
-        key: keys[i],
-        desc: labels[i],
-        glyphs: child.checkState === Qt.Checked ? [Glyphs.check] : child.hasChildren ? [Glyphs.submenu] : [],
-        select: child.hasChildren ? () => push({ kind: "menu", title: labels[i], handle: child, width: level.width }) : () => {
-          // Before hide(), which releases the menu this entry belongs to.
-          child.triggered();
-          hide();
+  // What each kind of level is: an entry's (its rows, then its list by digit; content when it lists or shows a view, its actions then on its bar, under its own `header`), an app's own menu (the app and the way into it on its bar: blueman › Plugins) or a listed item's actions (its name on its bar). A new kind is one more here.
+  readonly property var kinds: ({
+      entry: {
+        content: level => !!(level.entry.list || level.entry.view),
+        bar: level => root.slotsOf(level.entry.header ?? {}),
+        // Its own rows by letter, in their level (a value beside its label, with its meter), then what its list holds by digit.
+        items: level => Array.from(level.entry.submenu ?? []).map(entry => Object.assign(root.itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true })).concat(root.numbered(level.entry.list, level.entry.pins))
+      },
+      menu: {
+        content: () => false,
+        bar: () => ({ left: [root.appOf(root.stack.filter(level => level.kind === "menu"))], center: [], right: [] }),
+        items: level => {
+          const children = Array.from(menuOpener.children.values).filter(child => !child.isSeparator && child.enabled);
+          const labels = children.map(child => child.text.replace(/_/g, ""));
+          const keys = MenuKeys.assign(labels);
+          return children.map((child, i) => ({
+            key: keys[i],
+            desc: labels[i],
+            glyphs: child.checkState === Qt.Checked ? [Glyphs.check] : child.hasChildren ? [Glyphs.submenu] : [],
+            select: child.hasChildren ? () => root.push({ kind: "menu", title: labels[i], handle: child, width: level.width }) : () => {
+              // Before hide(), which releases the menu this entry belongs to.
+              child.triggered();
+              root.hide();
+            }
+          }));
         }
-      }));
-    }
-    // A listed item's own menu: its actions by their keys, each stepping back to the list once run.
-    if (level.kind === "actions") {
-      return Array.from(level.actions).map(action => ({
-        key: action.key,
-        desc: action.desc,
-        icon: action.icon,
-        closes: action.closes,
-        select: () => {
-          if (!action.closes) back();
-          action.select();
-        }
-      }));
-    }
+      },
+      actions: {
+        content: () => false,
+        bar: level => ({ left: [{ key: "", desc: level.title, icon: level.icon, named: true }], center: [], right: [] }),
+        // Its actions by their keys, each stepping back to the list once run.
+        items: level => Array.from(level.actions).map(action => ({
+            key: action.key,
+            desc: action.desc,
+            icon: action.icon,
+            closes: action.closes,
+            select: () => {
+              if (!action.closes) root.back();
+              action.select();
+            }
+          }))
+      }
+    })
 
-    // An entry's own rows by letter, in their level (a value beside its label, with its meter), then what its list holds by digit.
-    const own = Array.from(level.entry.submenu ?? []).map(entry => Object.assign(itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true }));
-    return own.concat(numbered(level.entry.list, level.entry.pins));
+  function itemsOf(level) {
+    return level === null ? entries.map(itemOf) : kinds[level.kind].items(level);
+  }
+
+  function slotsOf(bar) {
+    return { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) };
+  }
+
+  // A level starts with no view's focus, coming back to it too.
+  function clearViews() {
+    for (const name in Views.builtin) Views.builtin[name].clear(viewModels[name]);
   }
 
   // A bar slot's items: a name is a status or plugin to show, an entry with a list each of its items, any other entry itself; each with a `uid`, what it is, for the view to follow it by.
@@ -262,14 +282,14 @@ Scope {
     answerFocused = false;
   }
 
-  // A level starts with no event in focus, coming back to it too, and its input as it was left.
+  // A level comes back with its input as it was left.
   function back() {
     const left = level;
     stack = stack.slice(0, -1);
     stopFilter();
     inputFocused = !!left?.inputFocused;
     answerFocused = false;
-    calendar.focused = "";
+    clearViews();
   }
 
   function push(next) {
@@ -277,7 +297,7 @@ Scope {
     stopFilter();
     inputFocused = false;
     answerFocused = false;
-    calendar.focused = "";
+    clearViews();
   }
 
   function find(candidates, name) {
@@ -328,10 +348,7 @@ Scope {
   // Escape once its text is cleared: what is open on top (the filter, a focused event), then back where the level came from, closing where the menu opened.
   function stepBack() {
     if (filtering && !level.picking) return stopFilter();
-    if (inCalendar && calendar.focused) {
-      calendar.focused = "";
-      return;
-    }
+    if (view && view.stepBack(viewModel)) return;
     if (stack.length <= base) Panels.back();
     else back();
   }
@@ -363,7 +380,8 @@ Scope {
     } else if (!item.entry) {
       Plugins.get(item.status)?.activate();
     } else if (item.entry.submenu || item.entry.list || item.entry.view) {
-      calendar.reset();
+      const next = Views.builtin[item.entry.view];
+      if (next) next.reset(viewModels[item.entry.view]);
       push({ kind: "entry", entry: item.entry, width: item.entry.width });
     } else {
       run(item.entry, name);
@@ -401,7 +419,7 @@ Scope {
     else if (name === "?") held = "Help";
     else if (answerFocused && island.answerKey(name)) return true;
     else if (name === "Escape") stepBack();
-    else if (inCalendar && calendar.handleKey(name)) return true;
+    else if (view && view.handleKey(viewModel, name)) return true;
     else if (island.input && name === "Tab") inputFocused = true;
     else if (own) activate(own, name);
     else if (name === "/" && slashFilters) startFilter();
@@ -455,6 +473,6 @@ Scope {
 
   QsMenuOpener {
     id: menuOpener
-    menu: root.level?.kind === "menu" ? root.level.handle : null
+    menu: root.level?.handle ?? null
   }
 }
