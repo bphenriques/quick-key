@@ -75,6 +75,10 @@ ShellRoot {
       {
         name: "a plugin's own settings have nothing wrong",
         until: () => Validation.check({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }).length === 0
+      },
+      {
+        name: "a key renamed is named with what to write instead, and one not set is not",
+        until: () => Validation.renames({ clock: { fmt: "x" } }, { "clock.fmt": "clock.format", "audio.top": "audio.max" }).join() === "clock.fmt is now clock.format"
       }
     ].concat(root.wrong.map(([what, config, problem]) => ({
       name: what + " is named",

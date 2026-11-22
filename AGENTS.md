@@ -39,7 +39,7 @@ The rest:
 - `tests/`: the flake checks beyond the builds (see [DEVELOPMENT.md](DEVELOPMENT.md)).
 - `modules/home-manager/quick-key/`: the module. `default.nix` runs the shell and writes `settings` as given to `config.json`, which must pass the shell's check as the configuration builds; `calendar-sync.nix` runs calendar-sync.
 
-`Config.qml` is the schema of `config.json`: each key, its kind and its default. What a schema cannot say (an entry's fields, a name that must exist) is a check in `Validation.qml`, which the shell logs as it starts and `check.qml` fails on. Nothing else lists the settings or the built-in names.
+`Config.qml` is the schema of `config.json`: each key, its kind and its default. What a schema cannot say (an entry's fields, a name that must exist) is a check in `Validation.qml`, which the shell logs as it starts and `check.qml` fails on; an entry's fields are a table there (`fields`), only what spans fields written out. A renamed key adds its line to `Config.renamed`, so a config from before says what to write instead. Nothing else lists the settings or the built-in names.
 
 ## Code style
 

@@ -65,6 +65,9 @@ Singleton {
     }
   }
 
+  // Keys renamed, by their old path to their new one: a config still setting an old one fails its check saying what to write instead. A rename adds its line here.
+  readonly property var renamed: ({})
+
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
   function over(declared, value) {
     return kind(declared) === "map" && kind(value) === "map" ? Object.assign({}, declared, value) : value;

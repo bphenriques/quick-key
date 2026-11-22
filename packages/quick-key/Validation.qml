@@ -2,6 +2,8 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+// By name, not as the folder: so tools see Config as the singleton it is.
+import qs
 import qs.builtins
 import qs.ui
 
@@ -9,28 +11,42 @@ import qs.ui
 Singleton {
   id: root
 
-  // Null until config.json is read.
-  readonly property var problems: Config.written === null ? null : Config.invalid ? [Config.invalid] : check(Config.written)
-  // Logged as the verdict changes: the check runs again as what it reads settles, mostly to the same one.
-  onProblemsChanged: {
-    const verdict = JSON.stringify(problems ?? []);
-    if (verdict === internal.logged) return;
-    internal.logged = verdict;
-    for (const problem of problems ?? []) console.warn("config.json:", problem);
+  // Null until config.json is read; checked once each time it is, not in a binding, as the check makes the plugins' settings to read them.
+  readonly property var problems: internal.problems
+
+  function validate() {
+    if (Config.written === null) return;
+    internal.problems = Config.invalid ? [Config.invalid] : check(Config.written);
+    for (const problem of internal.problems) console.warn("config.json:", problem);
+  }
+
+  Component.onCompleted: validate()
+
+  Connections {
+    target: Config
+
+    function onWrittenChanged() {
+      Qt.callLater(root.validate);
+    }
+
+    function onInvalidChanged() {
+      Qt.callLater(root.validate);
+    }
   }
 
   QtObject {
     id: internal
-    property string logged: "[]"
+    property var problems: null
   }
 
-  readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "columns", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
   readonly property var views: ["calendar"]
   // Esc steps back, ? lists the keys no row shows, Tab moves to the input and Shift+Tab back.
   readonly property var reservedKeys: ["Escape", "?", "Tab", "Backtab"]
 
-  // Kinds first: the checks after them read the config in the shapes the settings declare.
+  // Renamed keys first, so a config from before a rename says what to write instead; then kinds, as the checks after them read the config in the shapes the settings declare.
   function check(json) {
+    const moved = renames(json, Config.renamed);
+    if (moved.length) return moved;
     const kinds = Config.undeclared(json);
     if (kinds.length) return kinds;
     const plugins = Object.keys(json.plugins ?? {});
@@ -42,6 +58,11 @@ Singleton {
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
       levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
+  }
+
+  // Each old key, by its path, that json still sets.
+  function renames(json, renamed) {
+    return Object.keys(renamed).filter(path => path.split(".").reduce((at, key) => at?.[key], json) !== undefined).map(path => path + " is now " + renamed[path]);
   }
 
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices); objectName is what Glyphs inherits as a QObject.
@@ -142,7 +163,6 @@ Singleton {
     const found = [];
     const unknown = Object.keys(input).filter(key => !["desc", "cmd", "plugin", "format", "after"].includes(key));
     if (unknown.length) found.push("sets input." + unknown.join(", input.") + ", which no input takes");
-    if (entry.submenu == null && entry.list == null && entry.view == null) found.push("can only set input on a level with submenu, list or view");
     if (typeof input.desc !== "string") found.push("needs an input with a desc");
     if (input.cmd != null && input.plugin != null) found.push("gives its input's text to both input.cmd and input.plugin");
     if (input.plugin != null && !plugins.includes(input.plugin)) found.push("gives its input's text to plugin '" + input.plugin + "', which is not one");
@@ -151,13 +171,49 @@ Singleton {
     return found;
   }
 
-  // In a bar an entry needs no key, and may only show its status.
+  // Each field an entry takes, and what it asks of the rest: `level`, a level's (submenu, list or view); `needs`, one of these set; `bar`, only in a bar; `names`, a table it names one of, else a plugin; `excludes`, fields it cannot sit beside; `invalid`, what is wrong with its value, else "".
+  readonly property var fields: ({
+      key: {},
+      desc: {},
+      cmd: {},
+      action: {},
+      icon: {},
+      width: {},
+      submenu: {},
+      keepOpen: { needs: ["cmd", "action"] },
+      activeWhen: { names: States.builtin },
+      columns: { level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 ? "" : "sets columns, which only a level of 1 or more columns takes" },
+      list: { names: Lists.builtin },
+      pins: { needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits" : "" },
+      view: { excludes: ["list"], invalid: view => root.views.includes(view) ? "" : "shows view '" + view + "', which is not built in" },
+      status: { names: Statuses.builtin },
+      format: { needs: ["status"] },
+      header: { level: true },
+      shortcut: { bar: true },
+      limit: { bar: true, needs: ["list"], invalid: limit => limit >= 1 && limit <= 9 ? "" : "limits its list to " + limit + ", not 1 to 9 digits" },
+      input: { level: true }
+    })
+
+  // What each set field asks of the rest, as `fields` says.
+  function fieldProblems(entry, plugins, inBar) {
+    const found = [];
+    const level = entry.submenu != null || entry.list != null || entry.view != null;
+    for (const [field, rule] of Object.entries(fields)) {
+      const value = entry[field];
+      if (value == null) continue;
+      if (rule.bar && !inBar || rule.level && !level || rule.needs && !rule.needs.some(other => entry[other] != null))
+        found.push("can only set " + field + (rule.level ? " on a level with submenu, list or view" : rule.bar ? (rule.needs ? " on a " + rule.needs.join(" or ") : "") + " in a bar" : " with " + rule.needs.join(" or ")));
+      if (rule.names && !(value in rule.names) && !plugins.includes(value)) found.push("names " + field + " '" + value + "', neither built in nor a plugin");
+      for (const other of rule.excludes ?? []) if (entry[other] != null) found.push("cannot combine " + field + " with " + other);
+      if (rule.invalid && rule.invalid(value)) found.push(rule.invalid(value));
+    }
+    return found;
+  }
+
+  // In a bar an entry needs no key, and may only show its status; past what `fields` says, what spans fields.
   function entryProblems(entry, plugins, inBar, list) {
     const found = [];
-    const named = (field, table) => {
-      if (entry[field] != null && !(entry[field] in table) && !plugins.includes(entry[field])) found.push("names " + field + " '" + entry[field] + "', neither built in nor a plugin");
-    };
-    const unknown = Object.keys(entry).filter(key => !entryKeys.includes(key));
+    const unknown = Object.keys(entry).filter(key => !(key in fields));
     const keys = [].concat(entry.key ?? []);
     const action = Actions.builtin[entry.action];
     const level = entry.submenu != null || entry.list != null || entry.view != null;
@@ -169,21 +225,8 @@ Singleton {
     if (inBar && entry.list == null && entry.status == null && entry.icon == null && entry.action == null) found.push("shows nothing: needs a status, an icon or an action");
     // A plugin's actions are its own, known only once it runs: on a level listing one, any name may be one.
     if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is not built in nor its level's plugin's");
-    named("status", Statuses.builtin);
-    named("activeWhen", States.builtin);
-    named("list", Lists.builtin);
-    if (entry.format != null && entry.status == null) found.push("can only set format with status");
-    if (entry.shortcut != null && !inBar) found.push("can only set shortcut in a bar, the only place it shows");
-    if (entry.header != null && !level) found.push("can only set header with submenu, list or view");
-    if (entry.limit != null && !(inBar && entry.list != null)) found.push("can only set limit on a list in a bar");
-    if (entry.limit != null && !(entry.limit >= 1 && entry.limit <= 9)) found.push("limits its list to " + entry.limit + ", not 1 to 9 digits");
-    if (entry.columns != null && !(Number.isInteger(entry.columns) && entry.columns >= 1 && (entry.submenu || entry.list || entry.view))) found.push("sets columns, which only a level of 1 or more columns takes");
-    if (entry.view != null && !views.includes(entry.view)) found.push("shows view '" + entry.view + "', which is not built in");
-    if (entry.view != null && entry.list != null) found.push("cannot combine view with list");
-    if (entry.keepOpen != null && entry.cmd == null && entry.action == null) found.push("can only set keepOpen with cmd or action");
+    found.push(...fieldProblems(entry, plugins, inBar));
     if ((entry.submenu ?? []).some(row => row.icon == null && row.action == null && row.status == null)) found.push("holds an action without an icon");
-    if (entry.pins != null && entry.list == null) found.push("can only set pins with list");
-    if ((entry.pins ?? []).length > 9) found.push("has more pins than digits");
     if (entry.list != null && (entry.submenu ?? []).some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
