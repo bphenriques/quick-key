@@ -22,7 +22,7 @@ Singleton {
   onLevelChanged: {
     const warning = warns(internal.level, level);
     internal.level = level;
-    if (warning && Startup.settled) Commands.run(Config.battery.warn, warning === "critical" ? Words.batteryCritical : Words.batteryLow, Words.batteryLeft(percentage));
+    if (warning && internal.settled) Commands.run(Config.battery.warn, warning === "critical" ? Words.batteryCritical : Words.batteryLow, Words.batteryLeft(percentage));
   }
 
   // The warning a change of level calls for: a worse one, never a better one (charging, or plugged in).
@@ -45,10 +45,22 @@ Singleton {
     setProfile(profiles[(profiles.indexOf(profile) + 1) % profiles.length]);
   }
 
+  Connections {
+    target: UPower.displayDevice
+
+    function onReadyChanged() {
+      if (UPower.displayDevice.ready) Qt.callLater(() => internal.settled = true);
+    }
+  }
+
+  Component.onCompleted: if (UPower.displayDevice.ready) Qt.callLater(() => internal.settled = true)
+
   QtObject {
     id: internal
     readonly property var ids: [PowerProfile.PowerSaver, PowerProfile.Balanced, PowerProfile.Performance]
     readonly property var names: ["power-saver", "balanced", "performance"]
     property string level: "normal"
+    // UPower has reported: the level it first gives is the state at start, not a fall.
+    property bool settled: false
   }
 }

@@ -22,8 +22,6 @@ Scope {
 
   Transient {
     id: transient
-    // Bound here, not read in show(): singletons start on first use, and this one must start with the shell.
-    armed: Startup.settled
   }
 
   Fade {
@@ -46,7 +44,12 @@ Scope {
         ? status.change ? [status.change()] : [status.glyph(), fields, status.meter ? status.meter() : -1, status.muted ? status.muted() : false, status.popup ? status.popup() : Statuses.value(status, fields).text]
         : plugin ? [plugin.glyph, plugin.text, plugin.detail, plugin.active, plugin.tone] : [])
 
-      onSignatureChanged: root.show(modelData)
+      // Its source has reported: its first value is state, the next ones changes.
+      readonly property bool ready: status ? !status.ready || status.ready() : !!plugin && (!plugin.settings.watch && !plugin.settings.read && !plugin.settings.file || Object.keys(plugin.state).length > 0)
+      property bool settled: false
+      onReadyChanged: if (ready) Qt.callLater(() => settled = true)
+      Component.onCompleted: if (ready) Qt.callLater(() => settled = true)
+      onSignatureChanged: if (settled) root.show(modelData)
     }
   }
 

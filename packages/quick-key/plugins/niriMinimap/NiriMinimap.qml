@@ -20,8 +20,11 @@ Plugin {
 
   Transient {
     id: transient
-    armed: Startup.settled
+    armed: false
   }
+
+  // niri's first layout is the state at start, not a move.
+  onMapChanged: if (map !== null && !transient.armed) Qt.callLater(() => transient.armed = true)
 
   // You moved: focus went to another window or workspace. A window that opens or closes moves focus without it.
   function moved() {

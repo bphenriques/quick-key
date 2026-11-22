@@ -10,7 +10,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own); change() what is a change worth a pop-up (else all it shows).
+  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own); change() what is a change worth a pop-up (else all it shows), ready() whether its source has reported, its first value then being state, not a change (else at once).
   readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -18,7 +18,8 @@ Singleton {
       format: "{device}|{volume}",
       meter: () => Audio.sinkVolume,
       muted: () => Audio.sinkMuted,
-      adjust: "sinkVolume"
+      adjust: "sinkVolume",
+      ready: () => Audio.sink?.ready ?? false
     },
     source: {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
@@ -26,7 +27,8 @@ Singleton {
       format: "{device}|{volume}",
       meter: () => Audio.sourceVolume,
       muted: () => Audio.sourceMuted,
-      adjust: "sourceVolume"
+      adjust: "sourceVolume",
+      ready: () => Audio.source?.ready ?? false
     },
     // Its glyph says whether it plays; with nothing playing it says so, which reads as state rather than something missing.
     music: {
@@ -64,7 +66,8 @@ Singleton {
       fields: () => !Brightness.lit ? {} : { level: Brightness.percentage + "%" },
       format: "|{level}",
       meter: () => Brightness.lit ? Brightness.percentage / 100 : -1,
-      adjust: "brightness"
+      adjust: "brightness",
+      ready: () => Brightness.present
     },
     calendar: {
       glyph: () => Glyphs.calendar,
@@ -93,7 +96,8 @@ Singleton {
       glyph: () => Glyphs.keyboard,
       fields: () => ({ layout: KeyboardLayout.label || KeyboardLayout.name }),
       format: "{layout}",
-      popupWidth: () => Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length))
+      popupWidth: () => Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)),
+      ready: () => KeyboardLayout.names.length > 0
     },
     // Where its daemon is (Power.profilesPresent); else nothing, so the row dims and a bar hides it.
     powerProfile: {

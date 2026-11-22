@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 
-// Runs `cases` in order and prints a TAP line for each: `start` once, then up to five seconds for `until` to hold.
+// Runs `cases` in order and prints a TAP line for each: `start` once, then up to its `timeout` (five seconds) for `until` to hold.
 Scope {
   id: root
 
@@ -31,7 +31,7 @@ Scope {
     onTriggered: {
       const passed = root.cases[root.index].until();
       root.waited += interval;
-      if (!passed && root.waited < 5000) return;
+      if (!passed && root.waited < (root.cases[root.index].timeout ?? 5000)) return;
       stop();
       console.info((passed ? "ok " : "not ok ") + (root.index + 1) + " - " + root.cases[root.index].name);
       root.next();

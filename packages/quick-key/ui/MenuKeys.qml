@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import "keys.js" as Keys
 
 // Keys by their xkb names (a, A, Up, space, ...), as menu entries declare them.
 Singleton {
@@ -45,60 +46,17 @@ Singleton {
     return event.modifiers & Qt.ControlModifier ? "" : event.text;
   }
 
-  // The names an entry key stands for: a single name or a list of them.
-  function names(key) {
-    return typeof key === "string" ? [key] : Array.from(key);
-  }
+  // Pure, so tests/unit reads them without a shell.
+  readonly property var names: Keys.names
+  readonly property var matches: Keys.matches
+  readonly property var label: Keys.label
+  readonly property var shortName: Keys.shortName
+  readonly property var gutter: Keys.gutter
+  readonly property var glob: Keys.glob
+  readonly property var assign: Keys.assign
 
   // Whether an entry runs one command per key (a pair); config lists are list-like, so Array.isArray cannot tell.
   function isPair(entry) {
     return entry?.cmd != null && typeof entry.cmd !== "string";
-  }
-
-  // Whether an entry key matches a key name.
-  function matches(key, name) {
-    return root.names(key).includes(name);
-  }
-
-  // A key Emacs-style: C- Ctrl, M- Alt, s- Super, Shift as the capital (S- otherwise), arrows as symbols; a pair shares its prefix.
-  function label(key, paired = false) {
-    const parts = (paired ? root.names(key) : root.names(key).slice(0, 1)).map(root.shortName);
-    const shared = parts.every(part => part.prefix === parts[0].prefix);
-    return shared ? parts[0].prefix + parts.map(part => part.key).join("") : parts.map(part => part.prefix + part.key).join("");
-  }
-
-  function shortName(name) {
-    const symbols = { Up: "↑", Down: "↓", Left: "←", Right: "→", space: "SPC", Space: "SPC", Tab: "TAB", Backtab: "S-TAB", Return: "RET", BackSpace: "DEL", Escape: "ESC" };
-    const [, chord, base] = name.match(/^((?:(?:Ctrl|Alt|Mod|Super|Shift)\+)*)(.*)$/);
-    const modifiers = chord.split("+");
-    const shift = modifiers.includes("Shift");
-    const letter = /^[A-Za-z]$/.test(base);
-    // In a chord a letter is its key, so lowercase unless Shift is held; alone, its case is already the key's.
-    const key = chord && letter ? (shift ? base.toUpperCase() : base.toLowerCase()) : symbols[base] ?? base;
-    const prefix = (modifiers.includes("Ctrl") ? "C-" : "") + (modifiers.includes("Alt") ? "M-" : "")
-      + (modifiers.includes("Mod") || modifiers.includes("Super") ? "s-" : "") + (shift && !letter ? "S-" : "");
-    return { prefix: prefix, key: key };
-  }
-
-  // A key gutter for keys up to `chars` long: a character more past a letter, as a row's spacing alone reads as no gap between words.
-  function gutter(chars) {
-    return chars > 1 ? chars + 1 : chars;
-  }
-
-  // Whether text matches a pattern where * stands for anything.
-  function glob(pattern, text) {
-    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
-    return new RegExp("^" + escaped + "$").test(text);
-  }
-
-  // One key per label (an app's own menu, a card's actions): its first letter not taken yet (`taken` already is), else one of `fallback`; "" when none is free.
-  function assign(labels, taken = [], fallback = "0123456789") {
-    const used = new Set(taken);
-    return labels.map(label => {
-      const letters = String(label).toLowerCase().replace(/[^a-z]/g, "") + fallback;
-      const key = Array.from(letters).find(letter => !used.has(letter)) ?? "";
-      if (key) used.add(key);
-      return key;
-    });
   }
 }
