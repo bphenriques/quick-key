@@ -19,4 +19,22 @@ ShellRoot {
   Menu {}
 
   Osd {}
+
+  KeepAwakeInhibitor {}
+
+  // What you chose while it runs (Kept), carried over the reload a config change makes; as JSON, as an object would stay with the engine the reload replaces.
+  PersistentProperties {
+    id: kept
+    reloadableId: "kept"
+    property string json: "{}"
+    onLoaded: Kept.restore(JSON.parse(json))
+  }
+
+  Connections {
+    target: Kept
+
+    function onValuesChanged() {
+      kept.json = JSON.stringify(Kept.values);
+    }
+  }
 }

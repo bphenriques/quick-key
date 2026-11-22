@@ -5,19 +5,14 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// Keeps the screen awake with Config.keepAwake.command, a systemd idle inhibitor hypridle honours. Off again when the shell restarts.
+// Whether the screen is kept awake (widgets/KeepAwakeInhibitor holds Wayland's idle inhibitor while it is); on until switched off, a reload included (Kept).
 Singleton {
   id: root
 
-  readonly property bool enabled: internal.enabled
+  readonly property bool enabled: Kept.values.keepAwake ?? false
 
   function toggle() {
-    internal.enabled = !internal.enabled;
-  }
-
-  QtObject {
-    id: internal
-    property bool enabled: false
+    Kept.set("keepAwake", !enabled);
   }
 
   IpcHandler {
@@ -26,13 +21,5 @@ Singleton {
     function toggle(): void {
       root.toggle();
     }
-  }
-
-  // The inhibitor holds until its stdin closes, which happens whenever it stops or the shell exits.
-  Process {
-    running: internal.enabled
-    stdinEnabled: true
-    command: ["sh", "-c", Config.keepAwake.command]
-    onExited: internal.enabled = false
   }
 }

@@ -1,6 +1,6 @@
 # Configuration
 
-Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `notifications`, ...), and the shell reloads it on save. With Nix, `programs.quick-key.settings` writes it as given. The [reference](options.md) lists every setting and its default.
+Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `notifications`, ...), and the shell reloads it on save, keeping what you chose while it ran: keep awake, unsent drafts, a list's order, an open conversation. With Nix, `programs.quick-key.settings` writes it as given. The [reference](options.md) lists every setting and its default.
 
 ```json
 {
@@ -36,7 +36,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 |---|---|
 | Brightness | the first `/sys/class/backlight` device, `busctl` |
 | Bluetooth, when rfkill blocks it | `rfkill` |
-| Keep awake | `systemd-inhibit` |
+| Keep awake | none: Wayland's idle inhibitor, which the compositor holds for every idle daemon |
 | Session | `loginctl`, `systemctl` |
 | Calendar reminders | `notify-send` |
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |

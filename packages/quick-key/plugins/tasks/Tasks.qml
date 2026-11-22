@@ -20,9 +20,9 @@ Plugin {
   readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
     .sort((a, b) => root.compare(a, b))
     .concat(adding.map(title => ({ id: "", title, adding: true })))
-  // From the settings, stepped through by the level's actions until the shell restarts.
-  property string sort: settings.sort
-  property string completed: settings.completed
+  // From the settings until the level's actions step them, then kept, a reload included (Kept), until the shell restarts.
+  readonly property string sort: Kept.values[name + ".sort"] ?? settings.sort
+  readonly property string completed: Kept.values[name + ".completed"] ?? settings.completed
   // Ticks not in the file yet, by id: done or not; titles added and not in it yet; and their commands, run one at a time.
   property var pending: ({})
   property var adding: []
@@ -40,8 +40,8 @@ Plugin {
   text: ""
   empty: completed === "only" ? words.noneDone : words.none
   actions: ({
-    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.words.sortedBy[root.sort], available: () => true, run: () => root.sort = root.after(root.settings.sorts, root.sort) },
-    completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.settings.shows, root.completed) }
+    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.words.sortedBy[root.sort], available: () => true, run: () => Kept.set(root.name + ".sort", root.after(root.settings.sorts, root.sort)) },
+    completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => Kept.set(root.name + ".completed", root.after(root.settings.shows, root.completed)) }
   })
   // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.
   detail: {

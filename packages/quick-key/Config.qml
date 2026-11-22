@@ -37,7 +37,6 @@ Singleton {
   readonly property alias audio: adapter.audio
   readonly property alias bluetooth: adapter.bluetooth
   readonly property alias brightness: adapter.brightness
-  readonly property alias keepAwake: adapter.keepAwake
   readonly property alias keyboardLayout: adapter.keyboardLayout
   readonly property alias battery: adapter.battery
   readonly property alias music: adapter.music
@@ -240,11 +239,6 @@ Singleton {
         property string set: "busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto org.freedesktop.login1.Session SetBrightness ssu backlight"
         // The panel the backlight dims; unset, the built-in output (eDP, LVDS or DSI).
         property string panel
-      }
-
-      property JsonObject keepAwake: JsonObject {
-        // Inhibits idle until its stdin closes; exec, so stopping it releases the lock.
-        property string command: 'exec systemd-inhibit --what=idle --who=quick-key --why="Keep awake" cat'
       }
 
       property JsonObject keyboardLayout: JsonObject {

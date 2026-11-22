@@ -24,8 +24,8 @@ Scope {
   property bool inputFocused: false
   // Whether Tab moved the keys on to the answer over the input, where Return opens the plugin's panel.
   property bool answerFocused: false
-  // Each input's unsent text, by the input, kept as the menu closes, as Ask keeps its draft.
-  property var drafts: ({})
+  // Each input's unsent text, by the input, kept as the menu closes and over a reload (Kept), as Ask keeps its draft.
+  readonly property var drafts: Kept.values.drafts ?? ({})
   readonly property string draft: draftOf(input)
   readonly property CalendarModel calendar: CalendarModel {}
 
@@ -422,7 +422,7 @@ Scope {
   }
 
   function keepDraft(text) {
-    if (input && text !== draft) drafts = Object.assign({}, drafts, { [JSON.stringify(input)]: text });
+    if (input && text !== draft) Kept.set("drafts", Object.assign({}, drafts, { [JSON.stringify(input)]: text }));
   }
 
   // A listed item does what it says; an entry with a level below opens it, any other runs; a plugin's name in a bar activates it.

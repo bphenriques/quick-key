@@ -118,8 +118,8 @@ ShellRoot {
         name: "the sort action steps through due, priority (none last), title and list, then due again, the one in use its value; completed through hidden, shown and only the done ones",
         until: () => {
           const tasks = Plugins.get("tasks");
-          tasks.sort = "due";
-          tasks.completed = "hidden";
+          Kept.set("tasks.sort", "due");
+          Kept.set("tasks.completed", "hidden");
           const ids = () => tasks.items.map(item => item.id).join();
           const shown = () => tasks.items.filter(item => !item.hidden).map(item => item.id).join();
           const sorts = [];
