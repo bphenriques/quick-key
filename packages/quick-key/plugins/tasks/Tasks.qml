@@ -32,7 +32,7 @@ Plugin {
   text: ""
   empty: completed === "only" ? Words.noCompleted : Words.noTasks
   actions: ({
-    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.sort, available: () => true, run: () => root.sort = root.after(root.settings.sorts, root.sort) },
+    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => Words.sortedBy[root.sort], available: () => true, run: () => root.sort = root.after(root.settings.sorts, root.sort) },
     completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => root.completed = root.after(root.settings.shows, root.completed) }
   })
   // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.

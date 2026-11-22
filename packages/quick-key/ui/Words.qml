@@ -58,6 +58,8 @@ Singleton {
   readonly property string noEvents: "No events"
   readonly property string noTasks: "No tasks"
   readonly property string noCompleted: "No completed tasks"
+  // The tasks' order as its action says it, by its value.
+  readonly property var sortedBy: ({ due: "by due date", priority: "by priority", title: "by title", list: "by list" })
 
   function devicesConnected(count) {
     return count + " devices connected";
