@@ -79,6 +79,18 @@
             "category": "^filed$"
           },
           "hide": true
+        },
+        {
+          "match": {
+            "app": "^forker$"
+          },
+          "actions": [
+            {
+              "key": "f",
+              "desc": "Fork",
+              "cmd": "(sleep 0.5; echo \"$NOTIFICATION_APP\" > \"$XDG_RUNTIME_DIR/forked\") &"
+            }
+          ]
         }
       ]
     }

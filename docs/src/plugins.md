@@ -139,7 +139,7 @@ plugins.notifications = {
 - `default`: what opening it runs, in place of its sender's.
 - `run`: a command run as it arrives, not when it is replaced.
 
-A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, `NOTIFICATION_ICON` (its picture or icon as a file, as niri sends a screenshot), and each named group of its `match` (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields are checked as the configuration builds.
+A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, `NOTIFICATION_ICON` (its icon as sent: a file's path, as a screenshot or album art comes, else a name), and each named group of its `match` (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields are checked as the configuration builds.
 
 Cards never take the keys on their own, so a notification never takes your typing. `summon`, bound to a compositor key (`Mod+N` through `action summon`, the plugin's `shortcut` naming it), gives them the keys where they are, the newest picked. Their keys show where they act, and nothing moves. Summoned, held cards show too, `limit` at a time, the bar saying how many of all there are (`1-3 of 8`). `hint` shows the `shortcut` dimly by the cards at rest. Keys:
 

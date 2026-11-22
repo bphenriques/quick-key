@@ -256,13 +256,18 @@ Plugin {
 
   // What a rule's labels and commands read: its app, summary, body, urgency and id, its picture or icon as a file (`icon`, as niri sends a screenshot), and what its groups found.
   function valuesOf(notification) {
-    return Object.assign({ app: notification.appName, summary: notification.summary, body: notification.body, urgency: urgencyOf(notification), id: String(notification.id), icon: fileOf(notification) }, internal.applied[notification.id]?.values);
+    return Object.assign({ app: notification.appName, summary: notification.summary, body: notification.body, urgency: urgencyOf(notification), id: String(notification.id), icon: fileOf(notification) || iconOf(notification) }, internal.applied[notification.id]?.values);
   }
 
-  // Its picture, else its icon, as a path when it is a file; else its icon's name.
+  // Its icon as sent: a file or a name, from its image-path hint (notify-send -i), else its app icon (niri's screenshot).
+  function iconOf(notification) {
+    return String(notification.hints["image-path"] ?? "") || notification.appIcon || "";
+  }
+
+  // Its icon as a path when it is a file, else "".
   function fileOf(notification) {
-    const file = [notification.image, notification.appIcon].find(source => source?.startsWith("/") || source?.startsWith("file://")) ?? notification.appIcon ?? "";
-    return file.startsWith("file://") ? decodeURIComponent(file.slice(7)) : file;
+    const icon = iconOf(notification);
+    return icon.startsWith("file://") ? decodeURIComponent(icon.slice(7)) : icon.startsWith("/") ? icon : "";
   }
 
   // A rule's command, given them in its environment as NOTIFICATION_<NAME>, as dunst gives DUNST_*.

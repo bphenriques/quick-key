@@ -18,16 +18,16 @@ Scope {
   readonly property bool right: settings.corner.endsWith("right")
   readonly property var cards: top ? plugin.shown : plugin.shown.slice().reverse()
 
-  // A picture: its image, else an icon given as a file (album art, a screenshot).
+  // A picture: an icon sent as a file (album art, a screenshot), else image data, which Quickshell serves as image://qsimage.
   function pictureOf(notification) {
-    const icon = notification.appIcon ?? "";
-    return notification.image || (icon.startsWith("/") ? "file://" + icon : icon.startsWith("file://") ? icon : "");
+    const file = plugin.fileOf(notification);
+    return file ? "file://" + file : notification.image?.startsWith("image://qsimage") ? notification.image : "";
   }
 
-  // An icon by its name, from the theme, at a glyph's size.
+  // An icon sent by its name, from the theme, at a glyph's size.
   function iconOf(notification) {
-    const icon = notification.appIcon ?? "";
-    return icon && !icon.includes("/") ? Quickshell.iconPath(icon, true) : "";
+    const icon = plugin.iconOf(notification);
+    return icon && !plugin.fileOf(notification) ? Quickshell.iconPath(icon, true) : "";
   }
 
   // The focused screen, which the cards follow while nothing holds them still.

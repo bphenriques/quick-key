@@ -37,7 +37,7 @@ ShellRoot {
   // What the rules' commands wrote, and whether a notification's text ran anything.
   Process {
     id: reader
-    command: ["sh", "-c", "cd \"$XDG_RUNTIME_DIR\" && for f in ran arrived opened edited pwned; do [ -e $f ] && echo \"$f: $(cat $f)\"; done; true"]
+    command: ["sh", "-c", "cd \"$XDG_RUNTIME_DIR\" && for f in ran arrived opened edited forked pwned; do [ -e $f ] && echo \"$f: $(cat $f)\"; done; true"]
     stdout: StdioCollector {
       onStreamFinished: root.files = text
     }
@@ -492,6 +492,41 @@ ShellRoot {
           }
           if ("once" in root.marks && root.mark("once") > 700 && !root.files) root.readFiles();
           return root.files.split("Run once").length === 2;
+        }
+      },
+      {
+        name: "notify-send -i sends its icon as image-path: a file reaches a rule's command as one, a name stays a name",
+        start: () => {
+          root.files = "";
+          root.send("-a", "shooter", "-i", "/tmp/Other shot.png", "Second shot");
+          root.send("-i", "dialog-information", "Named icon");
+        },
+        until: () => {
+          const shot = root.find("Second shot");
+          const edit = root.plugin.actionsOf(shot).find(action => action.key === "e");
+          if (edit && !("other" in root.marks)) {
+            root.mark("other");
+            edit.run();
+          }
+          if ("other" in root.marks && root.mark("other") > 500 && !root.files) root.readFiles();
+          const named = root.find("Named icon");
+          return root.files.includes("edited: /tmp/Other shot.png") && named !== null && root.plugin.fileOf(named) === "" && root.plugin.iconOf(named) === "dialog-information";
+        }
+      },
+      {
+        name: "what a rule's command leaves running outlives it, as wl-copy does serving the clipboard",
+        start: () => {
+          root.files = "";
+          root.send("-a", "forker", "Fork me");
+        },
+        until: () => {
+          const fork = root.plugin.actionsOf(root.find("Fork me")).find(action => action.key === "f");
+          if (fork && !("fork" in root.marks)) {
+            root.mark("fork");
+            fork.run();
+          }
+          if ("fork" in root.marks && root.mark("fork") > 1200 && !root.files) root.readFiles();
+          return root.files.includes("forked: forker");
         }
       },
       {
