@@ -272,6 +272,17 @@ ShellRoot {
         until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-1","a-1"],["C-0","+1"]]'
       },
       {
+        name: "a built-in status is shaped by its own format, an entry's over it, and music by its value",
+        until: () => {
+          const value = (name, fields, format) => JSON.stringify(Statuses.value(Statuses.builtin[name], fields, format));
+          return value("sink", { device: "Speakers", volume: "40%" }) === JSON.stringify({ text: "Speakers", detail: "40%" })
+            && value("bluetooth", { state: "off" }) === JSON.stringify({ text: "", detail: "off" })
+            && value("keepAwake", {}) === JSON.stringify({ text: "", detail: "" })
+            && value("sink", { device: "Speakers", volume: "40%" }, "{volume}") === JSON.stringify({ text: "40%", detail: "" })
+            && Statuses.value(Statuses.builtin.music, { song: "Song" }).text === "Song";
+        }
+      },
+      {
         name: "a format fills its fields, and a field without a value leaves nothing",
         until: () => Statuses.formatted("{title} · {when}", { title: "Lunch", when: "13:00" }) === "Lunch · 13:00" && Statuses.formatted("{none} x", {}) === "x"
       },

@@ -10,12 +10,12 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name for an entry's `format`, value(fields) as { text, detail, glyphs } when it has none, and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own).
+  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), busy() (a spinner on a bar icon showing it), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own).
   readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
       fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.level(Audio.sink) },
-      value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
+      format: "{device}|{volume}",
       meter: () => Audio.sinkVolume,
       muted: () => Audio.sinkMuted,
       adjust: "sinkVolume"
@@ -23,7 +23,7 @@ Singleton {
     source: {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
       fields: pinned => !Audio.source ? {} : { device: pinned(Audio.source.name, Audio.sourceName), volume: Audio.level(Audio.source) },
-      value: fields => ({ text: fields.device ?? "", detail: fields.volume ?? "" }),
+      format: "{device}|{volume}",
       meter: () => Audio.sourceVolume,
       muted: () => Audio.sourceMuted,
       adjust: "sourceVolume"
@@ -44,7 +44,7 @@ Singleton {
         name: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? Words.ethernet : Words.disconnected,
         wifi: Network.wifiEnabled ? "" : Words.wifiOff
       }),
-      value: fields => ({ text: fields.name, detail: fields.wifi })
+      format: "{name}|{wifi}"
     },
     bluetooth: {
       glyph: () => !Bluez.enabled ? Glyphs.bluetoothOff : Bluez.connected.length ? Glyphs.bluetoothConnected : Glyphs.bluetooth,
@@ -56,13 +56,13 @@ Singleton {
         if (others.length) return { device: Words.devicesConnected(Bluez.connected.length) };
         return { device: pinned(device.address, device.name), battery: device.batteryAvailable ? Math.round(device.battery * 100) + "%" : "" };
       },
-      value: fields => ({ text: fields.device ?? "", detail: fields.state ?? fields.battery ?? "" })
+      format: "{device}|{state}{battery}"
     },
     brightness: {
       // Unlit, no level to report, not even in its glyph: the row dims for that, "off" would read as the screen being off, and a level changing unseen is no change to pop up.
       glyph: () => Glyphs.brightness(Brightness.lit ? Brightness.percentage : 0),
       fields: () => !Brightness.lit ? {} : { level: Brightness.percentage + "%" },
-      value: fields => ({ text: "", detail: fields.level ?? "" }),
+      format: "|{level}",
       meter: () => Brightness.lit ? Brightness.percentage / 100 : -1,
       adjust: "brightness"
     },
@@ -72,31 +72,31 @@ Singleton {
       busy: () => Calendar.syncing,
       // A sync older than calendar.staleAfter warns, a format showing it or not.
       fieldTones: () => ({ updated: !Calendar.syncing && Clock.stale(Calendar.updated, Config.calendar.staleAfter) ? "warning" : "" }),
-      value: fields => ({ text: "", detail: fields.when ?? "" })
+      format: "|{when}"
     },
     clock: {
       glyph: () => Glyphs.calendar,
       fields: () => ({ date: Clock.text }),
       // The bar's anchor: bold, and not dimmed with the rest.
       strong: true,
-      value: fields => ({ text: fields.date, detail: "" })
+      format: "{date}"
     },
     battery: {
       glyph: () => Power.present ? Glyphs.battery(Power.percentage, Power.pluggedIn) : "",
       fields: () => !Power.present ? {} : { level: Power.percentage + "%" },
-      value: fields => ({ text: fields.level ?? "", detail: "" }),
+      format: "{level}",
       tone: () => Power.level === "critical" ? "alert" : Power.level === "low" ? "warning" : ""
     },
     keyboardLayout: {
       glyph: () => Glyphs.keyboard,
       fields: () => ({ layout: KeyboardLayout.label || KeyboardLayout.name }),
-      value: fields => ({ text: fields.layout, detail: "" }),
+      format: "{layout}",
       popupWidth: () => Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length))
     },
     keepAwake: {
       glyph: () => Glyphs.keepAwake,
       fields: () => ({}),
-      value: () => ({ text: "", detail: "" }),
+      format: "",
       tone: () => IdleInhibit.enabled ? "primary" : "",
       muted: () => !IdleInhibit.enabled,
       popup: () => Words.keepAwakeState(IdleInhibit.enabled),
@@ -107,6 +107,14 @@ Singleton {
   // A format with each {field} replaced; a field without a value leaves nothing.
   function formatted(format, fields) {
     return format.replace(/\{(\w+)\}/g, (_, name) => fields[name] ?? "").trim();
+  }
+
+  // A status's value over its fields, { text, detail, glyphs }: an entry's format over the status's own, `|` before the detail; with neither, its value().
+  function value(status, fields, format) {
+    const shape = format || status.format;
+    if (shape == null) return status.value(fields);
+    const [text, detail] = shape.split("|");
+    return { text: formatted(text, fields), detail: formatted(detail ?? "", fields) };
   }
 
   // The next event and when, and how old the events are: their age even after a failed sync, the line under the legend saying why.

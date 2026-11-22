@@ -27,7 +27,7 @@ ItemLine {
   readonly property var builtin: Statuses.builtin[status] ?? null
   readonly property var plugin: builtin ? null : Plugins.get(status)
   readonly property var fields: builtin ? builtin.fields((id, name) => root.pinned(id, name)) : Object.assign({ text: plugin?.text ?? "", detail: plugin?.detail ?? "" }, plugin?.fields ?? {})
-  readonly property var value: format ? { text: Statuses.formatted(format.split("|")[0], fields), detail: Statuses.formatted(format.split("|")[1] ?? "", fields) } : builtin ? builtin.value(fields) : { text: plugin?.text ?? "", detail: plugin?.detail ?? "", glyphs: Array.from(plugin?.glyphs ?? []) }
+  readonly property var value: builtin || format ? Statuses.value(builtin ?? {}, fields, format) : { text: plugin?.text ?? "", detail: plugin?.detail ?? "", glyphs: Array.from(plugin?.glyphs ?? []) }
   readonly property string statusTone: plugin?.tone || (builtin?.tone ? builtin.tone() : "")
   readonly property bool statusBusy: builtin?.busy ? builtin.busy() : plugin?.busy ?? false
   readonly property bool blank: glyph === "" && text === "" && detail === ""

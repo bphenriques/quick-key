@@ -43,7 +43,7 @@ Scope {
       readonly property var fields: status ? status.fields((id, name) => name) : ({})
       // Glyph, fields, meter, muted and text together: a toggle's glyph never moves, so its text says the change.
       readonly property string signature: JSON.stringify(status
-        ? [status.glyph(), fields, status.meter ? status.meter() : -1, status.muted ? status.muted() : false, status.popup ? status.popup() : status.value(fields).text]
+        ? [status.glyph(), fields, status.meter ? status.meter() : -1, status.muted ? status.muted() : false, status.popup ? status.popup() : Statuses.value(status, fields).text]
         : plugin ? [plugin.glyph, plugin.text, plugin.detail, plugin.active, plugin.tone] : [])
 
       onSignatureChanged: root.show(modelData)
@@ -64,7 +64,7 @@ Scope {
       // Never a dim fallback: a status without a tone of its own reads normal.
       readonly property string tone: muted ? "dim" : status ? ((status.tone ? status.tone() : "") || "normal") : plugin ? (plugin.tone || (plugin.active ? "primary" : "normal")) : "normal"
       readonly property string glyph: status ? status.glyph() : plugin ? plugin.glyph : ""
-      readonly property string text: status ? (status.popup ? status.popup() : status.value(fields).text) : plugin ? [plugin.text, plugin.detail].filter(part => part).join(" ") : ""
+      readonly property string text: status ? (status.popup ? status.popup() : Statuses.value(status, fields).text) : plugin ? [plugin.text, plugin.detail].filter(part => part).join(" ") : ""
 
       anchors.right: true
       margins.right: Config.theme.edgeMargin
