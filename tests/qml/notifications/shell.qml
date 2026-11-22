@@ -17,6 +17,21 @@ ShellRoot {
   property string chosen: ""
   property var replies: []
   property string chat: ""
+  property string files: ""
+
+  function readFiles() {
+    files = "";
+    reader.running = true;
+  }
+
+  // What the rules' commands wrote, and whether a notification's text ran anything.
+  Process {
+    id: reader
+    command: ["sh", "-c", "cd \"$XDG_RUNTIME_DIR\" && for f in ran arrived opened pwned; do [ -e $f ] && echo \"$f: $(cat $f)\"; done; true"]
+    stdout: StdioCollector {
+      onStreamFinished: root.files = text
+    }
+  }
 
   function chatSend(summary, hints = "@a{sv} {}") {
     Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify", "'Chat'", "uint32 0", "''", "'" + summary + "'", "'Lunch?'", "['inline-reply', 'Reply']", hints, "int32 -1"]);
@@ -331,10 +346,54 @@ ShellRoot {
         until: () => root.plugin.shown.some(notification => notification.summary === "Loud") && root.find("Quiet") !== null && !root.plugin.shown.some(notification => notification.summary === "Quiet")
       },
       {
+        name: "a rule adds its own action on its key, its label and command given what its groups found",
+        start: () => {
+          root.plugin.release();
+          Kept.set("notifications.paused", false);
+          root.send("-a", "Bank", "Code", "Your code is 482913.");
+        },
+        until: () => {
+          const action = root.plugin.actionsOf(root.find("Code")).find(action => action.key === "c");
+          if (action && !("code" in root.marks)) {
+            root.mark("code");
+            action.run();
+          }
+          if ("code" in root.marks && root.mark("code") > 500 && !root.files) root.readFiles();
+          return action?.desc === "Copy 482913" && root.files.includes("ran: 482913 Bank");
+        }
+      },
+      {
+        name: "a rule runs a command as one arrives, its text given, never run",
+        start: () => {
+          root.files = "";
+          root.send("-a", "runner", "$(touch $XDG_RUNTIME_DIR/pwned); true", "body");
+        },
+        until: () => {
+          if (root.find("$(touch $XDG_RUNTIME_DIR/pwned); true") && root.mark("runner") > 500 && !root.files) root.readFiles();
+          return root.files.includes("arrived: $(touch $XDG_RUNTIME_DIR/pwned); true") && !root.files.includes("pwned:");
+        }
+      },
+      {
+        name: "a rule's default is what opening it runs, and it is done with",
+        start: () => {
+          root.files = "";
+          root.send("-a", "opener", "Open me");
+        },
+        until: () => {
+          const card = root.find("Open me");
+          if (card && !("opener" in root.marks)) {
+            root.mark("opener");
+            root.plugin.open(card);
+          }
+          if ("opener" in root.marks && root.mark("opener") > 500 && !root.files) root.readFiles();
+          return root.files.includes("opened: opened") && !root.find("Open me");
+        }
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
-          const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes" });
-          return root.plugin.settings.problems().length === 0 && problems.length === 6 && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
+          const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c" }], run: 1 });
+          return root.plugin.settings.problems().length === 0 && problems.length === 10 && root.plugin.settings.groupNames("(a)(?:b)(?<c>[(]d)\\(").join() === ",c" && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
         }
       }
     ]

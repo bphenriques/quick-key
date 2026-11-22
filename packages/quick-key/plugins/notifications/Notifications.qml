@@ -96,8 +96,13 @@ Plugin {
     return shown.reduce((found, notification) => found === null || notification.id > found.id ? notification : found, null);
   }
 
-  // Its default action, else dismissed: a click means done with it.
+  // A rule's `default`, else its own default action, else dismissed: a click means done with it.
   function open(notification) {
+    const rule = internal.applied[notification.id]?.default;
+    if (rule) {
+      runFor(notification, rule);
+      return notification.dismiss();
+    }
     const action = Array.from(notification.actions).find(action => action.identifier === "default");
     if (action) action.invoke();
     else notification.dismiss();
@@ -112,12 +117,16 @@ Plugin {
     internal.held = on ? notification : internal.held === notification ? null : internal.held;
   }
 
-  // Its reply first, on TAB, then its sender's actions but the default, each with a letter from its label; `x`, which dismisses, is never one.
+  // Its reply first, on TAB, then its rules' actions on their keys, then its sender's but the default, each with a letter from its label that neither those nor `x`, which dismisses, take.
   function actionsOf(notification) {
-    const actions = Array.from(notification?.actions ?? []).filter(action => action.identifier !== "default");
-    const keys = MenuKeys.assign(actions.map(action => action.text), ["x"], "");
+    if (!notification || notification.gone) return [];
+    const values = valuesOf(notification);
+    const ruled = Array.from(internal.applied[notification.id]?.actions ?? []).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => root.runFor(notification, action.cmd) }));
+    const actions = Array.from(notification.actions).filter(action => action.identifier !== "default");
+    const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "");
     const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
-    return notification?.hasInlineReply ? [{ desc: notification.inlineReplyPlaceholder || words.reply, key: "Tab", run: () => root.reply(notification) }].concat(own) : own;
+    const reply = notification.hasInlineReply ? [{ desc: notification.inlineReplyPlaceholder || words.reply, key: "Tab", run: () => root.reply(notification) }] : [];
+    return reply.concat(ruled, own);
   }
 
   // Its prompt in its actions' place, summoned and picked; a click on Reply... starts here too.
@@ -187,7 +196,7 @@ Plugin {
     call(settings.owner, [], (code, output) => internal.error = code === 0 && Number(output.trim().split(/\s+/).pop()) === Quickshell.processId ? "" : words.taken);
   }
 
-  // What the rules that match it set, in order, later ones winning.
+  // What the rules that match it set, in order, later ones winning but actions adding up; `values` the text its named groups found.
   function ruled(notification) {
     const fields = {
       app: notification.appName,
@@ -197,8 +206,31 @@ Plugin {
       urgency: ["low", "normal", "critical"][notification.urgency],
       desktopEntry: notification.desktopEntry
     };
-    return Array.from(settings.rules).filter(rule => Object.entries(rule.match ?? {}).every(([field, pattern]) => new RegExp(pattern).test(fields[field] ?? "")))
-      .reduce((applied, rule) => Object.assign(applied, rule), {});
+    const applied = { actions: [], values: {} };
+    for (const rule of Array.from(settings.rules)) {
+      const values = {};
+      const matched = Object.entries(rule.match ?? {}).every(([field, pattern]) => {
+        const found = new RegExp(pattern).exec(fields[field] ?? "");
+        settings.groupNames(pattern).forEach((name, i) => {
+          if (found && name) values[name] = found[i + 1] ?? "";
+        });
+        return found !== null;
+      });
+      if (matched) Object.assign(applied, rule, { actions: applied.actions.concat(Array.from(rule.actions ?? [])), values: Object.assign(applied.values, values) });
+    }
+    return applied;
+  }
+
+  // What a rule's labels and commands read: its app, summary, body, urgency and id, and what its groups found.
+  function valuesOf(notification) {
+    return Object.assign({ app: notification.appName, summary: notification.summary, body: notification.body, urgency: urgencyOf(notification), id: String(notification.id) }, internal.applied[notification.id]?.values);
+  }
+
+  // A rule's command, given them in its environment as NOTIFICATION_<NAME>, as dunst gives DUNST_*.
+  function runFor(notification, cmd) {
+    const environment = {};
+    for (const [name, value] of Object.entries(valuesOf(notification))) environment["NOTIFICATION_" + name.toUpperCase()] = value;
+    Commands.runWith(cmd, environment);
   }
 
   // Milliseconds it shows: a rule's, else its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's; 0 for never, as for a critical one.
@@ -220,6 +252,7 @@ Plugin {
     const applied = ruled(notification);
     if (applied.hide) return;
     internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
+    if (applied.run) runFor(notification, applied.run);
     notification.tracked = true;
     const tag = tagOf(notification);
     for (const old of internal.list) {

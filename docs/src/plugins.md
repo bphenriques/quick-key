@@ -122,11 +122,12 @@ plugins.notifications = {
   rules = [
     { match = { app = "^niri$"; summary = "Screenshot captured"; }; hide = true; }
     { match.app = "^Alfredo$"; timeout = 0; ignorePause = true; }
+    { match.body = "(?<code>\\b\\d{6}\\b)"; actions = [ { key = "c"; desc = "Copy {code}"; cmd = ''wl-copy "$NOTIFICATION_CODE"''; } ]; }
   ];
 };
 ```
 
-`rules` apply in order, later ones winning: a rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`), and what it sets applies: `hide` drops it, `timeout` sets the seconds it shows (0, never), `urgency` (`low`, `normal`, `critical`) sets how it shows and lasts, and `ignorePause` lets it through a pause, as a critical one goes through. A rule's fields are checked as the configuration builds.
+`rules` apply in order, later ones winning: a rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`), and what it sets applies: `hide` drops it, `timeout` sets the seconds it shows (0, never), `urgency` (`low`, `normal`, `critical`) sets how it shows and lasts, and `ignorePause` lets it through a pause, as a critical one goes through. A rule acts too: `actions` adds its own to the card, each a menu entry's `{ key, desc, cmd }` on a letter you choose (any but `x`), after its reply and before its sender's; `default` is what opening it runs instead of its sender's; `run` runs as it arrives. A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, and each named group of its `match` (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields are checked as the configuration builds.
 
 Cards never take the keys on their own, so a notification never takes your typing. `summon` (bound to a compositor key, say `Mod+N` through `action summon`, the plugin's `shortcut` naming it) gives them the keys where they are, the newest picked, every one showing, held ones too, their order and time holding, nothing on them moving: their keys show where they act. A digit picks a card, `↑↓` move the pick, its actions' letters (from their labels, never `x`) run them, `RET` opens it and lets go, `x` dismisses it, the pick moving on; `C-x` clears all, `C-p` pauses or resumes, and `ESC` or a click beside them lets go. `hint` shows the `shortcut` dimly by the cards at rest. A key path runs as typing it would: `notifications press "2 x"`.
 
