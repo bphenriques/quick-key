@@ -8,7 +8,9 @@
 - `Ctrl+←→` moves a month, `Ctrl+↑↓` a year, `t` goes back to today.
 - `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns.
 
-A dot under a day marks each colour of its events. The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it; its fields are `title`, `when` and `updated`, how old the events are, `syncing...` while a sync runs. The month and year head the grid, its keys sit on the bar, and a failed sync says why under the events. A Sync button in the level's bar shows only its icon, spinning while the sync runs, `updated` on hover; past `calendar.staleAfter` it turns warning with `updated` beside it:
+A dot under a day marks each colour of its events. The month and year head the grid, its keys sit on the bar, and a failed sync says why under the events.
+
+The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it. Its fields are `title`, `when` and `updated`: how old the events are, or `syncing...` while a sync runs. A Sync button in the level's bar shows only its icon, spinning while the sync runs, `updated` on hover; past `calendar.staleAfter` it turns warning with `updated` beside it:
 
 ```nix
 header.right = [ { key = "s"; desc = "Sync"; icon = "<glyph>"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
@@ -33,10 +35,8 @@ The shell only reads `calendar.file`, watching it for changes. `calendarSync` wr
 - A repeating event is one entry per occurrence.
 - `location`, `error` and `syncing: true` are optional.
 
-## Reminders
-
-`calendar.remind` is run with an event's title and time, `calendar.remindBefore` minutes (10) before each timed event. It defaults to `notify-send`; empty turns reminders off.
+`calendar.remind` reminds of each timed event, `calendar.remindBefore` minutes before it starts.
 
 ## calendarSync
 
-`calendarSync.enable` syncs 62 days back and a year ahead. Its calendars start as a commented sample at `calendarSync.calendars`, and saving the list syncs. `calendarSync.exec.sync` syncs now, for a Sync entry.
+`calendarSync.enable` syncs 62 days back and a year ahead, from the calendars listed in `calendarSync.calendars`.

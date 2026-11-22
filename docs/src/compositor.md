@@ -1,6 +1,6 @@
 # Compositor
 
-The core asks the compositor for two things, through `Compositor`, and nothing more:
+The core asks the compositor for three things, through `Compositor`, and nothing more:
 
 - The outputs connected and the outputs on, each by connector name and by make, model and serial (what `brightness.panel` names).
 - The keyboard layouts, the current one, and switching to the next.

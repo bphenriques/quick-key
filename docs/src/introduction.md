@@ -9,5 +9,5 @@ It runs without a config; `config.json` changes only what you set (see [Configur
 ## How it reaches the system
 
 - **Built in:** volume, mute, Wi-Fi and Bluetooth power, playback and the tray go through Quickshell's own services. No tool is needed.
-- **Through the config:** anything else is a command you set, such as `brightness.adjust` or a plugin's. Swapping a tool means changing the config, not the shell. Unset, a standard tool from `PATH` is used where one exists.
+- **Through the config:** anything else is a command you set, such as `brightness.set` or a plugin's. Swapping a tool means changing the config, not the shell. Unset, a standard tool from `PATH` is used where one exists.
 - **The compositor:** a backend talks to it directly. niri is the only one today.
