@@ -77,7 +77,7 @@ assert lib.assertMsg (failed { } == [ ]) "the defaults must pass";
 assert lib.assertMsg (
   !(cfg.systemd.user.services ? quickshell)
 ) "quick-key runs as its own service, leaving the user's Quickshell alone";
-assert lib.assertMsg (lib.any (a: lib.hasInfix "neither in programs.quick-key.themes nor a preset" a.message) (failed {
+assert lib.assertMsg (lib.any (a: lib.hasInfix "is neither in programs.quick-key.themes" a.message) (failed {
   theme.name = "nope";
 })) "an unknown theme must be rejected";
 assert lib.assertMsg (failed { plugins.notifications = { }; } == [ ]) "the notifications plugin alone must pass";
@@ -89,17 +89,13 @@ assert lib.assertMsg (lib.any (a: !a.assertion && lib.hasInfix "only one can hol
 ) "the notifications plugin, under any name, beside dunst must be rejected";
 assert lib.assertMsg (
   (stylix { }).programs.quick-key.settings.theme == {
-    background = "#000000";
-    foreground = "#555555";
-    primary = "#dddddd";
-    alert = "#888888";
-    warning = "#aaaaaa";
-    border = "#333333";
+    name = "stylix";
     monospaceFont = "Stylix Mono";
     fontSize = 13;
     surfaceOpacity = 0.9;
   }
-) "stylix themes the shell when it themes every target";
+  && (stylix { }).programs.quick-key.themes.stylix.primary == "#dddddd"
+) "stylix themes the shell when it themes every target, its colours a theme a named one wins over";
 assert lib.assertMsg (
   !((stylix { stylix.autoEnable = false; }).programs.quick-key.settings ? theme)
 ) "with autoEnable off, stylix leaves the shell alone";

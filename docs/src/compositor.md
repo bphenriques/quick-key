@@ -10,3 +10,5 @@ A backend per compositor answers them, under `services/compositor/`, picked at s
 
 What only one compositor has stays with its backend (`Niri`: workspaces, windows, every event), for plugins built on it; such a plugin names its compositor (the workspace map is niri's). What the compositor is told (keys, layer rules, outputs) lives in the Nix modules, never in the shell.
 
+
+Each surface is a layer of its own namespace, for the compositor's layer rules (blur, a block on screen capture): `quick-key-menu`, a plugin's panel as `quick-key-<name>`, `quick-key-osd`, `quick-key-notifications`, `quick-key-recording-indicator` and `quick-key-dictation-indicator`, `quick-key-minimap`, `quick-key-keep-awake`, and `quick-key-dismiss`, the click-away area under an open surface. The menu and a panel cover the screen and draw only their cards, so a rule over the whole surface (a shadow, blur without `ignorealpha`) acts on the screen.

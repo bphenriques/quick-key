@@ -86,12 +86,15 @@ Singleton {
   }
 
   function brightness(percentage) {
-    return brightnessLevels[percentage < 30 ? 0 : percentage < 70 ? 1 : 2];
+    return level(brightnessLevels, percentage);
   }
 
-  // One per 10%.
   function battery(percentage, pluggedIn) {
-    const levels = pluggedIn ? batteryChargingLevels : batteryLevels;
-    return levels[Math.min(10, Math.floor(percentage / 10))] ?? "";
+    return level(pluggedIn ? batteryChargingLevels : batteryLevels, percentage);
+  }
+
+  // A list of glyphs over 0 to 100, an even share each, so a theme may give as many as its font has.
+  function level(levels, percentage) {
+    return levels[Math.min(levels.length - 1, Math.floor(percentage * levels.length / 101))] ?? "";
   }
 }

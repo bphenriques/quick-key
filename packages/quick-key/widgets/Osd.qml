@@ -71,7 +71,7 @@ Scope {
 
       anchors.right: true
       margins.right: Config.theme.edgeMargin
-      WlrLayershell.namespace: "osd"
+      WlrLayershell.namespace: "quick-key-osd"
 
       implicitWidth: metered ? bar.implicitWidth : pill.implicitWidth
       implicitHeight: metered ? bar.implicitHeight : pill.implicitHeight

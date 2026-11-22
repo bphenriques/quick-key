@@ -163,3 +163,45 @@ A plugin in a bar shows its glyph, lit while active; a click calls its `activate
 ```
 
 Pins take the digits from 1, dimmed while absent, so `a 2` is always the headphones.
+
+## Clipboard history
+
+```nix
+plugins.clipboard = {
+  type = "command";
+  read = ''cliphist list | head -n 50 | jq -Rsc '{items: (split("\n") | map(select(length > 0) | {id: ., label: (split("\t") | .[1:] | join(" "))}))}' '';
+  # The item comes last, as $1: a function puts it where the pipe needs it.
+  select = ''paste() { printf %s "$1" | cliphist decode | wl-copy; }; paste'';
+};
+menu.entries = [
+  { key = "v"; desc = "Clipboard"; icon = "<glyph>"; list = "clipboard"; }
+];
+```
+
+`/` filters the list as you type; `cliphist` and `wl-clipboard` go in `extraPackages`.
+
+## An external monitor's brightness
+
+```nix
+plugins.monitor = {
+  type = "command";
+  read = ''ddcutil getvcp 10 --brief | awk '{ printf "{\"text\": \"%s%%\"}\n", $4 }' '';
+};
+menu.entries = [
+  { key = [ "Down" "Up" ]; desc = "Monitor brightness"; icon = "<glyph>"; status = "monitor"; keepOpen = true;
+    cmd = [ "ddcutil setvcp 10 - 10" "ddcutil setvcp 10 + 10" ]; }
+];
+```
+
+DDC is slow, a second or so a step, and the level is read again as the menu opens.
+
+## Colours from the wallpaper
+
+A tool that writes a theme file is a theme: matugen's template is the shipped theme's keys filled from its palette.
+
+```json
+{ "background": "{{colors.surface.default.hex}}", "foreground": "{{colors.on_surface.default.hex}}", "primary": "{{colors.primary.default.hex}}",
+  "alert": "{{colors.error.default.hex}}", "warning": "{{colors.tertiary.default.hex}}", "border": "{{colors.outline_variant.default.hex}}" }
+```
+
+matugen writes it to `$XDG_CONFIG_HOME/quick-key/themes/matugen.json`, `theme.name = "matugen"` picks it, and the shell reloads as the file changes. With Nix, which owns that folder, matugen writes elsewhere and the theme links to it, so the build knows it: `xdg.configFile."quick-key/themes/matugen.json".source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.cacheHome}/matugen/quick-key.json";`. pywal works the same way, its template using `{background}`, `{foreground}` and `{color1}` to `{color8}`.

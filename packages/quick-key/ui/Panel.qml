@@ -69,7 +69,7 @@ Scope {
       anchors.bottom: true
       anchors.left: true
       anchors.right: true
-      WlrLayershell.namespace: root.namespace
+      WlrLayershell.namespace: "quick-key-" + root.namespace
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
       // Clicks beside the bar and the card reach the dismiss area below.
       mask: Region {

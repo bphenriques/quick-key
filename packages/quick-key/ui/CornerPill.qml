@@ -46,7 +46,7 @@ Scope {
         anchors.right: true
         margins.top: Config.theme.edgeMargin + root.slot * (implicitHeight + Config.theme.spacing)
         margins.right: Config.theme.edgeMargin
-        WlrLayershell.namespace: root.namespace
+        WlrLayershell.namespace: "quick-key-" + root.namespace
 
         implicitWidth: pill.implicitWidth
         implicitHeight: pill.implicitHeight

@@ -90,7 +90,8 @@ Singleton {
       format: "{level}",
       tone: () => Power.level === "critical" ? "alert" : Power.level === "low" ? "warning" : "",
       // A pop-up when it is plugged in or out, not at every percent; a low charge warns through battery.warn instead.
-      change: () => Power.present && Power.pluggedIn
+      change: () => Power.present && Power.pluggedIn,
+      ready: () => Power.present
     },
     keyboardLayout: {
       glyph: () => Glyphs.keyboard,

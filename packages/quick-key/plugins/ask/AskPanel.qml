@@ -205,6 +205,8 @@ Scope {
         onCountChanged: currentIndex = -1
 
         function page(down) {
+          // A conversation shorter than the view has nothing above to page to; laid out upward, the bound below would leave a gap.
+          if (contentHeight <= height) return;
           contentY = Math.max(originY, Math.min(originY + contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
         }
 

@@ -140,8 +140,13 @@ in
         message = "programs.quick-key: programs.quickshell.package runs the service, so it cannot be null";
       }
       {
-        assertion = themeName == null || cfg.themes ? ${themeName} || lib.elem themeName presets;
-        message = "programs.quick-key.settings.theme.name: '${toString themeName}' is neither in programs.quick-key.themes nor a preset: ${toString presets}";
+        # A file of your own under quick-key/themes/ counts too: a link to one matugen or pywal writes.
+        assertion =
+          themeName == null
+          || cfg.themes ? ${themeName}
+          || lib.elem themeName presets
+          || config.xdg.configFile ? "quick-key/themes/${themeName}.json";
+        message = "programs.quick-key.settings.theme.name: '${toString themeName}' is neither in programs.quick-key.themes, a file under quick-key/themes/, nor a preset: ${toString presets}";
       }
       {
         assertion = !(notificationsListed && (config.services.dunst.enable || config.services.mako.enable));

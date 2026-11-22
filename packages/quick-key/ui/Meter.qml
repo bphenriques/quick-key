@@ -14,7 +14,7 @@ Rectangle {
 
   implicitWidth: vertical ? Config.theme.meterThickness : 0
   implicitHeight: vertical ? 0 : Config.theme.meterThickness
-  radius: Math.min(width, height) / 2
+  radius: Math.min(Config.theme.itemRadius, Math.min(width, height) / 2)
   color: Tone.wash("normal")
 
   Rectangle {

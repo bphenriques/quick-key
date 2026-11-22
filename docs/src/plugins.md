@@ -123,7 +123,7 @@ Cards stack in a corner of the focused screen, newest by the corner, critical on
 - progress (`value`) as a meter, and a picture (album art, a screenshot) on its right;
 - its sender's actions below.
 
-A click opens a card: its app comes to the front (a window whose app id is its desktop entry or name), and its default action runs, else it is dismissed. `✕` or a right click dismisses it.
+A click opens a card: its app comes to the front (the one window whose app id is its desktop entry or name, when only one is open), and its default action runs, else it is dismissed. `✕` or a right click dismisses it.
 
 A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time stops while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input; it starts again in full. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card in its place, its rules and its time starting again. One re-sent by its id with nothing changed restarts nothing: Quickshell tells the shell only of changes.
 
@@ -154,7 +154,7 @@ Rules apply in order, later ones winning. A rule applies when each regular expre
 
 A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID` and `NOTIFICATION_ICON` (a file's path, as a screenshot or album art comes, else an icon name). Each named group of its `match` comes too, upper-cased (`(?<code>\d{6})` as `NOTIFICATION_CODE`), and a `desc` shows it by name (`{code}`). Commands run on the service's `PATH`, so with Nix what they call goes in `programs.quick-key.extraPackages`. The rules are checked as the configuration builds.
 
-There is no sound, per-output placement or per-rule colour.
+There is no sound of its own (a rule's `run` can play one: `run = "pw-play /path/to/sound.oga";`), per-output placement or per-rule colour.
 
 ### Keys
 

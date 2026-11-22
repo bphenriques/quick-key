@@ -13,7 +13,7 @@ OverlayWindow {
     left: true
     right: true
   }
-  WlrLayershell.namespace: "dismiss-area"
+  WlrLayershell.namespace: "quick-key-dismiss"
 
   MouseArea {
     anchors.fill: parent

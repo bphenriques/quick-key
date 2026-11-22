@@ -398,6 +398,8 @@ Plugin {
   property bool taken: false
   onKeptChanged: save()
   onRunningChanged: save()
+  // And the moment a turn opens its session, so a restart mid-answer resumes that session.
+  onSessionChanged: if (taken) Kept.set(name, kept)
 
   function save() {
     if (taken && !running) Kept.set(name, kept);
@@ -408,7 +410,9 @@ Plugin {
   function take() {
     const kept = Kept.value(name);
     if (kept) {
-      exchanges = kept.exchanges;
+      // A turn a restart cut short reads as stopped, as one you stopped does, not as answered with nothing.
+      const last = kept.exchanges[kept.exchanges.length - 1];
+      exchanges = last && !last.reply && !last.error ? kept.exchanges.slice(0, -1).concat([Object.assign({}, last, { error: "Stopped", stopped: true })]) : kept.exchanges;
       session = kept.session;
       draft = kept.draft;
     }

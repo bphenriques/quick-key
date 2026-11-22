@@ -11,7 +11,8 @@ Surface {
 
   implicitWidth: row.implicitWidth + 2 * padding
   implicitHeight: row.implicitHeight + padding
-  radius: height / 2
+  // A capsule, unless the theme squares its corners.
+  radius: Math.min(height / 2, 2 * Config.theme.radius)
   border.color: tone ? Tone.color(tone) : Config.colors.border
 
   Row {

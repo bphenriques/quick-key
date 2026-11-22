@@ -91,7 +91,7 @@ Scope {
       anchors.left: true
       margins.top: Config.theme.edgeMargin
       margins.left: Config.theme.edgeMargin
-      WlrLayershell.namespace: "niriMinimap"
+      WlrLayershell.namespace: "quick-key-minimap"
       mask: Region {}
 
       implicitWidth: content.implicitWidth
