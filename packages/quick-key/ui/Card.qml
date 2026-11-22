@@ -6,8 +6,9 @@ import qs
 Surface {
   id: root
 
-  // An app's icon at a glyph's size, in greys when `monochrome`; its column stays without one, so every card's text starts in one place.
+  // An app's icon at a glyph's size, in greys when `monochrome`; its column stays without one while `iconColumn`, so every card's text starts in one place, which its owner turns off when no card has one.
   property string icon: ""
+  property bool iconColumn: true
   property bool monochrome: false
   // A picture (album art, a screenshot) on the right, square and three lines tall.
   property string image: ""
@@ -18,7 +19,7 @@ Surface {
   // From 0 to 1, with `meterText` beside it; below 0, none.
   property real meter: -1
   property string meterText: ""
-  // Each { desc, key, run }, in order, on the side `actionSide` names, from the glyph's column to the edge.
+  // Each { desc, key, run }, with a `glyph` or an icon `source` before its label, in order, on the side `actionSide` names, from the glyph's column to the edge.
   property var actions: []
   property string actionSide: "right"
   // In the actions' place while set (a reply's prompt, what was sent), so the card never grows; it has the keys.
@@ -38,7 +39,8 @@ Surface {
     const rows = [];
     let used = room;
     actions.forEach((action, i) => {
-      const chars = (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0);
+      // An icon takes a glyph's width, about two characters, and one after it.
+      const chars = (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0) + (action.glyph || action.source ? 3 : 0);
       if (used + 1 + chars > room) {
         rows.push([]);
         used = -1;
@@ -95,6 +97,7 @@ Surface {
 
       Item {
         Layout.alignment: Qt.AlignTop
+        visible: root.iconColumn
         implicitWidth: Config.theme.iconSize
         implicitHeight: Config.theme.iconSize
 
@@ -252,9 +255,20 @@ Surface {
                   key: action.entry.key ?? ""
                 }
 
+                Icon {
+                  id: actionIcon
+                  anchors.verticalCenter: parent.verticalCenter
+                  visible: glyph !== "" || source !== ""
+                  size: Metrics.line
+                  tone: hover.containsMouse ? "primary" : "normal"
+                  glyph: action.entry.glyph ?? ""
+                  source: action.entry.source ?? ""
+                }
+
                 // Shortened only when one alone is wider than the card.
                 Label {
-                  width: Math.min(implicitWidth, actionArea.width - actionKey.implicitWidth)
+                  width: Math.min(implicitWidth, actionArea.width - actionKey.implicitWidth - (actionIcon.visible ? actionIcon.width : 0))
+                  leftPadding: actionIcon.visible ? Metrics.cell : 0
                   elide: Text.ElideRight
                   tone: hover.containsMouse ? "primary" : "normal"
                   text: action.entry.desc ?? ""
@@ -280,7 +294,8 @@ Surface {
 
     Loader {
       Layout.fillWidth: true
-      Layout.leftMargin: gutter.width + Config.theme.spacing
+      // From the icon's column, so a prompt's glyph sits there; without one, from the gutter.
+      Layout.leftMargin: root.iconColumn ? gutter.width + Config.theme.spacing : 0
       Layout.preferredWidth: 0
       // The actions' rows, held while the footer takes their place, so the card keeps its height.
       Layout.minimumHeight: Math.max(1, root.rows.length) * Metrics.line

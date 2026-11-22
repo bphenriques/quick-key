@@ -17,6 +17,8 @@ Scope {
   readonly property bool top: settings.corner.startsWith("top")
   readonly property bool right: settings.corner.endsWith("right")
   readonly property var cards: top ? plugin.shown : plugin.shown.slice().reverse()
+  // Whether any card shown has an app's icon: without one, no card keeps a column for it, so neither side sits empty.
+  readonly property bool icons: plugin.shown.some(entry => iconOf(entry) !== "")
 
   // A picture, as the protocol orders them: image data, which Quickshell serves as image://qsimage, else an icon sent as a file (album art, a screenshot).
   function pictureOf(entry) {
@@ -149,6 +151,7 @@ Scope {
 
               width: stack.width
               monochrome: Config.theme.monochromeTray
+              iconColumn: view.icons
               icon: entry ? view.iconOf(entry) : ""
               image: entry ? view.pictureOf(entry) : ""
               title: entry?.summary || entry?.appName || ""
@@ -189,8 +192,8 @@ Scope {
 
     Prompt {
       id: prompt
-      // The icon's column, so the text starts with the body's.
-      slot: Config.theme.iconSize
+      // The icon's column, else the gutter, so the text starts with the body's.
+      slot: view.icons ? Config.theme.iconSize : Metrics.cell
       // One line, scrolling, in the actions' place: the card keeps its height.
       maxLines: 1
       placeholder: view.plugin.replying?.inlineReplyPlaceholder || Words.replyPrompt

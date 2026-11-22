@@ -133,18 +133,19 @@ Plugin {
     return shown.reduce((found, entry) => found === null || entry.came > found.came ? entry : found, null);
   }
 
-  // A rule's `default`, else its own default action, else dismissed: a click means done with it; one brought back is only to read.
+  // A rule's `default`, else its app to the front and its own default action, else dismissed: a click means done with it; one brought back is only to read.
   function open(entry) {
     if (entry === internal.replying) endReply();
-    const action = entry.restored ? null : Array.from(entry.actions).find(action => action.identifier === "default");
-    if (entry.applied.default && !entry.restored) {
+    if (entry.restored) return dismiss(entry);
+    if (entry.applied.default) {
       runFor(entry, entry.applied.default);
-      dismiss(entry);
-    } else if (action) {
-      action.invoke();
-    } else {
-      dismiss(entry);
+      return dismiss(entry);
     }
+    // Its app to the front too, as its own default can rarely raise it: Wayland lets a window take focus only when the compositor gives it.
+    Compositor.focusApp([entry.desktopEntry, entry.appName]);
+    const action = Array.from(entry.actions).find(action => action.identifier === "default");
+    if (action) action.invoke();
+    else dismiss(entry);
   }
 
   // The card you reply to, by a click: the reply ends first, so nothing is copied.
@@ -173,13 +174,14 @@ Plugin {
   function actionsOf(entry) {
     if (!entry || entry.restored) return [];
     const values = valuesOf(entry);
-    const ruled = Array.from(entry.applied.actions).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => {
+    const ruled = Array.from(entry.applied.actions).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, glyph: action.icon ?? "", run: () => {
         root.runFor(entry, action.cmd);
         if (action.closes !== false) root.dismiss(entry);
       } }));
     const actions = Array.from(entry.actions).filter(action => action.identifier !== "default");
     const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwxyz");
-    const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
+    // A sender that says its actions are icons (action-icons) names one by each's identifier.
+    const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], source: entry.hints["action-icons"] ? Quickshell.iconPath(action.identifier, true) : "", run: () => action.invoke() }));
     const reply = entry.hasInlineReply ? [{ desc: Words.replyPrompt, key: "Tab", run: () => root.reply(entry) }] : [];
     return reply.concat(ruled, own);
   }

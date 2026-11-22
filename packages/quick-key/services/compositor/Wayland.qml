@@ -5,6 +5,10 @@ import Quickshell
 
 // The backend without a compositor of its own: Wayland's screens, each on, no layouts, Wayland placing pop-ups.
 Singleton {
+  id: root
+
+  signal outputsMoved
+
   readonly property var layouts: []
   readonly property int layoutIndex: 0
   readonly property string focusedOutput: ""
@@ -15,5 +19,16 @@ Singleton {
   }
 
   function switchLayout() {
+  }
+
+  function focusApp(names) {
+  }
+
+  Connections {
+    target: Quickshell
+
+    function onScreensChanged() {
+      root.outputsMoved();
+    }
   }
 }

@@ -123,7 +123,7 @@ Cards stack in a corner of the focused screen, newest by the corner, critical on
 - progress (`value`) as a meter, and a picture (album art, a screenshot) on its right;
 - its sender's actions below.
 
-A click opens a card, running its default action, else dismissing it. `✕` or a right click dismisses it.
+A click opens a card: its app comes to the front (a window whose app id is its desktop entry or name), and its default action runs, else it is dismissed. `✕` or a right click dismisses it.
 
 A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time stops while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input; it starts again in full. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card in its place, its rules and its time starting again. One re-sent by its id with nothing changed restarts nothing: Quickshell tells the shell only of changes.
 
@@ -148,7 +148,7 @@ Rules apply in order, later ones winning. A rule applies when each regular expre
 - `timeout`: the seconds it shows; 0, never.
 - `urgency` (`low`, `normal`, `critical`): how it shows and lasts.
 - `ignorePause`: shows it while paused; a fullscreen window still holds it, as only a critical one shows over one.
-- `actions`: its own, each `{ key, desc, cmd, closes }`, `key` a lowercase letter you choose, any but `x`. They come after its reply and before its sender's, whose letters come from their labels. Actions of every matching rule add up, one on a letter an earlier rule took replacing it. Running one dismisses its card; `closes = false` keeps it.
+- `actions`: its own, each `{ key, desc, cmd, closes, icon }`, `key` a lowercase letter you choose, any but `x`, `icon` a glyph before its label. A sender's own actions show icons when it names them (the protocol's `action-icons`). They come after its reply and before its sender's, whose letters come from their labels. Actions of every matching rule add up, one on a letter an earlier rule took replacing it. Running one dismisses its card; `closes = false` keeps it.
 - `default`: what opening it runs, in place of its sender's.
 - `run`: a command run as it arrives, not when it is replaced or kept over a reload.
 
