@@ -11,6 +11,21 @@ ShellRoot {
   }
 
   readonly property var wrong: [
+    ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
+    ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", submenu: "abc" }] } }, "sets submenu to no list of entries"],
+    ["an empty row in a submenu", { menu: { entries: [{ key: "a", desc: "A", submenu: [null] }] } }, "holds something that is not an entry"],
+    ["a key that is no name", { menu: { header: { right: [{ key: 5, desc: "X", status: "battery" }] } } }, "sets key to no key name"],
+    ["a plugin type that is no name", { plugins: { x: { type: 5 } } }, "x.type takes a plugin's name or path"],
+    ["a plugin type that does not exist", { plugins: { x: { type: "niriMinmap" } } }, "names type 'niriMinmap', which is neither shipped"],
+    ["a key no keyboard sends", { menu: { entries: [{ key: "Esc", desc: "X", cmd: "true", icon: "x" }] } }, "keys no keyboard sends"],
+    ["Ctrl with a symbol", { menu: { entries: [{ key: "Ctrl+.", desc: "X", cmd: "true", icon: "x" }] } }, "keys no keyboard sends"],
+    ["two notification daemons", { plugins: { notifications: {}, dunst: {} } }, "more than one notification daemon"],
+    ["a colour that is no colour", { theme: { alert: "rgba(255,0,0,0.5)" } }, "theme.alert: 'rgba(255,0,0,0.5)' is no colour"],
+    ["an opacity past 1", { theme: { surfaceOpacity: 2 } }, "theme.surfaceOpacity is 2, not 0 to 1"],
+    ["no columns", { menu: { columns: 0 } }, "menu.columns is 0, not 1 or more"],
+    ["battery thresholds the wrong way round", { battery: { low: 5, critical: 50 } }, "battery.critical is 50, not below battery.low"],
+    ["a bar slot that is no list", { menu: { header: { left: "battery" } } }, "bar sets left to no list"],
+    ["a level's bar slot misspelt", { menu: { entries: [{ key: "a", desc: "A", submenu: [], header: { rigth: [] } }] } }, "bar sets rigth, none of left, center, right"],
     ["a setting the shell does not declare", { audio: { stepp: 1 } }, "audio.stepp is not a setting"],
     ["a value of another kind", { audio: { step: "5" } }, "audio.step takes a number"],
     ["a plugin with two sources", { plugins: { x: { watch: "a", read: "b" } } }, "more than one of watch, read and file"],

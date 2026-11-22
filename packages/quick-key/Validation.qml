@@ -16,7 +16,12 @@ Singleton {
 
   function validate() {
     if (Config.written === null) return;
-    internal.problems = Config.invalid ? [Config.invalid] : check(Config.written);
+    // A check that throws still ends with a verdict: check.qml waits for one, and a build for check.qml.
+    try {
+      internal.problems = Config.invalid ? [Config.invalid] : check(Config.written);
+    } catch (error) {
+      internal.problems = ["the check failed on a value of an unexpected kind: " + error];
+    }
     for (const problem of internal.problems) console.warn("config.json:", problem);
   }
 
@@ -48,15 +53,50 @@ Singleton {
     if (moved.length) return moved;
     const kinds = Config.undeclared(json);
     if (kinds.length) return kinds;
+    const values = numberProblems(json).concat(colourProblems(json.theme ?? {}));
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
-    return pluginProblems(json.plugins ?? {}).concat(glyphProblems(json.glyphs ?? {}),
+    return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}),
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
       levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
+  }
+
+  // What a number takes beyond being one: 0 or more, an opacity at most 1, and these their own [least, most].
+  readonly property var ranges: ({
+      "theme.fontSize": [1],
+      "theme.lineHeight": [0.1],
+      "theme.iconSize": [1],
+      "menu.width": [1],
+      "menu.columns": [1],
+      "audio.step": [1],
+      "audio.max": [1],
+      "brightness.step": [1],
+      "clock.firstDayOfWeek": [-1, 6]
+    })
+
+  function numberProblems(json) {
+    const found = [];
+    for (const [group, kinds] of Object.entries(Config.declaredKinds)) {
+      if (typeof kinds !== "object") continue;
+      for (const [name, kind] of Object.entries(kinds)) {
+        const value = json[group]?.[name];
+        if (kind !== "number" || typeof value !== "number") continue;
+        const [least, most] = ranges[group + "." + name] ?? [0, name.endsWith("Opacity") ? 1 : Infinity];
+        if (value < least || value > (most ?? Infinity)) found.push(group + "." + name + " is " + value + ", not " + (most === undefined || most === Infinity ? least + " or more" : least + " to " + most));
+      }
+    }
+    const [low, critical] = [json.battery?.low ?? Config.battery.low, json.battery?.critical ?? Config.battery.critical];
+    if (critical >= low) found.push("battery.critical is " + critical + ", not below battery.low (" + low + ")");
+    return found;
+  }
+
+  // A colour as Qt reads it: #rgb, #rrggbb, or #aarrggbb with its alpha first; any other text would draw black. Its names are Config.colors'.
+  function colourProblems(theme) {
+    return Object.keys(Config.colors).filter(name => typeof theme[name] === "string" && theme[name] !== "" && !/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(theme[name])).map(name => "theme." + name + ": '" + theme[name] + "' is no colour (#rrggbb, or #aarrggbb)");
   }
 
   // Each old key, by its path, that json still sets.
@@ -67,7 +107,7 @@ Singleton {
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices); objectName is what Glyphs inherits as a QObject.
   function glyphProblems(glyphs) {
     return Object.keys(glyphs).map(name => !(name in Glyphs) || name === "objectName" || typeof Glyphs[name] === "function" ? "glyphs." + name + " is not a glyph"
-      : typeof glyphs[name] !== typeof Glyphs[name] ? "glyphs." + name + " takes a " + (typeof Glyphs[name] === "string" ? "glyph" : Array.isArray(Glyphs[name]) ? "list of glyphs" : "map of glyphs") : "").filter(problem => problem);
+      : Config.kind(glyphs[name]) !== Config.kind(Glyphs[name]) ? "glyphs." + name + " takes a " + (typeof Glyphs[name] === "string" ? "glyph" : Array.isArray(Glyphs[name]) ? "list of glyphs" : "map of glyphs") : "").filter(problem => problem);
   }
 
   function pluginProblems(plugins) {
@@ -77,6 +117,10 @@ Singleton {
       const at = "plugins." + name;
       if (Config.kind(plugin) !== "map") {
         found.push(at + " takes a map of settings");
+        continue;
+      }
+      if (plugin.type != null && typeof plugin.type !== "string") {
+        found.push(at + ".type takes a plugin's name or path");
         continue;
       }
       if (builtin.includes(name)) found.push(at + " takes a built-in name");
@@ -95,34 +139,40 @@ Singleton {
           break;
         }
       }
-      // None: a user's plugin may be absent where the build runs; its loading logs it.
-      if (settings) {
-        // Kinds read from defaults, then problems() from an object made with the values given: one written after being read would loop this binding.
-        const defaults = settings.createObject(null);
-        // Ready is not enough: settings that fail to instantiate name themselves, they do not hang the check.
-        if (!defaults) {
-          found.push(at + " Settings.qml does not instantiate");
-          continue;
-        }
-        const given = Object.assign({}, plugin);
-        delete given.type;
-        for (const key of Object.keys(given)) {
-          if (Config.settable(defaults, key)) given[key] = Config.over(defaults[key], given[key]);
-          else {
-            found.push(at + "." + key + " is not a setting");
-            delete given[key];
-          }
-        }
-        found.push(...Config.undeclared(given, defaults, at + "."));
-        // Its own checks on what it declares, so every problem shows at once, not one build at a time.
-        const declared = {};
-        for (const [key, value] of Object.entries(given)) if (defaults[key] === null || Config.kind(value) === Config.kind(defaults[key])) declared[key] = value;
-        defaults.destroy();
-        const object = settings.createObject(null, declared);
-        found.push(...object.problems().map(problem => at + " " + problem));
-        object.destroy();
+      // The module copies a user's plugins beside the config it checks, so one not found is one the shell will not find either.
+      if (!settings) {
+        found.push(at + " names type '" + (plugin.type ?? name) + "', which is neither shipped nor in " + Config.configDir + "/plugins");
+        continue;
       }
+      // Kinds read from defaults, then problems() from an object made with the values given: one written after being read would loop this binding.
+      const defaults = settings.createObject(null);
+      // Ready is not enough: settings that fail to instantiate name themselves, they do not hang the check.
+      if (!defaults) {
+        found.push(at + " Settings.qml does not instantiate");
+        continue;
+      }
+      const given = Object.assign({}, plugin);
+      delete given.type;
+      for (const key of Object.keys(given)) {
+        if (Config.settable(defaults, key)) given[key] = Config.over(defaults[key], given[key]);
+        else {
+          found.push(at + "." + key + " is not a setting");
+          delete given[key];
+        }
+      }
+      found.push(...Config.undeclared(given, Config.kindsOf(defaults), at + "."));
+      // Its own checks on what it declares, so every problem shows at once, not one build at a time.
+      const declared = {};
+      for (const [key, value] of Object.entries(given)) if (defaults[key] === null || Config.kind(value) === Config.kind(defaults[key])) declared[key] = value;
+      defaults.destroy();
+      const object = settings.createObject(null, declared);
+      found.push(...object.problems().map(problem => at + " " + problem));
+      object.destroy();
     }
+    // One daemon holds the notifications' bus: the plugin, under any name, or dunst's.
+    const types = Object.entries(plugins).map(([name, plugin]) => Config.kind(plugin) === "map" ? plugin.type ?? name : "");
+    const servers = types.filter(type => type === "notifications").length;
+    if (servers > 1 || servers > 0 && types.includes("dunst")) found.push("plugins: more than one notification daemon (notifications, dunst); keep one");
     return found;
   }
 
@@ -130,21 +180,30 @@ Singleton {
   function levelProblems(path, given, header, plugins, list) {
     if (Config.kind(given) !== "list") return ["menu: " + path + " takes a list of entries"];
     const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
-    const bar = ["left", "center", "right"].reduce((parts, slot) => parts.concat(Array.from(header?.[slot] ?? [])), []);
+    const slots = ["left", "center", "right"];
+    const bar = slots.reduce((parts, slot) => parts.concat(Config.kind(header?.[slot]) === "list" ? Array.from(header[slot]) : []), []);
     const barEntries = bar.filter(part => Config.kind(part) === "map");
-    const keys = entries.reduce((keys, entry) => keys.concat(entry.key ?? []), []);
-    const barKeys = barEntries.reduce((keys, entry) => keys.concat(entry.key ?? []), []);
+    // Key names only: one of another kind is its entry's own problem.
+    const keys = entries.reduce((keys, entry) => keys.concat(entry.key ?? []), []).filter(key => typeof key === "string");
+    const barKeys = barEntries.reduce((keys, entry) => keys.concat(entry.key ?? []), []).filter(key => typeof key === "string");
     const found = [];
+    for (const slot of Object.keys(header ?? {})) {
+      if (!slots.includes(slot)) found.push("menu: " + path + "'s bar sets " + slot + ", none of left, center, right");
+      else if (header[slot] != null && Config.kind(header[slot]) !== "list") found.push("menu: " + path + "'s bar sets " + slot + " to no list");
+    }
     if (entries.length < given.length || bar.some(part => Config.kind(part) !== "map" && typeof part !== "string")) found.push("menu: " + path + " holds something that is not an entry");
     const wrong = (which, why) => {
       if (which.length) found.push("menu: " + why + " in " + path + ": " + [...new Set(which)].join(", "));
     };
     wrong(keys.filter((key, index) => keys.indexOf(key) !== index), "keys bound twice");
-    wrong(keys.filter(key => key !== "+" && !/^((Ctrl|Alt)\+)*[^+]+$/.test(key)), "keys with a modifier other than Ctrl+ or Alt+");
+    // As MenuKeys names a key event: a named key, a letter or a digit, after Ctrl+ or Alt+; one symbol, after Alt+ at most, as Ctrl gives a symbol no name.
+    const sendable = key => /^((Ctrl|Alt)\+)*(Up|Down|Left|Right|space|Tab|Backtab|Return|Escape|BackSpace|[A-Za-z0-9])$/.test(key) || /^(Alt\+)?[^\sA-Za-z0-9]$/.test(key);
+    wrong(keys.filter(key => !sendable(key)), "keys no keyboard sends (an arrow, space, Return, BackSpace, a letter or a digit, after Ctrl+ or Alt+, or one symbol)");
     wrong(keys.filter(key => /^((Ctrl|Alt)\+)+[0-9]$/.test(key)), "keys that reach a listed item's own menu or the bar's list");
     wrong(keys.filter(key => reservedKeys.includes(key)), "keys reserved for the menu");
     wrong(barKeys.filter((key, index) => barKeys.indexOf(key) !== index), "bar keys bound twice");
     wrong(barKeys.filter(key => key !== "+" && key.includes("+")), "bar keys with a modifier, which Ctrl already takes");
+    wrong(barKeys.filter(key => /^[^\sA-Za-z0-9]$/.test(key)), "bar keys on a symbol, which Ctrl gives no name");
     wrong(barKeys.filter(key => /^[0-9]$/.test(key)), "bar keys on a digit, reserved for its lists");
     wrong(barKeys.filter(key => keys.includes("Ctrl+" + key)), "bar keys its body binds with Ctrl too");
     for (const name of bar.filter(part => typeof part === "string"))
@@ -177,7 +236,7 @@ Singleton {
       cmd: {},
       action: {},
       icon: {},
-      width: {},
+      width: { invalid: width => typeof width === "number" && width >= 1 ? "" : "sets width to " + width + ", no size in pixels" },
       submenu: {},
       keepOpen: { needs: ["cmd", "action"] },
       activeWhen: { names: States.builtin },
@@ -214,6 +273,9 @@ Singleton {
     const found = [];
     const unknown = Object.keys(entry).filter(key => !(key in fields));
     const keys = [].concat(entry.key ?? []);
+    const rows = Config.kind(entry.submenu) === "list" ? Array.from(entry.submenu).filter(row => Config.kind(row) === "map") : [];
+    if (!keys.every(key => typeof key === "string")) found.push("sets key to no key name");
+    if (entry.submenu != null && Config.kind(entry.submenu) !== "list") found.push("sets submenu to no list of entries");
     const action = Actions.builtin[entry.action];
     const level = entry.submenu != null || entry.list != null || entry.view != null;
     const does = [entry.cmd != null, entry.action != null, level].filter(set => set).length;
@@ -225,8 +287,8 @@ Singleton {
     // A plugin's actions are its own, known only once it runs: on a level listing one, any name may be one.
     if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is not built in nor its level's plugin's");
     found.push(...fieldProblems(entry, plugins, inBar));
-    if ((entry.submenu ?? []).some(row => row.icon == null && row.action == null && row.status == null)) found.push("holds an action without an icon");
-    if (entry.list != null && (entry.submenu ?? []).some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
+    if (rows.some(row => row.icon == null && row.action == null && row.status == null)) found.push("holds an action without an icon");
+    if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
     if (entry.input != null) found.push(...inputProblems(entry, plugins));

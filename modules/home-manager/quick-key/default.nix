@@ -9,6 +9,10 @@ let
   cfg = config.programs.quick-key;
 
   json = pkgs.formats.json { };
+  # What the shell reads beside config.json, so the check finds a user's own plugins and themes as the shell will.
+  besides = lib.filterAttrs (
+    name: _: lib.hasPrefix "quick-key/plugins/" name || lib.hasPrefix "quick-key/themes/" name
+  ) config.xdg.configFile;
   # The shell checks the settings it is given, so a wrong one fails the build, not the session.
   configFile =
     pkgs.runCommand "quick-key-config.json"
@@ -19,7 +23,12 @@ let
       ''
         export HOME=$TMPDIR XDG_CONFIG_HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR QT_QPA_PLATFORM=offscreen LC_ALL=C.UTF-8
         install -D $settings $TMPDIR/quick-key/config.json
-        qs -p ${cfg.package}/share/quick-key/check.qml
+        ${lib.concatStrings (
+          lib.mapAttrsToList (
+            name: file: "mkdir -p \"$(dirname $TMPDIR/${name})\" && cp -rL ${file.source} $TMPDIR/${name}\n"
+          ) besides
+        )}
+        timeout 60 qs -p ${cfg.package}/share/quick-key/check.qml
         cp $settings $out
       '';
   themeFiles = lib.mapAttrs (

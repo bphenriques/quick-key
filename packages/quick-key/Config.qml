@@ -73,18 +73,33 @@ Singleton {
     return kind(declared) === "map" && kind(value) === "map" ? Object.assign({}, declared, value) : value;
   }
 
-  // What json sets that the settings do not declare, or declare as another kind of value; lists and maps are not looked into.
-  function undeclared(json, group = adapter, path = "") {
+  // What json sets that the settings do not declare, or declare as another kind of value (`kinds`, as kindsOf reads them); lists and maps are not looked into.
+  function undeclared(json, kinds = declaredKinds, path = "") {
     let found = [];
     for (const key of Object.keys(json)) {
-      const [value, declared] = [json[key], group[key]];
-      if (!(key in group)) found.push(path + key + " is not a setting");
-      else if (declared !== null && typeof declared === "object" && "objectName" in declared)
+      const [value, declared] = [json[key], kinds[key]];
+      if (!(key in kinds)) found.push(path + key + " is not a setting");
+      else if (typeof declared === "object")
         found = found.concat(kind(value) === "map" ? undeclared(value, declared, path + key + ".") : [path + key + " holds settings, not a value"]);
-      else if (declared !== null && kind(value) !== kind(declared)) found.push(path + key + " takes a " + kind(declared));
+      else if (declared !== "object" && kind(value) !== declared) found.push(path + key + " takes a " + declared);
     }
     return found;
   }
+
+  // Each setting's kind, by name, a group's as its own table; read from the defaults, as a loaded value would only be compared with itself.
+  function kindsOf(group) {
+    const kinds = Object.create(null);
+    for (const key of Object.keys(group)) {
+      const value = group[key];
+      if (key === "objectName" || typeof value === "function") continue;
+      kinds[key] = value !== null && typeof value === "object" && "objectName" in value ? kindsOf(value) : kind(value);
+    }
+    return kinds;
+  }
+
+  // The settings' kinds, read before config.json loads over their defaults.
+  property var declaredKinds: Object.create(null)
+  Component.onCompleted: declaredKinds = kindsOf(adapter)
 
   // A plugin's file as candidate URLs: a type with a slash is its path, else its name in the user's plugins, then the shipped ones.
   function pluginUrls(name, spec) {
@@ -142,7 +157,9 @@ Singleton {
     onLoadFailed: root.written = {}
     onLoaded: {
       try {
-        root.written = JSON.parse(text());
+        const written = JSON.parse(text());
+        if (root.kind(written) !== "map") throw "config.json holds no object of settings";
+        root.written = written;
       } catch (error) {
         root.invalid = String(error);
         root.written = {};
