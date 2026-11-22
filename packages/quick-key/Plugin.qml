@@ -176,5 +176,11 @@ Scope {
     function refresh(): void {
       root.refresh();
     }
+
+    // One of its actions by name, as an entry naming it runs it: what a compositor binding calls.
+    function action(name: string): void {
+      const action = root.actions[name];
+      if (action?.available([])) action.run(false, [], null);
+    }
   }
 }

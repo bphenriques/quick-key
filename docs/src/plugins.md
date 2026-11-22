@@ -69,6 +69,7 @@ List one by name to use it: `plugins.dunst = { };`.
 - **`niriMinimap`:** a minimap of niri's workspaces as you move between them. Sized by `height`, `maxWidth`, `opacity` and `borderWidth`.
 - **`tasks`:** tasks to tick off, from the tasks file its `file` names (see [Tasks](tasks.md)). `done` and `reopen` are given a task's id and `add` a title, each writing the file again; `sync` runs as the menu opens on a file `syncAfter` minutes old (5), and after a tick; `remind`, unset by default, is given a title and a time as a timed task falls due.
 - **`ask`:** a panel for quick turns with an agent, below.
+- **`notifications`:** a notification server in the shell's look, below.
 
 ## Ask
 
@@ -107,6 +108,27 @@ Its status (its name in a bar) shows its `glyph` only while it has something to 
 
 Two agents are two plugins with `type = "ask"`. A level's `input` may hand one its text (see [Input](menu.md#input)).
 
+## Notifications
+
+A notification server drawn in the shell's own look, in place of dunst or mako: list it only with no other daemon running. Quickshell speaks the protocol; the plugin decides what shows, for how long, and where.
+
+Cards stack in a `corner` of the focused screen, newest by the corner, critical ones first: an icon, the summary in bold, the app on its right, the body in two lines, progress (`value`) as a meter, and the sender's actions on the `actionSide` (`right`). A click opens it, running its default action; `✕` or a right click dismisses it; the pointer on a card holds its time. A card shows for its sender's time, else `timeout.low` or `timeout.normal` seconds (3 and 8); a critical one stays until dismissed. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card and starts its time again.
+
+`limit` cards show at once (3), `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait instead of showing, a struck bell counting them, and their time starts once they show; a critical one shows anyway. The plugin's status is a bell with the count, struck and lit while paused, a click pausing or resuming; pause survives a reload.
+
+```nix
+plugins.notifications = {
+  corner = "top-right";
+  rules = [ { match = { app = "^niri$"; summary = "Screenshot captured"; }; hide = true; } ];
+};
+```
+
+`rules` apply in order, later ones winning: a rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`), and `hide` drops what it matches. A rule's fields are checked as the configuration builds.
+
+Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
+
+Other settings: `limit`, `width` (480).
+
 ## Writing one in QML
 
 A plugin that needs behaviour (a timer, a surface, a protocol) is a folder, found in `$XDG_CONFIG_HOME/quick-key/plugins/` and then among the shipped ones. `type` names it, by default the plugin's own name, or gives a path to its file.
@@ -137,4 +159,4 @@ What it gives:
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.
 
-Every plugin answers `<name> activate` and `<name> refresh` over IPC.
+Every plugin answers `<name> activate`, `<name> refresh` and `<name> action <action>` over IPC, the last running one of its `actions` as an entry naming it would.

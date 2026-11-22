@@ -1,6 +1,8 @@
 # The shell's logic in a real Quickshell, headless, one check per folder: its shell.qml replaces the shipped one and runs its cases through Suite.qml; a TypeError fails it too, as does a view not created for any reason but its window, which needs a session.
 { pkgs, self }:
 let
+  # The notifications suite runs on a session bus of its own, sending with notify-send and asking busctl who holds the name.
+  bus = name: name == "notifications";
   # The folder is the shell's config and state at once, so its config.json, plugins, scripts and events.json are found by name.
   run =
     name:
@@ -10,6 +12,11 @@ let
           pkgs.quickshell
           # The stand-in ACP agent (agent.py), in every suite's config.
           (pkgs.python3.withPackages (ps: [ ps.agent-client-protocol ]))
+        ]
+        ++ pkgs.lib.optionals (bus name) [
+          pkgs.dbus
+          pkgs.libnotify
+          pkgs.systemd
         ];
       }
       ''
@@ -23,12 +30,18 @@ let
         chmod -R u+w shell
         cp ${./Suite.qml} shell/Suite.qml
         cp ${./. + "/${name}/shell.qml"} shell/shell.qml
-        timeout 60 qs -p shell 2>&1 | tee log
+        ${pkgs.lib.optionalString (bus name) "dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- "}timeout 60 qs -p shell 2>&1 | tee log
         grep -q '# done' log
         if grep -qE 'not ok|TypeError' log || grep 'not created' log | grep -vq 'unavailable$'; then exit 1; fi
         touch $out
       '';
 in
-pkgs.lib.genAttrs' [ "plugins" "menu" "calendar" "ask" "check" "load" ] (
-  name: pkgs.lib.nameValuePair "qml-${name}" (run name)
-)
+pkgs.lib.genAttrs' [
+  "plugins"
+  "menu"
+  "calendar"
+  "ask"
+  "check"
+  "load"
+  "notifications"
+] (name: pkgs.lib.nameValuePair "qml-${name}" (run name))

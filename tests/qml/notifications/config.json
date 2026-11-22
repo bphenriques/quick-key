@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "notifications": {
+      "limit": 3,
+      "timeout": { "low": 1, "normal": 30 },
+      "rules": [
+        { "match": { "app": "^hidden$" }, "hide": true }
+      ]
+    }
+  }
+}

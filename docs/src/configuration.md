@@ -42,6 +42,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | Calendar reminders | `notify-send` |
 | Battery warnings | `notify-send` |
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
+| The `notifications` plugin, to see it holds the bus | `busctl` |
 
 `popups.show` lists the statuses or plugins whose changes pop up (`sink`, `source`, `brightness`, `keyboardLayout`, `keepAwake` by default), so another on-screen display can take any of them over; `battery` pops up as it is plugged in or out, not at every percent. A plugin shows as a pill with its glyph and text; one whose text changes constantly (a recording's timer) pops up on every change, so list only plugins that change rarely.
 
