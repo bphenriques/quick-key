@@ -7,7 +7,7 @@
 
 A keyboard-driven [Quickshell](https://quickshell.org) menu with live status, in the style of [`wlr-which-key`](https://github.com/MaxVerevkin/wlr-which-key), plus pop-ups for volume, brightness, keyboard layout and keep-awake. Works out of the box; configured from a home-manager module or a `config.json`.
 
-It is a menu first: it sits beside the bar or shell you have and replaces neither. The rest is plugins, off until listed: most are a command and a few lines of config ([recipes](https://bphenriques.github.io/quick-key/recipes.html)), and the shipped ones (a panel to ask an agent, pills for recording and dictation, a niri minimap) show how far one can go.
+It is a menu first: it sits beside the bar or shell you have and replaces neither. The rest is plugins, off until listed: most are a command and a few lines of config ([recipes](https://bphenriques.github.io/quick-key/recipes.html)), and the shipped ones (a panel to ask an agent, a notification server in place of dunst or mako, pills for recording and dictation, a niri minimap) show how far one can go.
 
 | Menu | Audio output |
 |---|---|

@@ -110,13 +110,15 @@ Two agents are two plugins with `type = "ask"`. A level's `input` may hand one i
 
 ## Notifications
 
-A notification server in the shell's own look, in place of dunst or mako: list it only with no other daemon running. Quickshell speaks the protocol; the plugin decides what shows, for how long, and where.
+A notification server in the shell's own look, in place of dunst or mako: list it only with no other daemon running. Quickshell speaks the protocol; the plugin decides what shows, for how long, and where. Its settings and their defaults are in the [reference](options.md#notifications).
 
-Cards stack in a `corner` of the focused screen, newest by the corner, critical ones first. A card shows its app's icon, the summary in bold, the app on its right (and when it came, once it has waited a minute), the body in two lines, progress (`value`) as a meter, a picture (album art, a screenshot) on its right, and the sender's actions below, on the `actionSide` (`right`). A click opens a card, running its default action, else dismissing it; `✕` or a right click dismisses it.
+Switching over, turn off `services.dunst` or `services.mako` and remove their packages: D-Bus starts a daemon whose service file it finds, which can take the bus before the shell does. The bell goes in a bar as an entry showing the plugin's status: `{ key = "n"; desc = "Notifications"; status = "notifications"; }`.
 
-A card shows for its sender's time, else `timeout.low` or `timeout.normal` seconds (3 and 8); a critical one stays until dismissed. Time holds while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input (120), so none goes while you are away. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card and starts its time again.
+Cards stack in a `corner` of the focused screen, newest by the corner, critical ones first. A card shows its app's icon, the summary in bold, the app on its right (and when it came, once it has waited a minute), the body in two lines, progress (`value`) as a meter, a picture (sent as image data, else as a file: album art, a screenshot) on its right, and the sender's actions below, on the `actionSide`. Its text is the shell's one font at `theme.fontSize`. A click opens a card, running its default action, else dismissing it; `✕` or a right click dismisses it.
 
-`limit` cards show at once (3), `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, a struck bell counting them (not over a fullscreen window), and their time starts once they show; a critical one shows anyway. The plugin's status is a bell with the count, struck and lit while paused; a click summons the cards. Pause survives a reload.
+A card shows for its sender's time, else `timeout.low` or `timeout.normal` seconds; a critical one stays until dismissed. Time holds while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input, so none goes while you are away. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card, its rules applying again and its time starting again.
+
+`limit` cards show at once, `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, a struck bell counting them (not over a fullscreen window), and their time starts once they show; a critical one shows anyway. At most `keep` are kept, shown or waiting; past it the oldest but critical ones close. The plugin's status is a bell with the count, struck and lit while paused; a click summons the cards. Pause survives a reload and a restart.
 
 ```nix
 plugins.notifications = {
@@ -129,32 +131,37 @@ plugins.notifications = {
 };
 ```
 
-`rules` apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`). It can set:
+`rules` apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`). They are JavaScript's, with no inline flags: `[Ss]lack` matches either case. A rule with no `match` applies to all, so `{ run = "env | grep ^NOTIFICATION_ >> /tmp/notifications"; }` logs what each tool sends. A rule can set:
 
 - `hide`: drops it.
 - `timeout`: the seconds it shows; 0, never.
 - `urgency` (`low`, `normal`, `critical`): how it shows and lasts.
 - `ignorePause`: lets it through a pause, as a critical one goes.
-- `actions`: its own, each a menu entry's `{ key, desc, cmd }` on a letter you choose (any but `x`), after its reply and before its sender's. Running one dismisses its card; `closes = false` keeps it.
+- `actions`: its own, each a menu entry's `{ key, desc, cmd }` on a letter you choose (any but `x`), after its reply and before its sender's, whose letters come from their labels around yours. Actions of every matching rule add up, one on a letter an earlier rule took replacing it. Running one dismisses its card; `closes = false` keeps it.
 - `default`: what opening it runs, in place of its sender's.
-- `run`: a command run as it arrives, not when it is replaced.
+- `run`: a command run as it arrives, not when it is replaced or kept over a reload.
 
-A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, `NOTIFICATION_ICON` (its icon as sent: a file's path, as a screenshot or album art comes, else a name), and each named group of its `match` (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields are checked as the configuration builds.
+A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, `NOTIFICATION_ICON` (its icon as sent: a file's path, as a screenshot or album art comes, else a name), and each named group of its `match`, upper-cased (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields, the names its labels show among them, are checked as the configuration builds.
 
-Cards never take the keys on their own, so a notification never takes your typing. `summon`, bound to a compositor key (`Mod+N` through `action summon`, the plugin's `shortcut` naming it), gives them the keys where they are, the newest picked. Their keys show where they act, and nothing moves. Summoned, held cards show too, `limit` at a time (at most 9), critical ones staying by the corner while the rest scroll, the bar counting those not shown (`+2`). The bar holds the keys the state changes (`C-p` pause or resume, `?`); `?` lists the rest, any key closing the list. `hint` shows the `shortcut` dimly by the cards at rest. Keys:
+Cards never take the keys (the keyboard's focus) on their own, so a notification never takes your typing. `summon`, bound to a compositor key (`Mod+N` through `action summon`; the plugin's `shortcut` only labels it), gives them the keys where they are, the newest picked, until you let go. Their keys show where they act, and nothing moves. Summoned, held cards show too, `limit` at a time (at most 9), critical ones staying by the corner, one place left for the rest to scroll through. The bar under the cards holds the keys the state changes (`C-p` pause or resume, `?`) and counts those not shown (`+2`); `?` lists the rest, any key closing the list. `hint` shows the `shortcut` dimly by the cards at rest. Keys:
 
 - A digit picks a card by its place among all, so it holds still, scrolling it into view; `↑↓` move the pick as the cards show, scrolling past the last one.
-- The picked card's letters run its actions (from their labels, never `x`); the keys stay, so one summon can clear several.
+- The picked card's letters run its actions; the keys stay, so one summon can clear several.
 - `RET` opens it and lets go; `x` dismisses it, the pick moving on.
 - `C-X` clears all; `C-r` brings back the last closed (of 20 kept, not those a sender marks transient), to read; `C-p` pauses or resumes.
 - `ESC`, or a click beside the cards, lets go.
 
 A key path runs as typing it would: `notifications press "2 x"`.
 
-A card whose sender takes a reply offers it first among its actions, on `TAB`. The prompt takes the actions' place, one line that scrolls, so the card keeps its height. `RET` sends it and lets go, as the reply closes the card; the keys stay only on a card its sender keeps (`resident`), which shows what you sent on one line. `C-S-RET` sends it and lets go always. `ESC` clears it; empty, `ESC` goes back to the card's keys. A card keeps its own unsent reply until it goes. A card its sender closes while you type stays, the bar saying so, until you leave the prompt: `RET` then copies your text, so none is lost.
+A card whose sender takes a reply offers it first among its actions, on `TAB`; one whose sender takes none has no `TAB`. The prompt takes the actions' place, one line that scrolls, so the card keeps its height, and has the keys until you leave it:
+
+- `RET` sends it. The reply closes the card and lets go, unless its sender keeps it (`resident`): then it shows what you sent, and the keys stay.
+- `C-S-RET` sends it and lets go always.
+- `ESC` clears it; empty, `ESC` goes back to the card's keys.
+- A card keeps its own unsent reply until it goes.
+- A card its sender closes while you type stays, the bar saying so, until you leave the prompt: `RET` then copies your text, so none is lost.
 
 Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `summon` gives the cards the keys, `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `restore` brings back the last closed, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
-
 
 ## Writing one in QML
 

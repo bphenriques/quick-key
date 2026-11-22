@@ -20,11 +20,11 @@ Plugin {
   readonly property bool summoned: Panels.top === root
   // Summoned or under the pointer, nothing moves and no time runs: the order holds, one that comes meanwhile going last.
   readonly property bool still: summoned || internal.hovered
-  readonly property var ordered: internal.list.slice().sort(still ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || b.id - a.id)
+  readonly property var ordered: internal.list.slice().sort((a, b) => critical(b) - critical(a) || (still ? internal.rank(a) - internal.rank(b) : b.id - a.id))
   // Summoned, the held ones show too.
   readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !internal.fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
-  // Critical ones by the corner, then the rest `limit` at a time, summoned the arrows scrolling past them; a card's digit is its place among all, so it holds still.
-  readonly property var shown: internal.pinned.slice(0, settings.limit).concat(internal.rest.slice(internal.offset, internal.offset + internal.room))
+  // Critical ones by the corner, leaving a place while others wait, then the rest `limit` at a time, summoned the arrows scrolling past them; a card's digit is its place among all, so it holds still.
+  readonly property var shown: showable.slice(0, internal.pinned).concat(internal.rest.slice(internal.offset, internal.offset + internal.room))
   // Those showable but not shown.
   readonly property int more: showable.length - shown.length
   // None under a fullscreen window: the count would sit over it.
@@ -130,6 +130,7 @@ Plugin {
 
   // A rule's `default`, else its own default action, else dismissed: a click means done with it.
   function open(notification) {
+    if (notification.gone) return notification.dismiss();
     const rule = internal.applied[notification.id]?.default;
     if (rule) {
       runFor(notification, rule);
@@ -168,7 +169,7 @@ Plugin {
   // Its prompt in its actions' place, summoned and picked; a click on Reply... starts here too.
   function reply(notification) {
     summon();
-    internal.picked = notification;
+    pick(notification);
     internal.replying = notification;
   }
 
@@ -194,9 +195,10 @@ Plugin {
     if (!notification || notification.gone) return false;
     internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
     internal.drafts = without(internal.drafts, notification.id);
+    // No longer the reply target, so if the reply closes it, it is kept to bring back.
+    internal.replying = null;
     notification.sendInlineReply(text);
     if (close || !notification.resident) release();
-    else endReply();
     return true;
   }
 
@@ -211,10 +213,9 @@ Plugin {
   function move(down) {
     const by = down === settings.corner.startsWith("top") ? 1 : -1;
     const at = shown.indexOf(internal.picked);
-    const first = Math.min(internal.pinned.length, settings.limit);
-    if (by < 0 && at === first && internal.offset > 0) {
+    if (by < 0 && at === internal.pinned && internal.offset > 0) {
       internal.offset--;
-      internal.picked = shown[first];
+      internal.picked = shown[internal.pinned];
     } else if (by > 0 && at === shown.length - 1 && internal.offset + internal.room < internal.rest.length) {
       internal.offset++;
       internal.picked = shown[shown.length - 1];
@@ -241,7 +242,7 @@ Plugin {
     const card = Object.assign({}, last, { restored: true });
     card.dismiss = card.expire = () => root.leave(card);
     internal.list = internal.list.concat([card]);
-    internal.left = Object.assign({}, internal.left, { [card.id]: 1000 * settings.timeout.normal });
+    internal.left = Object.assign({}, internal.left, { [card.id]: critical(card) ? 0 : 1000 * settings.timeout.normal });
     internal.arrived = Object.assign({}, internal.arrived, { [card.id]: last.arrived });
     if (summoned) internal.picked = card;
   }
@@ -253,6 +254,8 @@ Plugin {
   }
 
   function key(name) {
+    // The prompt has the keys: what it leaves (arrows, chords) would act on the cards under the text; Escape, from a binding, still lets go.
+    if (internal.replying && name !== "Escape") return false;
     if (internal.help) internal.help = false;
     else if (name === "?") internal.help = true;
     else if (/^[1-9]$/.test(name)) return pick(showable[Number(name) - 1]);
@@ -287,7 +290,7 @@ Plugin {
     call(settings.owner, [], (code, output) => internal.error = code === 0 && Number(output.trim().split(/\s+/).pop()) === Quickshell.processId ? "" : words.taken);
   }
 
-  // What the rules that match it set, in order, later ones winning but actions adding up; `values` the text its named groups found.
+  // What the rules that match it set, in order, later ones winning, actions adding up but one on a key taken before replacing it; `values` the text its named groups found.
   function ruled(notification) {
     const fields = {
       app: notification.appName,
@@ -307,7 +310,8 @@ Plugin {
         });
         return found !== null;
       });
-      if (matched) Object.assign(applied, rule, { actions: applied.actions.concat(Array.from(rule.actions ?? [])), values: Object.assign(applied.values, values) });
+      const actions = Array.from(rule.actions ?? []);
+      if (matched) Object.assign(applied, rule, { actions: applied.actions.filter(action => !actions.some(other => other.key === action.key)).concat(actions), values: Object.assign(applied.values, values) });
     }
     return applied;
   }
@@ -349,51 +353,67 @@ Plugin {
     return String(notification.hints["x-dunst-stack-tag"] ?? notification.hints["x-canonical-private-synchronous"] ?? "");
   }
 
-  // A hidden one is left untracked, so Quickshell drops it; a replaced one, by id or tag, starts its time again, and `run` runs for a new one only.
+  // A hidden one is left untracked, so Quickshell drops it; `run` runs for a new one only, not one kept over a reload.
   function arrive(notification) {
-    const applied = ruled(notification);
-    if (applied.hide) return;
-    const known = internal.list.includes(notification);
-    if (!known) internal.arrived = Object.assign({}, internal.arrived, { [notification.id]: Date.now() });
-    internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
-    if (applied.run && !known) runFor(notification, applied.run);
+    if (ruled(notification).hide) return;
     notification.tracked = true;
-    const tag = tagOf(notification);
-    for (const old of internal.list) {
-      if (tag && old !== notification && old.appName === notification.appName && tagOf(old) === tag) old.expire();
-    }
-    internal.left = Object.assign({}, internal.left, { [notification.id]: timeoutOf(notification) });
-    if (known) return;
+    if (!notification.lastGeneration) internal.arrived = Object.assign({}, internal.arrived, { [notification.id]: Date.now() });
     internal.list = internal.list.concat([notification]);
     notification.closed.connect(() => root.leave(notification));
+    // A sender replacing it by id changes it in place: its rules and time start again, once for all it changed.
+    const renew = () => root.apply(notification);
+    for (const changed of [notification.appNameChanged, notification.summaryChanged, notification.bodyChanged, notification.urgencyChanged, notification.expireTimeoutChanged, notification.hintsChanged, notification.actionsChanged]) changed.connect(() => Qt.callLater(renew));
+    apply(notification);
+    const run = internal.applied[notification.id]?.run;
+    if (run && !notification.lastGeneration) runFor(notification, run);
+    const over = internal.list.length - settings.keep;
+    if (over > 0) internal.list.filter(each => !each.gone && !critical(each)).sort((a, b) => a.id - b.id).slice(0, over).forEach(each => each.expire());
+  }
+
+  // Its rules and time, as it comes and as its sender replaces it: one that now hides goes, and its app's card by the same tag gives it its place.
+  function apply(notification) {
+    if (!internal.list.includes(notification)) return;
+    const applied = ruled(notification);
+    if (applied.hide) return notification.expire();
+    internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
+    internal.left = Object.assign({}, internal.left, { [notification.id]: timeoutOf(notification) });
+    const tag = tagOf(notification);
+    for (const old of internal.list) {
+      if (!tag || old === notification || old.appName !== notification.appName || tagOf(old) !== tag) continue;
+      if (internal.picked === old) internal.picked = notification;
+      internal.replaced[old.id] = true;
+      old.expire();
+    }
   }
 
   // The pick moves to the card that takes its place; the last one gone lets go of the keys. One closing while replied to stays as a placeholder, its slot and the text kept, until the reply ends.
   function leave(notification) {
     if (notification === internal.replying && !notification.gone) {
+      keepClosed(notification);
       const ghost = Object.assign(snapshot(notification), { gone: true, dismiss: () => root.endReply(), expire: () => root.endReply() });
       internal.list = internal.list.map(each => each === notification ? ghost : each);
       internal.replying = internal.picked = ghost;
       return;
     }
-    // Kept to bring back (C-r), unless its sender marked it passing (transient) or it is a placeholder already.
-    if (!notification.gone && !notification.restored && !notification.transient) internal.closed = internal.closed.slice(-19).concat([snapshot(notification)]);
+    if (!notification.gone && !(notification.id in internal.replaced)) keepClosed(notification);
     const at = shown.indexOf(notification);
+    // Nothing reads a gone card's id, so only the list tells; each map loses it in place.
+    for (const map of [internal.left, internal.sent, internal.applied, internal.drafts, internal.arrived, internal.replaced]) delete map[notification.id];
     internal.list = internal.list.filter(each => each !== notification);
-    internal.left = without(internal.left, notification.id);
-    internal.sent = without(internal.sent, notification.id);
-    internal.applied = without(internal.applied, notification.id);
-    internal.drafts = without(internal.drafts, notification.id);
-    internal.arrived = without(internal.arrived, notification.id);
     if (internal.offset > 0 && internal.offset + internal.room > internal.rest.length) internal.offset--;
     if (internal.picked !== notification) return;
     internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
     if (internal.picked === null) release();
   }
 
-  // What a card shows, kept once its sender is done with it: a placeholder that reads as it did and runs nothing.
+  // Kept to bring back (C-r), unless its sender marked it passing (transient) or it was brought back already.
+  function keepClosed(notification) {
+    if (!notification.restored && !notification.transient) internal.closed = internal.closed.slice(-19).concat([snapshot(notification)]);
+  }
+
+  // What a card shows, kept once its sender is done with it: a placeholder that reads as it did and runs nothing; a picture sent as data goes with its sender.
   function snapshot(notification) {
-    return { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image, urgency: notification.urgency, hints: ({ "image-path": notification.hints["image-path"], value: notification.hints.value }), actions: [], arrived: internal.arrived[notification.id] };
+    return { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image.startsWith("image://qsimage") ? "" : notification.image, urgency: ["low", "normal", "critical"].indexOf(urgencyOf(notification)), hints: ({ "image-path": notification.hints["image-path"], value: notification.hints.value }), actions: [], arrived: internal.arrived[notification.id] };
   }
 
   function without(map, id) {
@@ -409,9 +429,13 @@ Plugin {
 
     // A focused fullscreen window holds them as pause does: under it they would expire unseen.
     readonly property bool fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
-    readonly property var pinned: root.showable.filter(notification => root.critical(notification))
-    readonly property var rest: root.showable.filter(notification => !root.critical(notification))
-    readonly property int room: Math.max(0, root.settings.limit - pinned.length)
+    // How many critical ones show pinned; those past them scroll with the rest.
+    readonly property int pinned: {
+      const critical = root.showable.filter(notification => root.critical(notification)).length;
+      return root.showable.length > root.settings.limit ? Math.min(critical, root.settings.limit - 1) : critical;
+    }
+    readonly property var rest: root.showable.slice(pinned)
+    readonly property int room: root.settings.limit - pinned
     property var list: []
     // Milliseconds left by id, counted only while shown and nothing holds them; 0 never expires.
     property var left: ({})
@@ -428,6 +452,8 @@ Plugin {
     property var applied: ({})
     // The order as it was when it held still, by id.
     property var frozen: []
+    // Cards a newer one by their tag replaced, by id: gone, not to bring back.
+    property var replaced: ({})
     // The first shown, summoned, past those scrolled by.
     property int offset: 0
     property string error: ""

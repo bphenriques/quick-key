@@ -3,13 +3,15 @@ import qs
 
 // The notifications' settings (docs/src/plugins.md#notifications); `owner` the one tool it names, the standard busctl.
 PluginSettings {
-  // The corner the cards stack in.
+  // The corner the cards stack in: top-right, top-left, bottom-right or bottom-left.
   property string corner: "top-right"
   // Cards shown at once; the rest wait, counted.
   property int limit: 3
-  // Seconds a card shows, by urgency, when its sender sets none; a critical one stays until dismissed.
+  // Seconds a card shows, by urgency, when its sender sets none, either given alone keeping the other; a critical one stays until dismissed.
   property var timeout: ({ low: 3, normal: 8 })
-  // The side of a card its actions sit on.
+  // Notifications kept at most, shown or waiting; past it the oldest but critical ones close, to bring back.
+  property int keep: 100
+  // The side of a card its actions sit on: right or left.
   property string actionSide: "right"
   // Its cards' width, in pixels.
   property int width: 480
@@ -17,7 +19,7 @@ PluginSettings {
   property bool hint: false
   // Seconds without input after which no card's time runs, so none goes while you are away; 0 lets time run.
   property int idle: 120
-  // Each { match, hide, timeout, urgency, ignorePause, actions, default, run }, in order, later ones winning but actions adding up; `match` maps fields to regular expressions, every one found for the rule to apply, its named groups (`(?<code>\d+)`) values for its commands and labels.
+  // Each { match, hide, timeout, urgency, ignorePause, actions, default, run }, in order, later ones winning, actions adding up but one on a key taken before replacing it; `match` maps fields to regular expressions, every one found for the rule to apply, its named groups (`(?<code>\d+)`) values for its commands and labels.
   property var rules: []
   // Prints the process id holding the notifications' name on the session bus, last on its line: another daemon there shows as its error.
   property string owner: "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s org.freedesktop.Notifications"
@@ -37,6 +39,8 @@ PluginSettings {
     if (!sides.includes(actionSide)) found.push("sets actionSide to '" + actionSide + "', none of " + sides.join(", "));
     if (limit < 1 || limit > 9) found.push("sets limit to " + limit + ", not 1 to 9, as many as there are digits");
     if (idle < 0) found.push("sets idle below 0");
+    if (keep < limit) found.push("sets keep to " + keep + ", below limit");
+    found.push(...Object.keys(timeout ?? {}).filter(urgency => !["low", "normal"].includes(urgency)).map(urgency => "sets timeout." + urgency + ", none of low, normal"));
     for (const urgency of ["low", "normal"]) {
       if (typeof timeout?.[urgency] !== "number" || timeout[urgency] < 0) found.push("sets timeout." + urgency + " to no number of seconds");
     }
@@ -82,6 +86,9 @@ PluginSettings {
       if (!/^[a-wyz]$/.test(action.key ?? "")) found.push(at + "sets key to '" + action.key + "': one letter, any but x, which dismisses");
       else if (keys.includes(action.key)) found.push(at + "takes key " + action.key + " twice");
       keys.push(action.key);
+      const named = Object.values(rule.match ?? {}).filter(pattern => typeof pattern === "string").reduce((names, pattern) => names.concat(groupNames(pattern)), given.slice());
+      const unknown = String(action.desc ?? "").match(/\{\w+\}/g)?.map(name => name.slice(1, -1)).filter(name => !named.includes(name)) ?? [];
+      if (unknown.length) found.push(at + "shows " + unknown.map(name => "{" + name + "}").join(", ") + ", which no group of its match names");
     });
     for (const [field, pattern] of Object.entries(rule.match ?? {})) {
       if (!fields.includes(field)) found.push("matches " + field + ", none of " + fields.join(", "));

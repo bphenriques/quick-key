@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// Whether the screen is kept awake (widgets/KeepAwakeInhibitor holds Wayland's idle inhibitor while it is); on until switched off, a reload included (Kept).
+// Whether the screen is kept awake (widgets/KeepAwakeInhibitor holds Wayland's idle inhibitor while it is); on until switched off, a reload or restart included (Kept).
 Singleton {
   id: root
 

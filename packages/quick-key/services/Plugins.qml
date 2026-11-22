@@ -45,7 +45,7 @@ Singleton {
       const keys = Object.keys(spec).filter(key => key !== "type");
       const unknown = keys.filter(key => !(key in object));
       if (unknown.length) console.warn("plugin", name + ": ignoring unknown settings:", unknown.join(", "));
-      for (const key of keys) if (key in object) object[key] = spec[key];
+      for (const key of keys) if (key in object) object[key] = Config.over(object[key], spec[key]);
       return object;
     }
 

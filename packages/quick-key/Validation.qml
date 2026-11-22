@@ -11,8 +11,17 @@ Singleton {
 
   // Null until config.json is read.
   readonly property var problems: Config.written === null ? null : Config.invalid ? [Config.invalid] : check(Config.written)
+  // Logged as the verdict changes: the check runs again as what it reads settles, mostly to the same one.
   onProblemsChanged: {
+    const verdict = JSON.stringify(problems ?? []);
+    if (verdict === internal.logged) return;
+    internal.logged = verdict;
     for (const problem of problems ?? []) console.warn("config.json:", problem);
+  }
+
+  QtObject {
+    id: internal
+    property string logged: "[]"
   }
 
   readonly property var entryKeys: ["key", "desc", "cmd", "action", "keepOpen", "activeWhen", "width", "columns", "submenu", "list", "pins", "view", "status", "icon", "format", "header", "shortcut", "limit", "input"]
@@ -77,6 +86,7 @@ Singleton {
         }
         const given = Object.assign({}, plugin);
         delete given.type;
+        for (const key of Object.keys(given)) if (key in defaults) given[key] = Config.over(defaults[key], given[key]);
         const wrong = Config.undeclared(given, defaults, at + ".");
         defaults.destroy();
         found.push(...wrong);

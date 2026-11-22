@@ -35,9 +35,9 @@ Surface {
   readonly property bool hovered: mouse.containsMouse
   readonly property bool acting: keysShown && current
   readonly property string textTone: dimmed ? "dim" : "normal"
-  // The actions in rows as wide as fit, in their order, by characters as the font is monospace: whole, wrapping rather than cut, and the card's height is set as it comes, so nothing moves.
+  // The actions in rows as wide as fit, in their order, by characters as the font is monospace: whole, wrapping rather than cut, and the card's height is set as it comes, so nothing moves; from its width, which it has before its layout does.
   readonly property var rows: {
-    const room = Math.floor(actionArea.width / Metrics.cell);
+    const room = Math.floor((width - 2 * Config.theme.padding - Metrics.cell - Config.theme.spacing) / Metrics.cell);
     const rows = [];
     let used = room;
     actions.forEach((action, i) => {
@@ -175,6 +175,8 @@ Surface {
         sourceSize: Qt.size(6 * Metrics.line, 6 * Metrics.line)
         fillMode: Image.PreserveAspectCrop
         mipmap: true
+        // Off the GUI thread: a screenshot decodes in tens of milliseconds, and its place is already kept.
+        asynchronous: true
       }
 
       // Its ✕ in a column of its own, mirroring the digit's, so the text ends on one edge; its key in the ✕'s place while the keys are on it.

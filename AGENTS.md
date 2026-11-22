@@ -44,7 +44,7 @@ The rest:
 ## Code style
 
 - Idiomatic Nix and QML. YAGNI. Read neighbouring files and match their patterns.
-- A Repeater over a list that changes takes its length as `model`, each delegate reading its item by `index`, `?? ({})` since rows past a shrunk list's end read it before they go: an array model recreates every delegate on each change, dropping hover and wheel state. A list that changes many times a second, each item costly to draw (a streaming answer's pieces), keeps a `ListModel` in step instead, so only the item that changed is told (`Markdown`).
+- A Repeater over a list that changes takes its length as `model`, each delegate reading its item by `index`, `?? ({})` since rows past a shrunk list's end read it before they go: an array model recreates every delegate on each change, dropping hover and wheel state, and a new length does too. A list with a small bound that comes and goes often (the notifications' `limit`) takes the bound, hiding delegates past its end. A list that changes many times a second, each item costly to draw (a streaming answer's pieces), keeps a `ListModel` in step instead, so only the item that changed is told (`Markdown`).
 - Nushell logic in a `script.nu`, wrapped by `writeNushellApplication` (`packages/builders.nix`).
 - One-line `description` on every option, `defaultText` whenever a `default` references other config. Detail goes in a docs chapter.
 

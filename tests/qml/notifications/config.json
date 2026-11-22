@@ -91,6 +91,24 @@
               "cmd": "(sleep 0.5; echo \"$NOTIFICATION_APP\" > \"$XDG_RUNTIME_DIR/forked\") &"
             }
           ]
+        },
+        {
+          "match": {
+            "app": "^dup$"
+          },
+          "actions": [
+            {
+              "key": "c",
+              "desc": "Call",
+              "cmd": "true"
+            }
+          ]
+        },
+        {
+          "match": {
+            "app": "^ghostly$"
+          },
+          "default": "echo ghosted > \"$XDG_RUNTIME_DIR/ghosted\""
         }
       ]
     }

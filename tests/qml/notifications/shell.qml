@@ -37,10 +37,14 @@ ShellRoot {
   // What the rules' commands wrote, and whether a notification's text ran anything.
   Process {
     id: reader
-    command: ["sh", "-c", "cd \"$XDG_RUNTIME_DIR\" && for f in ran arrived opened edited forked pwned; do [ -e $f ] && echo \"$f: $(cat $f)\"; done; true"]
+    command: ["sh", "-c", "cd \"$XDG_RUNTIME_DIR\" && for f in ran arrived opened edited forked pwned ghosted; do [ -e $f ] && echo \"$f: $(cat $f)\"; done; true"]
     stdout: StdioCollector {
       onStreamFinished: root.files = text
     }
+  }
+
+  function notify(app, summary) {
+    Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify", "'" + app + "'", "uint32 0", "''", "'" + summary + "'", "''", "['inline-reply', 'Reply']", "@a{sv} {}", "int32 -1"]);
   }
 
   function chatSend(summary, hints = "@a{sv} {}") {
@@ -94,6 +98,30 @@ ShellRoot {
     stdout: StdioCollector {
       onStreamFinished: root.replaced = text.trim()
     }
+  }
+
+  // Its id as notify-send prints it, by key, to replace it.
+  property var ids: ({})
+
+  function sendId(key, ...args) {
+    idSender.createObject(root, { key: key, command: ["notify-send", "-p", ...args] }).running = true;
+  }
+
+  Component {
+    id: idSender
+
+    Process {
+      property string key
+      stdout: StdioCollector {
+        onStreamFinished: root.ids = Object.assign({}, root.ids, { [key]: text.trim() })
+      }
+    }
+  }
+
+  // Back to no cards and no keys, for a case that counts them.
+  function reset() {
+    plugin.release();
+    plugin.clear();
   }
 
   Suite {
@@ -602,9 +630,175 @@ ShellRoot {
         }
       },
       {
+        name: "a replacement by id starts its time again",
+        start: () => {
+          root.reset();
+          root.sendId("prog", "-t", "1500", "Prog 1");
+        },
+        until: () => {
+          if (root.ids.prog && !("prog" in root.marks)) root.mark("prog");
+          if ("prog" in root.marks && root.mark("prog") > 1000 && !("prog2" in root.marks)) {
+            root.mark("prog2");
+            root.send("-r", root.ids.prog, "-t", "1500", "Prog 2");
+          }
+          return "prog" in root.marks && root.mark("prog") > 2300 && root.find("Prog 2") !== null;
+        }
+      },
+      {
+        name: "and reads its rules again: what their groups find, and a critical urgency that never expires",
+        start: () => root.sendId("code", "-t", "800", "Code A", "code 111111"),
+        until: () => {
+          if (root.ids.code && !("codeAgain" in root.marks)) {
+            root.mark("codeAgain");
+            root.send("-r", root.ids.code, "-u", "critical", "Code B", "code 222222");
+          }
+          const code = root.find("Code B");
+          return "codeAgain" in root.marks && root.mark("codeAgain") > 1600 && code !== null && root.plugin.critical(code) && root.plugin.actionsOf(code).some(action => action.desc === "Copy 222222");
+        }
+      },
+      {
+        name: "a replacement by tag takes the pick, the keys staying, and is nothing to bring back",
+        start: () => {
+          root.reset();
+          root.send("-h", "string:x-dunst-stack-tag:vol", "-h", "int:value:10", "Vol");
+        },
+        until: () => {
+          if (root.find("Vol")?.hints.value === 10 && !("vol" in root.marks)) {
+            root.mark("vol");
+            root.plugin.summon();
+            root.send("-h", "string:x-dunst-stack-tag:vol", "-h", "int:value:20", "Vol");
+          }
+          const vol = root.find("Vol");
+          if (vol?.hints.value !== 20 || !root.plugin.summoned || root.plugin.picked !== vol) return false;
+          root.plugin.restore();
+          return root.plugin.ordered.filter(notification => notification.summary === "Vol").length === 1;
+        }
+      },
+      {
+        name: "while replying, the keys stay with the prompt: arrows and letters act on no card",
+        start: () => {
+          root.reset();
+          ["P1", "P2", "P3", "P4"].forEach(summary => root.send(summary));
+          root.chatSend("Rex");
+        },
+        until: () => {
+          const rex = root.find("Rex");
+          if (!rex || root.plugin.ordered.length < 5) return false;
+          root.plugin.reply(rex);
+          ["Down", "Down", "Down", "x", "Ctrl+X"].forEach(name => root.plugin.key(name));
+          return root.plugin.replying === rex && root.plugin.shown.includes(rex) && root.plugin.ordered.length === 5;
+        }
+      },
+      {
+        name: "a closed card's placeholder runs nothing when clicked",
+        start: () => {
+          root.reset();
+          root.files = "";
+          root.notify("ghostly", "Ghost");
+        },
+        until: () => {
+          const ghost = root.find("Ghost");
+          if (ghost && !ghost.gone && !("ghost" in root.marks)) {
+            root.mark("ghost");
+            root.plugin.reply(ghost);
+            ghost.dismiss();
+            root.plugin.open(root.find("Ghost"));
+          }
+          if ("ghost" in root.marks && root.mark("ghost") > 700 && !root.files) root.readFiles();
+          return root.files !== "" && !root.files.includes("ghosted");
+        }
+      },
+      {
+        name: "critical ones filling the limit leave a place for the rest, and a digit picks only what shows",
+        start: () => {
+          root.reset();
+          ["K1", "K2", "K3", "K4"].forEach(summary => root.send("-u", "critical", summary));
+          root.send("Normal");
+        },
+        until: () => {
+          if (root.plugin.ordered.length < 5) return false;
+          root.plugin.summon();
+          root.plugin.key("5");
+          return root.plugin.shown.length === 3 && root.plugin.picked?.summary === "Normal" && root.plugin.shown.includes(root.plugin.picked);
+        }
+      },
+      {
+        name: "an action on a key an earlier rule took replaces it",
+        start: () => {
+          root.reset();
+          root.send("-a", "dup", "Dup", "code 333333");
+        },
+        until: () => {
+          const actions = root.plugin.actionsOf(root.find("Dup"));
+          return actions.length === 1 && actions[0].key === "c" && actions[0].desc === "Call";
+        }
+      },
+      {
+        name: "a card a sent reply closes can be brought back",
+        start: () => {
+          root.reset();
+          root.chatSend("Zed");
+        },
+        until: () => {
+          const zed = root.find("Zed");
+          if (zed && !("zed" in root.marks)) {
+            root.mark("zed");
+            root.plugin.reply(zed);
+            root.plugin.sendReply("Yes", false);
+          }
+          if ("zed" in root.marks && !root.find("Zed") && !("zedBack" in root.marks)) {
+            root.mark("zedBack");
+            root.plugin.restore();
+          }
+          return root.find("Zed")?.restored === true;
+        }
+      },
+      {
+        name: "a restored critical card stays",
+        start: () => {
+          root.reset();
+          root.plugin.settings.timeout = ({ low: 1, normal: 1 });
+          root.send("-u", "critical", "Siren");
+        },
+        until: () => {
+          const siren = root.find("Siren");
+          if (siren && !siren.restored && !("siren" in root.marks)) {
+            root.mark("siren");
+            siren.dismiss();
+            root.plugin.restore();
+          }
+          return "siren" in root.marks && root.mark("siren") > 2000 && root.find("Siren")?.restored === true;
+        }
+      },
+      {
+        name: "past keep, the oldest but critical ones close, to bring back",
+        start: () => {
+          root.plugin.settings.timeout = ({ low: 1, normal: 30 });
+          root.reset();
+          root.send("-u", "critical", "Kept alarm");
+          ["Keep 1", "Keep 2", "Keep 3"].forEach(summary => root.send(summary));
+        },
+        until: () => {
+          if (root.plugin.ordered.length === 4 && !("keep" in root.marks)) {
+            root.mark("keep");
+            root.plugin.settings.keep = 3;
+            root.send("Keep 4");
+          }
+          const done = "keep" in root.marks && root.plugin.ordered.length === 3 && root.find("Kept alarm") !== null && root.find("Keep 4") !== null;
+          if (done) root.plugin.settings.keep = 100;
+          return done;
+        }
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
           const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c", closes: "yes" }], run: 1 });
+          const named = root.plugin.settings.ruleProblems({ match: { body: "(?<code>\\d+)" }, actions: [{ key: "a", desc: "Copy {code} {nope}", cmd: "c" }] });
+          root.plugin.settings.timeout = ({ low: 1, normal: 30, critical: 5 });
+          const extra = root.plugin.settings.problems();
+          root.plugin.settings.timeout = ({ low: 1, normal: 30 });
+          if (named.join() !== "actions[0] shows {nope}, which no group of its match names" || extra.join() !== "sets timeout.critical, none of low, normal") return false;
+          if (JSON.stringify(Config.over({ low: 3, normal: 8 }, { normal: 5 })) !== '{"low":3,"normal":5}' || Config.over([1], [2])[0] !== 2) return false;
           return root.plugin.settings.problems().length === 0 && problems.length === 11 && root.plugin.settings.groupNames("(a)(?:b)(?<c>[(]d)\\(").join() === ",c" && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
         }
       }

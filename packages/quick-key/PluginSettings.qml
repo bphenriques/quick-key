@@ -12,7 +12,7 @@ QtObject {
   property var show: ({})
   // Its items when they never change, each { id, label, icon, detail }; the source's `value` names the one in use.
   property var items: []
-  // Its compositor key, shown beside it while Super is held.
+  // Its compositor key, only a label: shown beside it while Super is held, bound in the compositor.
   property string shortcut
   // Its name, in tips, prompts and notifications; unset, the plugin's.
   property string title

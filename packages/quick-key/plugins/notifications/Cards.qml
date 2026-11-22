@@ -18,10 +18,11 @@ Scope {
   readonly property bool right: settings.corner.endsWith("right")
   readonly property var cards: top ? plugin.shown : plugin.shown.slice().reverse()
 
-  // A picture: an icon sent as a file (album art, a screenshot), else image data, which Quickshell serves as image://qsimage.
+  // A picture, as the protocol orders them: image data, which Quickshell serves as image://qsimage, else an icon sent as a file (album art, a screenshot).
   function pictureOf(notification) {
+    if (notification.image?.startsWith("image://qsimage")) return notification.image;
     const file = plugin.fileOf(notification);
-    return file ? "file://" + file : notification.image?.startsWith("image://qsimage") ? notification.image : "";
+    return file ? "file://" + file.split("/").map(encodeURIComponent).join("/") : "";
   }
 
   // An icon sent by its name, from the theme, at a glyph's size.
@@ -51,7 +52,11 @@ Scope {
   Fade {
     id: fade
     shown: view.plugin.summoned || view.plugin.shown.length > 0 || view.plugin.held > 0
+    onLoadedChanged: if (loaded) view.made = true
   }
+
+  // The window, once made, hides rather than goes: making one costs more than a card.
+  property bool made: false
 
   // A click beside the cards lets go of the keys; on the layer below theirs, so the cards keep their clicks.
   LazyLoader {
@@ -70,10 +75,13 @@ Scope {
   }
 
   LazyLoader {
-    active: fade.loaded
+    active: view.made
 
     OverlayWindow {
       id: window
+      visible: fade.loaded
+      // Hidden, a hover it never saw end would hold the cards for good.
+      onVisibleChanged: if (!visible) view.plugin.hold(false)
 
       screen: view.screen
       // As tall as the cards, so blocking it from screen capture hides them and nothing beside them.
@@ -97,8 +105,6 @@ Scope {
       FocusScope {
         anchors.fill: parent
         focus: true
-        // Gone with the window, a hover it never saw end would hold the cards for good.
-        Component.onDestruction: view.plugin.hold(false)
         Keys.onPressed: event => event.accepted = view.plugin.key(MenuKeys.name(event))
 
         Column {
@@ -117,12 +123,14 @@ Scope {
           }
 
           Repeater {
-            model: view.cards.length
+            // As many as can show, past the cards hidden: a count that changed would make every card again.
+            model: view.settings.limit
 
             Card {
               id: card
               required property int index
               readonly property var notification: view.cards[index] ?? null
+              visible: notification !== null
               readonly property var hint: notification?.hints.value
 
               width: stack.width

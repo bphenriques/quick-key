@@ -54,6 +54,11 @@ Singleton {
     return Array.isArray(value) || typeof value.length === "number" ? "list" : "map";
   }
 
+  // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
+  function over(declared, value) {
+    return kind(declared) === "map" && kind(value) === "map" ? Object.assign({}, declared, value) : value;
+  }
+
   // What json sets that the settings do not declare, or declare as another kind of value; lists and maps are not looked into.
   function undeclared(json, group = adapter, path = "") {
     let found = [];

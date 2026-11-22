@@ -392,22 +392,13 @@ Plugin {
     return true;
   }
 
-  // Its conversation and draft, kept over a reload (Kept): the agent loads the conversation again on its next turn.
+  // Its conversation and draft, kept over a reload or a restart (Kept): the agent loads the conversation again on its next turn.
   readonly property var kept: ({ exchanges: exchanges, session: session, draft: draft })
   // Saved only once taken, so a conversation being made never overwrites the one it is about to take.
   property bool taken: false
   onKeptChanged: if (taken) Kept.set(name, kept)
 
-  // Taken as it is made and as Kept is restored, whichever comes last: plugins load once config.json is read.
   Component.onCompleted: take()
-
-  Connections {
-    target: Kept
-
-    function onRestored() {
-      root.take();
-    }
-  }
 
   function take() {
     const kept = Kept.values[name];
