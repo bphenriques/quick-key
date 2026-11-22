@@ -109,6 +109,12 @@
             "app": "^ghostly$"
           },
           "default": "echo ghosted > \"$XDG_RUNTIME_DIR/ghosted\""
+        },
+        {
+          "match": {
+            "summary": "^Hushed$"
+          },
+          "hide": true
         }
       ]
     }

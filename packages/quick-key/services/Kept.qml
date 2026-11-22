@@ -10,13 +10,23 @@ Singleton {
 
   function set(key, value) {
     internal.values = Object.assign({}, internal.values, { [key]: value });
-    file.setText(JSON.stringify(internal.values));
+    write.restart();
   }
+
+  // Written once typing or a streamed answer pauses, not on each key; and before a reload replaces it.
+  Timer {
+    id: write
+    interval: 500
+    onTriggered: file.setText(JSON.stringify(internal.values))
+  }
+
+  Component.onDestruction: if (write.running) file.setText(JSON.stringify(internal.values))
 
   // Read before anyone reads it, so a value is never set over one still loading.
   Component.onCompleted: {
     try {
-      internal.values = JSON.parse(file.text() || "{}");
+      const values = JSON.parse(file.text() || "{}");
+      internal.values = values && typeof values === "object" && !Array.isArray(values) ? values : {};
     } catch (error) {
       internal.values = {};
     }

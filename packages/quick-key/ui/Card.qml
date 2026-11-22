@@ -32,7 +32,7 @@ Surface {
   property string closeKey: ""
   property bool keysShown: false
   property bool current: false
-  readonly property bool hovered: mouse.containsMouse
+  readonly property bool hovered: pointer.hovered
   readonly property bool acting: keysShown && current
   readonly property string textTone: dimmed ? "dim" : "normal"
   // The actions in rows as wide as fit, in their order, by characters as the font is monospace: whole, wrapping rather than cut, and the card's height is set as it comes, so nothing moves; from its width, which it has before its layout does.
@@ -52,6 +52,10 @@ Surface {
     return rows;
   }
 
+  // Rows its actions took, held while the footer takes their place, so the card keeps its height.
+  property int heldRows: 1
+  onRowsChanged: if (footer === null && rows.length > 0) heldRows = rows.length
+
   signal activated
   signal dismissed
 
@@ -66,10 +70,14 @@ Surface {
     color: root.current ? Tone.wash("primary") : root.hovered ? Tone.wash("normal") : "transparent"
   }
 
+  // Over the whole card, its actions and ✕ included, which take their own clicks.
+  HoverHandler {
+    id: pointer
+  }
+
   MouseArea {
     id: mouse
     anchors.fill: parent
-    hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
     onClicked: event => event.button === Qt.RightButton ? root.dismissed() : root.activated()
   }
@@ -281,6 +289,7 @@ Surface {
       Layout.fillWidth: true
       Layout.leftMargin: gutter.width + Config.theme.spacing
       Layout.preferredWidth: 0
+      Layout.minimumHeight: root.heldRows * Metrics.line
       active: root.footer !== null
       visible: active
       focus: active

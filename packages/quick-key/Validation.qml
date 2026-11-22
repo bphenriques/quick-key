@@ -87,14 +87,14 @@ Singleton {
         const given = Object.assign({}, plugin);
         delete given.type;
         for (const key of Object.keys(given)) if (key in defaults) given[key] = Config.over(defaults[key], given[key]);
-        const wrong = Config.undeclared(given, defaults, at + ".");
+        found.push(...Config.undeclared(given, defaults, at + "."));
+        // Its own checks on what it declares, so every problem shows at once, not one build at a time.
+        const declared = {};
+        for (const [key, value] of Object.entries(given)) if (key in defaults && (defaults[key] === null || Config.kind(value) === Config.kind(defaults[key]))) declared[key] = value;
         defaults.destroy();
-        found.push(...wrong);
-        if (wrong.length === 0) {
-          const object = settings.createObject(null, given);
-          found.push(...object.problems().map(problem => at + " " + problem));
-          object.destroy();
-        }
+        const object = settings.createObject(null, declared);
+        found.push(...object.problems().map(problem => at + " " + problem));
+        object.destroy();
       }
     }
     return found;

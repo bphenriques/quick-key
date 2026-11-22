@@ -20,8 +20,8 @@ RowLayout {
   property string detail: ""
   // Nothing to clear; an owner with more to clear than the text (a pasted image) says when.
   property bool empty: text === ""
-  // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys; the glyph on its left edge, where keys start.
-  readonly property real slot: Math.max(Metrics.line, keyHint.implicitWidth)
+  // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys, or an owner's column (a card's icon); the glyph on its left edge, where keys start.
+  property real slot: Math.max(Metrics.line, keyHint.implicitWidth)
 
   signal keyPressed(var event)
   signal tapped

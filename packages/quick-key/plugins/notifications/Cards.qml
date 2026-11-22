@@ -98,8 +98,15 @@ Scope {
       implicitHeight: stack.implicitHeight
       WlrLayershell.namespace: "quick-key-notifications"
       WlrLayershell.keyboardFocus: view.plugin.summoned ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+      // The cards and the ends, which at rest are only as wide as their pills: clicks beside them reach what is under.
       mask: Region {
-        item: stack
+        item: deck
+        Region {
+          item: lead.visible ? lead : null
+        }
+        Region {
+          item: trail.visible ? trail : null
+        }
       }
 
       FocusScope {
@@ -119,8 +126,15 @@ Scope {
           }
 
           Ends {
+            id: lead
             visible: !view.top
           }
+
+          Column {
+            id: deck
+            width: parent.width
+            visible: view.cards.length > 0
+            spacing: Config.theme.spacing
 
           Repeater {
             // As many as can show, past the cards hidden: a count that changed would make every card again.
@@ -156,7 +170,7 @@ Scope {
               keysShown: view.plugin.summoned && !view.plugin.replying
               current: view.plugin.summoned && notification === view.plugin.picked
               onActivated: view.plugin.open(notification)
-              onDismissed: notification.dismiss()
+              onDismissed: view.plugin.dismiss(notification)
 
               // What was sent, one dim line in the actions' place, so the card never grows.
               Component {
@@ -172,8 +186,10 @@ Scope {
               }
             }
           }
+          }
 
           Ends {
+            id: trail
             visible: view.top
           }
         }
@@ -187,6 +203,8 @@ Scope {
 
     Prompt {
       id: prompt
+      // The icon's column, so the text starts with the body's.
+      slot: Config.theme.iconSize
       // One line, scrolling, in the actions' place: the card keeps its height.
       maxLines: 1
       placeholder: view.plugin.replying?.inlineReplyPlaceholder || Words.replyPrompt
@@ -205,7 +223,8 @@ Scope {
 
   // The side away from the corner: summoned, the keys; else those over the limit, those held, and the key that summons.
   component Ends: Item {
-    width: parent.width
+    width: view.plugin.summoned ? parent.width : pills.implicitWidth
+    x: view.right && !view.plugin.summoned ? parent.width - width : 0
     implicitHeight: view.plugin.summoned ? bar.implicitHeight : pills.implicitHeight
 
     // Summoned: the keys the state changes on the left, what it reports on the right; `?` lists every key in its place.
@@ -243,8 +262,8 @@ Scope {
         KeyLegend {
           Layout.fillWidth: true
           clip: true
-          keys: view.plugin.replying?.gone ? [{ key: "Return", what: view.plugin.words.copyReply }]
-            : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
+          keys: view.plugin.replying?.gone ? [{ key: "Return", what: view.plugin.words.copyReply }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
+            : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendLeave }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
             : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }, { key: "?", what: Words.help }]
         }
 

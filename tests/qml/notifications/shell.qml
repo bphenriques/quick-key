@@ -512,10 +512,14 @@ ShellRoot {
       },
       {
         name: "a critical card stays by the corner while the rest scroll",
-        start: () => root.send("-u", "critical", "Alarm two"),
+        start: () => {
+          root.plugin.release();
+          root.send("-u", "critical", "Alarm two");
+        },
         until: () => {
           if (root.find("Alarm two") && !("pinned" in root.marks)) {
             root.mark("pinned");
+            root.plugin.summon();
             for (let i = 0; i < 6; i++) root.plugin.key("Up");
           }
           return "pinned" in root.marks && root.plugin.shown[0]?.summary === "Alarm two" && root.plugin.shown[1] !== root.plugin.showable[1];
@@ -825,6 +829,121 @@ ShellRoot {
             root.plugin.restore();
           }
           return "r1Back" in root.marks && root.find("R1")?.restored === true && root.plugin.shown.includes(root.find("R1"));
+        }
+      },
+      {
+        name: "a critical card that comes while summoned goes last, the pick staying in view, and x keeps the keys",
+        start: () => {
+          root.reset();
+          ["M1", "M2", "M3"].forEach(summary => root.send(summary));
+        },
+        until: () => {
+          if (root.plugin.ordered.length === 3 && !("critHeld" in root.marks)) {
+            root.mark("critHeld");
+            root.plugin.summon();
+            root.plugin.pick(root.plugin.shown[2]);
+            root.send("-u", "critical", "Crit");
+          }
+          if (!root.find("Crit") || !("critHeld" in root.marks)) return false;
+          const picked = root.plugin.picked;
+          if (!root.plugin.shown.includes(picked) || root.plugin.ordered[3]?.summary !== "Crit") return false;
+          root.plugin.key("x");
+          return root.plugin.summoned && root.plugin.ordered.length === 3 && root.plugin.shown.includes(root.plugin.picked);
+        }
+      },
+      {
+        name: "a tag replacement while held still keeps its card's place and the pick on it",
+        start: () => {
+          root.reset();
+          ["T1", "T2"].forEach(summary => root.send(summary));
+        },
+        until: () => {
+          if (root.plugin.ordered.length === 2 && !("tags" in root.marks)) {
+            root.mark("tags");
+            root.send("-h", "string:x-dunst-stack-tag:bri", "-h", "int:value:10", "Bri");
+          }
+          if (root.find("Bri")?.hints.value === 10 && !("bri" in root.marks)) {
+            root.mark("bri");
+            root.plugin.summon();
+            root.plugin.pick(root.find("Bri"));
+            root.send("-h", "string:x-dunst-stack-tag:bri", "-h", "int:value:20", "Bri");
+          }
+          const bri = root.find("Bri");
+          return bri?.hints.value === 20 && root.plugin.ordered[0] === bri && root.plugin.picked === bri;
+        }
+      },
+      {
+        name: "a card its sender replaces by id comes in as the newest",
+        start: () => {
+          root.reset();
+          root.sendId("group", "Group 1");
+        },
+        until: () => {
+          if (root.ids.group && root.find("Group 1") && !("group" in root.marks)) {
+            root.mark("group");
+            root.send("Other");
+          }
+          if (root.find("Other") && !("group2" in root.marks)) {
+            root.mark("group2");
+            root.send("-r", root.ids.group, "Group 2");
+          }
+          return root.plugin.ordered[0]?.summary === "Group 2" && root.plugin.ordered.length === 2;
+        }
+      },
+      {
+        name: "a replacement a rule hides goes, and is nothing to bring back",
+        start: () => {
+          root.reset();
+          root.sendId("hush", "Loud");
+        },
+        until: () => {
+          if (root.ids.hush && root.find("Loud") && !("hush" in root.marks)) {
+            root.mark("hush");
+            root.send("-r", root.ids.hush, "Hushed");
+          }
+          if (!("hush" in root.marks) || root.find("Loud") || root.find("Hushed")) return false;
+          root.plugin.restore();
+          return !root.find("Hushed") && !root.find("Loud");
+        }
+      },
+      {
+        name: "a placeholder keeps its reply when clicked, and C-r waits until it goes",
+        start: () => {
+          root.reset();
+          root.chatSend("Quin");
+        },
+        until: () => {
+          const quin = root.find("Quin");
+          if (quin && !quin.gone && !("quin" in root.marks)) {
+            root.mark("quin");
+            root.plugin.reply(quin);
+            root.plugin.keepDraft(quin, "Hello");
+            quin.dismiss();
+          }
+          const ghost = root.find("Quin");
+          if (!ghost?.gone) return false;
+          root.plugin.open(ghost);
+          root.plugin.restore();
+          return root.plugin.replying === ghost && root.plugin.draftOf(ghost) === "Hello" && root.plugin.ordered.filter(each => each.summary === "Quin").length === 1;
+        }
+      },
+      {
+        name: "dismissing the card you reply to ends the reply first, so it is kept to bring back",
+        start: () => {
+          root.plugin.endReply();
+          root.reset();
+          root.chatSend("Ray");
+        },
+        until: () => {
+          const ray = root.find("Ray");
+          if (ray && !("ray" in root.marks)) {
+            root.mark("ray");
+            root.plugin.reply(ray);
+            root.plugin.dismiss(ray);
+          }
+          if (!("ray" in root.marks) || root.find("Ray")) return false;
+          root.plugin.restore();
+          return root.plugin.replying === null && root.find("Ray")?.restored === true;
         }
       },
       {
