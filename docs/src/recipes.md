@@ -67,18 +67,18 @@ A `read` source is read as the menu opens, so the command asks for another read 
 ## Pick one of a few
 
 ```nix
-plugins.powerProfile = {
+plugins.displays = {
   type = "command";
-  read = "powerprofilesctl get";
-  select = "powerprofilesctl set";   # given the item's id
+  read = "display-layout get";     # prints the id in use
+  select = "display-layout set";   # given the item's id
   items = [
-    { id = "power-saver"; label = "Power saver"; icon = "<glyph>"; }
-    { id = "balanced"; label = "Balanced"; icon = "<glyph>"; }
-    { id = "performance"; label = "Performance"; icon = "<glyph>"; }
+    { id = "laptop"; label = "Laptop only"; icon = "<glyph>"; }
+    { id = "external"; label = "External only"; icon = "<glyph>"; }
+    { id = "extend"; label = "Extend"; icon = "<glyph>"; }
   ];
 };
 menu.entries = [
-  { key = "p"; desc = "Power profile"; status = "powerProfile"; list = "powerProfile"; }
+  { key = "d"; desc = "Display"; status = "displays"; list = "displays"; }
 ];
 ```
 
@@ -105,11 +105,41 @@ The state line carries the items when the settings list none.
 plugins.backup = {
   type = "command";
   file = "backup";   # under $XDG_RUNTIME_DIR
-  show.running = { text = "Backing up"; active = true; };
+  show.running = { text = "Backing up"; phase = "working"; };
+  show.failed = { text = "Backup failed"; phase = "error"; };
 };
 ```
 
-The script writes `running` to the file as it starts and empties it as it ends; the shell reads it on every change, with nothing running in between.
+The script writes `running` to the file as it starts, then empties it, or writes `failed`; the shell reads it on every change, with nothing running in between. `phase` is how every surface draws work: `working` spins, `error` alerts ([Plugins](plugins.md#sources)).
+
+## A VPN
+
+```nix
+plugins.vpn = {
+  type = "command";
+  read = ''tailscale status --json | jq -r 'if .BackendState == "Running" then "up" else "down" end' '';
+  show.up = { glyph = "<glyph>"; text = "connected"; active = true; };
+  show.down = { glyph = "<glyph>"; text = "off"; };
+  activate = ''tailscale status --json | jq -e '.BackendState == "Running"' > /dev/null && tailscale down || tailscale up; qs -c quick-key ipc call vpn refresh'';
+};
+menu.header.right = [ "vpn" ];
+```
+
+A click on it in the bar toggles it; for a key, make it an entry (`{ key = "v"; desc = "VPN"; status = "vpn"; activeWhen = "vpn"; cmd = "..."; }`). A NetworkManager or WireGuard connection is the same shape: `read` from `nmcli -g GENERAL.STATE connection show wg0`, toggle with `nmcli connection up` and `down`.
+
+## The weather
+
+```nix
+plugins.weather = {
+  type = "command";
+  read = ''curl -sf 'https://wttr.in/?format=%t' '';   # +18°C
+  every = 900;
+  glyph = "<glyph>";
+};
+menu.header.center = [ "weather" ];
+```
+
+Read as the menu opens and every 15 minutes while it stays open; with no network it shows nothing until the next read. Put a place after the slash (`wttr.in/Lisbon`) to pin it.
 
 ## In the bar
 
