@@ -36,7 +36,7 @@ Plugin {
     { key: "y", desc: "Copy the last answer", what: Words.copy, shows: () => !typing && !!exchanges[exchanges.length - 1]?.reply, run: () => !typing && copy() },
     { key: "Ctrl+l", desc: "A new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
     { key: "Ctrl+o", desc: "Move it to a terminal", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
-    { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => exchanges.length === 0 && recalls, run: () => recall(() => show()) },
+    { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => exchanges.length === 0 && recalls, run: () => recall() },
     { key: "Ctrl+v", desc: "Attach the clipboard's image", run: () => pasteImage() },
     { key: "1-9", desc: "Pick an option" },
     { key: "Escape", desc: Words.helpEscape }
@@ -49,14 +49,13 @@ Plugin {
   property string draft: ""
   // An image pasted for the next prompt, as a file under $XDG_RUNTIME_DIR.
   property string image: ""
-  property bool shown: false
+  // On top of Panels.
+  readonly property bool shown: Panels.top === root
   // Whether the prompt has the keys; it does as the panel opens, and Tab moves them.
   property bool typing: true
   property bool unread: false
   // Whether this visit (the menu showing its input) sent it a turn, so the next send continues that conversation.
   property bool visited: false
-  // How its panel was opened from an input's answer, to say how it is left (Plugin.expand); null otherwise.
-  property var backTo: null
   // `?` with the prompt dim: the panel's keys in place of the conversation, until the next key.
   property bool helping: false
   // What a digit picks: the last answer's options, once it is in.
@@ -105,7 +104,7 @@ Plugin {
   empty: listing ? words.listing : words.none
 
   // Its past conversations, listed afresh each time, in the picker.
-  function recall(back) {
+  function recall() {
     if (!settings.ask) return false;
     listing = true;
     failure = "";
@@ -114,7 +113,7 @@ Plugin {
       conversations = sessions ?? [];
       failure = why;
     });
-    Picker.pick(name, back);
+    Picker.pick(name);
     return true;
   }
 
@@ -156,29 +155,20 @@ Plugin {
   }
 
   function toggle() {
-    if (shown) shown = false;
+    if (shown) Panels.close();
     else show();
   }
 
   function show() {
-    shown = true;
+    Panels.open(root);
     unread = false;
     typing = true;
   }
 
-  // The whole conversation, for what the answer over an input cannot fit (Plugin.expand).
-  function expand(back) {
-    backTo = back;
+  // The whole conversation, over the menu, for what the answer over an input cannot fit (Plugin.expand).
+  function expand() {
     show();
     return true;
-  }
-
-  // Hidden, saying so to the menu that expanded it: `returning` when stepped back from.
-  function leave(returning) {
-    const back = backTo;
-    backTo = null;
-    shown = false;
-    if (back) back(returning);
   }
 
   // An option of the last answer, sent as the next message.
@@ -188,11 +178,7 @@ Plugin {
     return send(option, "");
   }
 
-  // Left any other way (sent in the background, dismissed, a link opened): not back to the menu.
-  onShownChanged: {
-    helping = false;
-    if (!shown && backTo) leave(false);
-  }
+  onShownChanged: helping = false
 
   // An input's text, answered above it while the menu shows it (the last answer staying until the next), else as a notification; one conversation per visit.
   function submit(text, background, after) {
@@ -246,7 +232,7 @@ Plugin {
     const last = exchanges[exchanges.length - 1];
     const retried = last && last.error && last.prompt === prompt && last.image === image;
     const kept = retried ? exchanges.slice(0, -1) : exchanges;
-    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || backTo !== null }]);
+    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || watched }]);
     if (image === root.image) root.image = "";
     busy = true;
     approval = "";
@@ -365,7 +351,7 @@ Plugin {
     if (!canMove) return;
     exec(settings.open, session);
     reset();
-    shown = false;
+    Panels.close();
   }
 
   // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt. Waiting, `?` lists them (any key closing the list) and its letters do what their Ctrl chords do, but for `y`.
@@ -398,7 +384,7 @@ Plugin {
   // With the prompt dim, Escape leaves, the conversation kept; typing, clearing first is the prompt's (Prompt.stepBack), so false leaves it to it.
   function stepBack() {
     if (typing) return false;
-    leave(true);
+    Panels.back();
     return true;
   }
 

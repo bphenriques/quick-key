@@ -118,7 +118,7 @@ What it gets:
 
 - `name`, `settings` (its part of the config), and `state` (the state line, with `show` and `items` applied).
 - `exec(setting, ...args)` runs a command setting; `call(setting, args, then)` runs one and always answers `then(code, output)` when it is done (127 when unset), so a second call never drops a command still running, and one that exits non-zero is logged with its last line on stderr; `commandLine(setting, ...args)` builds one for a `Process`. Arguments arrive as `$1`, `$2`.
-- The theme (`Config.theme`), the [kit](kit.md), and the services: `Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Compositor`, `Niri` for niri's own events, and `Picker` (`pick(list, back)` shows a list by name filtered on a menu level of its own, `back` showing the plugin's panel again on Escape).
+- The theme (`Config.theme`), the [kit](kit.md), and the services: `Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Compositor`, `Niri` for niri's own events, and `Picker` (`pick(list)` shows a list by name filtered on a menu level of its own, over the plugin's panel, which Escape shows again), and `Panels`, the stack of surfaces: `open(owner)` shows a plugin's panel on top, `back()` closes it to show what it covered, `close()` hides them all.
 
 What it gives:
 
@@ -131,8 +131,8 @@ What it gives:
 - `words`: what only it says (its empty list, its failures), as `Words` holds the words the surfaces share; a plugin never adds to `Words`.
 - `submit(text, background, after)` for an input's text when it sets no `cmd`: false if not taken (the input keeps it), as a plugin without one does; `after` run once done. `busy` while it takes no text, which shows a spinner in the input.
 - `watched` while the menu shows an input giving it text, which ends a visit each time that changes; `turn`, `{ question, context, text, phase, activity, options, table, steps }`, the conversation's turn as the menu draws it while watched, `phase` one of `working` (with `activity`, and `context` the answer it follows), `answered`, `choosing` (`options` a digit picks), `waiting` (on you), `failed` (the input getting the text back) or `stopped`, and `steps` what you answered on the way (an approval); null before the first.
-- `recall(back)` to show its past conversations filtered in the menu, for `C-r` in an input giving it text, while `recalls`: `back` shows again what opened it.
-- `expand(back)` to show the conversation in its own panel, when the answer over the input cannot fit it: `back(true)` when left by stepping back, so the menu shows again where it was, `back(false)` when left any other way; false without a panel.
+- `recall()` to show its past conversations filtered in the menu, for `C-r` in an input giving it text, while `recalls`: the picker opens over what asked for it.
+- `expand()` to show the conversation in its own panel over the menu, when the answer over the input cannot fit it; stepping back shows the menu again where it was, the visit going on; false without a panel.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.
 - `shortcut`, its compositor key.
 

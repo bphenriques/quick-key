@@ -19,7 +19,6 @@ ShellRoot {
   property int visitStep: 0
   property bool failedSent: false
   property int chooseStep: 0
-  property var backs: []
   property int streamStep: 0
   property real byeAt: 0
   property int resumeStep: 0
@@ -225,17 +224,19 @@ ShellRoot {
         }
       },
       {
-        name: "expanded from a menu, stepping back says so; leaving any other way says not",
+        name: "expanded over what opened it, stepping back shows that again, and closing hides both",
         until: () => {
           const ask = Plugins.get("expander");
           if (!ask) return false;
-          ask.expand(returning => root.backs = root.backs.concat([returning]));
+          // The suite stands in for the menu the panel opens over.
+          Panels.open(root);
+          ask.expand();
           const shown = ask.shown;
           ask.typing = false;
-          const stepped = ask.act("Escape") && !ask.shown;
-          ask.expand(returning => root.backs = root.backs.concat([returning]));
-          ask.shown = false;
-          return shown && stepped && root.backs.join() === "true,false" && ask.backTo === null;
+          const stepped = ask.act("Escape") && !ask.shown && Panels.top === root;
+          ask.expand();
+          Panels.close();
+          return shown && stepped && !ask.shown && Panels.top === null;
         }
       },
       {
@@ -282,7 +283,7 @@ ShellRoot {
         until: () => {
           const ask = Plugins.get("recaller");
           if (!ask) return false;
-          if (!root.recalledOnce) root.recalledOnce = ask.recall(null);
+          if (!root.recalledOnce) root.recalledOnce = ask.recall();
           const [old, older] = ask.items;
           return Picker.list === "recaller" && !ask.listing && ask.items.length === 2 && old.label === "An old question" && old.verb === "resume" && old.enabled
             && old.detail === Clock.recent(new Date("2026-11-01T10:00:00Z")) && older.label === "older" && ask.recalls;
@@ -306,7 +307,7 @@ ShellRoot {
         until: () => {
           const ask = Plugins.get("unlisted");
           if (!ask) return false;
-          if (!root.listedOnce) root.listedOnce = ask.recall(null);
+          if (!root.listedOnce) root.listedOnce = ask.recall();
           return !ask.listing && ask.items.length === 0 && ask.error !== "";
         }
       },

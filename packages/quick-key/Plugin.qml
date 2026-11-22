@@ -72,13 +72,13 @@ Scope {
   // Whether `recall` shows its past conversations, which C-r in an input giving it text opens.
   property bool recalls: false
 
-  // Its past conversations in the picker, `back` showing again what opened it; false without.
-  function recall(back) {
+  // Its past conversations in the picker (Picker), over what opened it; false without.
+  function recall() {
     return false;
   }
 
-  // Its own panel on the conversation an input's text started, for what an answer cannot fit: `back(true)` when it is left by stepping back (Escape), so the menu shows again where it was, `back(false)` when left any other way; false without a panel.
-  function expand(back) {
+  // Its own panel on the conversation an input's text started, for what an answer cannot fit, opened over the menu (Panels), which stepping back shows again; false without a panel.
+  function expand() {
     return false;
   }
 

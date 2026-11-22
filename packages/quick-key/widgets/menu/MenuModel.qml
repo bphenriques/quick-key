@@ -10,7 +10,10 @@ import qs.widgets.menu.calendar
 Scope {
   id: root
 
-  property bool open: false
+  // On top of Panels, shown; in its stack, shown or under a plugin's panel, its levels and its visit held until it leaves the stack.
+  readonly property bool open: Panels.top === root
+  readonly property bool inStack: Panels.stack.includes(root)
+  onInStackChanged: if (!inStack) reset()
   // Levels opened below the top one, the last is shown: an entry's (kind "entry"), an app's own menu (kind "menu") or a listed item's (kind "actions"). Each keeps `inputFocused` as it was below it, for Escape to give back.
   property var stack: []
   // How deep the menu opened (a level opened on its own by a shortcut or a key path), where Escape closes it.
@@ -34,11 +37,10 @@ Scope {
   // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
   readonly property var inputPlugin: input && !input.cmd ? Plugins.get(input.plugin ?? level?.entry?.list ?? "") : null
   readonly property bool inputBusy: inputPlugin?.busy ?? false
-  // The plugin and the input on show, so an answer shows there; a change of either ends a visit. Expanded into the plugin's panel, the visit holds.
+  // The plugin and the input on show, so an answer shows there; a change of either, or the menu leaving the stack, ends a visit.
   readonly property string inputToken: inputPlugin ? inputPlugin.name + "\n" + JSON.stringify(input) : ""
-  property string expandedWatching: ""
   // What Plugins.watching is set to.
-  readonly property string watching: open ? inputToken : expandedWatching
+  readonly property string watching: inStack ? inputToken : ""
   // The turn of the conversation the input started (Plugin.turn), its options a digit picks.
   readonly property var turn: inputPlugin?.turn ?? null
   readonly property var choices: turn?.options ?? []
@@ -234,7 +236,7 @@ Scope {
     // Sources without change events are read as the menu opens.
     Compositor.refresh();
     Plugins.refresh();
-    open = true;
+    Panels.open(root);
   }
 
   function toggle() {
@@ -256,8 +258,14 @@ Scope {
     base = stack.length;
   }
 
+  // Closes it and whatever it was over, fresh for its next opening.
   function hide() {
-    open = false;
+    Panels.close();
+    reset();
+  }
+
+  // As it leaves the stack: the top level again, nothing filtered, held or focused.
+  function reset() {
     stack = [];
     base = 0;
     stopFilter();
@@ -322,7 +330,7 @@ Scope {
 
   // The input's plugin's past conversations (C-r), on a level over this one; whether it has any to show.
   function recall() {
-    return !!inputPlugin?.recall(null);
+    return !!inputPlugin?.recall();
   }
 
   // The level's list filtered in place, the filter in its island with the keys; as many rows held as it shows.
@@ -337,10 +345,13 @@ Scope {
     filter.reset();
   }
 
-  // A list on a level of its own, filtering from the start: a bar's +N, or what a plugin's panel asks for (Picker), `back` showing that panel again on Escape.
-  function pickList(list, back) {
+  // A list on a level of its own, filtering from the start: a bar's +N, or what a plugin's panel asks for (Picker), opened over that panel, its only level, so Escape shows the panel again.
+  function pickList(list) {
+    const over = !open;
+    if (over) Panels.remove(root);
     if (!open) show();
-    push({ kind: "entry", entry: { list: list }, picking: true, back: back, width: Config.menu.width });
+    push({ kind: "entry", entry: { list: list }, picking: true, width: Config.menu.width });
+    if (over) base = stack.length;
     filterSlots = 9;
   }
 
@@ -351,10 +362,8 @@ Scope {
       calendar.focused = "";
       return;
     }
-    const then = level?.back;
-    if (then || stack.length <= base) hide();
+    if (stack.length <= base) Panels.back();
     else back();
-    if (then) then();
   }
 
   // The keys the filter leaves, by name: a digit picks a row shown and never types, Alt with it or Return its own menu.
@@ -381,21 +390,11 @@ Scope {
     return option !== undefined && submit(option, false);
   }
 
-  // The plugin's own panel on the conversation; stepping back from it shows this level again, the visit going on, and leaving it otherwise ends the visit.
+  // The plugin's own panel on the conversation, over the menu: stepping back from it shows this level again with its input focused, the visit going on.
   function expand() {
-    const saved = stack.slice();
-    const savedBase = base;
-    expandedWatching = inputToken;
-    const opened = inputPlugin?.expand(returning => {
-      if (returning) {
-        stack = saved;
-        base = savedBase;
-        show();
-        inputFocused = true;
-      }
-      expandedWatching = "";
-    });
-    if (!opened) expandedWatching = "";
+    inputFocused = true;
+    answerFocused = false;
+    inputPlugin?.expand();
   }
 
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
@@ -519,8 +518,8 @@ Scope {
   Connections {
     target: Picker
 
-    function onRequested(list, back) {
-      root.pickList(list, back);
+    function onRequested(list) {
+      root.pickList(list);
     }
   }
 

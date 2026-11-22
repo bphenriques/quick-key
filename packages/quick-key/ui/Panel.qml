@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A surface the keyboard opens (the menu, a plugin's panel) at the bottom centre: an optional bar at the edge, the card over it and an optional input, over the card (`inputOver`, a level's island) or between it and the bar; one open at a time, a click anywhere else dismisses it.
+// A surface the keyboard opens (the menu, a plugin's panel) at the bottom centre: an optional bar at the edge, the card over it and an optional input, over the card (`inputOver`, a level's island) or between it and the bar; one shown at a time, its owner on top of Panels; a click anywhere else dismisses it.
 Scope {
   id: root
 
@@ -33,25 +33,13 @@ Scope {
 
   // Hidden at once and then unloaded: torn down while still on screen, it would show its blur over nothing for a frame.
   onShownChanged: {
-    if (shown) {
-      Panels.current = root;
-      internal.loaded = true;
-    } else {
-      Qt.callLater(() => internal.loaded = root.shown);
-    }
+    if (shown) internal.loaded = true;
+    else Qt.callLater(() => internal.loaded = root.shown);
   }
 
   QtObject {
     id: internal
     property bool loaded: false
-  }
-
-  Connections {
-    target: Panels
-
-    function onCurrentChanged() {
-      if (root.shown && Panels.current !== root) root.dismissed();
-    }
   }
 
   LazyLoader {

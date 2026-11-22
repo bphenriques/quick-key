@@ -68,7 +68,7 @@ Scope {
     Layout.fillWidth: true
     onActivated: {
       Qt.openUrlExternally(link.url);
-      panel.plugin.shown = false;
+      Panels.close();
     }
 
     Icon {
@@ -145,7 +145,7 @@ Scope {
     // Waiting, the panel's own keys.
     onKeyPressed: event => event.accepted = panel.handle(event)
     // Hidden, the conversation is kept.
-    onDismissed: panel.plugin.shown = false
+    onDismissed: Panels.close()
 
     barShown: true
     statuses: true
@@ -298,7 +298,7 @@ Scope {
         active: panel.plugin.typing
         key: "Tab"
         onTapped: panel.plugin.typing = true
-        onBack: panel.plugin.leave(true)
+        onBack: Panels.back()
         empty: text === "" && !panel.plugin.image
         onCleared: panel.plugin.image = ""
         onTextChanged: panel.plugin.draft = text
@@ -315,7 +315,7 @@ Scope {
         function send(background) {
           if (!panel.plugin.send(text)) return;
           clear();
-          if (background) panel.plugin.shown = false;
+          if (background) Panels.close();
         }
 
         Connections {

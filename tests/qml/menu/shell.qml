@@ -16,8 +16,6 @@ ShellRoot {
   property int orderStep: 0
   // Whether a case pressed its key, once.
   property bool pressed: false
-  // Whether Escape out of a level opened to pick showed what opened it.
-  property bool backed: false
 
   ListFilter {
     id: probe
@@ -102,24 +100,29 @@ ShellRoot {
         }
       },
       {
-        name: "Escape on an empty filter gives the level back at rest; a level opened to pick goes back to the input it came from, focused, or to what opened it",
+        name: "Escape on an empty filter gives the level back at rest; a level opened to pick goes back to the input it came from, focused, or to the panel it opened over",
         until: () => {
           menu.hide();
+          menu.show();
           menu.push({ kind: "entry", entry: { list: "devices" } });
           menu.startFilter();
           const filtered = menu.filtering;
           menu.stepBack();
           const rest = !menu.filtering && menu.stack.length === 1;
           menu.inputFocused = true;
-          menu.pickList("devices", null);
+          menu.pickList("devices");
           const picking = menu.stack.length === 2 && menu.filtering && !menu.inputFocused;
           menu.stepBack();
           const refocused = menu.stack.length === 1 && menu.inputFocused;
           menu.hide();
-          Picker.pick("devices", () => root.backed = true);
-          const fromPanel = menu.stack.length === 1 && menu.filtering;
+          // The suite stands in for a plugin's panel the picker opens over.
+          Panels.open(root);
+          Picker.pick("devices");
+          const fromPanel = menu.open && menu.stack.length === 1 && menu.filtering;
           menu.stepBack();
-          return filtered && rest && picking && refocused && fromPanel && !menu.open && root.backed;
+          const shownAgain = !menu.open && Panels.top === root;
+          Panels.close();
+          return filtered && rest && picking && refocused && fromPanel && shownAgain;
         }
       },
       {
@@ -185,7 +188,7 @@ ShellRoot {
           if (Plugins.get("many")?.items.length !== 10000) return false;
           menu.hide();
           let start = Date.now();
-          menu.pickList("many", null);
+          menu.pickList("many");
           const opened = menu.rows.length;
           const open = Date.now() - start;
           start = Date.now();
@@ -227,7 +230,7 @@ ShellRoot {
         start: () => {
           Quickshell.execDetached(["sh", "-c", `echo '{"items": [{"id": "a"}, {"id": "b"}, {"id": "c"}]}' > "$XDG_RUNTIME_DIR/ordered"`]);
           menu.hide();
-          menu.pickList("ordered", null);
+          menu.pickList("ordered");
         },
         until: () => {
           if (root.orderStep === 0 && menu.filter.items.length === 3) {
@@ -242,7 +245,7 @@ ShellRoot {
         name: "while filtering, an item's verb names Return, and Alt opens its own menu, whose keys run its plugin's actions and step back",
         start: () => {
           menu.hide();
-          menu.pickList("acting", null);
+          menu.pickList("acting");
         },
         until: () => {
           if (menu.rows.length !== 1) return false;
@@ -356,8 +359,8 @@ ShellRoot {
           if (!agent || agent.busy) return false;
           switch (root.visitStep) {
           case 0:
+            menu.show();
             menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", format: "Add: {text}." } } }];
-            menu.open = true;
             Plugins.watching = menu.watching;
             root.visitStep = menu.submit("one", false) ? 1 : -1;
             return false;
@@ -369,12 +372,11 @@ ShellRoot {
             const token = menu.watching;
             menu.answerFocused = true;
             menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r" });
-            const held = agent.shown && menu.expandedWatching === token;
-            menu.hide();
-            const holding = Plugins.watching === menu.watching && menu.watching === token;
+            // Under the panel, the menu keeps its level and the visit.
+            const held = agent.shown && !menu.open && menu.inStack && menu.watching === token;
             agent.typing = false;
             agent.act("Escape");
-            root.visitStep = held && holding && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.expandedWatching === "" && agent.turn?.text === "two" ? 3 : -1;
+            root.visitStep = held && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.watching === token && agent.turn?.text === "two" ? 3 : -1;
             return false;
           }
           menu.hide();
