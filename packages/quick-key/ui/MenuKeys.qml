@@ -91,13 +91,13 @@ Singleton {
     return new RegExp("^" + escaped + "$").test(text);
   }
 
-  // One key per entry of an app's own menu: each label's first letter not taken yet, else a digit.
-  function assign(labels) {
-    const taken = new Set();
+  // One key per label (an app's own menu, a card's actions): its first letter not taken yet (`taken` already is), else one of `fallback`; "" when none is free.
+  function assign(labels, taken = [], fallback = "0123456789") {
+    const used = new Set(taken);
     return labels.map(label => {
-      const letters = String(label).toLowerCase().replace(/[^a-z]/g, "") + "0123456789";
-      const key = Array.from(letters).find(letter => !taken.has(letter)) ?? "";
-      taken.add(key);
+      const letters = String(label).toLowerCase().replace(/[^a-z]/g, "") + fallback;
+      const key = Array.from(letters).find(letter => !used.has(letter)) ?? "";
+      if (key) used.add(key);
       return key;
     });
   }
