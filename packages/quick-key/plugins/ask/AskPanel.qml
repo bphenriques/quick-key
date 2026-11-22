@@ -89,7 +89,9 @@ Scope {
   component Turn: ColumnLayout {
     id: turn
     required property int index
-    readonly property var exchange: panel.plugin.exchanges[index] ?? ({})
+    // Its exchange's place in the conversation: the list runs from the newest up.
+    readonly property int at: panel.plugin.exchanges.length - 1 - index
+    readonly property var exchange: panel.plugin.exchanges[at] ?? ({})
     readonly property var drawn: panel.plugin.describe(exchange)
     readonly property var links: panel.links(exchange.reply ?? "")
     Layout.fillWidth: true
@@ -111,9 +113,9 @@ Scope {
       steps: turn.drawn.steps ?? []
       picking: !panel.plugin.draft
       copyable: true
-      kept: panel.selection && panel.selection.turn === turn.index ? panel.selection : null
+      kept: panel.selection && panel.selection.turn === turn.at ? panel.selection : null
       onPicked: index => panel.plugin.pick(index)
-      onSelected: selection => panel.keep(turn.index, selection)
+      onSelected: selection => panel.keep(turn.at, selection)
     }
 
     Repeater {
@@ -172,17 +174,13 @@ Scope {
     body: ColumnLayout {
       spacing: Config.theme.padding
 
-      // The conversation, built only where it shows, so a long one opens as fast as a short one.
+      // The conversation, built only where it shows, so a long one opens as fast as a short one; laid out from the newest up, so it rests at its end however tall the turns built meanwhile, a streaming answer growing upward.
       ListView {
         id: thread
-        // At its end, where a new turn or the stream keeps it, until you scroll away.
-        property bool following: true
         visible: !panel.plugin.helping
+        verticalLayoutDirection: ListView.BottomToTop
         onWidthChanged: panel.threadWidth = width
-        Component.onCompleted: {
-          panel.threadWidth = width;
-          positionViewAtEnd();
-        }
+        Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
         Layout.preferredHeight: panel.plugin.lines * Metrics.line - panel.inputExtra
         Layout.leftMargin: Config.theme.itemPaddingX
@@ -203,24 +201,11 @@ Scope {
         delegate: Turn {
           width: thread.width
         }
-        onCountChanged: {
-          // No turn is current: a ListView keeps its current item built wherever it is, and makes the first current again as its count changes.
-          currentIndex = -1;
-          following = true;
-          Qt.callLater(follow);
-        }
-        // Later, as positioning builds turns and changes the height again; and only while following, as scrolling back builds turns too.
-        onContentHeightChanged: Qt.callLater(follow)
-        onHeightChanged: Qt.callLater(follow)
-        onMovementEnded: following = atYEnd
-
-        function follow() {
-          if (following && !atYEnd) positionViewAtEnd();
-        }
+        // No turn is current: a ListView keeps its current item built wherever it is, and makes the first current again as its count changes.
+        onCountChanged: currentIndex = -1
 
         function page(down) {
           contentY = Math.max(originY, Math.min(originY + contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
-          following = atYEnd;
         }
 
         Connections {
@@ -233,6 +218,9 @@ Scope {
 
         // An empty conversation says so, as an empty list does, or why it is empty: one being resumed, or one that could not be.
         Label {
+          // On the view itself, not its content, which a list laid out upward places out of sight while empty.
+          parent: thread
+          anchors.top: parent.top
           visible: panel.plugin.exchanges.length === 0
           width: thread.width
           wrapMode: Text.Wrap
