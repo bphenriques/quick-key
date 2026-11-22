@@ -48,6 +48,8 @@ Plugin {
   // The card being replied to, its prompt in its actions' place; and what was sent, by id, shown until it goes.
   readonly property var replying: internal.replying
   readonly property var sent: internal.sent
+  // A reply whose card closed went to the clipboard: the bar says so a moment.
+  readonly property bool copied: copyNotice.running
 
   glyph: paused ? Glyphs.notificationsPaused : Glyphs.notifications
   text: ordered.length > 0 ? String(ordered.length) : ""
@@ -60,9 +62,8 @@ Plugin {
       none: "No notifications",
       send: "send",
       sendLeave: "send, go",
-      copyReply: "copy reply",
       you: "You: ",
-      closedBySender: "closed by sender",
+      replyCopied: "reply copied",
       helpPick: "Pick that card",
       helpMove: "Move the pick",
       helpOpen: "Open it and let go",
@@ -131,8 +132,8 @@ Plugin {
 
   // A rule's `default`, else its own default action, else dismissed: a click means done with it.
   function open(notification) {
-    // A closed card's placeholder runs nothing; its reply is copied or cleared from the prompt.
-    if (notification.gone) return;
+    // One brought back is only to read: a click is done with it.
+    if (notification.restored) return notification.dismiss();
     if (notification === internal.replying) endReply();
     const rule = internal.applied[notification.id]?.default;
     if (rule) {
@@ -146,7 +147,7 @@ Plugin {
 
   // The card you reply to, by a click: the reply ends first, so it is yours that closed it, not its sender.
   function dismiss(notification) {
-    if (notification === internal.replying && !notification.gone) endReply();
+    if (notification === internal.replying) endReply();
     notification.dismiss();
   }
 
@@ -161,8 +162,8 @@ Plugin {
   }
 
   // Its reply first, on TAB, then its rules' actions on their keys, then its sender's but the default, each with a letter its label offers, else any, that neither those nor `x`, which dismisses, take; none once a reply shows in their place.
-  function actionsOf(notification) {
-    if (!notification || notification.gone || notification.restored || notification.id in internal.sent) return [];
+  function actionsOf(notification, whole = false) {
+    if (!notification || notification.restored || !whole && notification.id in internal.sent) return [];
     const values = valuesOf(notification);
     const ruled = Array.from(internal.applied[notification.id]?.actions ?? []).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => {
         root.runFor(notification, action.cmd);
@@ -182,11 +183,9 @@ Plugin {
     internal.replying = notification;
   }
 
-  // Back to the card's keys; a closed one's placeholder goes.
+  // Back to the card's keys.
   function endReply() {
-    const ended = internal.replying;
     internal.replying = null;
-    if (ended?.gone) leave(ended);
   }
 
   // A card's unsent reply, kept while the keys move elsewhere, until it goes.
@@ -201,7 +200,7 @@ Plugin {
   // False once its card closed, the prompt keeping the text; the keys stay only on a resident card.
   function sendReply(text, close) {
     const notification = internal.replying;
-    if (!notification || notification.gone) return false;
+    if (!notification) return false;
     internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
     internal.drafts = without(internal.drafts, notification.id);
     // No longer the reply target, so if the reply closes it, it is kept to bring back.
@@ -209,13 +208,6 @@ Plugin {
     notification.sendInlineReply(text);
     if (close || !notification.resident) release();
     return true;
-  }
-
-  // The reply to a card that closed meanwhile, to the clipboard, never lost.
-  function copyReply(text) {
-    Quickshell.clipboardText = text;
-    internal.drafts = without(internal.drafts, internal.replying?.id);
-    endReply();
   }
 
   // ↑↓ as they show: newest by the corner, so at a bottom one Down goes toward it; past the last shown, or back past the first of the rest, they scroll.
@@ -246,11 +238,12 @@ Plugin {
   // The last card that closed, back in the stack, only to read: its sender is done with it.
   function restore() {
     const last = internal.closed[internal.closed.length - 1];
-    // Not while its placeholder is still listed: two cards would share its id.
-    if (!last || internal.list.some(each => each.id === last.id)) return;
+    if (!last) return;
     internal.closed = internal.closed.slice(0, -1);
     const card = Object.assign({}, last, { restored: true });
     internal.came[card.id] = ++internal.seq;
+    // Held still, it comes last, as a new one does, not back to its old place.
+    internal.frozen = internal.frozen.filter(id => id !== card.id);
     card.dismiss = card.expire = () => root.leave(card);
     // Its rules with it, so a pause or a timeout they set still holds.
     if (last.applied) internal.applied = Object.assign({}, internal.applied, { [card.id]: last.applied });
@@ -387,9 +380,8 @@ Plugin {
     apply(notification, applied);
     if (applied.run && !notification.lastGeneration) runFor(notification, applied.run);
     // At most `keep`, the oldest closing first; never one that must not be missed, nor while the stack holds still.
-    const spare = internal.list.filter(each => !each.gone && !critical(each) && each !== notification && each !== internal.replying);
     const over = internal.list.length - settings.keep;
-    if (over > 0 && !still) spare.sort((a, b) => internal.came[a.id] - internal.came[b.id]).slice(0, over).forEach(each => each.expire());
+    if (over > 0 && !still) internal.list.filter(each => !critical(each) && each !== notification && each !== internal.replying).sort((a, b) => internal.came[a.id] - internal.came[b.id]).slice(0, over).forEach(each => each.expire());
   }
 
   function renew(notification) {
@@ -413,27 +405,33 @@ Plugin {
     for (const old of internal.list) {
       if (!tag || old === notification || old.appName !== notification.appName || tagOf(old) !== tag) continue;
       if (internal.picked === old) internal.picked = notification;
+      if (internal.replying === old) {
+        internal.drafts = Object.assign({}, internal.drafts, { [notification.id]: draftOf(old) });
+        internal.replying = notification;
+      }
       internal.frozen = internal.frozen.map(id => id === old.id ? notification.id : id);
       internal.replaced[old.id] = true;
       old.expire();
     }
   }
 
-  // The pick moves to the card that takes its place; the last one gone lets go of the keys. One closing while replied to stays as a placeholder, its slot and the text kept, until the reply ends.
+  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing ends the reply, your text to the clipboard, so none is lost.
   function leave(notification) {
-    if (notification === internal.replying && !notification.gone) {
-      keepClosed(notification);
-      const ghost = Object.assign(snapshot(notification), { gone: true, dismiss: () => root.endReply(), expire: () => root.endReply() });
-      internal.list = internal.list.map(each => each === notification ? ghost : each);
-      internal.replying = internal.picked = ghost;
-      return;
+    if (notification === internal.replying) {
+      if (draftOf(notification)) {
+        Quickshell.clipboardText = draftOf(notification);
+        copyNotice.restart();
+      }
+      internal.replying = null;
     }
-    if (!notification.gone && !(notification.id in internal.replaced)) keepClosed(notification);
+    if (!(notification.id in internal.replaced)) keepClosed(notification);
     const at = shown.indexOf(notification);
+    const before = internal.rest.indexOf(notification);
     // Nothing reads a gone card's id, so only the list tells; each map loses it in place.
     for (const map of [internal.left, internal.sent, internal.applied, internal.drafts, internal.arrived, internal.replaced, internal.came]) delete map[notification.id];
     internal.list = internal.list.filter(each => each !== notification);
-    if (internal.offset > 0 && internal.offset + internal.room > internal.rest.length) internal.offset--;
+    // One gone before those shown, or the last past them, moves them back a place, so the pick stays in view.
+    if (internal.offset > 0 && (before >= 0 && before < internal.offset || internal.offset + internal.room > internal.rest.length)) internal.offset--;
     if (internal.picked !== notification) return;
     // One gone off screen leaves the pick to the first shown; with none shown, the keys go.
     internal.picked = shown[at < 0 ? 0 : Math.min(at, shown.length - 1)] ?? null;
@@ -445,7 +443,7 @@ Plugin {
     if (!notification.restored && !notification.transient) internal.closed = internal.closed.slice(-19).concat([snapshot(notification)]);
   }
 
-  // What a card shows, kept once its sender is done with it: a placeholder that reads as it did and runs nothing; a picture sent as data goes with its sender.
+  // What a card shows, kept once its sender is done with it, to bring back: it reads as it did and runs nothing; a picture sent as data goes with its sender.
   function snapshot(notification) {
     return { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image.startsWith("image://qsimage") ? "" : notification.image, urgency: ["low", "normal", "critical"].indexOf(urgencyOf(notification)), hints: ({ "image-path": notification.hints["image-path"], value: notification.hints.value }), actions: [], arrived: internal.arrived[notification.id], applied: internal.applied[notification.id] };
   }
@@ -514,6 +512,11 @@ Plugin {
   }
 
   // Away from the keyboard, no time runs: with no history, one shown meanwhile would be gone unseen.
+  Timer {
+    id: copyNotice
+    interval: 3000
+  }
+
   IdleMonitor {
     id: idle
     enabled: root.settings.idle > 0

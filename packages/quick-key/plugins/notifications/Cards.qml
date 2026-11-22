@@ -156,10 +156,10 @@ Scope {
               aside: !notification ? "" : [notification.appName.toLowerCase() === title.toLowerCase() ? "" : notification.appName, view.plugin.ageOf(notification)].filter(part => part).join(" · ")
               body: notification?.body ?? ""
               tone: notification && view.plugin.critical(notification) ? "alert" : ""
-              dimmed: notification?.gone ?? false
               meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
               meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
               actions: view.plugin.actionsOf(notification)
+              heldActions: view.plugin.actionsOf(notification, true)
               footer: !notification ? null : notification === view.plugin.replying ? reply : notification.id in view.plugin.sent ? sent : null
               actionSide: view.settings.actionSide
               // Its place among all, while a digit reaches it.
@@ -215,8 +215,7 @@ Scope {
         const send = MenuKeys.sends(event);
         if (!send) return;
         event.accepted = true;
-        if (view.plugin.replying?.gone) view.plugin.copyReply(text);
-        else view.plugin.sendReply(text, send === "background");
+        view.plugin.sendReply(text, send === "background");
       }
     }
   }
@@ -262,15 +261,14 @@ Scope {
         KeyLegend {
           Layout.fillWidth: true
           clip: true
-          keys: view.plugin.replying?.gone ? [{ key: "Return", what: view.plugin.words.copyReply }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
-            : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendLeave }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
+          keys: view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendLeave }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
             : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }, { key: "?", what: Words.help }]
         }
 
         Label {
           visible: text !== ""
-          tone: view.plugin.replying?.gone ? "warning" : "dim"
-          text: view.plugin.replying?.gone ? view.plugin.words.closedBySender : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? "+" + view.plugin.more : ""
+          tone: "dim"
+          text: view.plugin.copied ? view.plugin.words.replyCopied : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? "+" + view.plugin.more : ""
         }
       }
     }

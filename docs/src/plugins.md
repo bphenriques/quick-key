@@ -114,7 +114,7 @@ Its status shows its glyph only while it has something to report: a run, an unre
 
 A notification server in the shell's look, in place of dunst or mako. Quickshell speaks the protocol; the plugin decides what shows, for how long, and where. Only one daemon can hold the bus, so turn off `services.dunst` or `services.mako` (the module requires it) and remove their packages: D-Bus starts any daemon whose service file it finds, which can take the bus before the shell does. Another daemon holding it shows as the plugin's error.
 
-The plugin's status is a bell with the count, struck and lit while paused, and a click on it summons the cards. Put it in a slot of the bar, such as `menu.header.right`: `{ key = "n"; desc = "Notifications"; status = "notifications"; }`. Setting a slot replaces the starter's entries there, so copy the ones to keep from `menu.json`'s `right`.
+The plugin's status is a bell with the count, struck and lit while paused, and a click on it summons the cards. Put it in a slot of the bar, such as `menu.header.right`: `{ key = "n"; desc = "Notifications"; status = "notifications"; }`. Setting a slot replaces the starter's entries there, so keep them from `menu.json`'s `right`; with Nix, `(builtins.fromJSON (builtins.readFile "${config.programs.quick-key.package}/share/quick-key/menu.json")).menu.header.right` is that list.
 
 Cards stack in a corner of the focused screen, newest by the corner, critical ones first. A card shows:
 
@@ -147,8 +147,8 @@ Rules apply in order, later ones winning. A rule applies when each regular expre
 - `hide`: drops it, as it arrives or once a replacement matches. No card shows, `C-r` has nothing to bring back, and no `run` runs.
 - `timeout`: the seconds it shows; 0, never.
 - `urgency` (`low`, `normal`, `critical`): how it shows and lasts.
-- `ignorePause`: shows it while paused.
-- `actions`: its own, each `{ key, desc, cmd }` on a letter you choose (any but `x`). They come after its reply and before its sender's, whose letters come from their labels. Actions of every matching rule add up, one on a letter an earlier rule took replacing it. Running one dismisses its card; `closes = false` keeps it.
+- `ignorePause`: shows it while paused; a fullscreen window still holds it, as only a critical one shows over one.
+- `actions`: its own, each `{ key, desc, cmd, closes }`, `key` a lowercase letter you choose, any but `x`. They come after its reply and before its sender's, whose letters come from their labels. Actions of every matching rule add up, one on a letter an earlier rule took replacing it. Running one dismisses its card; `closes = false` keeps it.
 - `default`: what opening it runs, in place of its sender's.
 - `run`: a command run as it arrives, not when it is replaced or kept over a reload.
 
@@ -161,10 +161,12 @@ There is no sound, per-output placement or per-rule colour.
 Cards never take the keys on their own, so a notification never takes your typing. `summon` gives them the keys where they are, the newest picked, until you let go. Bind it to a compositor key; in niri's config:
 
 ```kdl
-Mod+N { spawn "qs" "-c" "quick-key" "ipc" "call" "notifications" "action" "summon"; }
+binds {
+    Mod+N { spawn "qs" "-c" "quick-key" "ipc" "call" "notifications" "action" "summon"; }
+}
 ```
 
-With Nix, `config.programs.quick-key.exec.ipc` is that command's prefix.
+With Nix, the same through `exec.ipc`: `Mod+N { spawn-sh "${config.programs.quick-key.exec.ipc} notifications action summon"; }`.
 
 The plugin's `shortcut` only labels that key. Their keys show where they act, and nothing moves. Summoned, waiting cards show too, `limit` at a time, critical ones staying by the corner and one place left for the rest to scroll through. The bar under the cards holds the keys the state changes and counts the cards not shown (`+2`). `?` lists the rest.
 
@@ -184,7 +186,7 @@ A sender that takes a reply (the protocol's `inline-reply` action) gets one firs
 - `C-S-RET` sends it and lets go.
 - `ESC` clears it; empty, `ESC` goes back to the card's keys.
 - A card keeps its own unsent reply until it goes.
-- A card its sender closes while you type stays until you leave the prompt, the bar saying so; `RET` then copies your text, so none is lost.
+- A card that closes while you type ends the reply, your text going to the clipboard, so none is lost; the bar says so a moment.
 
 ## Writing one in QML
 

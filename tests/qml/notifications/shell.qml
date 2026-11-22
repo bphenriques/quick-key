@@ -341,7 +341,7 @@ ShellRoot {
         }
       },
       {
-        name: "one closed while replied to stays as a placeholder, its text unsent, until the reply ends",
+        name: "one closed while replied to ends the reply, the text on the clipboard, the bar saying so",
         start: () => {
           root.plugin.release();
           root.chatSend("Bea");
@@ -351,15 +351,11 @@ ShellRoot {
           if (bea && !("bea" in root.marks)) {
             root.mark("bea");
             root.plugin.reply(bea);
+            root.plugin.keepDraft(bea, "Too late");
             bea.dismiss();
           }
-          return root.plugin.replying?.gone === true && root.find("Bea")?.gone === true && !root.plugin.sendReply("Too late", false);
+          return "bea" in root.marks && root.plugin.replying === null && !root.find("Bea") && root.plugin.copied && Quickshell.clipboardText === "Too late";
         }
-      },
-      {
-        name: "and ending it lets the placeholder go",
-        start: () => root.plugin.endReply(),
-        until: () => !root.find("Bea") && root.plugin.replying === null
       },
       {
         name: "a rule sets the urgency, so its card is critical, first and never expiring",
@@ -617,20 +613,16 @@ ShellRoot {
         }
       },
       {
-        name: "however the keys go, the menu taking them included, a reply ends, a closed card's placeholder with it",
+        name: "however the keys go, the menu taking them included, a reply ends",
         start: () => root.chatSend("Dee"),
         until: () => {
           const dee = root.find("Dee");
-          if (dee && !dee.gone && !("dee" in root.marks)) {
+          if (dee && !("dee" in root.marks)) {
             root.mark("dee");
             root.plugin.reply(dee);
-            dee.dismiss();
-          }
-          if (root.plugin.replying?.gone && !("taken" in root.marks)) {
-            root.mark("taken");
             Panels.close();
           }
-          return "taken" in root.marks && root.plugin.replying === null && !root.find("Dee") && !root.plugin.summoned;
+          return "dee" in root.marks && root.plugin.replying === null && !root.plugin.summoned;
         }
       },
       {
@@ -694,7 +686,7 @@ ShellRoot {
         }
       },
       {
-        name: "a closed card's placeholder runs nothing when clicked",
+        name: "a card brought back runs nothing when clicked, only goes",
         start: () => {
           root.reset();
           root.files = "";
@@ -702,14 +694,14 @@ ShellRoot {
         },
         until: () => {
           const ghost = root.find("Ghost");
-          if (ghost && !ghost.gone && !("ghost" in root.marks)) {
+          if (ghost && !ghost.restored && !("ghost" in root.marks)) {
             root.mark("ghost");
-            root.plugin.reply(ghost);
             ghost.dismiss();
+            root.plugin.restore();
             root.plugin.open(root.find("Ghost"));
           }
           if ("ghost" in root.marks && root.mark("ghost") > 700 && !root.files) root.readFiles();
-          return root.files !== "" && !root.files.includes("ghosted");
+          return root.files !== "" && !root.files.includes("ghosted") && !root.find("Ghost");
         }
       },
       {
@@ -907,24 +899,38 @@ ShellRoot {
         }
       },
       {
-        name: "a placeholder keeps its reply when clicked, and C-r waits until it goes",
+        name: "a card closing before those shown keeps the pick in view",
         start: () => {
           root.reset();
-          root.chatSend("Quin");
+          ["S1", "S2", "S3", "S4", "S5"].forEach(summary => root.send(summary));
         },
         until: () => {
-          const quin = root.find("Quin");
-          if (quin && !quin.gone && !("quin" in root.marks)) {
-            root.mark("quin");
-            root.plugin.reply(quin);
-            root.plugin.keepDraft(quin, "Hello");
-            quin.dismiss();
+          if (root.plugin.ordered.length < 5) return false;
+          if (!("scrolled" in root.marks)) {
+            root.mark("scrolled");
+            root.plugin.summon();
+            root.plugin.pick(root.plugin.showable[4]);
+            root.plugin.showable[0].dismiss();
           }
-          const ghost = root.find("Quin");
-          if (!ghost?.gone) return false;
-          root.plugin.open(ghost);
-          root.plugin.restore();
-          return root.plugin.replying === ghost && root.plugin.draftOf(ghost) === "Hello" && root.plugin.ordered.filter(each => each.summary === "Quin").length === 1;
+          return root.plugin.ordered.length === 4 && root.plugin.shown.includes(root.plugin.picked);
+        }
+      },
+      {
+        name: "a tag replacement of the card you reply to carries the reply over",
+        start: () => {
+          root.reset();
+          root.chatSend("Tagged 1", "@a{sv} {'x-dunst-stack-tag': <'chat'>}");
+        },
+        until: () => {
+          const first = root.find("Tagged 1");
+          if (first && !("tagged" in root.marks)) {
+            root.mark("tagged");
+            root.plugin.reply(first);
+            root.plugin.keepDraft(first, "Hi");
+            root.chatSend("Tagged 2", "@a{sv} {'x-dunst-stack-tag': <'chat'>}");
+          }
+          const second = root.find("Tagged 2");
+          return second !== null && !root.find("Tagged 1") && root.plugin.replying === second && root.plugin.draftOf(second) === "Hi";
         }
       },
       {

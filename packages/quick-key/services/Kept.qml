@@ -10,17 +10,16 @@ Singleton {
 
   function set(key, value) {
     internal.values = Object.assign({}, internal.values, { [key]: value });
-    write.restart();
+    if (write.running) internal.dirty = true;
+    else internal.save();
   }
 
-  // Written once typing or a streamed answer pauses, not on each key; and before a reload replaces it.
+  // Written at once, then at most twice a second: a choice is kept right up to a restart, and typing or a streamed answer costs a write each half second, not one a key.
   Timer {
     id: write
     interval: 500
-    onTriggered: file.setText(JSON.stringify(internal.values))
+    onTriggered: if (internal.dirty) internal.save()
   }
-
-  Component.onDestruction: if (write.running) file.setText(JSON.stringify(internal.values))
 
   // Read before anyone reads it, so a value is never set over one still loading.
   Component.onCompleted: {
@@ -43,5 +42,12 @@ Singleton {
   QtObject {
     id: internal
     property var values: ({})
+    property bool dirty: false
+
+    function save() {
+      dirty = false;
+      file.setText(JSON.stringify(values));
+      write.start();
+    }
   }
 }

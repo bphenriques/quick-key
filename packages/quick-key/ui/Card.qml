@@ -25,8 +25,6 @@ Surface {
   property Component footer: null
   // Alert for what must not be missed: its border, the glyph beside `aside` and the meter, so colour is not all that says so.
   property string tone: ""
-  // What can no longer run (a card its sender closed), dim whole.
-  property bool dimmed: false
   // Its digit in the gutter, the keys on its actions and `closeKey` in its ✕'s place, shown while `keysShown`; an action's and the close key only while `current`.
   property string key: ""
   property string closeKey: ""
@@ -34,13 +32,17 @@ Surface {
   property bool current: false
   readonly property bool hovered: pointer.hovered
   readonly property bool acting: keysShown && current
-  readonly property string textTone: dimmed ? "dim" : "normal"
   // The actions in rows as wide as fit, in their order, by characters as the font is monospace: whole, wrapping rather than cut, and the card's height is set as it comes, so nothing moves; from its width, which it has before its layout does.
-  readonly property var rows: {
+  readonly property var rows: rowsOf(actions)
+  // Its actions whole, though the footer stands in for them (what was sent), so the card holds their height under it.
+  property var heldActions: actions
+  readonly property int heldRows: Math.max(1, rowsOf(heldActions).length)
+
+  function rowsOf(list) {
     const room = Math.floor((width - 2 * Config.theme.padding - Metrics.cell - Config.theme.spacing) / Metrics.cell);
     const rows = [];
     let used = room;
-    actions.forEach((action, i) => {
+    list.forEach((action, i) => {
       const chars = (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0);
       if (used + 1 + chars > room) {
         rows.push([]);
@@ -51,10 +53,6 @@ Surface {
     });
     return rows;
   }
-
-  // Rows its actions took, held while the footer takes their place, so the card keeps its height.
-  property int heldRows: 1
-  onRowsChanged: if (footer === null && rows.length > 0) heldRows = rows.length
 
   signal activated
   signal dismissed
@@ -109,7 +107,7 @@ Surface {
           anchors.centerIn: parent
           source: root.icon
           monochrome: root.monochrome
-          tone: root.textTone
+          tone: "normal"
         }
       }
 
@@ -126,7 +124,7 @@ Surface {
             Layout.fillWidth: true
             elide: Text.ElideRight
             strong: true
-            tone: root.textTone
+            tone: "normal"
             text: root.title
           }
 
@@ -152,7 +150,7 @@ Surface {
           wrapMode: Text.Wrap
           maximumLineCount: 2
           elide: Text.ElideRight
-          tone: root.textTone
+          tone: "normal"
           text: root.body
         }
 
@@ -168,7 +166,7 @@ Surface {
           }
 
           Label {
-            tone: root.tone || root.textTone
+            tone: root.tone || "normal"
             text: root.meterText
           }
         }
@@ -263,7 +261,7 @@ Surface {
                 Label {
                   width: Math.min(implicitWidth, actionArea.width - actionKey.implicitWidth)
                   elide: Text.ElideRight
-                  tone: hover.containsMouse ? "primary" : root.textTone
+                  tone: hover.containsMouse ? "primary" : "normal"
                   text: action.entry.desc ?? ""
                 }
               }
