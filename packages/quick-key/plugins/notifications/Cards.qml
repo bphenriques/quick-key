@@ -138,43 +138,43 @@ Scope {
             visible: view.cards.length > 0
             spacing: Config.theme.spacing
 
-          Repeater {
-            // As many as can show, past the cards hidden: a count that changed would make every card again.
-            model: view.settings.limit
+            Repeater {
+              // As many as can show, past the cards hidden: a count that changed would make every card again.
+              model: view.settings.limit
 
-            Card {
-              id: card
-              required property int index
-              readonly property var entry: view.cards[index] ?? null
-              visible: entry !== null
-              readonly property var hint: entry?.hints.value
+              Card {
+                id: card
+                required property int index
+                readonly property var entry: view.cards[index] ?? null
+                visible: entry !== null
+                readonly property var hint: entry?.hints.value
 
-              width: stack.width
-              monochrome: Config.theme.monochromeTray
-              iconColumn: view.icons
-              icon: entry ? view.iconOf(entry) : ""
-              image: entry ? view.pictureOf(entry) : ""
-              title: entry?.summary || entry?.appName || ""
-              // The app, unless the title already says it, and when it came once it has waited.
-              aside: !entry ? "" : [entry.appName.toLowerCase() === title.toLowerCase() ? "" : entry.appName, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
-              body: entry?.body ?? ""
-              tone: entry && view.plugin.critical(entry) ? "alert" : ""
-              meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
-              meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
-              actions: view.plugin.actionsOf(entry)
-              footer: entry !== null && entry === view.plugin.replying ? reply : null
-              actionSide: view.settings.actionSide
-              // Its place among all, while a digit reaches it.
-              readonly property int place: view.plugin.showable.indexOf(entry)
-              key: place >= 0 && place < 9 ? String(place + 1) : ""
-              closeKey: "x"
-              // Replying, the prompt has the keys: the others would type; after a closed reply, ESC alone.
-              keysShown: view.plugin.summoned && (view.plugin.mode === "cards" || view.plugin.mode === "help")
-              current: view.plugin.summoned && entry === view.plugin.picked
-              onActivated: view.plugin.open(entry)
-              onDismissed: view.plugin.dismiss(entry)
+                width: stack.width
+                monochrome: Config.theme.monochromeTray
+                iconColumn: view.icons
+                icon: entry ? view.iconOf(entry) : ""
+                image: entry ? view.pictureOf(entry) : ""
+                title: entry?.summary || entry?.appName || ""
+                // The app, unless the title already says it, and when it came once it has waited.
+                aside: !entry ? "" : [entry.appName.toLowerCase() === title.toLowerCase() ? "" : entry.appName, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
+                body: entry?.body ?? ""
+                tone: entry && view.plugin.critical(entry) ? "alert" : ""
+                meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
+                meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
+                actions: view.plugin.actionsOf(entry)
+                footer: entry !== null && entry === view.plugin.replying ? reply : null
+                actionSide: view.settings.actionSide
+                // Its place among all, while a digit reaches it.
+                readonly property int place: view.plugin.showable.indexOf(entry)
+                key: place >= 0 && place < 9 ? String(place + 1) : ""
+                closeKey: "x"
+                // Replying, the prompt has the keys: the others would type; after a closed reply, ESC alone.
+                keysShown: view.plugin.summoned && (view.plugin.mode === "cards" || view.plugin.mode === "help")
+                current: view.plugin.summoned && entry === view.plugin.picked
+                onActivated: view.plugin.open(entry)
+                onDismissed: view.plugin.dismiss(entry)
+              }
             }
-          }
           }
 
           Ends {
