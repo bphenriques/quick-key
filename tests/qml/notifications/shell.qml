@@ -171,6 +171,14 @@ ShellRoot {
         until: () => root.find("Public") !== null && !root.find("Secret") && root.mark("hidden") > 500
       },
       {
+        name: "a rule matches a sender's category",
+        start: () => {
+          root.send("-c", "filed", "Filed");
+          root.send("-c", "other", "Unfiled");
+        },
+        until: () => root.find("Unfiled") !== null && !root.find("Filed") && root.mark("filed") > 500
+      },
+      {
         name: "a replacement by id updates its card",
         start: () => first.running = true,
         until: () => {

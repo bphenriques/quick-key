@@ -73,6 +73,12 @@
               "closes": true
             }
           ]
+        },
+        {
+          "match": {
+            "category": "^filed$"
+          },
+          "hide": true
         }
       ]
     }
