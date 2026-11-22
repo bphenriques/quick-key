@@ -20,12 +20,15 @@ Plugin {
   readonly property bool fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
   // The cards have the keys (s-n), one surface at a time with the menu and panels.
   readonly property bool summoned: Panels.top === root
-  // Critical ones first, then the newest; a replaced one keeps its place. Summoned, the order holds, so digits do, one that comes meanwhile going last.
-  readonly property var ordered: internal.list.slice().sort(summoned ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || b.id - a.id)
-  // Summoned, every one shows, those held too, as many as there are digits.
+  // Summoned or under the pointer, nothing moves and no time runs: the order holds, one that comes meanwhile going last.
+  readonly property bool still: summoned || internal.hovered
+  readonly property var ordered: internal.list.slice().sort(still ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || b.id - a.id)
+  // Summoned, the held ones show too.
   readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
-  readonly property var shown: showable.slice(0, summoned ? 9 : settings.limit)
-  // Those over the limit, and those pause or a fullscreen window holds.
+  // `limit` at a time; summoned, the arrows scroll past them, digits following what shows.
+  readonly property var shown: showable.slice(internal.offset, internal.offset + settings.limit)
+  readonly property int first: internal.offset
+  // Those not shown, and those pause or a fullscreen window holds.
   readonly property int more: showable.length - shown.length
   readonly property int held: ordered.length - showable.length
   // The card the keys act on while summoned.
@@ -33,8 +36,6 @@ Plugin {
   // The card being replied to, its prompt in its actions' place; and what was sent, by id, shown until it goes.
   readonly property var replying: internal.replying
   readonly property var sent: internal.sent
-  // The reply typed so far, kept while the keys move elsewhere.
-  property string draft: ""
 
   glyph: paused ? Glyphs.notificationsPaused : Glyphs.notifications
   text: ordered.length > 0 ? String(ordered.length) : ""
@@ -42,16 +43,13 @@ Plugin {
   error: internal.error
   words: ({
       taken: "Another notification daemon has the bus: stop it, then restart quick-key",
-      open: "open",
       clear: "clear all",
       pause: "pause",
       resume: "resume",
-      none: "Nothing new",
-      reply: "Reply...",
+      none: "No notifications",
       send: "send",
-      leave: "send and leave",
-      copy: "copy",
-      closed: "Closed"
+      sendClose: "send and close",
+      closed: "closed"
     })
   actions: ({
       summon: { icon: () => Glyphs.notifications, available: () => true, run: () => root.summon() },
@@ -81,14 +79,21 @@ Plugin {
 
   function summon() {
     if (summoned) return;
-    internal.frozen = ordered.map(notification => notification.id);
+    freeze();
+    internal.offset = 0;
     Panels.open(root);
     internal.picked = newest();
   }
 
   function release() {
     endReply();
+    internal.offset = 0;
     if (summoned) Panels.back();
+  }
+
+  // The order as it is now, which `still` keeps.
+  function freeze() {
+    if (!still) internal.frozen = ordered.map(notification => notification.id);
   }
 
   // The newest card on screen, which a binding acts on and summoning picks.
@@ -112,23 +117,26 @@ Plugin {
     for (const notification of internal.list.slice()) notification.dismiss();
   }
 
-  // The pointer is on its card: its timer holds.
-  function hold(notification, on) {
-    internal.held = on ? notification : internal.held === notification ? null : internal.held;
+  // The pointer is on a card: every one holds still, so the one under it stays there.
+  function hold(on) {
+    if (on) freeze();
+    internal.hovered = on;
   }
 
-  // Its reply first, on TAB, then its rules' actions on their keys, then its sender's but the default, each with a letter from its label that neither those nor `x`, which dismisses, take.
+  // Its reply first, on TAB, then its rules' actions on their keys, then its sender's but the default, each with a letter its label offers, else any, that neither those nor `x`, which dismisses, take; none once a reply shows in their place.
   function actionsOf(notification) {
-    if (!notification || notification.gone) return [];
+    if (!notification || notification.gone || notification.id in internal.sent) return [];
     const values = valuesOf(notification);
     const ruled = Array.from(internal.applied[notification.id]?.actions ?? []).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => {
         root.runFor(notification, action.cmd);
-        if (action.closes) notification.dismiss();
+        if (action.closes === false) return;
+        notification.dismiss();
+        root.release();
       } }));
     const actions = Array.from(notification.actions).filter(action => action.identifier !== "default");
-    const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "");
+    const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwyz");
     const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
-    const reply = notification.hasInlineReply ? [{ desc: notification.inlineReplyPlaceholder || words.reply, key: "Tab", run: () => root.reply(notification) }] : [];
+    const reply = notification.hasInlineReply ? [{ desc: Words.replyPrompt, key: "Tab", run: () => root.reply(notification) }] : [];
     return reply.concat(ruled, own);
   }
 
@@ -146,14 +154,23 @@ Plugin {
     if (ended?.gone) leave(ended);
   }
 
-  // Sent as the reply, `leave` letting go of the keys; false once its card is closed, the prompt keeping the text.
-  function sendReply(text, leave) {
+  // A card's unsent reply, kept while the keys move elsewhere, until it goes.
+  function draftOf(notification) {
+    return internal.drafts[notification?.id] ?? "";
+  }
+
+  function keepDraft(notification, text) {
+    if (notification) internal.drafts = Object.assign({}, internal.drafts, { [notification.id]: text });
+  }
+
+  // Sent as the reply; false once its card is closed, the prompt keeping the text. The keys stay only on a card its sender keeps (resident), which shows what was sent; else, as with C-S-RET, they go back.
+  function sendReply(text, close) {
     const notification = internal.replying;
     if (!notification || notification.gone) return false;
     internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
-    draft = "";
+    internal.drafts = without(internal.drafts, notification.id);
     notification.sendInlineReply(text);
-    if (leave) release();
+    if (close || !notification.resident) release();
     else endReply();
     return true;
   }
@@ -161,20 +178,33 @@ Plugin {
   // The reply to a card that closed meanwhile, to the clipboard, never lost.
   function copyReply(text) {
     Quickshell.clipboardText = text;
-    draft = "";
+    internal.drafts = without(internal.drafts, internal.replying?.id);
     endReply();
   }
 
-  // A key while summoned: a digit picks a card, ↑↓ move the pick, its letters run its actions, RET opens it and lets go of the keys, x dismisses it; C-x clears all, C-p pauses, ESC lets go.
+  // ↑↓ as they show: newest by the corner, so at a bottom one Down goes toward it; past the last shown they scroll.
+  function move(down) {
+    const by = down === settings.corner.startsWith("top") ? 1 : -1;
+    const next = shown.indexOf(internal.picked) + by;
+    if (next >= 0 && next < shown.length) internal.picked = shown[next];
+    else if (next >= shown.length && internal.offset + shown.length < showable.length) {
+      internal.offset++;
+      internal.picked = shown[shown.length - 1];
+    } else if (next < 0 && internal.offset > 0) {
+      internal.offset--;
+      internal.picked = shown[0];
+    }
+  }
+
+  // A key while summoned: a digit picks a card, ↑↓ move the pick, its letters run its actions, RET opens it and lets go of the keys, x dismisses it; C-X clears all, C-p pauses, ESC lets go.
   function key(name) {
-    const at = shown.indexOf(internal.picked);
     if (/^[1-9]$/.test(name) && shown[Number(name) - 1]) internal.picked = shown[Number(name) - 1];
-    else if ((name === "Up" || name === "Down") && shown.length > 0) internal.picked = shown[Math.max(0, Math.min(shown.length - 1, at + (name === "Down" ? 1 : -1)))];
+    else if (name === "Up" || name === "Down") move(name === "Down");
     else if (name === "Return" && internal.picked) {
       open(internal.picked);
       release();
     } else if (name === "x" && internal.picked) internal.picked.dismiss();
-    else if (name === "Ctrl+x") clear();
+    else if (name === "Ctrl+X") clear();
     else if (name === "Ctrl+p") togglePause();
     else if (name === "Escape") release();
     else {
@@ -256,19 +286,20 @@ Plugin {
     return String(notification.hints["x-dunst-stack-tag"] ?? notification.hints["x-canonical-private-synchronous"] ?? "");
   }
 
-  // A hidden one is left untracked, so Quickshell drops it; a replaced one, by id or tag, starts its time again.
+  // A hidden one is left untracked, so Quickshell drops it; a replaced one, by id or tag, starts its time again, and `run` runs for a new one only.
   function arrive(notification) {
     const applied = ruled(notification);
     if (applied.hide) return;
+    const known = internal.list.includes(notification);
     internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
-    if (applied.run) runFor(notification, applied.run);
+    if (applied.run && !known) runFor(notification, applied.run);
     notification.tracked = true;
     const tag = tagOf(notification);
     for (const old of internal.list) {
       if (tag && old !== notification && old.appName === notification.appName && tagOf(old) === tag) old.expire();
     }
     internal.left = Object.assign({}, internal.left, { [notification.id]: timeoutOf(notification) });
-    if (internal.list.includes(notification)) return;
+    if (known) return;
     internal.list = internal.list.concat([notification]);
     notification.closed.connect(() => root.leave(notification));
   }
@@ -286,7 +317,8 @@ Plugin {
     internal.left = without(internal.left, notification.id);
     internal.sent = without(internal.sent, notification.id);
     internal.applied = without(internal.applied, notification.id);
-    if (internal.held === notification) internal.held = null;
+    internal.drafts = without(internal.drafts, notification.id);
+    if (internal.offset > 0 && internal.offset + settings.limit > showable.length) internal.offset--;
     if (internal.picked !== notification) return;
     internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
     if (internal.picked === null) release();
@@ -304,16 +336,19 @@ Plugin {
     id: internal
 
     property var list: []
-    // Milliseconds left by id, counted only while shown, not held and not summoned; 0 never expires.
+    // Milliseconds left by id, counted only while shown and nothing holds them; 0 never expires.
     property var left: ({})
-    property var held: null
+    property bool hovered: false
     property var picked: null
     property var replying: null
     property var sent: ({})
+    property var drafts: ({})
     // What the rules matching it set, by id.
     property var applied: ({})
-    // The order as it was summoned, by id.
+    // The order as it was when it held still, by id.
     property var frozen: []
+    // The first shown, summoned, past those scrolled by.
+    property int offset: 0
     property string error: ""
 
     function rank(notification) {
@@ -333,13 +368,20 @@ Plugin {
     onNotification: notification => root.arrive(notification)
   }
 
+  // Away from the keyboard, no time runs: with no history, one shown meanwhile would be gone unseen.
+  IdleMonitor {
+    id: idle
+    enabled: root.settings.idle > 0
+    timeout: root.settings.idle
+  }
+
   Timer {
     interval: 200
     repeat: true
-    running: !root.summoned && root.shown.some(notification => internal.left[notification.id] > 0 && notification !== internal.held)
+    running: !root.still && !idle.isIdle && root.shown.some(notification => internal.left[notification.id] > 0)
     onTriggered: {
       const left = Object.assign({}, internal.left);
-      const due = root.shown.filter(notification => notification !== internal.held && left[notification.id] > 0 && (left[notification.id] -= interval) <= 0);
+      const due = root.shown.filter(notification => left[notification.id] > 0 && (left[notification.id] -= interval) <= 0);
       internal.left = left;
       for (const notification of due) notification.expire();
     }

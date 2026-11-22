@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs
+import qs.services
 import qs.ui
 
 // The cards in their corner of the focused screen, the newest by the corner; only the cards take the pointer. Summoned, it takes the keys where it is, its bar where its pills sit.
@@ -17,16 +18,40 @@ Scope {
   readonly property bool right: settings.corner.endsWith("right")
   readonly property var cards: top ? plugin.shown : plugin.shown.slice().reverse()
 
-  // Its picture, else its app's icon by path or name; else the card's glyph.
-  function imageOf(notification) {
-    const file = notification.image || notification.appIcon;
-    if (!file) return "";
-    return file.startsWith("/") ? "file://" + file : file.includes(":/") ? file : Quickshell.iconPath(file, true);
+  // A picture: its image, else an icon given as a file (album art, a screenshot).
+  function pictureOf(notification) {
+    const icon = notification.appIcon ?? "";
+    return notification.image || (icon.startsWith("/") ? "file://" + icon : icon.startsWith("file://") ? icon : "");
+  }
+
+  // An icon by its name, from the theme, at a glyph's size.
+  function iconOf(notification) {
+    const icon = notification.appIcon ?? "";
+    return icon && !icon.includes("/") ? Quickshell.iconPath(icon, true) : "";
+  }
+
+  // The focused screen, which the cards follow while nothing holds them still.
+  property var screen: null
+  readonly property var focused: Quickshell.screens.find(screen => screen.name === Compositor.focusedOutput) ?? null
+  onFocusedChanged: follow()
+  Component.onCompleted: follow()
+
+  function follow() {
+    if (!plugin.still) screen = focused;
+  }
+
+  Connections {
+    target: view.plugin
+
+    function onStillChanged() {
+      view.follow();
+    }
   }
 
   Fade {
     id: fade
-    shown: view.plugin.summoned || view.plugin.shown.length > 0 || view.plugin.held > 0
+    // Under a fullscreen window, the held count shows nothing over it.
+    shown: view.plugin.summoned || view.plugin.shown.length > 0 || view.plugin.held > 0 && !view.plugin.fullscreen
   }
 
   // A click beside the cards lets go of the keys; on the layer below theirs, so the cards keep their clicks.
@@ -51,6 +76,7 @@ Scope {
     OverlayWindow {
       id: window
 
+      screen: view.screen
       // As tall as the cards, so blocking it from screen capture hides them and nothing beside them.
       anchors.top: view.top
       anchors.bottom: !view.top
@@ -95,7 +121,8 @@ Scope {
 
               width: stack.width
               glyph: Glyphs.notifications
-              image: notification ? view.imageOf(notification) : ""
+              icon: notification ? view.iconOf(notification) : ""
+              image: notification ? view.pictureOf(notification) : ""
               title: notification?.summary || notification?.appName || ""
               aside: notification?.gone ? view.plugin.words.closed : notification?.summary ? notification.appName : ""
               body: notification?.body ?? ""
@@ -113,7 +140,7 @@ Scope {
               current: view.plugin.summoned && notification === view.plugin.picked
               onActivated: view.plugin.open(notification)
               onDismissed: notification.dismiss()
-              onHoveredChanged: view.plugin.hold(notification, hovered)
+              onHoveredChanged: view.plugin.hold(hovered)
 
               // What was sent, as your side of the exchange, on the right.
               Component {
@@ -154,12 +181,12 @@ Scope {
     Prompt {
       id: prompt
       maxLines: 2
-      placeholder: view.plugin.replying?.inlineReplyPlaceholder || view.plugin.words.reply
+      placeholder: view.plugin.replying?.inlineReplyPlaceholder || Words.replyPrompt
       keys: text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }] : []
       onPicked: stepBack()
       onBack: view.plugin.endReply()
-      Component.onCompleted: set(view.plugin.draft)
-      onTextChanged: view.plugin.draft = text
+      Component.onCompleted: set(view.plugin.draftOf(view.plugin.replying))
+      onTextChanged: view.plugin.keepDraft(view.plugin.replying, text)
       onKeyPressed: event => {
         const send = MenuKeys.sends(event);
         if (!send) return;
@@ -186,20 +213,21 @@ Scope {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Config.theme.padding
-        keys: view.plugin.replying?.gone ? [{ key: "Return", what: view.plugin.words.copy }] : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.leave }] : view.plugin.shown.length === 0 ? [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }] : [
-          { key: "Return", what: view.plugin.words.open },
-          { key: "Ctrl+x", what: view.plugin.words.clear },
+        keys: view.plugin.replying?.gone ? [{ key: "Return", what: Words.copy }] : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendClose }] : view.plugin.shown.length === 0 ? [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }] : [
+          { key: "Return", what: Words.open },
+          { key: "Ctrl+X", what: view.plugin.words.clear },
           { key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }
         ]
       }
 
+      // None to show, or how many are of all there are, as a filter says it.
       Label {
-        visible: view.plugin.shown.length === 0
+        visible: text !== ""
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         anchors.rightMargin: Config.theme.padding
         tone: "dim"
-        text: view.plugin.words.none
+        text: view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? Words.rangeOf(view.plugin.first, view.plugin.shown.length, view.plugin.showable.length) : ""
       }
     }
 
@@ -228,7 +256,7 @@ Scope {
       }
 
       Pill {
-        visible: view.plugin.held > 0
+        visible: view.plugin.held > 0 && !view.plugin.fullscreen
 
         Icon {
           anchors.verticalCenter: parent.verticalCenter

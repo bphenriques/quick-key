@@ -15,6 +15,8 @@ PluginSettings {
   property int width: 480
   // Its compositor key (`shortcut`) dimly by the cards at rest, teaching it.
   property bool hint: false
+  // Seconds without input after which no card's time runs, so none goes while you are away; 0 lets time run.
+  property int idle: 120
   // Each { match, hide, timeout, urgency, ignorePause, actions, default, run }, in order, later ones winning but actions adding up; `match` maps fields to regular expressions, every one found for the rule to apply, its named groups (`(?<code>\d+)`) values for its commands and labels.
   property var rules: []
   // Prints the process id holding the notifications' name on the session bus, last on its line: another daemon there shows as its error.
@@ -34,6 +36,7 @@ PluginSettings {
     if (!corners.includes(corner)) found.push("sets corner to '" + corner + "', none of " + corners.join(", "));
     if (!sides.includes(actionSide)) found.push("sets actionSide to '" + actionSide + "', none of " + sides.join(", "));
     if (limit < 1) found.push("sets limit below 1");
+    if (idle < 0) found.push("sets idle below 0");
     for (const urgency of ["low", "normal"]) {
       if (typeof timeout?.[urgency] !== "number" || timeout[urgency] < 0) found.push("sets timeout." + urgency + " to no number of seconds");
     }

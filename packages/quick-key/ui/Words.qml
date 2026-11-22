@@ -30,6 +30,11 @@ Singleton {
     return "1-9 of " + total;
   }
 
+  // Rows shown of all there are, from the first shown (2-10 of 14).
+  function rangeOf(first, count, total) {
+    return (count > 1 ? (first + 1) + "-" + (first + count) : String(first + 1)) + " of " + total;
+  }
+
   function noMatch(text) {
     return "Nothing matches " + text;
   }

@@ -4,6 +4,7 @@ The core asks the compositor for two things, through `Compositor`, and nothing m
 
 - The outputs connected and the outputs on, each by connector name and by make, model and serial (what `brightness.panel` names).
 - The keyboard layouts, the current one, and switching to the next.
+- The focused output, by connector name, which the notifications' cards follow.
 
 A backend per compositor answers them, under `services/compositor/`, picked at startup from the environment (`NIRI_SOCKET` today; another compositor would add its own, such as `HYPRLAND_INSTANCE_SIGNATURE`). Without one, the outputs come from Wayland, which only knows those on, and the keyboard layout status stays empty. A backend ships once it is seen working ([design rule 10](https://github.com/bphenriques/quick-key/blob/main/AGENTS.md#design-rules)): niri today.
 

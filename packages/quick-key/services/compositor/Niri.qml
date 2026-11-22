@@ -10,6 +10,8 @@ Singleton {
 
   readonly property var layouts: internal.layouts
   readonly property int layoutIndex: internal.layoutIndex
+  // The output of the focused workspace, by connector name.
+  readonly property string focusedOutput: internal.outputs[internal.focused] ?? ""
 
   // Every event as niri sends it, for plugins that follow more of niri than the shell does.
   signal received(var event)
@@ -19,6 +21,9 @@ Singleton {
 
     property var layouts: []
     property int layoutIndex: 0
+    // Each workspace's output by its id, and the focused one's id.
+    property var outputs: ({})
+    property var focused: null
 
     function handle(event) {
       if (event.KeyboardLayoutsChanged) {
@@ -26,6 +31,14 @@ Singleton {
         layoutIndex = event.KeyboardLayoutsChanged.keyboard_layouts.current_idx;
       } else if (event.KeyboardLayoutSwitched) {
         layoutIndex = event.KeyboardLayoutSwitched.idx;
+      } else if (event.WorkspacesChanged) {
+        const workspaces = event.WorkspacesChanged.workspaces;
+        const outputs = {};
+        for (const workspace of workspaces) outputs[workspace.id] = workspace.output;
+        internal.outputs = outputs;
+        focused = workspaces.find(workspace => workspace.is_focused)?.id ?? focused;
+      } else if (event.WorkspaceActivated?.focused) {
+        focused = event.WorkspaceActivated.id;
       }
       root.received(event);
     }

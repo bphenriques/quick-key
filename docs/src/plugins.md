@@ -110,11 +110,13 @@ Two agents are two plugins with `type = "ask"`. A level's `input` may hand one i
 
 ## Notifications
 
-A notification server drawn in the shell's own look, in place of dunst or mako: list it only with no other daemon running. Quickshell speaks the protocol; the plugin decides what shows, for how long, and where.
+A notification server in the shell's own look, in place of dunst or mako: list it only with no other daemon running. Quickshell speaks the protocol; the plugin decides what shows, for how long, and where.
 
-Cards stack in a `corner` of the focused screen, newest by the corner, critical ones first: an icon, the summary in bold, the app on its right, the body in two lines, progress (`value`) as a meter, and the sender's actions on the `actionSide` (`right`). A click opens it, running its default action; `✕` or a right click dismisses it; the pointer on a card holds its time. A card shows for its sender's time, else `timeout.low` or `timeout.normal` seconds (3 and 8); a critical one stays until dismissed. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card and starts its time again.
+Cards stack in a `corner` of the focused screen, newest by the corner, critical ones first. A card shows an icon, the summary in bold, the app on its right, the body in two lines, progress (`value`) as a meter, and the sender's actions on the `actionSide` (`right`). A picture (album art, a screenshot) shows three lines tall. A click opens a card, running its default action, else dismissing it; `✕` or a right click dismisses it.
 
-`limit` cards show at once (3), `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait instead of showing, a struck bell counting them, and their time starts once they show; a critical one shows anyway. The plugin's status is a bell with the count, struck and lit while paused, a click summoning the cards; pause survives a reload.
+A card shows for its sender's time, else `timeout.low` or `timeout.normal` seconds (3 and 8); a critical one stays until dismissed. Time holds while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input (120), so none goes while you are away. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card and starts its time again.
+
+`limit` cards show at once (3), `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, a struck bell counting them (not over a fullscreen window), and their time starts once they show; a critical one shows anyway. The plugin's status is a bell with the count, struck and lit while paused; a click summons the cards. Pause survives a reload.
 
 ```nix
 plugins.notifications = {
@@ -127,15 +129,33 @@ plugins.notifications = {
 };
 ```
 
-`rules` apply in order, later ones winning: a rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`), and what it sets applies: `hide` drops it, `timeout` sets the seconds it shows (0, never), `urgency` (`low`, `normal`, `critical`) sets how it shows and lasts, and `ignorePause` lets it through a pause, as a critical one goes through. A rule acts too: `actions` adds its own to the card, each a menu entry's `{ key, desc, cmd }` on a letter you choose (any but `x`), after its reply and before its sender's, `closes` dismissing the card once it runs; `default` is what opening it runs instead of its sender's; `run` runs as it arrives. A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, `NOTIFICATION_ICON` (its picture or icon as a file, as niri sends a screenshot), and each named group of its `match` (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields are checked as the configuration builds.
+`rules` apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`). It can set:
 
-Cards never take the keys on their own, so a notification never takes your typing. `summon` (bound to a compositor key, say `Mod+N` through `action summon`, the plugin's `shortcut` naming it) gives them the keys where they are, the newest picked, every one showing, held ones too, their order and time holding, nothing on them moving: their keys show where they act. A digit picks a card, `↑↓` move the pick, its actions' letters (from their labels, never `x`) run them, `RET` opens it and lets go, `x` dismisses it, the pick moving on; `C-x` clears all, `C-p` pauses or resumes, and `ESC` or a click beside them lets go. `hint` shows the `shortcut` dimly by the cards at rest. A key path runs as typing it would: `notifications press "2 x"`.
+- `hide`: drops it.
+- `timeout`: the seconds it shows; 0, never.
+- `urgency` (`low`, `normal`, `critical`): how it shows and lasts.
+- `ignorePause`: lets it through a pause, as a critical one goes.
+- `actions`: its own, each a menu entry's `{ key, desc, cmd }` on a letter you choose (any but `x`), after its reply and before its sender's. Running one dismisses its card and lets go of the keys; `closes = false` keeps it.
+- `default`: what opening it runs, in place of its sender's.
+- `run`: a command run as it arrives, not when it is replaced.
 
-A card whose sender takes a reply offers it first among its actions, on `TAB`: the prompt takes the actions' place, the body a line, so the card keeps its height. `RET` sends it and `C-S-RET` sends it and lets go; `ESC` clears it, then goes back to the card's keys, keeping what you typed. A reply closes its card, as an action does, unless the sender keeps it (`resident`), which then shows what you sent. A card its sender closes while you type stays, marked Closed, until you leave the prompt: `RET` then copies your text, so none is lost.
+A command gets the notification in its environment, never in its text, as dunst's scripts get `DUNST_*`: `NOTIFICATION_APP`, `NOTIFICATION_SUMMARY`, `NOTIFICATION_BODY`, `NOTIFICATION_URGENCY`, `NOTIFICATION_ID`, `NOTIFICATION_ICON` (its picture or icon as a file, as niri sends a screenshot), and each named group of its `match` (`(?<code>\d{6})` as `NOTIFICATION_CODE`), which a `desc` shows by name (`{code}`). A rule's fields are checked as the configuration builds.
+
+Cards never take the keys on their own, so a notification never takes your typing. `summon`, bound to a compositor key (`Mod+N` through `action summon`, the plugin's `shortcut` naming it), gives them the keys where they are, the newest picked. Their keys show where they act, and nothing moves. Summoned, held cards show too, `limit` at a time, the bar saying how many of all there are (`1-3 of 8`). `hint` shows the `shortcut` dimly by the cards at rest. Keys:
+
+- A digit picks a card; `↑↓` move the pick as the cards show, scrolling past the last one.
+- The picked card's letters run its actions (from their labels, never `x`).
+- `RET` opens it and lets go; `x` dismisses it, the pick moving on.
+- `C-X` clears all; `C-p` pauses or resumes.
+- `ESC`, or a click beside the cards, lets go.
+
+A key path runs as typing it would: `notifications press "2 x"`.
+
+A card whose sender takes a reply offers it first among its actions, on `TAB`. The prompt takes the actions' place and the body a line, so the card keeps its height. `RET` sends it and lets go, as the reply closes the card; the keys stay only on a card its sender keeps (`resident`), which shows what you sent. `C-S-RET` sends it and lets go always. `ESC` clears it; empty, `ESC` goes back to the card's keys. A card keeps its own unsent reply until it goes. A card its sender closes while you type stays, marked closed, until you leave the prompt: `RET` then copies your text, so none is lost.
 
 Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `summon` gives the cards the keys, `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
 
-Other settings: `limit`, `width` (480), `hint`.
+Other settings: `limit`, `width` (480), `hint`, `idle`.
 
 ## Writing one in QML
 

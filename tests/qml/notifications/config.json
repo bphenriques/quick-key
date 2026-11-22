@@ -53,7 +53,7 @@
           "match": {
             "app": "^runner$"
           },
-          "run": "echo \"$NOTIFICATION_SUMMARY\" > \"$XDG_RUNTIME_DIR/arrived\""
+          "run": "echo \"$NOTIFICATION_SUMMARY\" >> \"$XDG_RUNTIME_DIR/arrived\""
         },
         {
           "match": {

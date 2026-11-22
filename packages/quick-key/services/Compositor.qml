@@ -15,6 +15,8 @@ Singleton {
   readonly property var enabled: internal.enabled
   readonly property var layouts: backend === "niri" ? Niri.layouts : []
   readonly property int layoutIndex: backend === "niri" ? Niri.layoutIndex : 0
+  // The output keys and pop-ups go to, by connector name; "" without a backend, Wayland placing them.
+  readonly property string focusedOutput: backend === "niri" ? Niri.focusedOutput : ""
 
   function refresh() {
     if (backend === "niri") {

@@ -15,6 +15,16 @@ ShellRoot {
   property string replaced: ""
   property string owner: ""
   property string chosen: ""
+  property string onceId: ""
+  property string codeDesc: ""
+
+  Process {
+    id: once
+    command: ["notify-send", "-p", "-a", "runner", "Run once"]
+    stdout: StdioCollector {
+      onStreamFinished: root.onceId = text.trim()
+    }
+  }
   property var replies: []
   property string chat: ""
   property string files: ""
@@ -127,13 +137,13 @@ ShellRoot {
         start: () => root.send("-t", "300", "Held"),
         until: () => {
           const held = root.find("Held");
-          if (held && !("held" in root.marks)) root.plugin.hold(held, true);
+          if (held && !("held" in root.marks)) root.plugin.hold(true);
           return held !== null && root.mark("held") > 1000;
         }
       },
       {
         name: "and letting go starts it again",
-        start: () => root.plugin.hold(root.find("Held"), false),
+        start: () => root.plugin.hold(false),
         until: () => !root.find("Held")
       },
       {
@@ -282,15 +292,15 @@ ShellRoot {
         until: () => root.find("Ana")?.hasInlineReply && root.plugin.actionsOf(root.find("Ana"))[0]?.key === "Tab"
       },
       {
-        name: "TAB opens the prompt in the card, and a reply sent reaches its sender, which closes it as an action does",
+        name: "TAB opens the prompt in the card, and a reply sent reaches its sender, which closes it as an action does, and the keys go back",
         start: () => {
           root.plugin.reply(root.find("Ana"));
           root.plugin.sendReply("Yes, at one", false);
         },
-        until: () => root.replies.some(line => line.includes("Yes, at one")) && !root.find("Ana") && root.plugin.replying === null && root.plugin.summoned
+        until: () => root.replies.some(line => line.includes("Yes, at one")) && !root.find("Ana") && root.plugin.replying === null && !root.plugin.summoned
       },
       {
-        name: "a resident one stays, showing what was sent",
+        name: "a resident one stays, showing what was sent in its actions' place, the keys staying",
         start: () => root.chatSend("Cid", "@a{sv} {'resident': <true>}"),
         until: () => {
           const cid = root.find("Cid");
@@ -299,7 +309,7 @@ ShellRoot {
             root.plugin.reply(cid);
             root.plugin.sendReply("On my way", false);
           }
-          return root.replies.some(line => line.includes("On my way")) && root.plugin.sent[root.find("Cid")?.id] === "On my way";
+          return root.replies.some(line => line.includes("On my way")) && root.plugin.sent[root.find("Cid")?.id] === "On my way" && root.plugin.summoned && root.plugin.actionsOf(root.find("Cid")).length === 0;
         }
       },
       {
@@ -354,7 +364,7 @@ ShellRoot {
         until: () => root.plugin.shown.some(notification => notification.summary === "Loud") && root.find("Quiet") !== null && !root.plugin.shown.some(notification => notification.summary === "Quiet")
       },
       {
-        name: "a rule adds its own action on its key, its label and command given what its groups found",
+        name: "a rule adds its own action on its key, its label and command given what its groups found, and running it closes its card",
         start: () => {
           root.plugin.release();
           Kept.set("notifications.paused", false);
@@ -364,10 +374,11 @@ ShellRoot {
           const action = root.plugin.actionsOf(root.find("Code")).find(action => action.key === "c");
           if (action && !("code" in root.marks)) {
             root.mark("code");
+            root.codeDesc = action.desc;
             action.run();
           }
           if ("code" in root.marks && root.mark("code") > 500 && !root.files) root.readFiles();
-          return action?.desc === "Copy 482913" && root.files.includes("ran: 482913 Bank");
+          return root.codeDesc === "Copy 482913" && root.files.includes("ran: 482913 Bank") && !root.find("Code");
         }
       },
       {
@@ -412,6 +423,75 @@ ShellRoot {
           }
           if ("shot" in root.marks && root.mark("shot") > 500 && !root.files) root.readFiles();
           return root.files.includes("edited: /tmp/My Shot.png") && !root.find("Screenshot captured");
+        }
+      },
+      {
+        name: "a sender's time is in milliseconds, so five seconds last past one",
+        start: () => {
+          root.plugin.release();
+          Kept.set("notifications.paused", false);
+          root.plugin.clear();
+          root.send("-t", "5000", "Long");
+        },
+        until: () => root.find("Long") !== null && root.mark("long") > 1200
+      },
+      {
+        name: "the pointer on any card holds every one still, one that comes meanwhile going last",
+        start: () => root.plugin.hold(true),
+        until: () => {
+          if (!("after" in root.marks)) {
+            root.mark("after");
+            root.send("After");
+          }
+          return root.plugin.ordered.map(notification => notification.summary).join() === "Long,After" && root.plugin.still;
+        }
+      },
+      {
+        name: "and letting go puts the newest first again",
+        start: () => root.plugin.hold(false),
+        until: () => root.plugin.ordered.map(notification => notification.summary).join() === "After,Long"
+      },
+      {
+        name: "a reply's draft is its own card's",
+        until: () => {
+          root.plugin.keepDraft({ id: 9991 }, "for one");
+          return root.plugin.draftOf({ id: 9991 }) === "for one" && root.plugin.draftOf({ id: 9992 }) === "";
+        }
+      },
+      {
+        name: "summoned, limit cards show, the arrows scrolling past them, Down toward a bottom corner",
+        start: () => ["C", "D", "E"].forEach(summary => root.send(summary)),
+        until: () => {
+          if (root.plugin.ordered.length === 5 && !root.plugin.summoned) {
+            root.plugin.settings.corner = "bottom-right";
+            root.plugin.summon();
+            root.plugin.key("Up");
+            root.plugin.key("Up");
+            root.plugin.key("Up");
+          }
+          return root.plugin.summoned && root.plugin.shown.length === 3 && root.plugin.first === 1 && root.plugin.picked === root.plugin.shown[2];
+        }
+      },
+      {
+        name: "and Down goes back toward the corner",
+        start: () => root.plugin.key("Down"),
+        until: () => root.plugin.picked === root.plugin.shown[1] && root.plugin.first === 1
+      },
+      {
+        name: "run runs for a new card, not again when it is replaced",
+        start: () => {
+          root.plugin.release();
+          root.plugin.settings.corner = "top-right";
+          root.files = "";
+          once.running = true;
+        },
+        until: () => {
+          if (root.onceId && !("once" in root.marks)) {
+            root.mark("once");
+            root.send("-a", "runner", "-r", root.onceId, "Run once");
+          }
+          if ("once" in root.marks && root.mark("once") > 700 && !root.files) root.readFiles();
+          return root.files.split("Run once").length === 2;
         }
       },
       {

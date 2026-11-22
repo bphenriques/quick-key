@@ -7,6 +7,8 @@ Surface {
   id: root
 
   property string glyph: ""
+  // An app's icon in the glyph's place, at its size; a picture (album art, a screenshot) three lines tall instead.
+  property string icon: ""
   property string image: ""
   property string title: ""
   // Who or what it is from, on the title's right.
@@ -68,6 +70,7 @@ Surface {
       Layout.alignment: Qt.AlignTop
       visible: root.image === ""
       glyph: root.glyph
+      source: root.icon
       tone: root.tone || "normal"
     }
 
@@ -163,13 +166,17 @@ Surface {
       }
 
       RowLayout {
+        id: actionRow
+        // An equal share each, labels shortened to fit, so every action and its key shows.
+        readonly property real share: (width - root.actions.length * spacing) / Math.max(1, root.actions.length)
         Layout.fillWidth: true
         visible: root.actions.length > 0 && root.footer === null
-        clip: true
         spacing: 2 * Metrics.cell
 
+        // Only on the open side: a hidden one takes no spacing, so the actions meet the edge.
         Item {
-          Layout.fillWidth: root.actionSide !== "left"
+          visible: root.actionSide !== "left"
+          Layout.fillWidth: true
         }
 
         Repeater {
@@ -186,10 +193,13 @@ Surface {
               id: actionRow
 
               KeyCell {
+                id: actionKey
                 key: action.entry.key ?? ""
               }
 
               Label {
+                width: Math.min(implicitWidth, actionRow.share - actionKey.implicitWidth)
+                elide: Text.ElideRight
                 tone: hover.containsMouse ? "primary" : root.current ? "normal" : "dim"
                 text: action.entry.desc ?? ""
               }
@@ -205,7 +215,8 @@ Surface {
         }
 
         Item {
-          Layout.fillWidth: root.actionSide === "left"
+          visible: root.actionSide === "left"
+          Layout.fillWidth: true
         }
       }
 

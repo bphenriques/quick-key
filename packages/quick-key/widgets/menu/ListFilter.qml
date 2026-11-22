@@ -28,7 +28,7 @@ QtObject {
   readonly property int first: Math.max(0, Math.min(offset, found.length - size))
   readonly property var rows: found.slice(first, first + size).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true, current: first + i === index }))
   // The rows shown of all that match, as a pager says it (1-9 of 11).
-  readonly property string count: found.length === 0 ? "" : (rows.length > 1 ? (first + 1) + "-" + (first + rows.length) : String(first + 1)) + " of " + found.length
+  readonly property string count: found.length === 0 ? "" : Words.rangeOf(first, rows.length, found.length)
   readonly property string emptyText: items.length > 0 && found.length === 0 ? Words.noMatch(query.trim()) : ""
   // Only what the state changes, Escape while it clears.
   readonly property var legend: (rows.length > 0 ? [{ key: rows.length > 1 ? "1-" + rows.length : "1", what: Words.choose }, { key: ["Up", "Down"], what: Words.move }] : [])
