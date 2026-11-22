@@ -20,7 +20,7 @@ Plugin {
   readonly property bool summoned: Panels.top === root
   // Summoned or under the pointer, nothing moves and no time runs: the order holds, one that comes meanwhile going last.
   readonly property bool still: summoned || internal.hovered
-  readonly property var ordered: internal.list.slice().sort((a, b) => critical(b) - critical(a) || (still ? internal.rank(a) - internal.rank(b) : b.id - a.id))
+  readonly property var ordered: internal.list.slice().sort((a, b) => critical(b) - critical(a) || (still ? internal.rank(a) - internal.rank(b) : internal.came[b.id] - internal.came[a.id]))
   // Summoned, the held ones show too.
   readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !internal.fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
   // Critical ones by the corner, leaving a place while others wait, then the rest `limit` at a time, summoned the arrows scrolling past them; a card's digit is its place among all, so it holds still.
@@ -125,7 +125,7 @@ Plugin {
 
   // The newest card on screen, which a binding acts on and summoning picks.
   function newest() {
-    return shown.reduce((found, notification) => found === null || notification.id > found.id ? notification : found, null);
+    return shown.reduce((found, notification) => found === null || internal.came[notification.id] > internal.came[found.id] ? notification : found, null);
   }
 
   // A rule's `default`, else its own default action, else dismissed: a click means done with it.
@@ -240,11 +240,12 @@ Plugin {
     if (!last) return;
     internal.closed = internal.closed.slice(0, -1);
     const card = Object.assign({}, last, { restored: true });
+    internal.came[card.id] = ++internal.seq;
     card.dismiss = card.expire = () => root.leave(card);
     internal.list = internal.list.concat([card]);
     internal.left = Object.assign({}, internal.left, { [card.id]: critical(card) ? 0 : 1000 * settings.timeout.normal });
     internal.arrived = Object.assign({}, internal.arrived, { [card.id]: last.arrived });
-    if (summoned) internal.picked = card;
+    if (summoned) pick(card);
   }
 
   // When it came, once it has waited a minute or more (held by pause, idle or a fullscreen window): so an old one never reads as new.
@@ -358,6 +359,7 @@ Plugin {
     if (ruled(notification).hide) return;
     notification.tracked = true;
     if (!notification.lastGeneration) internal.arrived = Object.assign({}, internal.arrived, { [notification.id]: Date.now() });
+    internal.came[notification.id] = ++internal.seq;
     internal.list = internal.list.concat([notification]);
     notification.closed.connect(() => root.leave(notification));
     // A sender replacing it by id changes it in place: its rules and time start again, once for all it changed.
@@ -376,6 +378,8 @@ Plugin {
     const applied = ruled(notification);
     if (applied.hide) return notification.expire();
     internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
+    // The sender's new text takes the place of what you sent below its old one.
+    if (notification.id in internal.sent) internal.sent = without(internal.sent, notification.id);
     internal.left = Object.assign({}, internal.left, { [notification.id]: timeoutOf(notification) });
     const tag = tagOf(notification);
     for (const old of internal.list) {
@@ -398,7 +402,7 @@ Plugin {
     if (!notification.gone && !(notification.id in internal.replaced)) keepClosed(notification);
     const at = shown.indexOf(notification);
     // Nothing reads a gone card's id, so only the list tells; each map loses it in place.
-    for (const map of [internal.left, internal.sent, internal.applied, internal.drafts, internal.arrived, internal.replaced]) delete map[notification.id];
+    for (const map of [internal.left, internal.sent, internal.applied, internal.drafts, internal.arrived, internal.replaced, internal.came]) delete map[notification.id];
     internal.list = internal.list.filter(each => each !== notification);
     if (internal.offset > 0 && internal.offset + internal.room > internal.rest.length) internal.offset--;
     if (internal.picked !== notification) return;
@@ -454,13 +458,16 @@ Plugin {
     property var frozen: []
     // Cards a newer one by their tag replaced, by id: gone, not to bring back.
     property var replaced: ({})
+    // The order they came in, by id, one brought back coming again: the newest goes by the corner.
+    property var came: ({})
+    property int seq: 0
     // The first shown, summoned, past those scrolled by.
     property int offset: 0
     property string error: ""
 
     function rank(notification) {
       const at = frozen.indexOf(notification.id);
-      return at < 0 ? frozen.length + notification.id : at;
+      return at < 0 ? frozen.length + came[notification.id] : at;
     }
   }
 

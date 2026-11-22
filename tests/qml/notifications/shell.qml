@@ -47,8 +47,8 @@ ShellRoot {
     Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify", "'" + app + "'", "uint32 0", "''", "'" + summary + "'", "''", "['inline-reply', 'Reply']", "@a{sv} {}", "int32 -1"]);
   }
 
-  function chatSend(summary, hints = "@a{sv} {}") {
-    Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify", "'Chat'", "uint32 0", "''", "'" + summary + "'", "'Lunch?'", "['inline-reply', 'Reply']", hints, "int32 -1"]);
+  function chatSend(summary, hints = "@a{sv} {}", replaces = 0) {
+    Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify", "'Chat'", "uint32 " + replaces, "''", "'" + summary + "'", "'Lunch?'", "['inline-reply', 'Reply']", hints, "int32 -1"]);
   }
 
   // What the bus says the server sent its senders: their replies.
@@ -787,6 +787,44 @@ ShellRoot {
           const done = "keep" in root.marks && root.plugin.ordered.length === 3 && root.find("Kept alarm") !== null && root.find("Keep 4") !== null;
           if (done) root.plugin.settings.keep = 100;
           return done;
+        }
+      },
+      {
+        name: "a sender replacing a resident card by id takes the place of what you sent, its actions back",
+        start: () => {
+          root.reset();
+          root.chatSend("Una", "@a{sv} {'resident': <true>}");
+        },
+        until: () => {
+          const una = root.find("Una");
+          if (una && !("una" in root.marks)) {
+            root.mark("una");
+            root.plugin.reply(una);
+            root.plugin.sendReply("Sure", false);
+            root.chatSend("Una again", "@a{sv} {'resident': <true>}", una.id);
+          }
+          const again = root.find("Una again");
+          return again !== null && !(again.id in root.plugin.sent) && root.plugin.actionsOf(again).some(action => action.key === "Tab");
+        }
+      },
+      {
+        name: "a card brought back comes in as the newest, in view",
+        start: () => {
+          root.reset();
+          root.send("R1");
+        },
+        until: () => {
+          const first = root.find("R1");
+          if (first && !first.restored && !("r1" in root.marks)) {
+            root.mark("r1");
+            first.dismiss();
+            ["R2", "R3", "R4"].forEach(summary => root.send(summary));
+          }
+          if (root.plugin.ordered.length === 3 && !("r1Back" in root.marks)) {
+            root.mark("r1Back");
+            root.plugin.restore();
+          }
+          return "r1Back" in root.marks && root.find("R1")?.restored === true && root.plugin.shown.includes(root.find("R1"));
         }
       },
       {

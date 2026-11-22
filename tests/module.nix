@@ -80,6 +80,13 @@ assert lib.assertMsg (
 assert lib.assertMsg (lib.any (a: lib.hasInfix "neither in programs.quick-key.themes nor a preset" a.message) (failed {
   theme.name = "nope";
 })) "an unknown theme must be rejected";
+assert lib.assertMsg (failed { plugins.notifications = { }; } == [ ]) "the notifications plugin alone must pass";
+assert lib.assertMsg (lib.any (a: !a.assertion && lib.hasInfix "only one can hold the bus" a.message)
+  (evalHome {
+    programs.quick-key.settings.plugins.alerts.type = "notifications";
+    services.dunst.enable = true;
+  }).assertions
+) "the notifications plugin, under any name, beside dunst must be rejected";
 assert lib.assertMsg (
   (stylix { }).programs.quick-key.settings.theme == {
     background = "#000000";
