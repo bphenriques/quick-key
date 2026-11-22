@@ -30,6 +30,11 @@ Plugin {
   readonly property int held: ordered.length - showable.length
   // The card the keys act on while summoned.
   readonly property var picked: internal.picked
+  // The card being replied to, its prompt in its actions' place; and what was sent, by id, shown until it goes.
+  readonly property var replying: internal.replying
+  readonly property var sent: internal.sent
+  // The reply typed so far, kept while the keys move elsewhere.
+  property string draft: ""
 
   glyph: paused ? Glyphs.notificationsPaused : Glyphs.notifications
   text: ordered.length > 0 ? String(ordered.length) : ""
@@ -41,7 +46,12 @@ Plugin {
       clear: "clear all",
       pause: "pause",
       resume: "resume",
-      none: "Nothing new"
+      none: "Nothing new",
+      reply: "Reply...",
+      send: "send",
+      leave: "send and leave",
+      copy: "copy",
+      closed: "Closed"
     })
   actions: ({
       summon: { icon: () => Glyphs.notifications, available: () => true, run: () => root.summon() },
@@ -72,6 +82,7 @@ Plugin {
   }
 
   function release() {
+    endReply();
     if (summoned) Panels.back();
   }
 
@@ -96,11 +107,45 @@ Plugin {
     internal.held = on ? notification : internal.held === notification ? null : internal.held;
   }
 
-  // Its sender's actions but the default, each with a letter from its label; `x`, which dismisses, is never one.
+  // Its reply first, on TAB, then its sender's actions but the default, each with a letter from its label; `x`, which dismisses, is never one.
   function actionsOf(notification) {
     const actions = Array.from(notification?.actions ?? []).filter(action => action.identifier !== "default");
     const keys = MenuKeys.assign(actions.map(action => action.text), ["x"], "");
-    return actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
+    const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
+    return notification?.hasInlineReply ? [{ desc: notification.inlineReplyPlaceholder || words.reply, key: "Tab", run: () => root.reply(notification) }].concat(own) : own;
+  }
+
+  // Its prompt in its actions' place, summoned and picked; a click on Reply... starts here too.
+  function reply(notification) {
+    summon();
+    internal.picked = notification;
+    internal.replying = notification;
+  }
+
+  // Back to the card's keys; a closed one's placeholder goes.
+  function endReply() {
+    const ended = internal.replying;
+    internal.replying = null;
+    if (ended?.gone) leave(ended);
+  }
+
+  // Sent as the reply, `leave` letting go of the keys; false once its card is closed, the prompt keeping the text.
+  function sendReply(text, leave) {
+    const notification = internal.replying;
+    if (!notification || notification.gone) return false;
+    internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
+    draft = "";
+    notification.sendInlineReply(text);
+    if (leave) release();
+    else endReply();
+    return true;
+  }
+
+  // The reply to a card that closed meanwhile, to the clipboard, never lost.
+  function copyReply(text) {
+    Quickshell.clipboardText = text;
+    draft = "";
+    endReply();
   }
 
   // A key while summoned: a digit picks a card, ↑↓ move the pick, its letters run its actions, RET opens it and lets go of the keys, x dismisses it; C-x clears all, C-p pauses, ESC lets go.
@@ -177,13 +222,24 @@ Plugin {
     notification.closed.connect(() => root.leave(notification));
   }
 
-  // The pick moves to the card that takes its place; the last one gone lets go of the keys.
+  // The pick moves to the card that takes its place; the last one gone lets go of the keys. One closing while replied to stays as a placeholder, its slot and the text kept, until the reply ends.
   function leave(notification) {
+    if (notification === internal.replying && !notification.gone) {
+      const ghost = { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image, urgency: notification.urgency, hints: ({}), actions: [], gone: true, dismiss: () => root.endReply() };
+      internal.list = internal.list.map(each => each === notification ? ghost : each);
+      internal.replying = internal.picked = ghost;
+      return;
+    }
     const at = shown.indexOf(notification);
     internal.list = internal.list.filter(each => each !== notification);
     const left = Object.assign({}, internal.left);
     delete left[notification.id];
     internal.left = left;
+    if (notification.id in internal.sent) {
+      const sent = Object.assign({}, internal.sent);
+      delete sent[notification.id];
+      internal.sent = sent;
+    }
     if (internal.held === notification) internal.held = null;
     if (internal.picked !== notification) return;
     internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
@@ -200,6 +256,8 @@ Plugin {
     property var left: ({})
     property var held: null
     property var picked: null
+    property var replying: null
+    property var sent: ({})
     // The order as it was summoned, by id.
     property var frozen: []
     property string error: ""
@@ -217,6 +275,7 @@ Plugin {
     bodySupported: true
     bodyMarkupSupported: false
     bodyHyperlinksSupported: false
+    inlineReplySupported: true
     onNotification: notification => root.arrive(notification)
   }
 

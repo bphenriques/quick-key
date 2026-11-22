@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs
@@ -84,6 +85,7 @@ Scope {
             model: view.cards.length
 
             Card {
+              id: card
               required property int index
               readonly property var notification: view.cards[index] ?? null
               readonly property var hint: notification?.hints.value
@@ -92,12 +94,15 @@ Scope {
               glyph: Glyphs.notifications
               image: notification ? view.imageOf(notification) : ""
               title: notification?.summary || notification?.appName || ""
-              aside: notification?.summary ? notification.appName : ""
+              aside: notification?.gone ? view.plugin.words.closed : notification?.summary ? notification.appName : ""
               body: notification?.body ?? ""
               tone: notification && view.plugin.critical(notification) ? "alert" : ""
               meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
               meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
               actions: view.plugin.actionsOf(notification)
+              // Replying, the body takes a line and the prompt two, so the card keeps its height.
+              lines: notification && notification === view.plugin.replying ? 1 : 2
+              footer: !notification ? null : notification === view.plugin.replying ? reply : notification.id in view.plugin.sent ? sent : null
               actionSide: view.settings.actionSide
               key: String(view.plugin.shown.indexOf(notification) + 1)
               closeKey: "x"
@@ -106,6 +111,28 @@ Scope {
               onActivated: view.plugin.open(notification)
               onDismissed: notification.dismiss()
               onHoveredChanged: view.plugin.hold(notification, hovered)
+
+              // What was sent, as your side of the exchange, on the right.
+              Component {
+                id: sent
+
+                RowLayout {
+                  Item {
+                    Layout.fillWidth: true
+                  }
+
+                  Bubble {
+                    mine: true
+                    maximumWidth: parent.width
+
+                    Label {
+                      Layout.fillWidth: true
+                      elide: Text.ElideRight
+                      text: view.plugin.sent[card.notification?.id] ?? ""
+                    }
+                  }
+                }
+              }
             }
           }
 
@@ -113,6 +140,29 @@ Scope {
             visible: view.top
           }
         }
+      }
+    }
+  }
+
+  // The reply typed in the card: RET sends it, C-S-RET sends it and lets go, ESC clears it, then goes back to the card's keys; to a card closed meanwhile, RET copies it.
+  Component {
+    id: reply
+
+    Prompt {
+      id: prompt
+      maxLines: 2
+      placeholder: view.plugin.replying?.inlineReplyPlaceholder || view.plugin.words.reply
+      keys: text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }] : []
+      onPicked: stepBack()
+      onBack: view.plugin.endReply()
+      Component.onCompleted: set(view.plugin.draft)
+      onTextChanged: view.plugin.draft = text
+      onKeyPressed: event => {
+        const send = MenuKeys.sends(event);
+        if (!send) return;
+        event.accepted = true;
+        if (view.plugin.replying?.gone) view.plugin.copyReply(text);
+        else view.plugin.sendReply(text, send === "background");
       }
     }
   }
@@ -133,7 +183,7 @@ Scope {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Config.theme.padding
-        keys: view.plugin.shown.length === 0 ? [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }] : [
+        keys: view.plugin.replying?.gone ? [{ key: "Return", what: view.plugin.words.copy }] : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.leave }] : view.plugin.shown.length === 0 ? [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }] : [
           { key: "Return", what: view.plugin.words.open },
           { key: "Ctrl+x", what: view.plugin.words.clear },
           { key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }

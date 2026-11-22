@@ -127,6 +127,8 @@ plugins.notifications = {
 
 Cards never take the keys on their own, so a notification never takes your typing. `summon` (bound to a compositor key, say `Mod+N` through `action summon`, the plugin's `shortcut` naming it) gives them the keys where they are, the newest picked, every one showing, held ones too, their order and time holding, nothing on them moving: their keys show where they act. A digit picks a card, `↑↓` move the pick, its actions' letters (from their labels, never `x`) run them, `RET` opens it and lets go, `x` dismisses it, the pick moving on; `C-x` clears all, `C-p` pauses or resumes, and `ESC` or a click beside them lets go. `hint` shows the `shortcut` dimly by the cards at rest. A key path runs as typing it would: `notifications press "2 x"`.
 
+A card whose sender takes a reply offers it first among its actions, on `TAB`: the prompt takes the actions' place, the body a line, so the card keeps its height. `RET` sends it and `C-S-RET` sends it and lets go; `ESC` clears it, then goes back to the card's keys, keeping what you typed. A reply closes its card, as an action does, unless the sender keeps it (`resident`), which then shows what you sent. A card its sender closes while you type stays, marked Closed, until you leave the prompt: `RET` then copies your text, so none is lost.
+
 Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `summon` gives the cards the keys, `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
 
 Other settings: `limit`, `width` (480), `hint`.

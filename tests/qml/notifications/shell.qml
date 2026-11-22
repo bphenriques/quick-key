@@ -15,6 +15,23 @@ ShellRoot {
   property string replaced: ""
   property string owner: ""
   property string chosen: ""
+  property var replies: []
+  property string chat: ""
+
+  function chatSend(summary, hints = "@a{sv} {}") {
+    Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify", "'Chat'", "uint32 0", "''", "'" + summary + "'", "'Lunch?'", "['inline-reply', 'Reply']", hints, "int32 -1"]);
+  }
+
+  // What the bus says the server sent its senders: their replies.
+  Process {
+    running: true
+    command: ["gdbus", "monitor", "--session", "--dest", "org.freedesktop.Notifications"]
+    stdout: SplitParser {
+      onRead: line => {
+        if (line.includes("NotificationReplied")) root.replies = root.replies.concat([line]);
+      }
+    }
+  }
 
   function send(...args) {
     Quickshell.execDetached(["notify-send", ...args]);
@@ -235,6 +252,53 @@ ShellRoot {
           root.plugin.press("1 Return");
         },
         until: () => !root.plugin.summoned && !root.find("Third")
+      },
+      {
+        name: "a sender offering a reply gets it first among the card's actions, on TAB",
+        start: () => root.chatSend("Ana"),
+        until: () => root.find("Ana")?.hasInlineReply && root.plugin.actionsOf(root.find("Ana"))[0]?.key === "Tab"
+      },
+      {
+        name: "TAB opens the prompt in the card, and a reply sent reaches its sender, which closes it as an action does",
+        start: () => {
+          root.plugin.reply(root.find("Ana"));
+          root.plugin.sendReply("Yes, at one", false);
+        },
+        until: () => root.replies.some(line => line.includes("Yes, at one")) && !root.find("Ana") && root.plugin.replying === null && root.plugin.summoned
+      },
+      {
+        name: "a resident one stays, showing what was sent",
+        start: () => root.chatSend("Cid", "@a{sv} {'resident': <true>}"),
+        until: () => {
+          const cid = root.find("Cid");
+          if (cid && !("cid" in root.marks)) {
+            root.mark("cid");
+            root.plugin.reply(cid);
+            root.plugin.sendReply("On my way", false);
+          }
+          return root.replies.some(line => line.includes("On my way")) && root.plugin.sent[root.find("Cid")?.id] === "On my way";
+        }
+      },
+      {
+        name: "one closed while replied to stays as a placeholder, its text unsent, until the reply ends",
+        start: () => {
+          root.plugin.release();
+          root.chatSend("Bea");
+        },
+        until: () => {
+          const bea = root.find("Bea");
+          if (bea && !("bea" in root.marks)) {
+            root.mark("bea");
+            root.plugin.reply(bea);
+            bea.dismiss();
+          }
+          return root.plugin.replying?.gone === true && root.find("Bea")?.gone === true && !root.plugin.sendReply("Too late", false);
+        }
+      },
+      {
+        name: "and ending it lets the placeholder go",
+        start: () => root.plugin.endReply(),
+        until: () => !root.find("Bea") && root.plugin.replying === null
       },
       {
         name: "the settings' check names what is wrong, and passes these",
