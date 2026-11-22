@@ -33,16 +33,11 @@ Surface {
   readonly property bool hovered: pointer.hovered
   readonly property bool acting: keysShown && current
   // The actions in rows as wide as fit, in their order, by characters as the font is monospace: whole, wrapping rather than cut, and the card's height is set as it comes, so nothing moves; from its width, which it has before its layout does.
-  readonly property var rows: rowsOf(actions)
-  // Its actions whole, though the footer stands in for them (what was sent), so the card holds their height under it.
-  property var heldActions: actions
-  readonly property int heldRows: Math.max(1, rowsOf(heldActions).length)
-
-  function rowsOf(list) {
+  readonly property var rows: {
     const room = Math.floor((width - 2 * Config.theme.padding - Metrics.cell - Config.theme.spacing) / Metrics.cell);
     const rows = [];
     let used = room;
-    list.forEach((action, i) => {
+    actions.forEach((action, i) => {
       const chars = (action.desc ?? "").length + (action.key ? MenuKeys.label(action.key).length + 1 : 0);
       if (used + 1 + chars > room) {
         rows.push([]);
@@ -287,10 +282,12 @@ Surface {
       Layout.fillWidth: true
       Layout.leftMargin: gutter.width + Config.theme.spacing
       Layout.preferredWidth: 0
-      Layout.minimumHeight: root.heldRows * Metrics.line
+      // The actions' rows, held while the footer takes their place, so the card keeps its height.
+      Layout.minimumHeight: Math.max(1, root.rows.length) * Metrics.line
       active: root.footer !== null
       visible: active
-      focus: active
+      // Only the picked card's, as delegates that changed card would otherwise take the keys from the prompt.
+      focus: active && root.current
       sourceComponent: root.footer
     }
   }

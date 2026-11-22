@@ -125,9 +125,9 @@ Cards stack in a corner of the focused screen, newest by the corner, critical on
 
 A click opens a card, running its default action, else dismissing it. `✕` or a right click dismisses it.
 
-A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time holds while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card, which comes in as the newest, its rules and its time starting again. One re-sent by its id with nothing changed restarts nothing: Quickshell tells the shell only of changes.
+A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time stops while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input; it starts again in full. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card in its place, its rules and its time starting again. One re-sent by its id with nothing changed restarts nothing: Quickshell tells the shell only of changes.
 
-`limit` cards show at once, `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, and their time starts once they show; a critical one shows anyway. A struck bell by the corner counts those waiting, except over a fullscreen window. Past `keep` notifications, the oldest close. Pause survives a reload and a restart.
+`limit` cards show at once, `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, and their time starts once they show; a critical one shows anyway. A struck bell by the corner counts those waiting, except over a fullscreen window. Past `keep` notifications, the oldest close. Pause survives a reload and a restart; the cards do not survive a restart (a deploy), as the sender still has them.
 
 ```nix
 plugins.notifications = {
@@ -168,7 +168,7 @@ binds {
 
 With Nix, the same through `exec.ipc`: `Mod+N { spawn-sh "${config.programs.quick-key.exec.ipc} notifications action summon"; }`.
 
-The plugin's `shortcut` only labels that key. Their keys show where they act, and nothing moves. Summoned, waiting cards show too, `limit` at a time, critical ones staying by the corner and one place left for the rest to scroll through. The bar under the cards holds the keys the state changes and counts the cards not shown (`+2`). `?` lists the rest.
+The plugin's `shortcut` only labels that key. Their keys show where they act, and nothing moves. Summoned, waiting cards show too, `limit` at a time, the arrows scrolling past them. The bar under the cards holds the keys the state changes and counts the cards not shown (`+2`). `?` lists the rest.
 
 - A digit picks a card by its place among all, so it holds still, scrolling it into view. `↑↓` move the pick, scrolling past the last one.
 - The picked card's letters run its actions. The keys stay, so one summon can clear several.
@@ -182,7 +182,7 @@ A key path runs as typing it would: `notifications press "2 x"`. The plugin's ac
 
 A sender that takes a reply (the protocol's `inline-reply` action) gets one first among its card's actions, on `TAB`. The prompt takes the actions' place, one line that scrolls, so the card keeps its height, and holds the keys until you leave it:
 
-- `RET` sends it. The reply closes the card and lets go, unless its sender keeps it (`resident`): then it shows what you sent, and the keys stay.
+- `RET` sends it. The reply closes the card and lets go, unless its sender keeps it (`resident`): then the keys stay.
 - `C-S-RET` sends it and lets go.
 - `ESC` clears it; empty, `ESC` goes back to the card's keys.
 - A card keeps its own unsent reply until it goes, and its time holds while it has one.

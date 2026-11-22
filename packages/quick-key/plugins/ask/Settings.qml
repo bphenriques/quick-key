@@ -21,8 +21,8 @@ PluginSettings {
   }
   // Given a file, prints it base64, as an image goes to the agent.
   property string encodeImage: "base64 -w0"
-  // Given a title and a text, tells of an answer while the panel is hidden; printing `default` (a click) shows the panel.
-  property string notify: "notify-send --action=default=Open"
+  // Given a title and a text, tells of an answer while the panel is hidden, each replacing the last by its tag; printing `default` (a click) shows the panel.
+  property string notify: "notify-send --action=default=Open --hint=string:x-dunst-stack-tag:ask"
   // Given a file, writes the clipboard's image there, failing when it holds none.
   property string pasteImage: "sh -c 'for type in $(wl-paste --list-types); do case $type in image/*) exec wl-paste --type \"$type\" > \"$1\" ;; esac; done; exit 1' sh"
   // Given the session, opens it in a terminal.

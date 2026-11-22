@@ -8,7 +8,7 @@ import qs
 import qs.services
 import qs.ui
 
-// A notification server: Quickshell speaks the protocol; this decides what shows and for how long, and Cards.qml draws it.
+// A notification server: Quickshell speaks the protocol; this decides what shows and for how long, and Cards.qml draws it. Each card is an Entry, which a replacement updates in place.
 Plugin {
   id: root
 
@@ -18,19 +18,23 @@ Plugin {
   readonly property bool paused: Kept.values[name + ".paused"] ?? false
   // The cards have the keys (s-n), one surface at a time with the menu and panels.
   readonly property bool summoned: Panels.top === root
-  // Summoned or under the pointer, nothing moves and no time runs: the order holds, one that comes meanwhile going last.
+  // Summoned or under the pointer, nothing moves and no time runs: those there keep their order, newcomers going after them.
   readonly property bool still: summoned || internal.hovered
-  readonly property var ordered: still ? internal.list.slice().sort((a, b) => internal.rank(a) - internal.rank(b)) : atRest()
+  readonly property var ordered: {
+    const atRest = internal.list.slice().sort((a, b) => critical(b) - critical(a) || b.came - a.came);
+    if (!still) return atRest;
+    return atRest.filter(entry => entry.came <= internal.heldAt).concat(internal.list.filter(entry => entry.came > internal.heldAt).sort((a, b) => a.came - b.came));
+  }
   // Summoned, the held ones show too.
-  readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !internal.fullscreen && (!paused || !!internal.applied[notification.id]?.ignorePause))
-  // Critical ones by the corner, leaving a place while others wait, then the rest `limit` at a time, summoned the arrows scrolling past them; a card's digit is its place among all, so it holds still.
-  readonly property var shown: showable.slice(0, internal.pinned).concat(internal.rest.slice(internal.offset, internal.offset + internal.room))
+  readonly property var showable: summoned ? ordered : ordered.filter(entry => critical(entry) || !internal.fullscreen && (!paused || !!entry.applied.ignorePause))
+  // `limit` at a time, the window following the pick; a card's digit is its place among all, so it holds still.
+  readonly property var shown: showable.slice(internal.first, internal.first + settings.limit)
   // Those showable but not shown.
   readonly property int more: showable.length - shown.length
   // None under a fullscreen window: the count would sit over it.
   readonly property int held: internal.fullscreen ? 0 : ordered.length - showable.length
-  // The keys, listed while `?` holds them, as the menu lists its own.
-  readonly property bool help: internal.help
+  // What the keys do: the cards', the key list's (`?`), the prompt's, or nothing but ESC once the card you replied to closed.
+  readonly property string mode: internal.mode
   readonly property var keys: [
     { key: "1-9", desc: words.helpPick },
     { key: ["Up", "Down"], desc: words.helpMove },
@@ -43,13 +47,11 @@ Plugin {
     { key: "Ctrl+p", desc: words.helpPause },
     { key: "Escape", desc: Words.helpEscape }
   ]
-  // The card the keys act on while summoned.
+  // The card the keys act on while summoned, and the one replied to, its prompt in its actions' place.
   readonly property var picked: internal.picked
-  // The card being replied to, its prompt in its actions' place; and what was sent, by id, shown until it goes.
   readonly property var replying: internal.replying
-  readonly property var sent: internal.sent
-  // The card you replied to closed: the bar says so, and the keys do nothing until ESC, so what you were typing goes nowhere.
-  readonly property string notice: internal.notice
+  // The reply whose card closed went to the clipboard; else it was empty.
+  readonly property bool copied: internal.copied
 
   glyph: paused ? Glyphs.notificationsPaused : Glyphs.notifications
   text: ordered.length > 0 ? String(ordered.length) : ""
@@ -62,7 +64,6 @@ Plugin {
       none: "No notifications",
       send: "send",
       sendLeave: "send, go",
-      you: "You: ",
       replyCopied: "reply copied",
       cardClosed: "card closed",
       letGo: "let go",
@@ -85,13 +86,13 @@ Plugin {
       restore: { icon: () => Glyphs.notifications, available: () => internal.closed.length > 0, run: () => root.restore() }
     })
 
-  function critical(notification) {
-    return urgencyOf(notification) === "critical";
+  function critical(entry) {
+    return urgencyOf(entry) === "critical";
   }
 
   // Its sender's, unless a rule sets another.
-  function urgencyOf(notification) {
-    return internal.applied[notification.id]?.urgency ?? ["low", "normal", "critical"][notification.urgency];
+  function urgencyOf(entry) {
+    return entry.applied.urgency ?? settings.urgencies[entry.urgency];
   }
 
   function togglePause() {
@@ -113,180 +114,163 @@ Plugin {
     if (summoned) Panels.back();
   }
 
-  // However the keys go (ESC, the menu opening over the cards), the reply, the scroll and the list go with them.
+  // However the keys go (ESC, the menu opening over the cards), the reply, the scroll and the pick go with them; back from the menu, the pick lands on a card that shows.
   onSummonedChanged: {
-    // Back from the menu too, the order as it is now, the pick on a card that shows.
     if (summoned) {
-      if (!internal.hovered) freeze();
       if (!shown.includes(internal.picked)) internal.picked = newest();
       return;
     }
-    endReply();
-    internal.notice = "";
+    internal.mode = "cards";
+    internal.replying = null;
+    internal.picked = null;
     internal.offset = 0;
-    internal.help = false;
   }
 
-  // The order as it is now, which `still` keeps.
-  function freeze() {
-    internal.frozen = atRest().map(notification => notification.id);
-  }
-
-  // Critical ones first, then the newest.
-  function atRest() {
-    return internal.list.slice().sort((a, b) => critical(b) - critical(a) || internal.came[b.id] - internal.came[a.id]);
-  }
+  onStillChanged: if (still) internal.heldAt = internal.seq
 
   // The newest card on screen, which a binding acts on and summoning picks.
   function newest() {
-    return shown.reduce((found, notification) => found === null || internal.came[notification.id] > internal.came[found.id] ? notification : found, null);
+    return shown.reduce((found, entry) => found === null || entry.came > found.came ? entry : found, null);
   }
 
-  // A rule's `default`, else its own default action, else dismissed: a click means done with it.
-  function open(notification) {
-    // One brought back is only to read: a click is done with it.
-    if (notification.restored) return notification.dismiss();
-    if (notification === internal.replying) endReply();
-    const rule = internal.applied[notification.id]?.default;
-    if (rule) {
-      runFor(notification, rule);
-      return notification.dismiss();
+  // A rule's `default`, else its own default action, else dismissed: a click means done with it; one brought back is only to read.
+  function open(entry) {
+    if (entry === internal.replying) endReply();
+    const action = entry.restored ? null : Array.from(entry.actions).find(action => action.identifier === "default");
+    if (entry.applied.default && !entry.restored) {
+      runFor(entry, entry.applied.default);
+      dismiss(entry);
+    } else if (action) {
+      action.invoke();
+    } else {
+      dismiss(entry);
     }
-    const action = Array.from(notification.actions).find(action => action.identifier === "default");
-    if (action) action.invoke();
-    else notification.dismiss();
   }
 
-  // The card you reply to, by a click: the reply ends first, so it is yours that closed it, not its sender.
-  function dismiss(notification) {
-    if (notification === internal.replying) endReply();
-    notification.dismiss();
+  // The card you reply to, by a click: the reply ends first, so nothing is copied.
+  function dismiss(entry) {
+    if (entry === internal.replying) endReply();
+    if (entry.notification) entry.notification.dismiss();
+    else leave(entry);
+  }
+
+  function expire(entry) {
+    if (entry.notification) entry.notification.expire();
+    else leave(entry);
   }
 
   function clear() {
     endReply();
-    for (const notification of internal.list.slice()) notification.dismiss();
+    for (const entry of internal.list.slice()) dismiss(entry);
   }
 
   // The pointer is on a card: every one holds still, so the one under it stays there.
   function hold(on) {
-    if (on && !still) freeze();
     internal.hovered = on;
   }
 
-  // Its reply first, on TAB, then its rules' actions on their keys, then its sender's but the default, each with a letter its label offers, else any, that neither those nor `x`, which dismisses, take; none once a reply shows in their place.
-  function actionsOf(notification, whole = false) {
-    if (!notification || notification.restored || !whole && notification.id in internal.sent) return [];
-    const values = valuesOf(notification);
-    const ruled = Array.from(internal.applied[notification.id]?.actions ?? []).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => {
-        root.runFor(notification, action.cmd);
-        if (action.closes !== false) notification.dismiss();
+  // Its reply first, on TAB, then its rules' actions on their keys, then its sender's but the default, each with a letter its label offers, else any, that neither those nor `x`, which dismisses, take.
+  function actionsOf(entry) {
+    if (!entry || entry.restored) return [];
+    const values = valuesOf(entry);
+    const ruled = Array.from(entry.applied.actions).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, run: () => {
+        root.runFor(entry, action.cmd);
+        if (action.closes !== false) root.dismiss(entry);
       } }));
-    const actions = Array.from(notification.actions).filter(action => action.identifier !== "default");
+    const actions = Array.from(entry.actions).filter(action => action.identifier !== "default");
     const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwxyz");
     const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
-    const reply = notification.hasInlineReply ? [{ desc: Words.replyPrompt, key: "Tab", run: () => root.reply(notification) }] : [];
+    const reply = entry.hasInlineReply ? [{ desc: Words.replyPrompt, key: "Tab", run: () => root.reply(entry) }] : [];
     return reply.concat(ruled, own);
   }
 
   // Its prompt in its actions' place, summoned and picked; a click on Reply... starts here too.
-  function reply(notification) {
+  function reply(entry) {
     summon();
-    pick(notification);
-    internal.replying = notification;
+    pick(entry);
+    internal.replying = entry;
+    internal.mode = "reply";
   }
 
-  // Back to the card's keys.
   function endReply() {
+    if (internal.mode === "reply") internal.mode = "cards";
     internal.replying = null;
   }
 
-  // A card's unsent reply, kept while the keys move elsewhere, until it goes.
-  function draftOf(notification) {
-    return internal.drafts[notification?.id] ?? "";
+  // The reply can no longer reach its card: your text to the clipboard, and the keys held until ESC, so the rest of what you type goes nowhere.
+  function interrupt() {
+    const draft = internal.replying.draft;
+    if (draft) Quickshell.clipboardText = draft;
+    internal.copied = draft !== "";
+    internal.replying = null;
+    internal.mode = "closed";
   }
 
-  function keepDraft(notification, text) {
-    if (notification) internal.drafts = Object.assign({}, internal.drafts, { [notification.id]: text });
+  function keepDraft(entry, text) {
+    if (entry) entry.draft = text;
   }
 
-  // False once its card closed, the prompt keeping the text; the keys stay only on a resident card.
+  // The keys stay only on a resident card.
   function sendReply(text, close) {
-    const notification = internal.replying;
-    if (!notification || text.trim() === "") return false;
-    internal.sent = Object.assign({}, internal.sent, { [notification.id]: text });
-    internal.drafts = without(internal.drafts, notification.id);
+    const entry = internal.replying;
+    if (!entry || text.trim() === "") return;
+    entry.draft = "";
     // No longer the reply target, so if the reply closes it, it is kept to bring back.
-    internal.replying = null;
-    notification.sendInlineReply(text);
-    if (close || !notification.resident) release();
-    return true;
+    endReply();
+    entry.notification.sendInlineReply(text);
+    if (close || !entry.resident) release();
   }
 
-  // ↑↓ as they show: newest by the corner, so at a bottom one Down goes toward it; past the last shown, or back past the first of the rest, they scroll.
+  // ↑↓ as they show: newest by the corner, so at a bottom one Down goes toward it; the window follows.
   function move(down) {
     const by = down === settings.corner.startsWith("top") ? 1 : -1;
-    const at = shown.indexOf(internal.picked);
-    if (by < 0 && at === internal.pinned && internal.offset > 0) {
-      internal.offset--;
-      internal.picked = shown[internal.pinned];
-    } else if (by > 0 && at === shown.length - 1 && internal.offset + internal.room < internal.rest.length) {
-      internal.offset++;
-      internal.picked = shown[shown.length - 1];
-    } else if (at + by >= 0 && at + by < shown.length) {
-      internal.picked = shown[at + by];
-    }
+    pick(showable[showable.indexOf(internal.picked) + by]);
   }
 
   // A card by its digit, its place among all, scrolled into view.
-  function pick(notification) {
-    if (!notification) return false;
-    const at = internal.rest.indexOf(notification);
-    if (at >= 0 && at < internal.offset) internal.offset = at;
-    else if (at >= internal.offset + internal.room) internal.offset = at - internal.room + 1;
-    internal.picked = notification;
+  function pick(entry) {
+    if (!entry) return false;
+    internal.picked = entry;
+    internal.offset = internal.first;
     return true;
   }
 
-  // The last card that closed, back in the stack, only to read: its sender is done with it.
+  // The last card that closed, back in the stack as the newest, only to read: its sender is done with it.
   function restore() {
-    const last = internal.closed[internal.closed.length - 1];
-    if (!last) return;
+    const entry = internal.closed[internal.closed.length - 1];
+    if (!entry) return;
     internal.closed = internal.closed.slice(0, -1);
-    const card = Object.assign({}, last, { restored: true });
-    internal.came[card.id] = ++internal.seq;
-    // Held still, it comes last, as a new one does, not back to its old place.
-    internal.frozen = internal.frozen.filter(id => id !== card.id).concat(still ? [card.id] : []);
-    card.dismiss = card.expire = () => root.leave(card);
-    // Its rules with it, so a pause or a timeout they set still holds.
-    if (last.applied) internal.applied = Object.assign({}, internal.applied, { [card.id]: last.applied });
-    internal.list = internal.list.concat([card]);
-    internal.left = Object.assign({}, internal.left, { [card.id]: timeoutOf(card) });
-    internal.arrived = Object.assign({}, internal.arrived, { [card.id]: last.arrived });
-    if (summoned && !internal.replying) pick(card);
+    entry.came = ++internal.seq;
+    entry.timeout = timeoutOf(entry);
+    internal.list = internal.list.concat([entry]);
+    if (summoned && !internal.replying) pick(entry);
   }
 
   // When it came, once it has waited a minute or more (held by pause, idle or a fullscreen window): so an old one never reads as new.
-  function ageOf(notification) {
-    const since = internal.arrived[notification.id];
-    return since && Clock.date - since >= 60000 ? Clock.time(new Date(since)) : "";
+  function ageOf(entry) {
+    return entry.arrived && Clock.date - entry.arrived >= 60000 ? Clock.time(new Date(entry.arrived)) : "";
+  }
+
+  // Whether its time runs: shown, nothing holding the cards, no unsent reply on it.
+  function counting(entry) {
+    return !still && !idle.isIdle && entry.timeout > 0 && !entry.draft && shown.includes(entry);
   }
 
   function key(name) {
-    if (internal.notice) {
+    if (internal.mode === "closed") {
       if (name === "Escape") release();
       return true;
     }
     // The prompt has the keys: what it leaves (arrows, chords) would act on the cards under the text; Escape, from a binding, still lets go.
-    if (internal.replying && name !== "Escape") return false;
-    if (internal.help) internal.help = false;
-    else if (name === "?") internal.help = true;
+    if (internal.mode === "reply" && name !== "Escape") return false;
+    if (internal.mode === "help") internal.mode = "cards";
+    else if (name === "?") internal.mode = "help";
     else if (/^[1-9]$/.test(name)) return pick(showable[Number(name) - 1]);
     else if (name === "Up" || name === "Down") move(name === "Down");
     else if (name === "Return" && internal.picked) {
       open(internal.picked);
       release();
-    } else if (name === "x" && internal.picked) internal.picked.dismiss();
+    } else if (name === "x" && internal.picked) dismiss(internal.picked);
     else if (name === "Ctrl+X") clear();
     else if (name === "Ctrl+p") togglePause();
     else if (name === "Ctrl+r") restore();
@@ -320,7 +304,7 @@ Plugin {
       summary: notification.summary,
       body: notification.body,
       category: String(notification.hints.category ?? ""),
-      urgency: ["low", "normal", "critical"][notification.urgency],
+      urgency: settings.urgencies[notification.urgency],
       desktopEntry: notification.desktopEntry
     };
     const applied = { actions: [], values: {} };
@@ -340,18 +324,18 @@ Plugin {
   }
 
   // What a rule's labels and commands read: its app, summary, body, urgency and id, its picture or icon as a file (`icon`, as niri sends a screenshot), and what its groups found.
-  function valuesOf(notification) {
-    return Object.assign({ app: notification.appName, summary: notification.summary, body: notification.body, urgency: urgencyOf(notification), id: String(notification.id), icon: fileOf(notification) || iconOf(notification) }, internal.applied[notification.id]?.values);
+  function valuesOf(entry) {
+    return Object.assign({ app: entry.appName, summary: entry.summary, body: entry.body, urgency: urgencyOf(entry), id: String(entry.id), icon: fileOf(entry) || iconOf(entry) }, entry.applied.values);
   }
 
   // Its icon as sent: a file or a name, from its image-path hint (notify-send -i), else its app icon (niri's screenshot).
-  function iconOf(notification) {
-    return String(notification.hints["image-path"] ?? "") || notification.appIcon || "";
+  function iconOf(entry) {
+    return String(entry.hints["image-path"] ?? "") || entry.appIcon || "";
   }
 
   // Its icon as a path when it is a file, else "".
-  function fileOf(notification) {
-    const icon = iconOf(notification);
+  function fileOf(entry) {
+    const icon = iconOf(entry);
     if (icon.startsWith("/")) return icon;
     if (!icon.startsWith("file://")) return "";
     try {
@@ -362,19 +346,18 @@ Plugin {
   }
 
   // A rule's command, given them in its environment as NOTIFICATION_<NAME>, as dunst gives DUNST_*.
-  function runFor(notification, cmd) {
+  function runFor(entry, cmd) {
     const environment = {};
-    for (const [name, value] of Object.entries(valuesOf(notification))) environment["NOTIFICATION_" + name.toUpperCase()] = value;
+    for (const [name, value] of Object.entries(valuesOf(entry))) environment["NOTIFICATION_" + name.toUpperCase()] = value;
     Commands.runWith(cmd, environment);
   }
 
-  // Milliseconds it shows: a rule's, else its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's; 0 for never, as for a critical one.
-  function timeoutOf(notification) {
-    if (critical(notification)) return 0;
-    const rule = internal.applied[notification.id]?.timeout;
-    if (rule !== undefined) return rule * 1000;
-    if (notification.expireTimeout >= 0) return notification.expireTimeout;
-    return 1000 * (urgencyOf(notification) === "low" ? settings.timeout.low : settings.timeout.normal);
+  // Milliseconds it shows: a rule's, else 0 for a critical one, else its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's.
+  function timeoutOf(entry) {
+    if (entry.applied.timeout !== undefined) return entry.applied.timeout * 1000;
+    if (critical(entry)) return 0;
+    if (entry.expireTimeout >= 0) return entry.expireTimeout;
+    return 1000 * (urgencyOf(entry) === "low" ? settings.timeout.low : settings.timeout.normal);
   }
 
   // Volume and brightness tools replace their last one by a tag.
@@ -382,141 +365,149 @@ Plugin {
     return String(notification.hints["x-dunst-stack-tag"] ?? notification.hints["x-canonical-private-synchronous"] ?? "");
   }
 
-  // A hidden one is left untracked, so Quickshell drops it; `run` runs for a new one only, not one kept over a reload.
+  // A hidden one is left untracked, so Quickshell drops it; one by the tag of a card from its app takes that card, as a replacement by id does; `run` runs for a new one only, not one kept over a reload.
   function arrive(notification) {
     const applied = ruled(notification);
     if (applied.hide) return;
     notification.tracked = true;
-    if (!notification.lastGeneration) internal.arrived = Object.assign({}, internal.arrived, { [notification.id]: Date.now() });
-    internal.came[notification.id] = ++internal.seq;
-    internal.list = internal.list.concat([notification]);
-    notification.closed.connect(() => root.leave(notification));
-    // Held still, a newcomer takes the next place for good, so later ones never swap with it.
-    if (still) internal.frozen = internal.frozen.concat([notification.id]);
-    if (summoned && !internal.picked) pick(notification);
-    // A sender replacing it by id changes it in place: once for all it changed, it comes again, its rules and time with it.
-    const renew = () => root.renew(notification);
-    for (const changed of [notification.appNameChanged, notification.summaryChanged, notification.bodyChanged, notification.urgencyChanged, notification.expireTimeoutChanged, notification.hintsChanged, notification.actionsChanged]) changed.connect(() => Qt.callLater(renew));
-    apply(notification, applied);
-    if (applied.run && !notification.lastGeneration) runFor(notification, applied.run);
-    // At most `keep`, the oldest closing first; never one that must not be missed, nor while the stack holds still.
+    const tag = tagOf(notification);
+    const same = tag ? internal.list.find(each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag) : null;
+    const entry = same ?? entryOf.createObject(root, { came: ++internal.seq, arrived: notification.lastGeneration ? 0 : Date.now() });
+    const old = entry.notification;
+    entry.notification = notification;
+    notification.closed.connect(() => {
+      if (entry.notification === notification) root.leave(entry);
+    });
+    if (old) return old.expire();
+    internal.list = internal.list.concat([entry]);
+    apply(entry, applied);
+    if (summoned && !internal.picked) pick(entry);
+    if (applied.run && !notification.lastGeneration) runFor(entry, applied.run);
+    // At most `keep`, the oldest closing first, never one that must not be missed or that you reply to.
     const over = internal.list.length - settings.keep;
-    if (over > 0 && !still) internal.list.filter(each => !critical(each) && each !== notification && each !== internal.replying).sort((a, b) => internal.came[a.id] - internal.came[b.id]).slice(0, over).forEach(each => each.expire());
+    if (over > 0) internal.list.filter(each => !critical(each) && each !== internal.replying).sort((a, b) => a.came - b.came).slice(0, over).forEach(each => root.expire(each));
   }
 
-  function renew(notification) {
-    if (!internal.list.includes(notification)) return;
-    internal.came[notification.id] = ++internal.seq;
-    internal.arrived = Object.assign({}, internal.arrived, { [notification.id]: Date.now() });
-    apply(notification, ruled(notification));
-  }
-
-  // Its rules and time, as it comes and as its sender replaces it: one that now hides goes, and its app's card by the same tag gives it its place, in the order too.
-  function apply(notification, applied) {
+  // Its rules and time, as it comes and as its sender replaces it, by id or tag: one that now hides goes, not to bring back; one that now takes no reply ends yours.
+  function apply(entry, applied) {
     if (applied.hide) {
-      internal.replaced[notification.id] = true;
+      const notification = entry.notification;
+      entry.notification = null;
+      leave(entry, false);
       return notification.expire();
     }
-    internal.applied = Object.assign({}, internal.applied, { [notification.id]: applied });
-    // The sender's new text takes the place of what you sent below its old one.
-    if (notification.id in internal.sent) internal.sent = without(internal.sent, notification.id);
-    internal.left = Object.assign({}, internal.left, { [notification.id]: timeoutOf(notification) });
-    const tag = tagOf(notification);
-    for (const old of internal.list) {
-      if (!tag || old === notification || old.appName !== notification.appName || tagOf(old) !== tag) continue;
-      if (internal.picked === old) internal.picked = notification;
-      if (internal.replying === old && notification.hasInlineReply) {
-        internal.drafts = Object.assign({}, internal.drafts, { [notification.id]: draftOf(old) });
-        internal.replying = notification;
-      }
-      internal.frozen = internal.frozen.filter(id => id !== notification.id).map(id => id === old.id ? notification.id : id);
-      internal.replaced[old.id] = true;
-      old.expire();
+    entry.applied = applied;
+    entry.timeout = timeoutOf(entry);
+    if (entry.timer.running) entry.timer.restart();
+    if (entry === internal.replying && !entry.hasInlineReply) interrupt();
+  }
+
+  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient) or it was brought back already.
+  function leave(entry, keep = true) {
+    if (entry === internal.replying) interrupt();
+    const at = shown.indexOf(entry);
+    internal.list = internal.list.filter(each => each !== entry);
+    if (internal.picked === entry) {
+      internal.picked = shown[at < 0 ? 0 : Math.min(at, shown.length - 1)] ?? null;
+      if (internal.picked === null && internal.mode !== "closed") release();
     }
+    if (!keep || entry.restored || entry.notification.transient) return entry.destroy();
+    entry.saved = snapshot(entry);
+    entry.notification = null;
+    const closed = internal.closed.concat([entry]);
+    if (closed.length > 20) closed.shift().destroy();
+    internal.closed = closed;
   }
 
-  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing ends the reply, your text to the clipboard, so none is lost.
-  function leave(notification) {
-    if (notification === internal.replying) {
-      if (draftOf(notification)) Quickshell.clipboardText = draftOf(notification);
-      internal.notice = draftOf(notification) ? words.replyCopied : words.cardClosed;
-      internal.replying = null;
-    }
-    if (!(notification.id in internal.replaced)) keepClosed(notification);
-    const at = shown.indexOf(notification);
-    const before = internal.rest.indexOf(notification);
-    // Nothing reads a gone card's id, so only the list tells; each map loses it in place.
-    for (const map of [internal.left, internal.sent, internal.applied, internal.drafts, internal.arrived, internal.replaced, internal.came]) delete map[notification.id];
-    internal.list = internal.list.filter(each => each !== notification);
-    // One gone before those shown, or the last past them, moves them back a place, so the pick stays in view.
-    if (internal.offset > 0 && (before >= 0 && before < internal.offset || internal.offset + internal.room > internal.rest.length)) internal.offset--;
-    if (internal.picked !== notification) return;
-    // One gone off screen leaves the pick to the first shown; with none shown, the keys go.
-    internal.picked = shown[at < 0 ? 0 : Math.min(at, shown.length - 1)] ?? null;
-    if (internal.picked === null && !internal.notice) release();
-  }
-
-  // Kept to bring back (C-r), unless its sender marked it passing (transient) or it was brought back already.
-  function keepClosed(notification) {
-    if (!notification.restored && !notification.transient) internal.closed = internal.closed.slice(-19).concat([snapshot(notification)]);
-  }
-
-  // What a card shows, kept once its sender is done with it, to bring back: it reads as it did and runs nothing; a picture sent as data goes with its sender.
-  function snapshot(notification) {
-    return { id: notification.id, summary: notification.summary, body: notification.body, appName: notification.appName, appIcon: notification.appIcon, image: notification.image.startsWith("image://qsimage") ? "" : notification.image, urgency: ["low", "normal", "critical"].indexOf(urgencyOf(notification)), hints: ({ "image-path": notification.hints["image-path"], value: notification.hints.value }), actions: [], arrived: internal.arrived[notification.id], applied: internal.applied[notification.id] };
-  }
-
-  function without(map, id) {
-    const rest = Object.assign({}, map);
-    delete rest[id];
-    return rest;
+  // What a card shows, kept once its sender is done with it; a picture sent as data goes with its sender.
+  function snapshot(entry) {
+    return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image: entry.image.startsWith("image://qsimage") ? "" : entry.image, urgency: entry.urgency, hints: ({ "image-path": entry.hints["image-path"], value: entry.hints.value }), desktopEntry: entry.desktopEntry, expireTimeout: -1 };
   }
 
   Component.onCompleted: check()
+
+  // A card: its notification while its sender keeps it, else what it showed; when it came, what its rules set, your unsent reply, and its time.
+  component Entry: QtObject {
+    id: entry
+
+    required property var plugin
+    property var notification: null
+    property var saved: null
+    readonly property var data: notification ?? saved
+    readonly property bool restored: notification === null
+    readonly property int id: data?.id ?? 0
+    readonly property string summary: data?.summary ?? ""
+    readonly property string body: data?.body ?? ""
+    readonly property string appName: data?.appName ?? ""
+    readonly property string appIcon: data?.appIcon ?? ""
+    readonly property string image: data?.image ?? ""
+    readonly property var hints: data?.hints ?? ({})
+    readonly property int urgency: data?.urgency ?? 1
+    readonly property string desktopEntry: data?.desktopEntry ?? ""
+    readonly property int expireTimeout: data?.expireTimeout ?? -1
+    readonly property var actions: notification?.actions ?? []
+    readonly property bool hasInlineReply: notification?.hasInlineReply ?? false
+    readonly property bool resident: notification?.resident ?? false
+    property int came: 0
+    property real arrived: 0
+    property var applied: ({ actions: [], values: {} })
+    property string draft: ""
+    property int timeout: 0
+    // What a replacement changes, by id or tag: once for all of it, its rules and time again.
+    readonly property string signature: notification ? [notification.id, notification.appName, notification.summary, notification.body, notification.urgency, notification.expireTimeout, JSON.stringify(notification.hints), Array.from(notification.actions).map(action => action.identifier).join()].join("\n") : ""
+    readonly property var renew: () => {
+      if (entry.notification && entry.plugin.ordered.includes(entry)) entry.plugin.apply(entry, entry.plugin.ruled(entry.notification));
+    }
+    onSignatureChanged: Qt.callLater(renew)
+
+    // Restarting in full whenever it runs again: after a hover, a summon, idle.
+    property Timer timer: Timer {
+      interval: Math.max(1, entry.timeout)
+      running: entry.plugin.counting(entry)
+      onTriggered: entry.plugin.expire(entry)
+    }
+
+    function dismiss() {
+      plugin.dismiss(entry);
+    }
+
+    function expire() {
+      plugin.expire(entry);
+    }
+  }
+
+  Component {
+    id: entryOf
+
+    Entry {
+      plugin: root
+    }
+  }
 
   QtObject {
     id: internal
 
     // A focused fullscreen window holds them as pause does: under it they would expire unseen.
     readonly property bool fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
-    // How many critical ones at the head show pinned, a critical one that came while held still scrolling with the rest; those past them too.
-    readonly property int pinned: {
-      let critical = 0;
-      while (critical < root.showable.length && root.critical(root.showable[critical])) critical++;
-      return root.showable.length > root.settings.limit ? Math.min(critical, root.settings.limit - 1) : critical;
+    // The first shown: `offset`, within the list, moved just enough to show the pick.
+    readonly property int first: {
+      const at = root.showable.indexOf(picked);
+      const within = Math.max(0, Math.min(offset, root.showable.length - root.settings.limit));
+      return at < 0 ? within : Math.max(at - root.settings.limit + 1, Math.min(within, at));
     }
-    readonly property var rest: root.showable.slice(pinned)
-    readonly property int room: root.settings.limit - pinned
     property var list: []
-    // Milliseconds left by id, counted only while shown and nothing holds them; 0 never expires.
-    property var left: ({})
+    // The last closed, to bring back.
+    property var closed: []
     property bool hovered: false
     property var picked: null
     property var replying: null
-    property var sent: ({})
-    property var drafts: ({})
-    // The last closed, to bring back, and when each came, by id.
-    property var closed: []
-    property var arrived: ({})
-    property bool help: false
-    // What the rules matching it set, by id.
-    property var applied: ({})
-    // The order as it was when it held still, by id.
-    property var frozen: []
-    // Cards a newer one by their tag replaced, by id: gone, not to bring back.
-    property var replaced: ({})
-    // The order they came in, by id, one brought back coming again: the newest goes by the corner.
-    property var came: ({})
+    property string mode: "cards"
+    property bool copied: false
+    // Arrivals counted; the count when the cards last held still.
     property int seq: 0
-    property string notice: ""
-    // The first shown, summoned, past those scrolled by.
+    property int heldAt: 0
     property int offset: 0
     property string error: ""
-
-    function rank(notification) {
-      const at = frozen.indexOf(notification.id);
-      return at < 0 ? frozen.length + came[notification.id] : at;
-    }
   }
 
   NotificationServer {
@@ -535,17 +526,5 @@ Plugin {
     id: idle
     enabled: root.settings.idle > 0
     timeout: root.settings.idle
-  }
-
-  Timer {
-    interval: 200
-    repeat: true
-    running: !root.still && !idle.isIdle && root.shown.some(notification => internal.left[notification.id] > 0 && !root.draftOf(notification))
-    onTriggered: {
-      const left = Object.assign({}, internal.left);
-      const due = root.shown.filter(notification => left[notification.id] > 0 && !root.draftOf(notification) && (left[notification.id] -= interval) <= 0);
-      internal.left = left;
-      for (const notification of due) notification.expire();
-    }
   }
 }

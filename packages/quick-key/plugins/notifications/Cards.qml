@@ -19,16 +19,16 @@ Scope {
   readonly property var cards: top ? plugin.shown : plugin.shown.slice().reverse()
 
   // A picture, as the protocol orders them: image data, which Quickshell serves as image://qsimage, else an icon sent as a file (album art, a screenshot).
-  function pictureOf(notification) {
-    if (notification.image?.startsWith("image://qsimage")) return notification.image;
-    const file = plugin.fileOf(notification);
+  function pictureOf(entry) {
+    if (entry.image.startsWith("image://qsimage")) return entry.image;
+    const file = plugin.fileOf(entry);
     return file ? "file://" + file.split("/").map(encodeURIComponent).join("/") : "";
   }
 
   // An icon sent by its name, from the theme, at a glyph's size.
-  function iconOf(notification) {
-    const icon = plugin.iconOf(notification);
-    return icon && !plugin.fileOf(notification) ? Quickshell.iconPath(icon, true) : "";
+  function iconOf(entry) {
+    const icon = plugin.iconOf(entry);
+    return icon && !plugin.fileOf(entry) ? Quickshell.iconPath(icon, true) : "";
   }
 
   // The focused screen, which the cards follow while nothing holds them still.
@@ -143,47 +143,33 @@ Scope {
             Card {
               id: card
               required property int index
-              readonly property var notification: view.cards[index] ?? null
-              visible: notification !== null
-              readonly property var hint: notification?.hints.value
+              readonly property var entry: view.cards[index] ?? null
+              visible: entry !== null
+              readonly property var hint: entry?.hints.value
 
               width: stack.width
               monochrome: Config.theme.monochromeTray
-              icon: notification ? view.iconOf(notification) : ""
-              image: notification ? view.pictureOf(notification) : ""
-              title: notification?.summary || notification?.appName || ""
+              icon: entry ? view.iconOf(entry) : ""
+              image: entry ? view.pictureOf(entry) : ""
+              title: entry?.summary || entry?.appName || ""
               // The app, unless the title already says it, and when it came once it has waited.
-              aside: !notification ? "" : [notification.appName.toLowerCase() === title.toLowerCase() ? "" : notification.appName, view.plugin.ageOf(notification)].filter(part => part).join(" · ")
-              body: notification?.body ?? ""
-              tone: notification && view.plugin.critical(notification) ? "alert" : ""
+              aside: !entry ? "" : [entry.appName.toLowerCase() === title.toLowerCase() ? "" : entry.appName, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
+              body: entry?.body ?? ""
+              tone: entry && view.plugin.critical(entry) ? "alert" : ""
               meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
               meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
-              actions: view.plugin.actionsOf(notification)
-              heldActions: view.plugin.actionsOf(notification, true)
-              footer: !notification ? null : notification === view.plugin.replying ? reply : notification.id in view.plugin.sent ? sent : null
+              actions: view.plugin.actionsOf(entry)
+              footer: entry !== null && entry === view.plugin.replying ? reply : null
               actionSide: view.settings.actionSide
               // Its place among all, while a digit reaches it.
-              readonly property int place: view.plugin.showable.indexOf(notification)
+              readonly property int place: view.plugin.showable.indexOf(entry)
               key: place >= 0 && place < 9 ? String(place + 1) : ""
               closeKey: "x"
               // Replying, the prompt has the keys: the others would type; after a closed reply, ESC alone.
-              keysShown: view.plugin.summoned && !view.plugin.replying && !view.plugin.notice
-              current: view.plugin.summoned && notification === view.plugin.picked
-              onActivated: view.plugin.open(notification)
-              onDismissed: view.plugin.dismiss(notification)
-
-              // What was sent, one dim line in the actions' place, so the card never grows.
-              Component {
-                id: sent
-
-                Label {
-                  elide: Text.ElideRight
-                  tone: "dim"
-                  // In the text's column, as the prompt's glyph takes the icon's.
-                  leftPadding: Config.theme.iconSize + Config.theme.spacing
-                  text: view.plugin.words.you + (view.plugin.sent[card.notification?.id] ?? "")
-                }
-              }
+              keysShown: view.plugin.summoned && (view.plugin.mode === "cards" || view.plugin.mode === "help")
+              current: view.plugin.summoned && entry === view.plugin.picked
+              onActivated: view.plugin.open(entry)
+              onDismissed: view.plugin.dismiss(entry)
             }
           }
           }
@@ -209,7 +195,7 @@ Scope {
       maxLines: 1
       placeholder: view.plugin.replying?.inlineReplyPlaceholder || Words.replyPrompt
       onBack: view.plugin.endReply()
-      Component.onCompleted: set(view.plugin.draftOf(view.plugin.replying))
+      Component.onCompleted: set(view.plugin.replying?.draft ?? "")
       onTextChanged: view.plugin.keepDraft(view.plugin.replying, text)
       onKeyPressed: event => {
         const send = MenuKeys.sends(event);
@@ -232,13 +218,13 @@ Scope {
       visible: view.plugin.summoned
       width: parent.width
       color: Tone.surface(1)
-      implicitHeight: (view.plugin.help ? list.implicitHeight : barRow.implicitHeight) + Config.theme.padding / 2
+      implicitHeight: (view.plugin.mode === "help" ? list.implicitHeight : barRow.implicitHeight) + Config.theme.padding / 2
 
       KeyList {
         id: list
         // One column: the stack is a card wide.
         columns: 1
-        visible: view.plugin.help
+        visible: view.plugin.mode === "help"
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.right: parent.right
@@ -249,7 +235,7 @@ Scope {
 
       RowLayout {
         id: barRow
-        visible: !view.plugin.help
+        visible: view.plugin.mode !== "help"
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.right: parent.right
@@ -261,15 +247,15 @@ Scope {
         KeyLegend {
           Layout.fillWidth: true
           clip: true
-          keys: view.plugin.notice ? [{ key: "Escape", what: view.plugin.words.letGo }]
-            : view.plugin.replying ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendLeave }].concat(view.plugin.draftOf(view.plugin.replying) !== "" ? [{ key: "Escape", what: Words.clear }] : [])
+          keys: view.plugin.mode === "closed" ? [{ key: "Escape", what: view.plugin.words.letGo }]
+            : view.plugin.mode === "reply" ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: view.plugin.words.sendLeave }].concat((view.plugin.replying?.draft ?? "") !== "" ? [{ key: "Escape", what: Words.clear }] : [])
             : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }, { key: "?", what: Words.help }]
         }
 
         Label {
           visible: text !== ""
-          tone: view.plugin.notice ? "warning" : "dim"
-          text: view.plugin.notice ? view.plugin.notice : view.plugin.replying ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? "+" + view.plugin.more : ""
+          tone: view.plugin.mode === "closed" ? "warning" : "dim"
+          text: view.plugin.mode === "closed" ? (view.plugin.copied ? view.plugin.words.replyCopied : view.plugin.words.cardClosed) : view.plugin.mode === "reply" ? "" : view.plugin.shown.length === 0 ? view.plugin.words.none : view.plugin.more > 0 ? "+" + view.plugin.more : ""
         }
       }
     }

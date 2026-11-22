@@ -328,7 +328,7 @@ ShellRoot {
         until: () => root.replies.some(line => line.includes("Yes, at one")) && !root.find("Ana") && root.plugin.replying === null && !root.plugin.summoned
       },
       {
-        name: "a resident one stays, showing what was sent in its actions' place, the keys staying",
+        name: "a resident one stays after a reply, its actions back, the keys staying",
         start: () => root.chatSend("Cid", "@a{sv} {'resident': <true>}"),
         until: () => {
           const cid = root.find("Cid");
@@ -337,7 +337,7 @@ ShellRoot {
             root.plugin.reply(cid);
             root.plugin.sendReply("On my way", false);
           }
-          return root.replies.some(line => line.includes("On my way")) && root.plugin.sent[root.find("Cid")?.id] === "On my way" && root.plugin.summoned && root.plugin.actionsOf(root.find("Cid")).length === 0;
+          return root.replies.some(line => line.includes("On my way")) && root.find("Cid") !== null && root.plugin.summoned && root.plugin.mode === "cards" && root.plugin.actionsOf(root.find("Cid")).length > 0;
         }
       },
       {
@@ -352,12 +352,12 @@ ShellRoot {
             root.mark("bea");
             root.plugin.reply(bea);
             root.plugin.keepDraft(bea, "Too late");
-            bea.dismiss();
+            bea.notification.dismiss();
           }
-          if (!("bea" in root.marks) || root.plugin.replying !== null || root.find("Bea") || root.plugin.notice !== root.plugin.words.replyCopied || Quickshell.clipboardText !== "Too late") return false;
+          if (!("bea" in root.marks) || root.plugin.replying !== null || root.find("Bea") || root.plugin.mode !== "closed" || !root.plugin.copied || Quickshell.clipboardText !== "Too late") return false;
           const held = root.plugin.key("x") && root.plugin.summoned;
           root.plugin.key("Escape");
-          return held && !root.plugin.summoned && root.plugin.notice === "";
+          return held && !root.plugin.summoned && root.plugin.mode === "cards";
         }
       },
       {
@@ -479,13 +479,6 @@ ShellRoot {
         until: () => root.plugin.ordered.map(notification => notification.summary).join() === "After,Long"
       },
       {
-        name: "a reply's draft is its own card's",
-        until: () => {
-          root.plugin.keepDraft({ id: 9991 }, "for one");
-          return root.plugin.draftOf({ id: 9991 }) === "for one" && root.plugin.draftOf({ id: 9992 }) === "";
-        }
-      },
-      {
         name: "summoned, limit cards show, the arrows scrolling past them, Down toward a bottom corner",
         start: () => ["C", "D", "E"].forEach(summary => root.send(summary)),
         until: () => {
@@ -510,27 +503,12 @@ ShellRoot {
         until: () => root.plugin.picked === root.plugin.showable[0] && root.plugin.shown[0] === root.plugin.showable[0]
       },
       {
-        name: "a critical card stays by the corner while the rest scroll",
-        start: () => {
-          root.plugin.release();
-          root.send("-u", "critical", "Alarm two");
-        },
-        until: () => {
-          if (root.find("Alarm two") && !("pinned" in root.marks)) {
-            root.mark("pinned");
-            root.plugin.summon();
-            for (let i = 0; i < 6; i++) root.plugin.key("Up");
-          }
-          return "pinned" in root.marks && root.plugin.shown[0]?.summary === "Alarm two" && root.plugin.shown[1] !== root.plugin.showable[1];
-        }
-      },
-      {
         name: "? lists the keys, and any key closes the list",
         start: () => root.plugin.key("?"),
         until: () => {
-          const listed = root.plugin.help && root.plugin.keys.some(hint => hint.key === "Ctrl+r");
+          const listed = root.plugin.mode === "help" && root.plugin.keys.some(hint => hint.key === "Ctrl+r");
           if (listed) root.plugin.key("a");
-          return listed && !root.plugin.help;
+          return listed && root.plugin.mode === "cards";
         }
       },
       {
@@ -708,7 +686,7 @@ ShellRoot {
         }
       },
       {
-        name: "critical ones filling the limit leave a place for the rest, and a digit picks only what shows",
+        name: "with critical ones past the limit, a digit picks what then shows",
         start: () => {
           root.reset();
           ["K1", "K2", "K3", "K4"].forEach(summary => root.send("-u", "critical", summary));
@@ -789,24 +767,6 @@ ShellRoot {
         }
       },
       {
-        name: "a sender replacing a resident card by id takes the place of what you sent, its actions back",
-        start: () => {
-          root.reset();
-          root.chatSend("Una", "@a{sv} {'resident': <true>}");
-        },
-        until: () => {
-          const una = root.find("Una");
-          if (una && !("una" in root.marks)) {
-            root.mark("una");
-            root.plugin.reply(una);
-            root.plugin.sendReply("Sure", false);
-            root.chatSend("Una again", "@a{sv} {'resident': <true>}", una.id);
-          }
-          const again = root.find("Una again");
-          return again !== null && !(again.id in root.plugin.sent) && root.plugin.actionsOf(again).some(action => action.key === "Tab");
-        }
-      },
-      {
         name: "a card brought back comes in as the newest, in view",
         start: () => {
           root.reset();
@@ -868,7 +828,7 @@ ShellRoot {
         }
       },
       {
-        name: "a card its sender replaces by id comes in as the newest",
+        name: "a card its sender replaces by id keeps its place",
         start: () => {
           root.reset();
           root.sendId("group", "Group 1");
@@ -882,7 +842,7 @@ ShellRoot {
             root.mark("group2");
             root.send("-r", root.ids.group, "Group 2");
           }
-          return root.plugin.ordered[0]?.summary === "Group 2" && root.plugin.ordered.length === 2;
+          return root.plugin.ordered.map(each => each.summary).join() === "Other,Group 2";
         }
       },
       {
@@ -933,7 +893,7 @@ ShellRoot {
             root.chatSend("Tagged 2", "@a{sv} {'x-dunst-stack-tag': <'chat'>}");
           }
           const second = root.find("Tagged 2");
-          return second !== null && !root.find("Tagged 1") && root.plugin.replying === second && root.plugin.draftOf(second) === "Hi";
+          return second !== null && !root.find("Tagged 1") && root.plugin.replying === second && second.draft === "Hi";
         }
       },
       {
@@ -965,8 +925,8 @@ ShellRoot {
           const una = root.find("Una blank");
           if (!una) return false;
           root.plugin.reply(una);
-          const sent = root.plugin.sendReply("  ", false);
-          return !sent && root.plugin.replying === una && root.find("Una blank") !== null;
+          root.plugin.sendReply("  ", false);
+          return root.plugin.replying === una && root.find("Una blank") !== null;
         }
       },
       {
