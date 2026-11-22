@@ -290,7 +290,7 @@ ShellRoot {
       {
         name: "Ctrl held lists the bar's keys, each named, a pair as one",
         start: () => menu.held = "Ctrl",
-        until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-1","a-1"],["C-0","+1"]]'
+        until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-k","Clicked"],["C-1","a-1"],["C-0","+1"]]'
       },
       {
         name: "a built-in status is shaped by its own format, an entry's over it, and music by its value",
@@ -440,6 +440,14 @@ ShellRoot {
           const map = menu.keyMap();
           return ran && !missing && map.includes("- `Ctrl+x` X") && map.includes("- `Ctrl+Down` `Ctrl+Up` Volume") && Plugins.get("picked")?.text === "bar";
         }
+      },
+      {
+        name: "an entry showing a plugin, without a command, activates it as a click does",
+        start: () => {
+          menu.hide();
+          menu.press("Ctrl+k");
+        },
+        until: () => Plugins.get("picked")?.text === "clicked"
       }
     ]
   }

@@ -296,7 +296,8 @@ Scope {
       return;
     }
     const cmd = MenuKeys.isPair(entry) ? Array.from(entry.cmd)[MenuKeys.names(entry.key).indexOf(name)] : entry.cmd;
-    if (!cmd) return;
+    // No command: an entry showing a plugin activates it, as a click on it in a bar does.
+    if (!cmd) return Plugins.get(entry.status ?? "")?.activate();
     if (!entry.keepOpen) hide();
     Commands.run(cmd);
   }

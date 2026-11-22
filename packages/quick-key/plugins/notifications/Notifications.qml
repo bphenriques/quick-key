@@ -18,20 +18,33 @@ Plugin {
   readonly property bool paused: Kept.values[name + ".paused"] ?? false
   // A focused fullscreen window holds them as pause does: under it they would expire unseen.
   readonly property bool fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
-  // Critical ones first, then the newest; a replaced one keeps its place.
-  readonly property var ordered: internal.list.slice().sort((a, b) => critical(b) - critical(a) || b.id - a.id)
-  readonly property var showable: ordered.filter(notification => critical(notification) || !paused && !fullscreen)
-  readonly property var shown: showable.slice(0, settings.limit)
+  // The cards have the keys (s-n), one surface at a time with the menu and panels.
+  readonly property bool summoned: Panels.top === root
+  // Critical ones first, then the newest; a replaced one keeps its place. Summoned, the order holds, so digits do, one that comes meanwhile going last.
+  readonly property var ordered: internal.list.slice().sort(summoned ? (a, b) => internal.rank(a) - internal.rank(b) : (a, b) => critical(b) - critical(a) || b.id - a.id)
+  // Summoned, every one shows, those held too, as many as there are digits.
+  readonly property var showable: summoned ? ordered : ordered.filter(notification => critical(notification) || !paused && !fullscreen)
+  readonly property var shown: showable.slice(0, summoned ? 9 : settings.limit)
   // Those over the limit, and those pause or a fullscreen window holds.
   readonly property int more: showable.length - shown.length
   readonly property int held: ordered.length - showable.length
+  // The card the keys act on while summoned.
+  readonly property var picked: internal.picked
 
   glyph: paused ? Glyphs.notificationsPaused : Glyphs.notifications
   text: ordered.length > 0 ? String(ordered.length) : ""
   active: paused
   error: internal.error
-  words: ({ taken: "Another notification daemon has the bus: stop it, then restart quick-key" })
+  words: ({
+      taken: "Another notification daemon has the bus: stop it, then restart quick-key",
+      open: "open",
+      clear: "clear all",
+      pause: "pause",
+      resume: "resume",
+      none: "Nothing new"
+    })
   actions: ({
+      summon: { icon: () => Glyphs.notifications, available: () => true, run: () => root.summon() },
       pause: { icon: () => root.glyph, state: root.name, available: () => true, run: () => root.togglePause() },
       clear: { icon: () => Glyphs.close, available: () => internal.list.length > 0, run: () => root.clear() },
       dismiss: { icon: () => Glyphs.close, available: () => root.newest() !== null, run: () => root.newest().dismiss() },
@@ -46,11 +59,23 @@ Plugin {
     Kept.set(name + ".paused", !paused);
   }
 
+  // A click on its bell, or an entry showing it, gives the cards the keys.
   function activate() {
-    togglePause();
+    summon();
   }
 
-  // The newest card on screen, which a binding acts on.
+  function summon() {
+    if (summoned) return;
+    internal.frozen = ordered.map(notification => notification.id);
+    Panels.open(root);
+    internal.picked = newest();
+  }
+
+  function release() {
+    if (summoned) Panels.back();
+  }
+
+  // The newest card on screen, which a binding acts on and summoning picks.
   function newest() {
     return shown.reduce((found, notification) => found === null || notification.id > found.id ? notification : found, null);
   }
@@ -69,6 +94,38 @@ Plugin {
   // The pointer is on its card: its timer holds.
   function hold(notification, on) {
     internal.held = on ? notification : internal.held === notification ? null : internal.held;
+  }
+
+  // Its sender's actions but the default, each with a letter from its label; `x`, which dismisses, is never one.
+  function actionsOf(notification) {
+    const actions = Array.from(notification?.actions ?? []).filter(action => action.identifier !== "default");
+    const keys = MenuKeys.assign(actions.map(action => action.text), ["x"], "");
+    return actions.map((action, i) => ({ desc: action.text, key: keys[i], run: () => action.invoke() }));
+  }
+
+  // A key while summoned: a digit picks a card, ↑↓ move the pick, its letters run its actions, RET opens it and lets go of the keys, x dismisses it; C-x clears all, C-p pauses, ESC lets go.
+  function key(name) {
+    const at = shown.indexOf(internal.picked);
+    if (/^[1-9]$/.test(name) && shown[Number(name) - 1]) internal.picked = shown[Number(name) - 1];
+    else if ((name === "Up" || name === "Down") && shown.length > 0) internal.picked = shown[Math.max(0, Math.min(shown.length - 1, at + (name === "Down" ? 1 : -1)))];
+    else if (name === "Return" && internal.picked) {
+      open(internal.picked);
+      release();
+    } else if (name === "x" && internal.picked) internal.picked.dismiss();
+    else if (name === "Ctrl+x") clear();
+    else if (name === "Ctrl+p") togglePause();
+    else if (name === "Escape") release();
+    else {
+      const action = actionsOf(internal.picked).find(action => action.key && action.key === name);
+      if (!action) return false;
+      action.run();
+    }
+    return true;
+  }
+
+  function press(path) {
+    summon();
+    return path.trim().split(/\s+/).every(name => key(name));
   }
 
   function refresh() {
@@ -120,12 +177,17 @@ Plugin {
     notification.closed.connect(() => root.leave(notification));
   }
 
+  // The pick moves to the card that takes its place; the last one gone lets go of the keys.
   function leave(notification) {
+    const at = shown.indexOf(notification);
     internal.list = internal.list.filter(each => each !== notification);
     const left = Object.assign({}, internal.left);
     delete left[notification.id];
     internal.left = left;
     if (internal.held === notification) internal.held = null;
+    if (internal.picked !== notification) return;
+    internal.picked = shown[Math.min(at, shown.length - 1)] ?? null;
+    if (internal.picked === null) release();
   }
 
   Component.onCompleted: check()
@@ -134,10 +196,18 @@ Plugin {
     id: internal
 
     property var list: []
-    // Milliseconds left by id, counted only while shown and not held; 0 never expires.
+    // Milliseconds left by id, counted only while shown, not held and not summoned; 0 never expires.
     property var left: ({})
     property var held: null
+    property var picked: null
+    // The order as it was summoned, by id.
+    property var frozen: []
     property string error: ""
+
+    function rank(notification) {
+      const at = frozen.indexOf(notification.id);
+      return at < 0 ? frozen.length + notification.id : at;
+    }
   }
 
   NotificationServer {
@@ -153,7 +223,7 @@ Plugin {
   Timer {
     interval: 200
     repeat: true
-    running: root.shown.some(notification => internal.left[notification.id] > 0 && notification !== internal.held)
+    running: !root.summoned && root.shown.some(notification => internal.left[notification.id] > 0 && notification !== internal.held)
     onTriggered: {
       const left = Object.assign({}, internal.left);
       const due = root.shown.filter(notification => notification !== internal.held && left[notification.id] > 0 && (left[notification.id] -= interval) <= 0);

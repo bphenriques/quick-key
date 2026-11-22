@@ -67,6 +67,11 @@ Scope {
     exec(settings.activate);
   }
 
+  // A key path on a surface of its own (`<name> press "2 m"` over IPC), run as typing it would: what a binding runs; false if it has none.
+  function press(path) {
+    return false;
+  }
+
   // What choosing one of its items does, given the item's id.
   function select(id) {}
 
@@ -181,6 +186,10 @@ Scope {
     function action(name: string): void {
       const action = root.actions[name];
       if (action?.available([])) action.run(false, [], null);
+    }
+
+    function press(path: string): void {
+      root.press(path);
     }
   }
 }

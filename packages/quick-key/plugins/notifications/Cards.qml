@@ -6,7 +6,7 @@ import Quickshell.Wayland
 import qs
 import qs.ui
 
-// The cards in their corner of the focused screen, the newest by the corner; the window spans the screen's height, so it never resizes, and only the cards take the pointer.
+// The cards in their corner of the focused screen, the newest by the corner; the window spans the screen's height, so it never resizes, and only the cards take the pointer. Summoned, it takes the keys where it is, its bar where its pills sit.
 Scope {
   id: view
 
@@ -25,7 +25,23 @@ Scope {
 
   Fade {
     id: fade
-    shown: view.plugin.shown.length > 0 || view.plugin.held > 0
+    shown: view.plugin.summoned || view.plugin.shown.length > 0 || view.plugin.held > 0
+  }
+
+  // A click beside the cards lets go of the keys; on the layer below theirs, so the cards keep their clicks.
+  LazyLoader {
+    active: view.plugin.summoned
+
+    Variants {
+      model: Quickshell.screens
+
+      DismissArea {
+        required property var modelData
+        screen: modelData
+        WlrLayershell.layer: WlrLayer.Top
+        onDismissed: view.plugin.release()
+      }
+    }
   }
 
   LazyLoader {
@@ -42,79 +58,134 @@ Scope {
       margins.left: Config.theme.edgeMargin
       implicitWidth: view.settings.width
       WlrLayershell.namespace: "quick-key-notifications"
+      WlrLayershell.keyboardFocus: view.plugin.summoned ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
       mask: Region {
         item: stack
       }
 
-      Column {
-        id: stack
-        width: parent.width
-        // In the top right, under the corner pills (recording) as they stack.
-        y: view.top ? Config.theme.edgeMargin + (view.right ? CornerPills.order.length * (Metrics.line + 3 * Config.theme.spacing) : 0) : window.height - height - Config.theme.edgeMargin
-        spacing: Config.theme.spacing
-        opacity: fade.value
+      FocusScope {
+        anchors.fill: parent
+        focus: true
+        Keys.onPressed: event => event.accepted = view.plugin.key(MenuKeys.name(event))
 
-        Pills {
-          visible: !view.top
-        }
+        Column {
+          id: stack
+          width: parent.width
+          // In the top right, under the corner pills (recording) as they stack.
+          y: view.top ? Config.theme.edgeMargin + (view.right ? CornerPills.order.length * (Metrics.line + 3 * Config.theme.spacing) : 0) : window.height - height - Config.theme.edgeMargin
+          spacing: Config.theme.spacing
+          opacity: fade.value
 
-        Repeater {
-          model: view.cards.length
-
-          Card {
-            id: card
-            required property int index
-            readonly property var notification: view.cards[index] ?? null
-            readonly property var hint: notification?.hints.value
-
-            width: stack.width
-            glyph: Glyphs.notifications
-            image: notification ? view.imageOf(notification) : ""
-            title: notification?.summary || notification?.appName || ""
-            aside: notification?.summary ? notification.appName : ""
-            body: notification?.body ?? ""
-            tone: notification && view.plugin.critical(notification) ? "alert" : ""
-            meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
-            meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
-            actions: Array.from(notification?.actions ?? []).filter(action => action.identifier !== "default").map(action => ({ desc: action.text, run: () => action.invoke() }))
-            actionSide: view.settings.actionSide
-            onActivated: view.plugin.open(notification)
-            onDismissed: notification.dismiss()
-            onHoveredChanged: view.plugin.hold(notification, hovered)
+          Ends {
+            visible: !view.top
           }
-        }
 
-        Pills {
-          visible: view.top
+          Repeater {
+            model: view.cards.length
+
+            Card {
+              required property int index
+              readonly property var notification: view.cards[index] ?? null
+              readonly property var hint: notification?.hints.value
+
+              width: stack.width
+              glyph: Glyphs.notifications
+              image: notification ? view.imageOf(notification) : ""
+              title: notification?.summary || notification?.appName || ""
+              aside: notification?.summary ? notification.appName : ""
+              body: notification?.body ?? ""
+              tone: notification && view.plugin.critical(notification) ? "alert" : ""
+              meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
+              meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
+              actions: view.plugin.actionsOf(notification)
+              actionSide: view.settings.actionSide
+              key: String(view.plugin.shown.indexOf(notification) + 1)
+              closeKey: "x"
+              keysShown: view.plugin.summoned
+              current: view.plugin.summoned && notification === view.plugin.picked
+              onActivated: view.plugin.open(notification)
+              onDismissed: notification.dismiss()
+              onHoveredChanged: view.plugin.hold(notification, hovered)
+            }
+          }
+
+          Ends {
+            visible: view.top
+          }
         }
       }
     }
   }
 
-  // Those over the limit, and those held while paused or under a fullscreen window, on the side away from the corner.
-  component Pills: Row {
-    anchors.right: view.right ? parent.right : undefined
-    spacing: Config.theme.spacing
+  // The side away from the corner: summoned, the keys; else those over the limit, those held, and the key that summons.
+  component Ends: Item {
+    width: parent.width
+    implicitHeight: view.plugin.summoned ? bar.implicitHeight : pills.implicitHeight
 
-    Pill {
-      visible: view.plugin.more > 0
+    Surface {
+      id: bar
+      visible: view.plugin.summoned
+      width: parent.width
+      implicitHeight: legend.implicitHeight + Config.theme.padding / 2
+
+      KeyLegend {
+        id: legend
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        anchors.leftMargin: Config.theme.padding
+        keys: view.plugin.shown.length === 0 ? [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }] : [
+          { key: "Return", what: view.plugin.words.open },
+          { key: "Ctrl+x", what: view.plugin.words.clear },
+          { key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }
+        ]
+      }
 
       Label {
-        text: "+" + view.plugin.more
+        visible: view.plugin.shown.length === 0
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: parent.right
+        anchors.rightMargin: Config.theme.padding
+        tone: "dim"
+        text: view.plugin.words.none
       }
     }
 
-    Pill {
-      visible: view.plugin.held > 0
+    Row {
+      id: pills
+      visible: !view.plugin.summoned
+      anchors.right: view.right ? parent.right : undefined
+      spacing: Config.theme.spacing
 
-      Icon {
-        anchors.verticalCenter: parent.verticalCenter
-        glyph: Glyphs.notificationsPaused
+      Pill {
+        visible: view.settings.hint && view.plugin.shortcut !== ""
+
+        KeyHint {
+          anchors.verticalCenter: parent.verticalCenter
+          key: view.plugin.shortcut
+          chars: MenuKeys.label(view.plugin.shortcut).length
+        }
       }
 
-      Label {
-        anchors.verticalCenter: parent.verticalCenter
-        text: view.plugin.held
+      Pill {
+        visible: view.plugin.more > 0
+
+        Label {
+          text: "+" + view.plugin.more
+        }
+      }
+
+      Pill {
+        visible: view.plugin.held > 0
+
+        Icon {
+          anchors.verticalCenter: parent.verticalCenter
+          glyph: Glyphs.notificationsPaused
+        }
+
+        Label {
+          anchors.verticalCenter: parent.verticalCenter
+          text: view.plugin.held
+        }
       }
     }
   }

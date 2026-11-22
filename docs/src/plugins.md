@@ -114,7 +114,7 @@ A notification server drawn in the shell's own look, in place of dunst or mako: 
 
 Cards stack in a `corner` of the focused screen, newest by the corner, critical ones first: an icon, the summary in bold, the app on its right, the body in two lines, progress (`value`) as a meter, and the sender's actions on the `actionSide` (`right`). A click opens it, running its default action; `✕` or a right click dismisses it; the pointer on a card holds its time. A card shows for its sender's time, else `timeout.low` or `timeout.normal` seconds (3 and 8); a critical one stays until dismissed. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card and starts its time again.
 
-`limit` cards show at once (3), `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait instead of showing, a struck bell counting them, and their time starts once they show; a critical one shows anyway. The plugin's status is a bell with the count, struck and lit while paused, a click pausing or resuming; pause survives a reload.
+`limit` cards show at once (3), `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait instead of showing, a struck bell counting them, and their time starts once they show; a critical one shows anyway. The plugin's status is a bell with the count, struck and lit while paused, a click summoning the cards; pause survives a reload.
 
 ```nix
 plugins.notifications = {
@@ -125,9 +125,11 @@ plugins.notifications = {
 
 `rules` apply in order, later ones winning: a rule applies when each regular expression in its `match` is found in its field (`app`, `summary`, `body`, `category`, `urgency`, `desktopEntry`; anchor one with `^…$`), and `hide` drops what it matches. A rule's fields are checked as the configuration builds.
 
-Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
+Cards never take the keys on their own, so a notification never takes your typing. `summon` (bound to a compositor key, say `Mod+N` through `action summon`, the plugin's `shortcut` naming it) gives them the keys where they are, the newest picked, every one showing, held ones too, their order and time holding, nothing on them moving: their keys show where they act. A digit picks a card, `↑↓` move the pick, its actions' letters (from their labels, never `x`) run them, `RET` opens it and lets go, `x` dismisses it, the pick moving on; `C-x` clears all, `C-p` pauses or resumes, and `ESC` or a click beside them lets go. `hint` shows the `shortcut` dimly by the cards at rest. A key path runs as typing it would: `notifications press "2 x"`.
 
-Other settings: `limit`, `width` (480).
+Actions for a binding (`qs -c quick-key ipc call notifications action <name>`) or an entry: `summon` gives the cards the keys, `invoke` opens the newest card, `dismiss` dismisses it, `clear` dismisses every one, `pause` pauses or resumes. Another daemon holding the bus shows as the plugin's error; `owner`, a command printing the process that holds it, makes that check (`busctl`).
+
+Other settings: `limit`, `width` (480), `hint`.
 
 ## Writing one in QML
 

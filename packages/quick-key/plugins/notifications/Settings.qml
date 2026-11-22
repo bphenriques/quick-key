@@ -13,6 +13,8 @@ PluginSettings {
   property string actionSide: "right"
   // Its cards' width, in pixels.
   property int width: 480
+  // Its compositor key (`shortcut`) dimly by the cards at rest, teaching it.
+  property bool hint: false
   // Each { match, hide }, in order, later ones winning; `match` maps fields to regular expressions, every one found for the rule to apply.
   property var rules: []
   // Prints the process id holding the notifications' name on the session bus, last on its line: another daemon there shows as its error.

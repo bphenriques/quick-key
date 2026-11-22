@@ -38,6 +38,10 @@
     "hides": {
       "type": "command",
       "read": "echo '{\"items\":[{\"id\":\"a\"},{\"id\":\"b\",\"hidden\":true}]}'"
+    },
+    "clicked": {
+      "type": "command",
+      "activate": "echo clicked > \"$XDG_RUNTIME_DIR/picked\""
     }
   },
   "menu": {
@@ -59,6 +63,11 @@
             "true"
           ],
           "keepOpen": true
+        },
+        {
+          "key": "k",
+          "desc": "Clicked",
+          "status": "clicked"
         }
       ],
       "center": [],

@@ -14,6 +14,7 @@ ShellRoot {
   property string waited: ""
   property string replaced: ""
   property string owner: ""
+  property string chosen: ""
 
   function send(...args) {
     Quickshell.execDetached(["notify-send", ...args]);
@@ -34,6 +35,14 @@ ShellRoot {
     command: ["notify-send", "--wait", "-A", "default=Open", "-A", "later=Later", "Act"]
     stdout: StdioCollector {
       onStreamFinished: root.waited = text.trim()
+    }
+  }
+
+  Process {
+    id: chooser
+    command: ["notify-send", "--wait", "-A", "default=Open", "-A", "later=Later", "-A", "next=Next week", "Choose"]
+    stdout: StdioCollector {
+      onStreamFinished: root.chosen = text.trim()
     }
   }
 
@@ -167,6 +176,65 @@ ShellRoot {
         name: "the newest is what a binding dismisses",
         start: () => root.plugin.actions.dismiss.run(),
         until: () => !root.find("Volume") && root.find("Count 2") !== null
+      },
+      {
+        name: "summoned, the cards take the keys, the newest picked, every held one shown, and their time holds",
+        start: () => {
+          root.plugin.clear();
+          Kept.set("notifications.paused", true);
+          root.send("-t", "400", "Quick");
+        },
+        until: () => {
+          if (root.find("Quick") && !("quick" in root.marks)) {
+            root.mark("quick");
+            root.send("Second");
+          }
+          if (root.find("Second") && !root.plugin.summoned) root.plugin.actions.summon.run();
+          return root.plugin.summoned && root.plugin.picked?.summary === "Second" && root.plugin.shown.length === 2 && root.mark("summoned") > 1000 && root.find("Quick") !== null;
+        }
+      },
+      {
+        name: "summoned, one that comes goes last, so digits hold; a digit and the arrows pick",
+        start: () => chooser.running = true,
+        until: () => {
+          if (root.find("Choose") && !("choose" in root.marks)) {
+            root.mark("choose");
+            root.plugin.key("1");
+            root.plugin.key("Down");
+            root.plugin.key("Down");
+          }
+          return root.plugin.shown.map(notification => notification.summary).join() === "Second,Quick,Choose" && root.plugin.picked?.summary === "Choose";
+        }
+      },
+      {
+        name: "the picked card's actions take letters from their labels, never x, and a letter runs one, which its sender hears",
+        start: () => root.plugin.key(root.plugin.actionsOf(root.plugin.picked).find(action => action.desc === "Later").key),
+        until: () => root.chosen === "later"
+          && MenuKeys.assign(["Open", "Other"], ["x"], "").join() === "o,t" && MenuKeys.assign(["x"], ["x"], "").join() === ""
+      },
+      {
+        name: "x dismisses the picked card, the pick moving to the one in its place",
+        start: () => {
+          root.plugin.key("1");
+          root.plugin.key("x");
+        },
+        until: () => !root.find("Second") && root.plugin.picked?.summary === "Quick"
+      },
+      {
+        name: "a key path runs as typing it would, and ESC lets go of the keys, the held ones held again",
+        start: () => {
+          root.send("Third");
+          root.plugin.press("Escape");
+        },
+        until: () => !root.plugin.summoned && root.plugin.held >= 1 && root.plugin.shown.length === 0
+      },
+      {
+        name: "RET opens the picked card, dismissing one without a default action, and lets go",
+        start: () => {
+          Kept.set("notifications.paused", false);
+          root.plugin.press("1 Return");
+        },
+        until: () => !root.plugin.summoned && !root.find("Third")
       },
       {
         name: "the settings' check names what is wrong, and passes these",
