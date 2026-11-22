@@ -8,7 +8,12 @@ import Quickshell.Io
 Singleton {
   id: root
 
-  readonly property bool enabled: Kept.values.keepAwake ?? false
+  readonly property bool enabled: kept.value ?? false
+
+  KeptValue {
+    id: kept
+    key: "keepAwake"
+  }
 
   function toggle() {
     Kept.set("keepAwake", !enabled);

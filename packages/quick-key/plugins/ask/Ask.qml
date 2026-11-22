@@ -394,14 +394,19 @@ Plugin {
 
   // Its conversation and draft, kept over a reload or a restart (Kept): the agent loads the conversation again on its next turn.
   readonly property var kept: ({ exchanges: exchanges, session: session, draft: draft })
-  // Saved only once taken, so a conversation being made never overwrites the one it is about to take.
+  // Saved once taken, so a conversation being made never overwrites the one it is about to take, and once a turn settles, not with every piece of an answer streaming in.
   property bool taken: false
-  onKeptChanged: if (taken) Kept.set(name, kept)
+  onKeptChanged: save()
+  onRunningChanged: save()
+
+  function save() {
+    if (taken && !running) Kept.set(name, kept);
+  }
 
   Component.onCompleted: take()
 
   function take() {
-    const kept = Kept.values[name];
+    const kept = Kept.value(name);
     if (kept) {
       exchanges = kept.exchanges;
       session = kept.session;

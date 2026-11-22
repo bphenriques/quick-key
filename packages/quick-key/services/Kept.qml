@@ -4,12 +4,18 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// What you chose while you are logged in (keep awake on, a draft, a list's order, a conversation), by key, kept over a reload or a restart (a deploy).
+// What you chose while you are logged in (keep awake on, a draft, a list's order, a conversation), by key, kept over a reload or a restart (a deploy). A binding reads one through a KeptValue, which wakes only when its own key changes.
 Singleton {
-  readonly property var values: internal.values
+  signal changed(string key)
+
+  function value(key) {
+    return internal.values[key];
+  }
 
   function set(key, value) {
-    internal.values = Object.assign({}, internal.values, { [key]: value });
+    if (internal.values[key] === value) return;
+    internal.values[key] = value;
+    changed(key);
     if (write.running) internal.dirty = true;
     else internal.save();
   }

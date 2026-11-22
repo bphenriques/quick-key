@@ -22,7 +22,10 @@ QtObject {
   property string lastSent: ""
 
   // Each input's unsent text, by the input, kept as the menu closes and over a reload (Kept), as Ask keeps its draft.
-  readonly property var drafts: Kept.values.drafts ?? ({})
+  readonly property var drafts: keptDrafts.value ?? ({})
+  readonly property KeptValue keptDrafts: KeptValue {
+    key: "drafts"
+  }
   readonly property string draft: draftOf(input)
 
   // The plugin a visit is with, while the menu, in Panels' stack, shows its input: a change of the plugin or the input, or the menu leaving the stack, ends it (Plugin.endVisit).

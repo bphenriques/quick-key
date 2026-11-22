@@ -21,8 +21,8 @@ Plugin {
     .sort((a, b) => root.compare(a, b))
     .concat(adding.map(title => ({ id: "", title, adding: true })))
   // From the settings until the level's actions step them, then kept, a reload included (Kept), until the shell restarts.
-  readonly property string sort: Kept.values[name + ".sort"] ?? settings.sort
-  readonly property string completed: Kept.values[name + ".completed"] ?? settings.completed
+  readonly property string sort: keptSort.value ?? settings.sort
+  readonly property string completed: keptCompleted.value ?? settings.completed
   // Ticks not in the file yet, by id: done or not; titles added and not in it yet; and their commands, run one at a time.
   property var pending: ({})
   property var adding: []
@@ -152,6 +152,16 @@ Plugin {
       reminded[key] = true;
       exec(settings.remind, task.title, task.due.slice(11));
     }
+  }
+
+  KeptValue {
+    id: keptSort
+    key: root.name + ".sort"
+  }
+
+  KeptValue {
+    id: keptCompleted
+    key: root.name + ".completed"
   }
 
   Connections {

@@ -15,7 +15,7 @@ Plugin {
   views: ["Cards.qml"]
 
   // Kept over a reload, as keep awake is.
-  readonly property bool paused: Kept.values[name + ".paused"] ?? false
+  readonly property bool paused: keptPause.value ?? false
   // The cards have the keys (s-n), one surface at a time with the menu and panels.
   readonly property bool summoned: Panels.top === root
   // Summoned or under the pointer, nothing moves and no time runs: those there keep their order, newcomers going after them.
@@ -482,6 +482,11 @@ Plugin {
     Entry {
       plugin: root
     }
+  }
+
+  KeptValue {
+    id: keptPause
+    key: root.name + ".paused"
   }
 
   QtObject {
