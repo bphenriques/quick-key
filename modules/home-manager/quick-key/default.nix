@@ -89,7 +89,7 @@ in
             border = lib.mkOption {
               type = lib.types.nullOr lib.types.str;
               default = null;
-              description = "Colour of outlines and dividers; unset, the dim text colour";
+              description = "Colour of outlines and dividers; unset, the foreground at `theme.disabledOpacity`";
             };
             bubble = lib.mkOption {
               type = lib.types.nullOr lib.types.str;
@@ -112,7 +112,7 @@ in
       type = lib.types.listOf lib.types.package;
       default = [ ];
       example = lib.literalExpression "[ config.services.dunst.package ]";
-      description = "Packages first on the shell's PATH, for what plugins and commands call by name; one here wins over a standard tool's";
+      description = "Packages first on the shell's PATH, for what commands, plugins and notification rules call by name; one here wins over a standard tool's";
     };
 
     exec.ipc = lib.mkOption {

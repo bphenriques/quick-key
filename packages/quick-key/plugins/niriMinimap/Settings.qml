@@ -1,9 +1,12 @@
 import qs
 
-// The map's size and look, in pixels but for opacity.
 PluginSettings {
+  // A workspace's height on the map, in pixels.
   property int height: 30
+  // The widest a workspace gets on the map, in pixels; a wider one shrinks to fit.
   property int maxWidth: 180
+  // A window tile's background opacity, 0 to 1.
   property real opacity: 0.7
+  // A window tile's outline, in pixels, the focused one's in the primary colour.
   property int borderWidth: 1
 }

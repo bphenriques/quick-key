@@ -2,19 +2,19 @@ import QtQuick
 
 // What every plugin takes in config.json's `plugins.<name>`, beside its `type`; each plugin's Settings.qml adds its own.
 QtObject {
-  // Its one source of state, at most one set (docs/src/plugins.md#sources).
+  // Its one source of state, at most one set: a command printing a line per change, one run as the menu opens, or a file read on every change, relative to $XDG_RUNTIME_DIR (docs/src/plugins.md#sources).
   property string watch
   property string read
   property string file
-  // Seconds between reads of `read` while the menu is open; 0 reads only as it opens.
+  // Seconds between runs of `read` while the menu is open; 0 runs it only as the menu opens.
   property int every: 0
-  // The look of each value the source gives, by value: { glyph, text, detail, active, tone }.
+  // The look of each value the source gives, by value: { glyph, text, detail, active, tone }; a value without one shows as text.
   property var show: ({})
   // Its items when they never change, each { id, label, icon, detail }; the source's `value` names the one in use.
   property var items: []
-  // Its compositor key, only a label: shown beside it while Super is held, bound in the compositor.
+  // Its compositor key (Mod+N), only a label: shown while Super is held; the binding is the compositor's.
   property string shortcut
-  // Its name, in tips, prompts and notifications; unset, the plugin's.
+  // Its name in tips, prompts and notifications; unset, its name under `plugins`.
   property string title
   // Its glyph when its state names none.
   property string glyph

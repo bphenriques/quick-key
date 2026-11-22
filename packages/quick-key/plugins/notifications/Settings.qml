@@ -5,23 +5,23 @@ import qs
 PluginSettings {
   // The corner the cards stack in: top-right, top-left, bottom-right or bottom-left.
   property string corner: "top-right"
-  // Cards shown at once; the rest wait, counted.
+  // Cards shown at once, 1 to 9; the rest wait, counted.
   property int limit: 3
-  // Seconds a card shows, by urgency, when its sender sets none, either given alone keeping the other; a critical one stays until dismissed.
+  // Seconds a card shows when its sender sets no time, by urgency; one set alone leaves the other at its default; a critical card stays until dismissed.
   property var timeout: ({ low: 3, normal: 8 })
-  // Notifications kept at most, shown or waiting; past it the oldest but critical ones close, to bring back.
+  // Notifications kept at most, shown or waiting, no fewer than `limit`; past it the oldest close, never a critical one.
   property int keep: 100
   // The side of a card its actions sit on: right or left.
   property string actionSide: "right"
-  // Its cards' width, in pixels.
+  // A card's width, in pixels.
   property int width: 480
-  // Its compositor key (`shortcut`) dimly by the cards at rest, teaching it.
+  // Shows the plugin's `shortcut` dimly by the cards at rest, to teach it.
   property bool hint: false
   // Seconds without input after which no card's time runs, so none goes while you are away; 0 lets time run.
   property int idle: 120
-  // Each { match, hide, timeout, urgency, ignorePause, actions, default, run }, in order, later ones winning, actions adding up but one on a key taken before replacing it; `match` maps fields to regular expressions, every one found for the rule to apply, its named groups (`(?<code>\d+)`) values for its commands and labels.
+  // Each { match, hide, timeout, urgency, ignorePause, actions, default, run }, applied in order (docs/src/plugins.md#rules).
   property var rules: []
-  // Prints the process id holding the notifications' name on the session bus, last on its line: another daemon there shows as its error.
+  // Prints the process id holding the notifications' name on the session bus, last on its line, so another daemon there shows as the plugin's error.
   property string owner: "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s org.freedesktop.Notifications"
 
   readonly property var corners: ["top-right", "top-left", "bottom-right", "bottom-left"]

@@ -23,7 +23,7 @@ in
       type = lib.types.str;
       default = "${config.xdg.configHome}/quick-key/calendars.yaml";
       defaultText = lib.literalExpression ''"''${config.xdg.configHome}/quick-key/calendars.yaml"'';
-      description = "Calendar list, edited by hand since its URLs are secret; starts as the sample, and saving it syncs";
+      description = "Path of the calendar list (YAML), edited by hand since its URLs are secret; it starts as a commented sample, and saving it syncs";
     };
 
     eventsFile = lib.mkOption {

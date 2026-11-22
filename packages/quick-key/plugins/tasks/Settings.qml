@@ -8,9 +8,9 @@ PluginSettings {
   property string reopen
   // Given a title, adds a task to the first list and writes the file again.
   property string add
-  // Syncs, as the menu opens and after a tick.
+  // Syncs, as the menu opens on a file `syncAfter` minutes old, and after a tick.
   property string sync
-  // Minutes old the file may be as the menu opens before a sync; one on every opening would keep the calendar syncing.
+  // Minutes old the file may be before opening the menu syncs it; syncing on every opening would keep the calendar syncing.
   property int syncAfter: 5
   // Minutes after which the last sync shows in warning.
   property int staleAfter: 120

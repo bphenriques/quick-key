@@ -2,13 +2,13 @@ import qs
 
 // Ask's agent and commands, each command given its arguments as $1, $2... (docs/src/plugins.md#ask).
 PluginSettings {
-  // The agent: a command speaking ACP on its stdio, kept running between turns.
+  // Required: the agent, a command speaking ACP on its stdio, kept running between turns.
   property string ask
   // Where its sessions work, on the agent's machine; unset, $HOME.
   property string cwd
   // Minutes without a turn before the agent is stopped; the next turn starts it again.
   property int idle: 10
-  // A tool name (a regular expression) that makes `toolRun` run once the turn that used it ends.
+  // A tool name pattern (a regular expression): `toolRun` runs once a turn that used a matching tool ends.
   property string toolMatch
   property string toolRun
   // toolMatch compiled once; null when unset or not a pattern, which problems() names.
@@ -21,7 +21,7 @@ PluginSettings {
   }
   // Given a file, prints it base64, as an image goes to the agent.
   property string encodeImage: "base64 -w0"
-  // Given a title and a text, while the panel is hidden; prints `default` when clicked.
+  // Given a title and a text, tells of an answer while the panel is hidden; printing `default` (a click) shows the panel.
   property string notify: "notify-send --action=default=Open"
   // Given a file, writes the clipboard's image there, failing when it holds none.
   property string pasteImage: "sh -c 'for type in $(wl-paste --list-types); do case $type in image/*) exec wl-paste --type \"$type\" > \"$1\" ;; esac; done; exit 1' sh"
@@ -31,7 +31,7 @@ PluginSettings {
   property string promptGlyph
   // What the empty prompt says, {title} for the title.
   property string placeholder: "Ask {title}"
-  // How many lines tall the conversation is, like a level's width: declared, so the panel holds still (rule 4).
+  // The conversation's height, in lines, declared so the panel holds still.
   property int lines: 14
 
   function problems() {
