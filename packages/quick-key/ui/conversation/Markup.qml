@@ -64,11 +64,11 @@ Singleton {
     return markdown.replace(/\r/g, "").split("\n");
   }
 
-  function blocks(lines) {
+  function blocks(lines, depth = 0) {
     const out = [];
     // A table already ends in its gap (closing).
     const top = () => out.length && !out[out.length - 1].endsWith("</table>") ? Config.theme.spacing : 0;
-    for (const [start, end] of spans(lines)) out.push(block(lines.slice(start, end), top()));
+    for (const [start, end] of spans(lines)) out.push(block(lines.slice(start, end), top(), depth));
     // Nothing follows the last table, so its gap goes.
     return out.join("").replace(/<tr><td colspan="\d+" style="padding-top:\d+px; font-size:1px"><\/td><\/tr><\/table>$/, "</table>");
   }
@@ -113,7 +113,7 @@ Singleton {
     return end;
   }
 
-  function block(lines, top) {
+  function block(lines, top, depth) {
     const line = lines[0];
     const fence = line.match(fenceLine);
     if (fence) {
@@ -123,7 +123,8 @@ Singleton {
     if (startsTable(lines, 0)) return table(cells(line), cells(lines[1]), lines.slice(2).map(cells), top);
     if (headingLine.test(line)) return paragraph("<b>" + inline(line.replace(/^\s*#+\s+/, "").replace(/\s+#+\s*$/, "")) + "</b>", top);
     if (ruleLine.test(line)) return rule(top);
-    if (quoteLine.test(line)) return quote(blocks(lines.map(quoted => quoted.replace(/^\s{0,3}>\s?/, ""))), top);
+    // The third level takes every mark left, as each level is a table and Qt lays them out in time multiplying with depth.
+    if (quoteLine.test(line)) return quote(blocks(lines.map(quoted => quoted.replace(depth < 2 ? /^\s{0,3}>\s?/ : /^(\s{0,3}>\s?)+/, "")), depth + 1), top);
     if (listItem.test(line)) {
       const items = [];
       for (const each of lines) {

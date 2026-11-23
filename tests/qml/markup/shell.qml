@@ -13,6 +13,11 @@ ShellRoot {
     return Markup.html(markdown).replace(/ style="[^"]*"| bgcolor="[^"]*"/g, "");
   }
 
+  // A quote as bare() gives it, around its blocks.
+  function quote(inner) {
+    return "<table cellspacing=\"0\" cellpadding=\"0\"><tr><td width=\"2\"></td><td width=\"8\"></td><td>" + inner + "</td></tr></table>";
+  }
+
   function same(what, got, want) {
     const right = JSON.stringify(got) === JSON.stringify(want);
     if (!right) console.info("# " + what + " gave " + JSON.stringify(got));
@@ -36,6 +41,8 @@ ShellRoot {
       ["<td align=\"left\"><b>L", "<td align=\"center\"><b>C", "<td align=\"right\"><b>R", "<td align=\"left\">1", "<td align=\"center\">", "<td align=\"right\">"]],
     ["a rule is a divider without text", () => bare("---"), "<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td colspan=\"1\"></td></tr></table>"],
     ["a quote's blocks render inside it", () => bare("> *w*").includes("<td><p><i>w</i></p></td>"), true],
+    ["a quote nests as written up to three deep", () => [1, 2, 3].map(depth => bare("> ".repeat(depth) + "x")), [quote("<p>x</p>"), quote(quote("<p>x</p>")), quote(quote(quote("<p>x</p>")))]],
+    ["a deeper quote renders three deep, as each level multiplies its layout time", () => bare("> ".repeat(30) + "x"), quote(quote(quote("<p>x</p>")))],
     ["a link or an image shows by its text", () => bare("[site](https://e.com) ![pic](https://e.com/a.png)"), "<p>site pic</p>"],
     ["HTML shows as text, so a script never runs", () => bare("<script>alert(1)</script> & <img src=x>"), "<p>&lt;script&gt;alert(1)&lt;/script&gt; &amp; &lt;img src=x&gt;</p>"],
     ["nothing it renders fetches: no link, image or stylesheet in any block", () => /<a |<img|href|src=|url\(|<link|<style/.test(Markup.html(everything)), false],
