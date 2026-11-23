@@ -11,7 +11,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | a row to click | `ListItem`, `StatusLine` in it |
 | a listed item (a task, a device) | `ListItem` |
 | keys: one, a legend, a list | `KeyHint`, `KeyLegend`, `KeyList` |
-| text to type or send | `TextField`, `TextArea`, `Prompt` |
+| text to type or send | `TextArea`, `Prompt` |
 | a conversation (`qs.ui.conversation`) | `Exchange`, `Bubble` and `Markdown` in it; an answer's Markdown read through `Markup` |
 | a surface, an outline | `Panel`, `Surface`, `Pill`, `Divider` |
 | a card that comes and goes (a notification) | `Card` |
@@ -28,10 +28,9 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `KeyLegend` | keys a level takes beyond its rows, on one line on its bar after a content level's actions: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
 | `KeyList` | keys and what each does, a row each across the menu's columns, as `?` lists them; a click is `picked` |
 | `Meter` | a thin level bar |
-| `TextField` | text typed in, plain and wrapped, coloured by `tone`, with a dim `placeholder` while empty |
 | `Markdown` | an agent's answer rendered from its Markdown (`markdown`) by `Markup` a piece at a time, so a stream redraws only its last; a selection, within a piece, is copied and reported (`selected`), and `kept` shows it again as its piece is rebuilt |
 | `Markup` | what the kit reads in an agent's Markdown, in one place: its `plain` lines (compact), its pieces (`split`, whole blocks gathered to a size), each one's `html` for `Markdown`, and whether it `hasTable`. The html is rich text of the kit's own making: the text escaped, an image or a link shown by its text, so nothing is fetched and no HTML runs. A table's header is bold over one divider, code sits on a faint wash, a quote dim behind a rule, a heading bold at the body size (as the calendar's month), prose at `theme.lineHeight` |
-| `TextArea` | a `TextField` that grows to `maxLines`, then scrolls to the cursor; its keys reach `keyPressed` first |
+| `TextArea` | text typed in, plain and wrapped, with a dim `placeholder` while empty, growing to `maxLines`, then scrolling to the cursor; its keys reach `keyPressed` first |
 | `Prompt` | a line of text to send: a column as wide as its `key`'s name, holding the key dim while it waits (`TAB` for a level's input), else a glyph on the column's left edge, and a spinner in their place while `busy` (what it sends to takes no text); then a `TextArea`. Return sends its text (`sent`), in the background with Ctrl+Shift, unless `sends` is off (a filter). A click while waiting reaches `tapped`. `keys` is a legend on its right (`picked`), `detail` a dim value after it |
 | `Exchange` | one turn of a conversation: the `question` a `Bubble` on the right, the answer (`text`, Markdown) plain on the left, drawn by its `phase` and `kind` (`Phase`). Working shows a spinner and `activity` until the answer streams in, then a spinner where its copy button goes until done. Blocked shows a permission in warning. Error is in alert, the question faded; idle, once stopped. `steps` are dim lines over the answer (an approval you gave). With `lines` it is compact, cut there, `overflows` saying what it cannot hold; else it all shows as `Markdown`, with a copy button (`copyable`). `next` is what Return does after it, for the prompt under it (`Words.next`); `kept` and `selected` pass its answer's selection through |
 | `Bubble` | a message in a conversation, yours (`mine`) on the right in the theme's `bubble` colour with `bubbleText`, the other's plain on the left, never glyphs, its text on the keys' edge, as wide as its content up to `maximumWidth`, or all of it when `full` (text cut at a line count cannot size it); `faded` for one that did not go through |

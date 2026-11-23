@@ -1,11 +1,12 @@
 import QtQuick
+import qs
 
-// A TextField growing to `maxLines`, then scrolling; keys reach `keyPressed` first, so the owner can take some.
+// Plain text typed in, in the theme font, with a dim `placeholder` while empty, growing to `maxLines`, then scrolling; keys reach `keyPressed` first, so the owner can take some.
 Flickable {
   id: root
 
   property alias text: field.text
-  property alias placeholder: field.placeholder
+  property string placeholder: ""
   property int maxLines: 4
   property alias activeFocusOnPress: field.activeFocusOnPress
 
@@ -25,14 +26,32 @@ Flickable {
   clip: true
   boundsBehavior: Flickable.StopAtBounds
 
-  TextField {
+  TextEdit {
     id: field
     width: root.width
     focus: true
+    color: Tone.color("normal")
+    Behavior on color {
+      ColorAnimation {
+        duration: Config.theme.animationDuration
+      }
+    }
+    selectionColor: Tone.wash("primary", 2)
+    selectedTextColor: Tone.color("normal")
+    font.family: Config.theme.monospaceFont
+    font.pointSize: Config.theme.fontSize
+    textFormat: TextEdit.PlainText
+    wrapMode: TextEdit.Wrap
     onCursorRectangleChanged: {
       if (root.contentY >= cursorRectangle.y) root.contentY = cursorRectangle.y;
       else if (root.contentY + root.height <= cursorRectangle.y + cursorRectangle.height) root.contentY = cursorRectangle.y + cursorRectangle.height - root.height;
     }
     Keys.onPressed: event => root.keyPressed(event)
+
+    Label {
+      visible: field.text === "" && root.placeholder !== ""
+      tone: "dim"
+      text: root.placeholder
+    }
   }
 }
