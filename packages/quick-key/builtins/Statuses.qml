@@ -138,14 +138,34 @@ Singleton {
     }
   })
 
+  // What a name neither built in nor a plugin's shows: nothing; change, when set, is all a pop-up watches.
+  readonly property var none: ({ glyph: "", text: "", detail: "", glyphs: [], fields: {}, fieldTones: {}, tone: "", phase: "idle", active: false,
+    strong: false, brief: false, meter: -1, muted: false, popup: "", popupWidth: 0, change: null, ready: false, adjust: "" })
+
   // A format with each {field} replaced; a field without a value leaves nothing.
   function formatted(format, fields) {
     return format.replace(/\{(\w+)\}/g, (_, name) => fields[name] ?? "").trim();
   }
 
-  // A name's glyph, a built-in status's or else the plugin's of that name: what a bar's legend, a row and the pop-up all show for it.
-  function glyphOf(name) {
-    return builtin[name]?.glyph() ?? Plugins.get(name)?.glyph ?? "";
+  // A status by name, a built-in's or else the plugin's, in one shape, none's: what a bar, a row and the pop-up all show for it.
+  function of(name, pinned = (id, label) => label) {
+    const status = builtin[name];
+    const plugin = status ? null : Plugins.get(name);
+    if (plugin) return Object.assign({}, none, {
+      glyph: plugin.glyph, text: plugin.text, detail: plugin.detail, glyphs: Array.from(plugin.glyphs), fieldTones: plugin.fieldTones,
+      fields: Object.assign({ text: plugin.text, detail: plugin.detail }, plugin.fields), tone: plugin.tone, phase: plugin.phase, active: plugin.active,
+      popup: [plugin.text, plugin.detail].filter(part => part).join(" "),
+      ready: !plugin.settings.watch && !plugin.settings.read && !plugin.settings.file || Object.keys(plugin.state).length > 0
+    });
+    if (!status) return none;
+    const fields = status.fields(pinned);
+    const own = value(status, fields, "");
+    const call = key => status[key] ? status[key]() : none[key];
+    return Object.assign({}, none, own, {
+      glyph: status.glyph(), fields, fieldTones: call("fieldTones"), tone: call("tone"), phase: call("phase"), meter: call("meter"), muted: call("muted"),
+      strong: !!status.strong, brief: !!status.brief, popup: status.popup ? status.popup() : own.text, popupWidth: call("popupWidth"),
+      change: call("change"), ready: !status.ready || status.ready(), adjust: status.adjust ?? ""
+    });
   }
 
   // A status's value over its fields, { text, detail, glyphs }: an entry's format over the status's own, `|` before the detail; with neither, its value().

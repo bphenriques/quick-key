@@ -34,7 +34,7 @@ ListItem {
     active: root.item.active ?? false
     icon: root.item.icon ?? ""
     // Its value beside it while its tone warns, so colour is not all that says so.
-    glyphOnly: !!root.item.icon && !builtin?.brief && barTone !== "warning" && barTone !== "alert"
+    glyphOnly: !!root.item.icon && !shape.brief && barTone !== "warning" && barTone !== "alert"
     busy: glyphOnly && statusBusy
   }
 

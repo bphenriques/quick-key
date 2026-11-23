@@ -160,7 +160,7 @@ Scope {
   }
 
   function hint(item, key) {
-    const glyph = Statuses.glyphOf(item.status);
+    const glyph = Statuses.of(item.status).glyph;
     return Object.assign({}, item, { key, status: "", format: "", paired: typeof key !== "string", icon: item.icon || (item.image ? "" : glyph) });
   }
 

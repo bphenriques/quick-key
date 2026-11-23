@@ -44,16 +44,12 @@ Scope {
     delegate: Scope {
       required property string modelData
 
-      readonly property var status: Statuses.builtin[modelData] ?? null
-      readonly property var plugin: status === null ? Plugins.get(modelData) : null
-      readonly property var fields: status ? status.fields((id, name) => name) : ({})
-      // What the status calls a change (change()), else glyph, fields, meter, muted and text together: a toggle's glyph never moves, so its text says the change.
-      readonly property string signature: JSON.stringify(status
-        ? status.change ? [status.change()] : [status.glyph(), fields, status.meter ? status.meter() : -1, status.muted ? status.muted() : false, status.popup ? status.popup() : Statuses.value(status, fields).text]
-        : plugin ? [plugin.glyph, plugin.text, plugin.detail, plugin.active, plugin.tone] : [])
+      readonly property var status: Statuses.of(modelData)
+      // What the status calls a change, else its look together: a toggle's glyph never moves, so its text says the change.
+      readonly property string signature: JSON.stringify(status.change ?? [status.glyph, status.fields, status.meter, status.muted, status.popup, status.active, status.tone])
 
       // Its source has reported: its first value is state, the next ones changes.
-      readonly property bool ready: status ? !status.ready || status.ready() : !!plugin && (!plugin.settings.watch && !plugin.settings.read && !plugin.settings.file || Object.keys(plugin.state).length > 0)
+      readonly property bool ready: status.ready
       property bool settled: false
       onReadyChanged: if (ready) Qt.callLater(() => settled = true)
       Component.onCompleted: if (ready) Qt.callLater(() => settled = true)
@@ -69,15 +65,10 @@ Scope {
 
       // Named, so its size is known before the surface maps; left to the compositor, Qt would guess another.
       screen: Quickshell.screens.find(each => each.name === root.output) ?? Quickshell.screens[0]
-      readonly property var status: Statuses.builtin[root.kind] ?? null
-      readonly property var plugin: Plugins.get(root.kind)
-      readonly property var fields: status ? status.fields((id, name) => name) : ({})
-      readonly property bool metered: status !== null && !!status.meter && status.meter() >= 0
-      readonly property bool muted: status !== null && !!status.muted && status.muted()
+      readonly property var status: Statuses.of(root.kind)
+      readonly property bool metered: status.meter >= 0
       // Never a dim fallback: a status without a tone of its own reads normal.
-      readonly property string tone: muted ? "dim" : status ? ((status.tone ? status.tone() : "") || "normal") : plugin ? (plugin.tone || (plugin.active ? "primary" : "normal")) : "normal"
-      readonly property string glyph: Statuses.glyphOf(root.kind)
-      readonly property string text: status ? (status.popup ? status.popup() : Statuses.value(status, fields).text) : plugin ? [plugin.text, plugin.detail].filter(part => part).join(" ") : ""
+      readonly property string tone: status.muted ? "dim" : status.tone || (status.active ? "primary" : "normal")
 
       // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
       readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
@@ -128,7 +119,7 @@ Scope {
           hoverEnabled: true
           onContainsMouseChanged: transient.held = containsMouse
           onStepped: up => {
-            if (window.status && window.status.adjust) Actions.builtin[window.status.adjust].run(up);
+            if (window.status.adjust) Actions.builtin[window.status.adjust].run(up);
           }
         }
 
@@ -146,14 +137,14 @@ Scope {
             orientation: window.across ? Qt.Horizontal : Qt.Vertical
             width: window.across ? window.length : implicitWidth
             height: window.across ? implicitHeight : window.length
-            tone: window.muted ? "dim" : "primary"
-            value: window.metered ? window.status.meter() : 0
+            tone: window.status.muted ? "dim" : "primary"
+            value: window.metered ? window.status.meter : 0
           }
 
           Icon {
             size: Config.theme.osdIconSize
             tone: window.tone
-            glyph: window.glyph
+            glyph: window.status.glyph
           }
         }
       }
@@ -174,16 +165,16 @@ Scope {
         Icon {
           anchors.verticalCenter: parent.verticalCenter
           tone: window.tone
-          glyph: window.glyph
+          glyph: window.status.glyph
         }
 
         Label {
           id: value
           anchors.verticalCenter: parent.verticalCenter
           // As wide as its widest value where the glyph alone says little, so the pill holds still as the value changes.
-          width: (window.status && window.status.popupWidth ? window.status.popupWidth() : window.text.length) * Metrics.cell
+          width: (window.status.popupWidth || window.status.popup.length) * Metrics.cell
           tone: window.tone
-          text: window.text
+          text: window.status.popup
         }
       }
     }
