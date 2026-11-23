@@ -10,8 +10,8 @@ RowLayout {
   id: header
 
   required property MenuModel menu
-  // Both sides as wide when there is a centre to keep centred.
-  readonly property bool centred: centreSlot.visible
+  // Both sides as wide when there is a centre to keep centred and room for both at that width; crowded, each side keeps what it needs, so the shortage falls on the text that can give most.
+  readonly property bool centred: centreSlot.visible && 2 * Math.max(leftSlot.wanted, rightSlot.wanted) + centreSlot.wanted + 2 * spacing <= width
   readonly property real sideMinimum: Math.max(leftSlot.contentMinimum, rightSlot.contentMinimum)
   // What the slots and the legend leave the actions: with less than every label needs, all show their glyphs alone.
   readonly property real actionsRoom: width - [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.wanted + spacing : 0), 0) - (legend.visible ? legend.implicitWidth + actions.spacing : 0)

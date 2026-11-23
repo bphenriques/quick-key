@@ -26,6 +26,15 @@ Scope {
     id: transient
   }
 
+  // One already showing goes when a menu or panel opens at its edge, as a new one would not show.
+  Connections {
+    target: Panels
+
+    function onTopChanged() {
+      if (Panels.top && Config.popups.position === Config.menu.edge) transient.hide();
+    }
+  }
+
   Fade {
     id: fade
     shown: transient.shown
@@ -91,20 +100,22 @@ Scope {
       WlrLayershell.namespace: "quick-key-osd"
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {
-        item: window.metered ? bar : pill
-        radius: (window.metered ? bar : pill).radius
+        item: window.shape
+        radius: window.shape.radius
       }
 
-      implicitWidth: (metered ? bar.implicitWidth : pill.implicitWidth) + (across ? 0 : room)
-      implicitHeight: (metered ? bar.implicitHeight : pill.implicitHeight) + (across ? room : 0)
+      // What shows, a level or a pill, placed within the window past the room left for a slide, and moved itself while sliding so its blur moves with it.
+      readonly property Item shape: metered ? bar : pill
+      readonly property point at: Qt.point((Config.popups.position === "left" ? room : 0) + slide.x, (Config.popups.position === "top" ? room : 0) + slide.y)
+      implicitWidth: shape.implicitWidth + (across ? 0 : room)
+      implicitHeight: shape.implicitHeight + (across ? room : 0)
 
       // A level: a bar, the level above the icon, or after it when it reads across.
       Surface {
         id: bar
         opacity: fade.value
-        // Within the window, past the room left for a slide, and moved itself while sliding so its blur moves with it.
-        x: (Config.popups.position === "left" ? window.room : 0) + window.slide.x
-        y: (Config.popups.position === "top" ? window.room : 0) + window.slide.y
+        x: window.at.x
+        y: window.at.y
         width: implicitWidth
         height: implicitHeight
         visible: window.metered
@@ -151,8 +162,8 @@ Scope {
       Pill {
         id: pill
         opacity: fade.value
-        x: (Config.popups.position === "left" ? window.room : 0) + window.slide.x
-        y: (Config.popups.position === "top" ? window.room : 0) + window.slide.y
+        x: window.at.x
+        y: window.at.y
         width: implicitWidth
         height: implicitHeight
         visible: !window.metered

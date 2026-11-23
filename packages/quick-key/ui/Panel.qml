@@ -108,15 +108,11 @@ Scope {
         id: islandRegions
         model: islandsDrawn.count
 
-        Region {
+        // Each island by the bar it sits on, so it follows the bar too.
+        PlacedRegion {
           required property int index
-          readonly property Item island: islandsDrawn.count > index ? islandsDrawn.itemAt(index) : null
-          // Its island's place in the window, by the bar it sits on, so it follows the bar too.
-          x: island?.visible ? bar.x + island.x : 0
-          y: island?.visible ? bar.y + island.y : 0
-          width: island?.visible ? island.width : 0
-          height: island?.visible ? island.height : 0
-          radius: Config.theme.radius
+          over: islandsDrawn.count > index ? islandsDrawn.itemAt(index) : null
+          at: Qt.point(bar.x + (over?.x ?? 0), bar.y + (over?.y ?? 0))
         }
       }
 
@@ -193,6 +189,8 @@ Scope {
 
             Loader {
               id: statusesContent
+              // Hidden too while inactive, or the row keeps a gap for it.
+              visible: root.statuses
               active: root.statuses
               sourceComponent: Panels.statuses
             }

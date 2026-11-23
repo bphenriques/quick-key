@@ -29,9 +29,9 @@ Scope {
 
   // An icon sent by its name, from the theme, at a glyph's size; a rule's own first.
   function iconOf(entry) {
-    if (entry.applied.icon) return Quickshell.iconPath(entry.applied.icon, true);
-    const icon = plugin.iconOf(entry);
-    return icon && !plugin.fileOf(entry) ? Quickshell.iconPath(icon, true) : "";
+    const icon = entry.applied.icon || (plugin.fileOf(entry) ? "" : plugin.iconOf(entry));
+    // Its symbolic version first, drawn in the text's colour, so a theme's icon made for another background never washes out.
+    return icon ? Quickshell.iconPath(icon + "-symbolic", true) || Quickshell.iconPath(icon, true) : "";
   }
 
   // The focused screen, which the cards follow while nothing holds them still.
@@ -125,15 +125,11 @@ Scope {
         id: blurs
         model: view.settings.limit
 
-        Region {
+        // Each card by the stack and the deck it sits in, which move it (the pills' row above, a slide).
+        PlacedRegion {
           required property int index
-          readonly property var card: cards.count > index ? cards.itemAt(index) : null
-          // Its card's place in the window, by the stack and the deck it sits in: given by item, it would follow the card alone, not what moves it (the pills' row above).
-          x: card?.visible ? stack.x + deck.x + card.x : 0
-          y: card?.visible ? stack.y + deck.y + card.y : 0
-          width: card?.visible ? card.width : 0
-          height: card?.visible ? card.height : 0
-          radius: Config.theme.radius
+          over: cards.count > index ? cards.itemAt(index) : null
+          at: Qt.point(stack.x + deck.x + (over?.x ?? 0), stack.y + deck.y + (over?.y ?? 0))
         }
       }
 
@@ -179,7 +175,7 @@ Scope {
                 readonly property var hint: entry?.hints.value
 
                 width: stack.width
-                recolour: Config.theme.appIcons
+                recolour: icon.includes("symbolic") ? "tint" : Config.theme.appIcons
                 iconColumn: view.icons
                 icon: entry ? view.iconOf(entry) : ""
                 image: entry ? view.pictureOf(entry) : ""

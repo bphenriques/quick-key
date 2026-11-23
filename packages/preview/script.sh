@@ -17,6 +17,13 @@ done
 mv "$work/config.shell" "$work/config/quick-key"
 cp "$config" "$work/config/quick-key/config.json"
 
+# A copy of your state (tasks, events), so plugins read it as they would, but what they write, a sync's result, stays in the preview.
+state_home=${XDG_STATE_HOME:-$HOME/.local/state}
+mkdir "$work/state"
+if [ -d "$state_home/quick-key" ]; then cp -r "$state_home/quick-key" "$work/state/"; fi
+# A path to it the config spells out (as the module writes them) points at the copy too.
+sed -i "s|$state_home/quick-key|$work/state/quick-key|g" "$work/config/quick-key/config.json"
+
 # niri runs the command once it is up, which reports where; the read waits for it, opened read-write so the open itself cannot block.
 mkfifo "$work/ready"
 exec 3<>"$work/ready"
@@ -29,7 +36,7 @@ if ! read -r -t 30 -u 3 display socket; then
 fi
 export WAYLAND_DISPLAY=$display NIRI_SOCKET=$socket
 
-XDG_CONFIG_HOME=$work/config quickshell -p "$dir" > "$work/quickshell.log" 2>&1 &
+XDG_CONFIG_HOME=$work/config XDG_STATE_HOME=$work/state quickshell -p "$dir" > "$work/quickshell.log" 2>&1 &
 shell_pid=$!
 
 # shellcheck disable=SC2329 # a steps file calls these, then the preview ends; shots land in the working directory

@@ -70,8 +70,8 @@ RowLayout {
     // Packed, as wide as itself at most, still shortening when squeezed.
     Layout.fillWidth: true
     Layout.maximumWidth: root.packed ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
-    // Squeezed, text ends in an ellipsis: what a row is short of comes from each part by how much it can give, so a short value (80%, EN) gives least.
-    Layout.minimumWidth: Math.min(implicitWidth, 2 * Metrics.cell)
+    // Squeezed, text ends in an ellipsis, but a short value (80%, EN) stays whole: only a longer one gives way.
+    Layout.minimumWidth: Math.ceil(implicitWidth) <= 6 * Metrics.cell ? Math.ceil(implicitWidth) : 2 * Metrics.cell
     horizontalAlignment: root.titled && !root.packed ? Text.AlignRight : Text.AlignLeft
     elide: Text.ElideRight
     font.strikeout: root.struck
@@ -95,7 +95,7 @@ RowLayout {
   Label {
     id: detailLabel
     visible: root.detail !== ""
-    Layout.minimumWidth: Math.min(implicitWidth, 4 * Metrics.cell)
+    Layout.minimumWidth: Math.ceil(implicitWidth) <= 6 * Metrics.cell ? Math.ceil(implicitWidth) : 4 * Metrics.cell
     elide: Text.ElideRight
     horizontalAlignment: Text.AlignRight
     tone: root.valueTone
