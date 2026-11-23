@@ -191,19 +191,19 @@ Plugin {
     else leave(entry);
   }
 
-  // Emptied at once, then each closed: one by one, every card would sort the rest again.
+  // Emptied at once and those closed set once, as one by one every card would sort the rest again; each shelved before its sender hears, so its closing finds it gone, but a passing one, which leaves as it closes.
   function clear() {
     endReply();
     const all = internal.list;
     internal.list = [];
-    // The closed history built aside and set once: set per card, all that reads it would follow each.
-    internal.building = internal.closed;
-    for (const entry of all) {
-      if (entry.notification) entry.notification.dismiss();
-      else leave(entry);
-    }
-    internal.closed = internal.building;
-    internal.building = null;
+    if (internal.picked && internal.mode !== "closed") release();
+    internal.picked = null;
+    internal.closed = all.reduce((history, entry) => {
+      const notification = entry.notification;
+      const next = notification?.transient ? history : shelved(history, entry);
+      if (notification) notification.dismiss();
+      return next;
+    }, internal.closed);
   }
 
   // The pointer is on a card: every one holds still, so the one under it stays there.
@@ -498,7 +498,7 @@ Plugin {
     if (entry === internal.replying && !entry.hasInlineReply) interrupt();
   }
 
-  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient); one brought back goes back.
+  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient).
   function leave(entry, keep = true) {
     if (entry === internal.replying) interrupt();
     const at = shown.indexOf(entry);
@@ -508,16 +508,18 @@ Plugin {
       if (internal.picked === null && internal.mode !== "closed") release();
     }
     if (!keep || entry.notification?.transient) return entry.destroy();
+    internal.closed = shelved(internal.closed, entry);
+  }
+
+  // The closed history with it last, one brought back going back; its earlier self goes, by tag or by saying the same, so a chatty sender (a volume tool, a silent rule) never pushes the rest out.
+  function shelved(history, entry) {
     if (!entry.restored) entry.saved = snapshot(entry);
     entry.notification = null;
-    // Its earlier self goes, by tag or by saying the same, so a chatty sender (a volume tool, a silent rule) never pushes the rest out.
     const twin = each => each.appName === entry.appName && (tagOf(entry.data) ? tagOf(each.data) === tagOf(entry.data) : each.summary === entry.summary && each.body === entry.body);
-    const history = internal.building ?? internal.closed;
     history.filter(twin).forEach(each => each.destroy());
     const closed = history.filter(each => !twin(each)).concat([entry]);
     while (closed.length > settings.history) closed.shift().destroy();
-    if (internal.building) internal.building = closed;
-    else internal.closed = closed;
+    return closed;
   }
 
   // What a card shows, kept once its sender is done with it; a picture sent as data goes with its sender.
@@ -606,8 +608,6 @@ Plugin {
     }
     property var list: []
     property var closed: []
-    // While clearing, the closed history being built.
-    property var building: null
     property bool hovered: false
     property var picked: null
     property var replying: null
