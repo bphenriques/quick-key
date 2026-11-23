@@ -58,6 +58,30 @@ ShellRoot {
     return lateStep[name] === 2 && !ask.busy && ask.exchanges[0].stopped && ask.exchanges[1]?.reply === "next" && done(ask);
   }
 
+  // The text in `item` cut at `lines`, as a compact turn's answer is.
+  function cutAt(item, lines) {
+    for (let i = 0; i < item.children.length; i++) {
+      const child = item.children[i];
+      const found = child.maximumLineCount === lines ? child : cutAt(child, lines);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // A turn as the menu's island draws it.
+  FloatingWindow {
+    implicitWidth: 300
+    implicitHeight: 200
+
+    Exchange {
+      id: compact
+      width: 300
+      lines: 3
+      table: true
+      text: "A paragraph long enough to wrap across this narrow turn more than once, and then some more.\n\n| a | b |\n|---|---|\n| 1 | 2 |"
+    }
+  }
+
   Suite {
     cases: [
       {
@@ -249,6 +273,13 @@ ShellRoot {
           const done = ask.turn?.table === true && ask.turn.phase === "done";
           if (done) ask.endVisit();
           return done;
+        }
+      },
+      {
+        name: "a compact answer holding a table still wraps, its last line ending in the ellipsis rather than cut through a letter",
+        until: () => {
+          const brief = root.cutAt(compact, 3);
+          return brief !== null && brief.lineCount === 3 && brief.truncated && brief.contentWidth <= brief.width;
         }
       },
       {

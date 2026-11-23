@@ -16,7 +16,7 @@ ColumnLayout {
   property string phase: "done"
   property string kind: ""
   property string activity
-  // The text is a table's rows: kept whole, so its columns line up.
+  // The text holds a table, which only the whole conversation lays out: compact, it overflows.
   property bool table: false
   property int lines: 0
   property bool copyable: false
@@ -111,7 +111,7 @@ ColumnLayout {
           Layout.fillWidth: true
           visible: root.compact
           tone: root.tone || "normal"
-          wrapMode: root.table ? Text.NoWrap : Text.Wrap
+          wrapMode: Text.Wrap
           maximumLineCount: Math.max(1, root.lines)
           elide: Text.ElideRight
           // Hidden, a view still lays its text out: each takes the answer only while it shows.
