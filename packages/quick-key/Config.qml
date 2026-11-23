@@ -320,7 +320,7 @@ Singleton {
         // The events file the month shows, by default $XDG_STATE_HOME/quick-key/events.json; until it exists, the month alone.
         property string file: root.stateDir + "/events.json"
         // Given an event's title and when (14:00 · Rua Augusta 120), reminds of it; empty, no reminders.
-        property string remind: "notify-send --app-name=Calendar --icon=x-office-calendar"
+        property string remind: "notify-send --app-name=Calendar --icon=x-office-calendar --"
         // Minutes before a timed event starts that `remind` runs.
         property int remindBefore: 10
         // Minutes after the last sync before it shows in warning.

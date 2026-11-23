@@ -1121,6 +1121,16 @@ ShellRoot {
           if (JSON.stringify(Config.over({ low: 3, normal: 8 }, { normal: 5 })) !== '{"low":3,"normal":5}' || Config.over([1], [2])[0] !== 2) return false;
           return root.plugin.settings.problems().length === 0 && problems.length === 11 && root.plugin.settings.groupNames("(a)(?:b)(?<c>[(]d)\\(").join() === ",c" && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
         }
+      },
+      {
+        name: "an event or an answer titled as an option shows by the default reminder and Ask's notify, its title the summary",
+        start: () => {
+          const ask = Qt.createComponent(Quickshell.shellPath("plugins/ask/Settings.qml")).createObject(root);
+          Commands.run(Config.calendar.remind, "--help", "14:00");
+          Commands.run(ask.notify, "-x", "Done");
+          ask.destroy();
+        },
+        until: () => root.find("--help")?.body === "14:00" && root.find("-x")?.body === "Done"
       }
     ]
   }
