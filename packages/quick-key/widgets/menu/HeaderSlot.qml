@@ -12,8 +12,8 @@ Item {
   property var items: []
   property int alignment: Qt.AlignLeft
   readonly property bool centre: alignment === Qt.AlignHCenter
-  // The least its items need, their text shortened, never their icons.
-  readonly property real contentMinimum: row.Layout.minimumWidth
+  // The least its items need, summed from them: asking the row while the bar tears down its old items reads freed memory (a crash moving between levels).
+  readonly property real contentMinimum: Array.from(row.children).reduce((sum, item) => sum + (item.visible && item.implicitWidth > 0 ? item.Layout.minimumWidth : 0), 0)
   readonly property real wanted: row.implicitWidth
   // What it draws, for an island behind it.
   readonly property Item content: row
