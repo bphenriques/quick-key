@@ -259,6 +259,7 @@ def task-lists [calendars_file: path]: nothing -> list {
 
 # This script's subcommand, under the state's lock: a tick and a sync's rewrite of the tasks file never interleave, and neither waits on the network.
 def locked [events_file: path, ...args] {
+  # Callers pass "--" quoted, so it reaches the inner call: a bare one would end this command's own flags.
   ^flock ($events_file | path dirname | path join lock) nu $env.CURRENT_FILE ...$args
 }
 
@@ -272,11 +273,11 @@ def "main tasks" [calendars_file: path, events_file: path, --synced, --error: st
 
 # Ticks a task off by its id and title in the tasks file, and writes that file again; the next sync takes it to its server.
 def "main done" [calendars_file: path, events_file: path, id: int, title: string] {
-  locked $events_file tick done $calendars_file $events_file $id $title
+  locked $events_file tick "--" done $calendars_file $events_file $id $title
 }
 
 def "main reopen" [calendars_file: path, events_file: path, id: int, title: string] {
-  locked $events_file tick reopen $calendars_file $events_file $id $title
+  locked $events_file tick "--" reopen $calendars_file $events_file $id $title
 }
 
 # What done and reopen run under the lock. todoman numbers tasks anew as their files change, an id landing on another alike, so only the one task shown with that title, open for done and done for reopen, is acted on.
@@ -308,7 +309,7 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: int, 
 
 # Adds a task to the first list by its title, and writes the tasks file again; the next sync takes it to its server.
 def "main add" [calendars_file: path, events_file: path, title: string] {
-  locked $events_file create $calendars_file $events_file $title
+  locked $events_file create "--" $calendars_file $events_file $title
 }
 
 # What add runs under the lock; todoman's default list is the first.

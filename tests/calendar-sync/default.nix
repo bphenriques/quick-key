@@ -93,6 +93,10 @@ pkgs.runCommand "quick-key-calendar-sync"
 
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"
+    for title in -x --help; do
+      quick-key-calendar-sync add ${./calendars.yaml} state/events.json -- "$title"
+      jq -e --arg t "$title" '[.tasks[] | select(.title == $t)] | length == 1' state/tasks.json > /dev/null || fail "add takes a title like a flag after --, as the module passes it: $title"
+    done
     grep -lq '^SUMMARY:-Call the plumber' state/vdirs/personal/*.ics || fail "add writes it to the first list"
     [ ! -e state/__pycache__ ] || fail "todoman leaves no bytecode beside its config"
 
