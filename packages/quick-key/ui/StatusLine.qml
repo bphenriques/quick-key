@@ -29,6 +29,8 @@ RowLayout {
   property bool struck: false
   // Its text bold, the one to find first (the clock).
   property bool strong: false
+  // Its value as a title (the clock).
+  property bool heading: false
   // Still being made: a spinner in place of its icon.
   property bool busy: false
   // Its label (the title, else the text) shown.
@@ -74,6 +76,7 @@ RowLayout {
     elide: Text.ElideRight
     font.strikeout: root.struck
     strong: root.strong
+    title: root.heading
     tone: root.titled ? root.valueTone : root.tone
     text: root.text
   }

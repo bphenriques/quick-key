@@ -14,6 +14,8 @@ What you choose while logged in is kept over a reload or a restart: keep awake, 
 
 The defaults are a suggested setup, not a ceiling. Sizes given in pixels that you leave unset follow `theme.fontSize` (`theme.iconSize`, `menu.width`), so a larger font keeps the proportions; what you set wins. The check bounds each value, and the layout keeps every surface within its screen, so no setting breaks the menu or its keys.
 
+Beyond the suggested look: `menu.islands` draws the bar's actions and slots apart, each on an island, as waybar's islands do; `theme.titleScale` sets the clock and a card's summary larger, up to 1.5 times the font; `theme.motion = "slide"` brings pop-ups, corner pills and cards in from their edge as they fade. The menu itself always appears at once.
+
 ## Checking
 
 `qs -p <the shell's folder>/check.qml` checks `config.json` and shows nothing. It prints what is wrong (a setting that does not exist, a value of another kind, a menu entry or plugin that cannot work) and exits 1. The shell logs the same as it starts. With Nix, the module runs it as the configuration builds, so a wrong setting fails the build, not the session; the shell's folder is the package's `share/quick-key`. Without a display, as in CI or over SSH, run it with `QT_QPA_PLATFORM=offscreen`.

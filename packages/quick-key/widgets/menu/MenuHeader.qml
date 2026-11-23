@@ -22,6 +22,9 @@ RowLayout {
   readonly property bool overflows: width > 0 && needed > width + 1
   onOverflowsChanged: if (overflows) console.warn("menu: the bar needs " + Math.ceil(needed) + " px, more than its " + Math.floor(width) + ": widen menu.width or the level's width, or list fewer items")
 
+  // What each island holds with `menu.islands`: the actions, then each slot's items, which Panel draws apart.
+  readonly property var islands: [actions, leftSlot.content, centreSlot.content, rightSlot.content]
+
   // A key of the legend clicked.
   signal picked(var key)
 

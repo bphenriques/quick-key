@@ -140,6 +140,10 @@ Scope {
           width: parent.width
           spacing: Config.theme.spacing
           opacity: fade.value
+          // Sliding, in from the side of its corner.
+          transform: Translate {
+            x: view.right ? fade.offset : -fade.offset
+          }
 
           // Over the whole stack, its gaps too, so moving between cards never lets go.
           HoverHandler {

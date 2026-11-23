@@ -63,6 +63,10 @@ Scope {
           id: pill
           tone: root.tone
           opacity: fade.value
+          // Sliding, in from the right.
+          transform: Translate {
+            x: fade.offset
+          }
           anchors.fill: parent
 
           Loader {

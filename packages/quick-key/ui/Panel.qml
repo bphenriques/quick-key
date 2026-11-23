@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Window
 import Quickshell
 import Quickshell.Wayland
 import qs
@@ -20,6 +21,8 @@ Scope {
   property Component body
   property bool inputShown: false
   property bool inputOver: false
+  // The bar drawn as islands, one behind each item its content lists in `islands`, rather than as one surface.
+  property bool islands: false
   // Whether the input has the keys, else the body.
   property bool inputFocused: false
   property Component input
@@ -85,11 +88,26 @@ Scope {
         item: card
         radius: Config.theme.radius
         Region {
-          item: bar.visible ? bar : null
+          item: bar.visible && !root.islands ? bar : null
           radius: Config.theme.radius
         }
         Region {
+          regions: Array.from({ length: islandRegions.count }, (_, i) => islandRegions.objectAt(i))
+        }
+        Region {
           item: inputSurface.visible ? inputSurface : null
+          radius: Config.theme.radius
+        }
+      }
+
+      Instantiator {
+        id: islandRegions
+        model: islandsDrawn.count
+
+        Region {
+          required property int index
+          readonly property Item island: islandsDrawn.count > index ? islandsDrawn.itemAt(index) : null
+          item: island?.visible ? island : null
           radius: Config.theme.radius
         }
       }
@@ -123,7 +141,26 @@ Scope {
           anchors.bottomMargin: Config.menu.margin
           anchors.topMargin: Config.menu.margin
           width: card.width
-          height: barRow.implicitHeight + Config.theme.padding / 2
+          // At least a title's line, so a level's bar without the clock is as tall as the top level's and the body holds still.
+          height: Math.max(barRow.implicitHeight, Metrics.titleLine + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
+          // As islands, only what is behind each item shows.
+          color: root.islands ? "transparent" : Tone.surface()
+          border.width: root.islands ? 0 : Config.theme.borderWidth / Screen.devicePixelRatio
+
+          Repeater {
+            id: islandsDrawn
+            model: root.islands ? barContent.item?.islands ?? [] : []
+
+            Surface {
+              required property Item modelData
+              // Its item's place in the bar, read again as the item or its slot moves or resizes.
+              readonly property rect box: modelData.visible && modelData.width + modelData.x + (modelData.parent?.x ?? 0) + (modelData.parent?.width ?? 0) >= 0 ? modelData.mapToItem(bar, 0, 0, modelData.width, modelData.height) : Qt.rect(0, 0, 0, 0)
+              visible: box.width > 0
+              x: box.x
+              width: box.width
+              height: bar.height
+            }
+          }
 
           RowLayout {
             id: barRow
@@ -135,6 +172,7 @@ Scope {
             spacing: Config.theme.spacing
 
             Loader {
+              id: barContent
               Layout.fillWidth: true
               sourceComponent: root.bar
             }

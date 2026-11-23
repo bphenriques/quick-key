@@ -213,10 +213,14 @@ Singleton {
         property real disabledOpacity: 0.5
         // Milliseconds a fade or colour change takes; 0 for none.
         property int animationDuration: 100
+        // How a pop-up, a corner pill and the cards come and go: "fade", or "slide", fading as they move in from their edge; the menu always appears at once.
+        property string motion: "fade"
         // The one font, by family: monospace, since sizes are counted in its characters.
         property string monospaceFont: "monospace"
         // The font's size, in points.
         property int fontSize: 11
+        // A title's size (the clock, a card's summary) as a multiple of the font's, 1 to 1.5.
+        property real titleScale: 1
         // Wrapped prose (an answer) at this multiple of a line; rows keep their own padding.
         property real lineHeight: 1.3
         // Corner radius of panels and cards, in pixels.
@@ -271,6 +275,8 @@ Singleton {
         property string edge: "bottom"
         // Where along that edge: left, center or right.
         property string align: "center"
+        // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.
+        property bool islands: false
         // Where a level's input sits: past its body ("body"), or between the body and the bar ("bar"), where a body of another height moves it less.
         property string inputSide: "body"
       }

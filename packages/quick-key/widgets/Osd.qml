@@ -71,6 +71,8 @@ Scope {
 
       // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
       readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
+      // Sliding, in from the edge it sits at.
+      readonly property point slide: Qt.point(Config.popups.position === "right" ? fade.offset : Config.popups.position === "left" ? -fade.offset : 0, Config.popups.position === "bottom" ? fade.offset : Config.popups.position === "top" ? -fade.offset : 0)
       // A level no longer than half its screen.
       readonly property real length: Math.min(Config.theme.osdLength, (across ? screen.width : screen.height) / 2 || Config.theme.osdLength)
       anchors.right: Config.popups.position === "right"
@@ -95,6 +97,10 @@ Scope {
       Surface {
         id: bar
         opacity: fade.value
+        transform: Translate {
+          x: window.slide.x
+          y: window.slide.y
+        }
         anchors.fill: parent
         visible: window.metered
         implicitWidth: (window.across ? levelColumn.implicitWidth : Config.theme.osdIconSize) + 2 * Config.theme.padding
@@ -140,6 +146,10 @@ Scope {
       Pill {
         id: pill
         opacity: fade.value
+        transform: Translate {
+          x: window.slide.x
+          y: window.slide.y
+        }
         anchors.fill: parent
         visible: !window.metered
         padding: Config.theme.padding

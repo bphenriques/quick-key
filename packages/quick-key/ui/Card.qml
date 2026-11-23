@@ -124,6 +124,7 @@ Surface {
             Layout.fillWidth: true
             elide: Text.ElideRight
             strong: true
+            title: true
             tone: "normal"
             text: root.title
           }

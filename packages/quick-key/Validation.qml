@@ -70,6 +70,7 @@ Singleton {
   readonly property var ranges: ({
       "theme.fontSize": [4, 48],
       "theme.lineHeight": [0.1, 4],
+      "theme.titleScale": [1, 1.5],
       "theme.iconSize": [4, 256],
       "menu.margin": [0, 1000],
       "popups.margin": [0, 1000],
@@ -111,7 +112,8 @@ Singleton {
       "menu.edge": ["bottom", "top"],
       "menu.align": ["left", "center", "right"],
       "menu.inputSide": ["body", "bar"],
-      "popups.position": ["right", "left", "top", "bottom"]
+      "popups.position": ["right", "left", "top", "bottom"],
+      "theme.motion": ["fade", "slide"]
     })
 
   function choiceProblems(json) {

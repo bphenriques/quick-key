@@ -16,6 +16,8 @@ Item {
   readonly property real contentMinimum: row.Layout.minimumWidth
   // What its items want, whole.
   readonly property real wanted: row.implicitWidth
+  // What it draws, for an island behind it.
+  readonly property Item content: row
   // Set on the sides: at least what their items need, or what either side needs when there is a centre to keep centred.
   property real sideMinimum: 0
   property bool centred: false
