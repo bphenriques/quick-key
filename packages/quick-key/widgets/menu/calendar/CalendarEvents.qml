@@ -187,7 +187,8 @@ ListView {
 
     ColumnLayout {
       visible: (!!row.event || !!row.earlier) && !root.folded
-      Layout.minimumWidth: root.timeChars * Metrics.cell
+      // Whole pixels: the layout snaps a width to them, and a fraction short cuts the longest time to an ellipsis.
+      Layout.minimumWidth: Math.ceil(root.timeChars * Metrics.cell)
       Layout.maximumWidth: Layout.minimumWidth
       Layout.alignment: Qt.AlignTop
       spacing: 0
