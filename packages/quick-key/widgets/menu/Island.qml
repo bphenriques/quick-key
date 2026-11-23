@@ -55,14 +55,11 @@ ColumnLayout {
       lines: 3
       maximumWidth: root.width * 0.85
       question: root.model.turn?.question ?? ""
-      context: root.model.turn?.context ?? ""
       text: root.model.turn?.text ?? ""
       phase: root.model.turn?.phase ?? "done"
       kind: root.model.turn?.kind ?? ""
       activity: root.model.turn?.activity ?? ""
-      options: root.model.choices
       table: !!root.model.turn?.table
-      picking: root.model.turn?.kind === "question" && fits
     }
   }
 
@@ -97,14 +94,10 @@ ColumnLayout {
     onKeyPressed: event => {
       const send = MenuKeys.sends(event);
       const name = MenuKeys.name(event);
-      // A choice waiting takes the digits whether or not they all show here, so they never type.
-      const waiting = !prompt.filter && root.model.turn?.kind === "question" && prompt.text === "";
       if (prompt.filter) {
         if (!root.menu.filterKey(name)) return;
       } else if (send) prompt.send(send === "background");
-      else if (waiting && /^[1-9]$/.test(name)) {
-        if (exchange.picking) root.model.pick(Number(name) - 1);
-      } else if (name === "Ctrl+r") {
+      else if (name === "Ctrl+r") {
         if (!root.model.recall()) return;
       } else if (name === "Tab" && last.visible) {
         root.menu.focusOn("answer");

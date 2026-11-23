@@ -45,11 +45,10 @@ Plugin {
     { key: "Ctrl+o", desc: "Move it to a terminal", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
     { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => recalls, run: () => recall() },
     { key: "Ctrl+v", desc: "Attach the clipboard's image", run: () => pasteImage() },
-    { key: "1-9", desc: "Pick an option" },
     { key: "Escape", desc: Words.helpEscape }
   ].filter(entry => entry.when !== false)
 
-  // [{ prompt, image, reply, error, stopped, after, input, options, table, steps }], the last streaming while busy; `input` when a level input sent it.
+  // [{ prompt, image, reply, error, stopped, after, input, table, steps }], the last streaming while busy; `input` when a level input sent it.
   property var exchanges: []
   property alias session: agent.session
   property string draft: ""
@@ -66,7 +65,6 @@ Plugin {
   property bool visited: false
   // `?` with the prompt dim: the panel keys until the next key.
   property bool helping: false
-  readonly property var choices: busy ? [] : exchanges[exchanges.length - 1]?.options ?? []
   property string approval: ""
   property string activity: ""
   // A tool `toolMatch` matches ran this turn.
@@ -141,8 +139,7 @@ Plugin {
     failure = outcome.error ?? "";
     if (!outcome.loaded) session = "";
     exchanges = !outcome.loaded ? [] : recalled.map(entry => {
-      const shaped = Markup.options(entry.reply);
-      return { prompt: entry.prompt.trim(), image: "", reply: shaped.text, error: "", stopped: false, after: "", input: false, options: shaped.options, table: Markup.hasTable(entry.reply) };
+      return { prompt: entry.prompt.trim(), image: "", reply: entry.reply, error: "", stopped: false, after: "", input: false, table: Markup.hasTable(entry.reply) };
     });
     recalled = [];
   }
@@ -168,12 +165,6 @@ Plugin {
     return true;
   }
 
-  function pick(index) {
-    const option = choices[index];
-    if (option === undefined) return false;
-    return send(option, "");
-  }
-
   onShownChanged: helping = false
 
   // Answered above the input while the menu shows it, else as a notification; one conversation per visit.
@@ -190,18 +181,12 @@ Plugin {
     return !!exchange?.input && watched;
   }
 
-  // What a reply to this answers: its text and options on one line.
-  function followed(exchange) {
-    return exchange ? [exchange.reply, (exchange.options ?? []).join(" · ")].filter(part => part).join(" ") : "";
-  }
-
-  // As an Exchange draws it (Phase): blocked on an approval while running, on a question while its options wait.
+  // As an Exchange draws it (Phase): blocked on an approval while running.
   function describe(exchange) {
-    const latest = exchange === exchanges[exchanges.length - 1];
-    const working = latest && stage === "working";
+    const working = exchange === exchanges[exchanges.length - 1] && stage === "working";
     const phase = working ? (approval ? "blocked" : "working")
-      : exchange.stopped ? "idle" : exchange.error ? "error" : latest && choices.length > 0 ? "blocked" : "done";
-    const kind = phase !== "blocked" ? "" : working ? "permission" : "question";
+      : exchange.stopped ? "idle" : exchange.error ? "error" : "done";
+    const kind = phase === "blocked" ? "permission" : "";
     return {
       question: exchange.prompt,
       image: exchange.image,
@@ -210,9 +195,6 @@ Plugin {
       phase: phase,
       kind: kind,
       activity: phase === "working" ? activity : "",
-      // So the question shows what it answers.
-      context: phase === "working" ? followed(exchanges[exchanges.indexOf(exchange) - 1]) : "",
-      options: kind === "question" ? choices : [],
       table: !!exchange.table,
       steps: exchange.steps ?? []
     };
@@ -252,8 +234,7 @@ Plugin {
     // Stopped, what streamed stays: people stop because they have read enough.
     if (!outcome.answered) return finish({ reply: outcome.stopped ? exchanges[exchanges.length - 1].reply : "", error: outcome.error ?? "Stopped", stopped: !!outcome.stopped });
     const text = exchanges[exchanges.length - 1].reply;
-    const shaped = Markup.options(text);
-    finish({ reply: shaped.text, options: shaped.options, table: Markup.hasTable(text) });
+    finish({ reply: text, table: Markup.hasTable(text) });
   }
 
   // Replaced, not edited, so what draws it hears.
@@ -271,11 +252,11 @@ Plugin {
   }
 
   function finish(answer) {
-    const last = setLast({ reply: answer.reply ?? "", error: answer.error ?? (answer.reply ? "" : words.noAnswer), stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
+    const last = setLast({ reply: answer.reply ?? "", error: answer.error ?? (answer.reply ? "" : words.noAnswer), stopped: !!answer.stopped, table: !!answer.table });
     stage = "idle";
     approval = "";
     if (seen(last)) report();
-    else notify(last.error || [last.reply].concat(last.options).join(" · "));
+    else notify(last.error || last.reply);
     if (last.reply && !last.stopped) exec(last.after);
     if (touched) exec(settings.toolRun);
     if (!shown && !seen(last)) unread = true;
@@ -385,8 +366,6 @@ Plugin {
       typing = !typing;
       return true;
     }
-    // A digit picks a waiting choice while the prompt is empty, never typing.
-    if (/^[1-9]$/.test(key) && !draft && !image && Number(key) <= choices.length) return pick(Number(key) - 1);
     if (key === "Escape") return stepBack();
     const entry = keys.find(entry => entry.run && (entry.key === key || typedAs(entry.key) === key));
     return !!entry && (!entry.shows || entry.shows()) && entry.run() !== false;

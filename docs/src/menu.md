@@ -78,9 +78,9 @@ The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level l
 
 `format` wraps the text that starts a conversation (`{text}`). `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
 
-Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows over the body: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works and, while you answer a question, the answer it follows. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
+Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows over the body: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
 
-An answer the island cannot hold (past three lines, a table, options that do not fit, an approval) opens the whole conversation in Ask, and `ESC` there comes back. `TAB` to the turn and `RET`, or a click, opens it too, and `y` copies its answer. A digit picks an option while the input is empty; once you type, digits type too. A failure shows in alert, what you sent faded and given back for `RET` to retry. `C-S-RET` leaves the answer to a notification.
+An answer the island cannot hold (past three lines, a table, an approval) opens the whole conversation in Ask, and `ESC` there comes back. `TAB` to the turn and `RET`, or a click, opens it too, and `y` copies its answer. A failure shows in alert, what you sent faded and given back for `RET` to retry. `C-S-RET` leaves the answer to a notification.
 
 An input writes, never filters. Put an agent's input only on a level showing what it changes:
 

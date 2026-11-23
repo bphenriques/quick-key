@@ -4,7 +4,7 @@ import Quickshell
 import qs
 import qs.ui
 
-// What the kit reads in an agent's Markdown (ACP's text format), in one place: its plain lines, its rich text, its closing options, whether it holds a table.
+// What the kit reads in an agent's Markdown (ACP's text format), in one place: its plain lines, its rich text, whether it holds a table.
 Singleton {
   readonly property var tableSeparator: /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/
   readonly property var listItem: /^(\s*)([-*+]|(\d+)[.)])\s+(.*)$/
@@ -234,16 +234,6 @@ Singleton {
   function quote(content, top) {
     return opening(top, false) + "<tr><td width=\"" + 2 * Config.theme.borderWidth + "\" bgcolor=\"" + css(Config.colors.border) + "\"></td>" + spacer(Config.theme.spacing) + "<td style=\"color:" + css(Tone.color("dim")) + "\">"
       + content + "</td></tr>" + closing(3);
-  }
-
-  // A closing numbered list (1. 2. ...) as the options a digit picks, taken out of the text: { text, options }.
-  function options(markdown) {
-    const lines = markdown.trim().split("\n");
-    let start = lines.length;
-    while (start > 0 && /^\s*\d+[.)]\s+\S/.test(lines[start - 1])) start--;
-    const listed = lines.slice(start);
-    const picked = listed.length >= 2 && start > 0 && listed.every((line, i) => parseInt(line) === i + 1);
-    return { text: (picked ? lines.slice(0, start) : lines).join("\n").trim(), options: picked ? listed.map(line => line.replace(/^\s*\d+[.)]\s+/, "").trim()) : [] };
   }
 
   function hasTable(markdown) {

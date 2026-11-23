@@ -11,18 +11,14 @@ ColumnLayout {
   id: root
 
   property string question
-  // What is being answered, dim over the question while it waits for its own.
-  property string context
   property string image
   // Markdown, as ACP sends text; plain when compact.
   property string text
   property string phase: "done"
   property string kind: ""
   property string activity
-  property var options: []
   // The text is a table's rows: kept whole, so its columns line up.
   property bool table: false
-  property bool picking: false
   property int lines: 0
   property bool copyable: false
   // What you answered on the way (an approval), dim over the answer.
@@ -31,33 +27,16 @@ ColumnLayout {
   property real maximumWidth: Infinity
 
   readonly property bool compact: lines > 0
-  readonly property bool fits: options.length <= 9 && choices.implicitWidth <= maximumWidth - 2 * Config.theme.itemPaddingX
-  readonly property bool overflows: compact && (kind === "permission" || table || brief.width > 0 && brief.truncated || (options.length > 0 && !fits))
+  readonly property bool overflows: compact && (kind === "permission" || table || brief.width > 0 && brief.truncated)
   // What Return does next, for the prompt under it.
-  readonly property string next: Words.next(phase, kind, picking, options.length)
+  readonly property string next: Words.next(phase, kind)
   // The selection to show again (Markdown.kept).
   property alias kept: answer.kept
   readonly property string tone: phase === "error" ? "alert" : kind === "permission" ? "warning" : phase === "idle" ? "dim" : ""
 
-  signal picked(int index)
   signal selected(var selection)
 
   spacing: Config.theme.spacing / 2
-
-  Bubble {
-    visible: root.context !== ""
-    maximumWidth: root.maximumWidth
-    full: root.compact
-
-    Label {
-      Layout.fillWidth: true
-      tone: "dim"
-      wrapMode: Text.Wrap
-      maximumLineCount: root.compact ? root.lines : 1000
-      elide: Text.ElideRight
-      text: Markup.plain(root.context)
-    }
-  }
 
   Bubble {
     mine: true
@@ -154,42 +133,12 @@ ColumnLayout {
           markdown: root.compact ? "" : root.text
         }
       }
-
-      RowLayout {
-        id: choices
-        visible: root.compact && root.options.length > 0
-        // Flattened, not hidden, when they do not fit: a hidden layout stops measuring, and `fits` would keep its last answer.
-        Layout.maximumHeight: root.fits ? Infinity : 0
-        clip: true
-        spacing: 2 * Config.theme.spacing
-
-        Repeater {
-          model: root.options
-
-          RowLayout {
-            id: chip
-            required property int index
-            required property string modelData
-            spacing: Config.theme.spacing
-
-            KeyHint {
-              visible: root.picking
-              key: String(chip.index + 1)
-            }
-
-            Label {
-              tone: root.picking ? "normal" : "dim"
-              text: chip.modelData
-            }
-          }
-        }
-      }
     }
 
     // At its end, so it reads as the whole answer's; a selection copies its part.
     ListItem {
       Layout.alignment: Qt.AlignBottom
-      visible: root.copyable && (root.phase === "done" || root.kind === "question")
+      visible: root.copyable && root.phase === "done"
       onActivated: Quickshell.clipboardText = root.text
 
       Icon {
@@ -212,34 +161,6 @@ ColumnLayout {
     // Fills the row, so the exchange is as wide as what holds it and the question sits on its right (a layout grows no wider than its children).
     Item {
       Layout.fillWidth: true
-    }
-  }
-
-  Repeater {
-    model: root.compact ? [] : root.options
-
-    ListItem {
-      id: option
-      required property int index
-      required property string modelData
-      Layout.fillWidth: true
-      // Outset by its padding, so the digits start where the answer does.
-      Layout.leftMargin: -Config.theme.itemPaddingX
-      Layout.rightMargin: -Config.theme.itemPaddingX
-      onActivated: root.picked(option.index)
-
-      // On a wrapped option's first line, as a row's key is.
-      KeyHint {
-        Layout.alignment: Qt.AlignTop
-        visible: root.picking
-        key: String(option.index + 1)
-      }
-
-      Label {
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        text: option.modelData
-      }
     }
   }
 }

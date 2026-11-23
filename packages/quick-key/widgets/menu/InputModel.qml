@@ -15,7 +15,6 @@ QtObject {
   readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.level?.entry?.list ?? "") : null
   readonly property bool busy: plugin?.busy ?? false
   readonly property var turn: plugin?.turn ?? null
-  readonly property var choices: turn?.options ?? []
   onTurnChanged: if (!turn && menu.answerFocused) menu.focusOn("body")
   // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
@@ -60,11 +59,6 @@ QtObject {
 
   function recall() {
     return !!plugin?.recall();
-  }
-
-  function pick(index) {
-    const option = choices[index];
-    return option !== undefined && submit(option, false);
   }
 
   // The plugin's own panel on the conversation, over the menu: stepping back from it shows this level again with its input focused, the visit going on.

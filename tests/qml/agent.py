@@ -164,8 +164,6 @@ class Agent:
             await self.cancelled.wait()
             write("trapped", "stopped")
             return PromptResponse(stop_reason="cancelled")
-        elif text.startswith("pick"):
-            await self.say(session_id, "Qual?\n1. a\n2. b")
         elif "table" in text:
             await self.say(session_id, "| dia | o quê |\n|---|---|\n| seg | Café |\n")
         elif text == "stream":

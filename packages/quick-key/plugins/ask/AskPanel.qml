@@ -52,13 +52,10 @@ Scope {
     kind: drawn.kind ?? ""
     // The wait too, once noticeable.
     activity: [drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
-    options: drawn.options ?? []
     table: !!drawn.table
     steps: drawn.steps ?? []
-    picking: !panel.plugin.draft
     copyable: true
     kept: panel.selection && panel.selection.turn === turn.at ? panel.selection : null
-    onPicked: index => panel.plugin.pick(index)
     onSelected: selection => panel.keep(turn.at, selection)
   }
 
@@ -94,7 +91,6 @@ Scope {
         id: legend
         // Each key as it runs now (Ask.typedAs): waiting, a chord's letter alone.
         keys: panel.plugin.keys.filter(entry => entry.what && entry.shows()).map(entry => ({ key: panel.plugin.typedAs(entry.key), what: entry.what, clickable: true }))
-          .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: Words.choose }] : [])
           .concat(!panel.plugin.typing ? [{ key: "?", what: Words.help, clickable: true }] : [])
           .concat(panel.plugin.typing && (panel.plugin.draft || panel.plugin.image) ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
         onPicked: key => {
@@ -216,7 +212,7 @@ Scope {
         Layout.fillWidth: true
         glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
         // Until a turn says what Return does next, as the menu's input does.
-        placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
+        placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
         active: panel.plugin.typing
         key: "Tab"
         onTapped: panel.plugin.focusPrompt()

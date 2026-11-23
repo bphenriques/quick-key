@@ -31,7 +31,6 @@ ShellRoot {
   }
   property int visitStep: 0
   property bool failedSent: false
-  property int chooseStep: 0
   property int streamStep: 0
   property real byeAt: 0
   property int resumeStep: 0
@@ -245,7 +244,7 @@ ShellRoot {
         }
       },
       {
-        name: "while the menu shows its input, its turn shows there, the next working under the answer it follows, unread stays off, and the next send continues the conversation; a new visit starts fresh",
+        name: "while the menu shows its input, its turn shows there, unread stays off, and the next send continues the conversation; a new visit starts fresh",
         until: () => {
           const ask = Plugins.get("visitor");
           if (!ask) return false;
@@ -253,7 +252,7 @@ ShellRoot {
             ask.startVisit();
             root.visitStep = ask.submit("one", false, "") ? 1 : 0;
           } else if (root.visitStep === 1 && ask.turn?.text === "one") {
-            root.visitStep = ask.submit("two", false, "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" && ask.turn.context === "one" ? 2 : -1;
+            root.visitStep = ask.submit("two", false, "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" ? 2 : -1;
           } else if (root.visitStep === 2 && ask.turn?.text === "two" && ask.turn.phase === "done") {
             root.visitStep = ask.exchanges.length === 2 && !ask.unread ? 3 : -1;
             ask.endVisit();
@@ -277,23 +276,14 @@ ShellRoot {
         }
       },
       {
-        name: "an answer's options are the choices, a digit picking one as the next message, Escape leaving them alone; a table stays marked",
+        name: "an answer that is a table stays marked, so the menu opens the panel on it",
+        start: () => {
+          Plugins.get("chooser").startVisit();
+          Plugins.get("chooser").submit("a table", false, "");
+        },
         until: () => {
           const ask = Plugins.get("chooser");
-          if (!ask || ask.busy) return false;
-          switch (root.chooseStep) {
-          case 0:
-            ask.startVisit();
-            root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
-            return false;
-          case 1:
-            root.chooseStep = ask.turn?.kind === "question" && ask.turn.options.length === 2 && !ask.act("Escape") && ask.choices.length === 2 && ask.act("2") ? 3 : -1;
-            return false;
-          case 3:
-            root.chooseStep = ask.exchanges[ask.exchanges.length - 1].prompt === "b" && ask.exchanges[ask.exchanges.length - 1].reply === "b" && ask.submit("a table", false, "") ? 4 : -1;
-            return false;
-          }
-          const done = root.chooseStep === 4 && ask.turn?.table === true && ask.turn.phase === "done" && ask.turn.options.length === 0;
+          const done = ask.turn?.table === true && ask.turn.phase === "done";
           if (done) ask.endVisit();
           return done;
         }

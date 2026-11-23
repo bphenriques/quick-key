@@ -4,7 +4,7 @@ A panel to ask an agent something without leaving what you are doing. It opens w
 
 `ask` is the agent: a command speaking [ACP](https://agentclientprotocol.com) on its stdio. It starts with the first turn and stays for the next, so a turn skips its start and its session's loading. After `idle` minutes without a turn it stops, and the next turn starts it again.
 
-The answer streams in as Markdown, ACP's text format and the one text the shell renders rich. The conversation renders it, fetching nothing and running no HTML: an image shows as its alt text. The menu's island shows it plain. A closing numbered list is the options a digit picks, read from the Markdown's structure, never guessed from plain text.
+The answer streams in as Markdown, ACP's text format and the one text the shell renders rich. The conversation renders it, fetching nothing and running no HTML: an image shows as its alt text. The menu's island shows it plain.
 
 ```nix
 # Claude, through Zed's ACP adapter; `open` resumes its session in a terminal.
@@ -33,5 +33,5 @@ Keys:
 
 A question from an input starts a new conversation, as a quick-entry window does, the one it leaves staying in the agent's own list. History is that list (ACP's `session/list`, in `cwd`), in its order, each with its last activity, filtered in the menu as a shell's reverse search is. `RET` resumes one, its history replayed (`session/load`), and its own menu (`M-RET`) has `o`, which opens it in a terminal. An agent that cannot load them dims them, and one that cannot list them says so. An input that gives Ask its text takes `C-r` too.
 
-Its status shows its glyph only while it has something to report: a run, an unread answer, a question for you. To ask from a key, bind `menu press Tab`: the menu opens with its input focused. Two agents are two plugins with `type = "ask"`, and a level's `input` may hand one its text (see [Input](menu.md#input)).
+Its status shows its glyph only while it has something to report: a run, an unread answer, an approval waiting on you. To ask from a key, bind `menu press Tab`: the menu opens with its input focused. Two agents are two plugins with `type = "ask"`, and a level's `input` may hand one its text (see [Input](menu.md#input)).
 

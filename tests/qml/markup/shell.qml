@@ -39,11 +39,6 @@ ShellRoot {
     ["a link or an image shows by its text", () => bare("[site](https://e.com) ![pic](https://e.com/a.png)"), "<p>site pic</p>"],
     ["HTML shows as text, so a script never runs", () => bare("<script>alert(1)</script> & <img src=x>"), "<p>&lt;script&gt;alert(1)&lt;/script&gt; &amp; &lt;img src=x&gt;</p>"],
     ["nothing it renders fetches: no link, image or stylesheet in any block", () => /<a |<img|href|src=|url\(|<link|<style/.test(Markup.html(everything)), false],
-    ["closing numbered options are the choices, taken out of the text", () => Markup.options("Pick one:\n1. Red\n2) Blue\n"), { text: "Pick one:", options: ["Red", "Blue"] }],
-    ["one option is no choice", () => Markup.options("Pick:\n1. Red").options, []],
-    ["options not counted from 1 are no choice", () => Markup.options("Then:\n2. a\n3. b").options, []],
-    ["a numbered list before more text is no choice", () => Markup.options("Steps:\n1. a\n2. b\nThen done.").options, []],
-    ["an answer that is only a list is no choice", () => Markup.options("1. a\n2. b"), { text: "1. a\n2. b", options: [] }],
     ["a table is told by its separator row; a rule or a lone pipe is none", () => ["| a | b |\n|---|:-:|", "text\n---|---", "a | b", "---"].map(text => Markup.hasTable(text)), [true, true, false, false]]
   ]
 
