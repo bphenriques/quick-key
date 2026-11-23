@@ -143,6 +143,11 @@ ShellRoot {
         until: () => {
           const tasks = Plugins.get("tasks");
           const item = id => (tasks?.items ?? []).find(item => item.id === id);
+          // Written again should the minute turn before it is read, so the task due now is not late yet.
+          if (tasks.tasks.some(task => task.id === "b" && task.due !== tasks.now) && root.dueMinute !== tasks.now) {
+            root.dueMinute = tasks.now;
+            root.tasks("write");
+          }
           return tasks.items.map(item => item.id).join() === "a,e,f,b,c,d" && tasks.text === "" && tasks.fields.title === "Late" && tasks.detail === "1"
             && tasks.tone === "warning" && item("e").done && item("e").icon === Glyphs.checkboxChecked
             && ["a", "e", "f", "c", "d"].map(id => item(id).tone).join() === "warning,,,," && item("e").glyphs.length === 0
