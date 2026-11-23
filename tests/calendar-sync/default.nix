@@ -85,6 +85,12 @@ pkgs.runCommand "quick-key-calendar-sync"
     grep -q "two tasks are called Buy milk" err && cmp ${./added}/milk-home.ics state/vdirs/personal/milk-home.ics && cmp ${./added}/milk-office.ics state/vdirs/personal/milk-office.ics \
       || fail "a done of one of two open tasks alike says so, touching neither"
 
+    # A series with an instance of its own in one file, done this week: todoman lists it once, and an edit would reach all.
+    sed "s/^COMPLETED:2026[0-9]*T/COMPLETED:$(date -u +%Y%m%d)T/" ${./added}/review.ics > review.ics && cp review.ics state/vdirs/personal/review.ics
+    sync tasks
+    ! tick reopen "$(jq -r '.tasks[] | select(.title == "Weekly review") | .id' state/tasks.json)" "Weekly review" 2> err || fail "a tick of a file of more than one task fails"
+    grep -q "holds more than one task" err && cmp review.ics state/vdirs/personal/review.ics || fail "a tick of a file of more than one task says so, touching it not"
+
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"
     grep -lq '^SUMMARY:-Call the plumber' state/vdirs/personal/*.ics || fail "add writes it to the first list"

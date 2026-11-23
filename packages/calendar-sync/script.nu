@@ -286,15 +286,18 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: int, 
   let alike = shown $state | where {|t| $t.summary == $title and $t.completed == ($how == "reopen") }
   if $id not-in $alike.id { error make --unspanned { msg: "tasks changed, try again" } }
   if ($alike | length) > 1 { error make --unspanned { msg: $"two tasks are called ($title): tick it in your calendar app" } }
+  # A series with instances of its own in one file, which todoman lists as one and an edit would change whole.
+  let file = ^todo --config $config path $id | str trim
+  let ics = open --raw $file
+  if ($ics | parse --regex '(?m)^(BEGIN:VTODO)\r?$' | length) > 1 { error make --unspanned { msg: $"the file of ($title) holds more than one task: tick it in your calendar app" } }
   if $how == "done" and $alike.0.recurring {
     # todoman makes a repeating task's next one.
     let run = ^todo --config $config done $id | complete
     if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   } else {
     # Edited in place, as todoman writes a task anew from its cache, losing what it does not read: the lines a tick sets go with those they fold onto (RFC 5545), only a task's in a CalDAV file (RFC 4791), and come back after BEGIN:VTODO in its line endings.
-    let file = ^todo --config $config path $id | str trim
     let set = if $how == "done" { [STATUS:COMPLETED $"COMPLETED:(date now | date to-timezone UTC | format date '%Y%m%dT%H%M%SZ')" PERCENT-COMPLETE:100] } else { [STATUS:NEEDS-ACTION] }
-    open --raw $file
+    $ics
     | str replace --all --regex '(?m)^(STATUS|COMPLETED|PERCENT-COMPLETE)[:;].*\n([ \t].*\n)*' ''
     | str replace --regex '(?m)^BEGIN:VTODO(\r?)\n' ($set | prepend BEGIN:VTODO | each { $in + '${1}' + "\n" } | str join)
     | save -f $"($file).tmp"
