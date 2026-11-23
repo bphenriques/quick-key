@@ -12,7 +12,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | a listed item (a task, a device) | `ListItem` |
 | keys: one, a legend, a list | `KeyHint`, `KeyLegend`, `KeyList` |
 | text to type or send | `TextArea`, `Prompt` |
-| a conversation (`qs.ui.conversation`) | `Exchange`, `Bubble` and `Markdown` in it; an answer's Markdown read through `Markup` |
+| a conversation (`qs.ui.conversation`) | a `Thread` of `Exchange`s, `Bubble` and `Markdown` in each; an answer's Markdown read through `Markup` |
 | a surface, an outline | `Panel`, `Surface`, `Pill`, `Divider` |
 | a card that comes and goes (a notification) | `Card` |
 
@@ -34,6 +34,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Prompt` | a line of text to send: a column as wide as its `key`'s name, holding the key dim while it waits (`TAB` for a level's input), else a glyph on the column's left edge, and a spinner in their place while `busy` (what it sends to takes no text); then a `TextArea`. Return sends its text (`sent`), in the background with Ctrl+Shift, unless `sends` is off (a filter). A click while waiting reaches `tapped`. `keys` is a legend on its right (`picked`), `detail` a dim value after it |
 | `Exchange` | one turn of a conversation: the `question` a `Bubble` on the right, the answer (`text`, Markdown) plain on the left, drawn by its `phase` and `kind` (`Phase`). Working shows a spinner and `activity` until the answer streams in, then a spinner where its copy button goes until done. Blocked shows a permission in warning. Error is in alert, the question faded; idle, once stopped. `steps` are dim lines over the answer (an approval you gave). With `lines` it is compact, cut there, `overflows` saying what it cannot hold; else it all shows as `Markdown`, with a copy button (`copyable`). `next` is what Return does after it, for the prompt under it (`Words.next`); `kept` and `selected` pass its answer's selection through |
 | `Bubble` | a message in a conversation, yours (`mine`) on the right in the theme's `bubble` colour with `bubbleText`, the other's plain on the left, never glyphs, its text on the keys' edge, as wide as its content up to `maximumWidth`, or all of it when `full` (text cut at a line count cannot size it); `faded` for one that did not go through |
+| `Thread` | a conversation's turns, its `delegate` each, built only where they show and laid out from the newest up, so it rests at its end; what scrolled away above fades out; `page` scrolls most of a view up or down; empty, it says `emptyText` in `emptyTone` |
 | `Phase` | work as Rex's Program Status Protocol names it, one vocabulary for every surface: `idle`, `working`, `blocked` on you (with a `kind`), `done`, `error`; `of` reads one a source gave, `tone` draws it (blocked warns, error alerts, done is lit) |
 | `Divider` | a line between two parts of one content (the calendar's month and agenda), in the theme's `border`; never between content and its actions |
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |

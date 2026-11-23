@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs
@@ -99,78 +98,27 @@ Scope {
     }
 
     body: ColumnLayout {
-      spacing: Config.theme.padding
-
-      // Built only where it shows, so a long conversation opens as fast as a short one; laid out from the newest up, so it rests at its end however tall the turns built meanwhile.
-      ListView {
+      Thread {
         id: thread
-        verticalLayoutDirection: ListView.BottomToTop
         onWidthChanged: panel.threadWidth = width
         Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(panel.plugin.settings.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra
         Layout.leftMargin: Metrics.itemPaddingX
         Layout.rightMargin: Metrics.itemPaddingX
-        clip: true
-        // What scrolled away above fades out, so a cut bubble shows no edge; only while something is cut.
-        layer.enabled: !atYBeginning
-        layer.effect: MultiEffect {
-          maskEnabled: true
-          maskSource: fadeMask
-          maskThresholdMin: 0.5
-          maskSpreadAtMin: 1
-        }
-        spacing: Config.theme.padding
-        boundsBehavior: Flickable.StopAtBounds
         model: panel.plugin.exchanges.length
         delegate: Turn {
           width: thread.width
         }
-        // No turn is current: a ListView keeps its current item built wherever it is, and makes the first current again as its count changes.
-        onCountChanged: currentIndex = -1
-
-        function page(down) {
-          // A conversation shorter than the view has nothing above to page to; laid out upward, the bound below would leave a gap.
-          if (contentHeight <= height) return;
-          contentY = Math.max(originY, Math.min(originY + contentHeight - height, contentY + (down ? 1 : -1) * height * 0.8));
-        }
+        // Empty, it says so, or that it is being resumed or could not be.
+        emptyTone: panel.plugin.failure ? "alert" : "dim"
+        emptyText: panel.plugin.stage === "resuming" ? panel.plugin.words.resuming : panel.plugin.failure || panel.plugin.words.newConversation
 
         Connections {
           target: panel
 
           function onPaged(down) {
             thread.page(down);
-          }
-        }
-
-        // An empty conversation says so, or that it is being resumed or could not be.
-        Label {
-          // On the view itself, not its content, which a list laid out upward places out of sight while empty.
-          parent: thread
-          anchors.top: parent.top
-          visible: panel.plugin.exchanges.length === 0
-          width: thread.width
-          wrapMode: Text.Wrap
-          tone: panel.plugin.failure ? "alert" : "dim"
-          text: panel.plugin.stage === "resuming" ? panel.plugin.words.resuming : panel.plugin.failure || panel.plugin.words.newConversation
-        }
-      }
-
-      // Clear at the top, opaque a line down.
-      Rectangle {
-        id: fadeMask
-        visible: false
-        layer.enabled: true
-        width: thread.width
-        height: thread.height
-        gradient: Gradient {
-          GradientStop {
-            position: 0
-            color: "transparent"
-          }
-          GradientStop {
-            position: Math.min(1, Metrics.line / Math.max(1, thread.height))
-            color: "black"
           }
         }
       }
