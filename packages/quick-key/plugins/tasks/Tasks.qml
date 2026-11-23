@@ -18,13 +18,10 @@ Plugin {
     tickFailed: what => "Could not tick off " + what,
     reopenFailed: what => "Could not reopen " + what
   })
-  // In the order chosen, those done as the menu opened last: a tick in the visit keeps its digit, so the same key unticks it. A tick shows before the file has it, and an added task first, seen however long the list.
-  readonly property var tasks: {
-    // The state read before `adding`: its first read sets `adding` (onStateChanged), a loop were it read already.
-    const listed = Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
-      .sort((a, b) => root.compare(a, b));
-    return adding.map(title => ({ id: "", title, adding: true })).concat(listed);
-  }
+  // In the order chosen, those done as the menu opened last: a tick in the visit keeps its digit, so the same key unticks it. A tick shows before the file has it.
+  readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task).sort((a, b) => root.compare(a, b))
+  // A task being added shows in the input, as a turn does, so no row moves under the keys until it is listed.
+  turn: adding.length > 0 ? { question: adding.join(" · "), text: "", phase: "working", activity: Words.adding } : null
   // Kept once the level's actions step them, over a reload or a restart.
   readonly property string sort: keptSort.value ?? settings.sort
   readonly property string completed: keptCompleted.value ?? settings.completed
@@ -72,8 +69,6 @@ Plugin {
       swatch: task.color ?? "",
       done: !!task.done,
       hidden: root.completed === "hidden" ? !!task.done && root.settled.includes(task.id) : root.completed === "only" && !task.done && !root.settled.includes(task.id),
-      busy: !!task.adding,
-      enabled: !task.adding,
       tone: late ? "warning" : "",
       verb: task.done ? "untick" : "tick"
     };
@@ -114,7 +109,7 @@ Plugin {
   // A tick shows at once; its command waits its turn, as each holds the calendar's lock and a sync may hold it too.
   function select(id) {
     const task = tasks.find(task => task.id === id);
-    if (!task || task.adding) return;
+    if (!task) return;
     failure = "";
     pending = Object.assign({}, pending, { [id]: !task.done });
     queue = queue.concat([{ verb: task.done ? "reopen" : "done", arg: id }]);

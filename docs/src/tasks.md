@@ -2,7 +2,7 @@
 
 The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A level's `input` adds a task by its title, raw, to the first list (see [Input](menu.md#input)).
 
-A tick shows at once. An added task shows at once too, first however long the list, with a spinner until its command is done and the file places it, so a command that reads a date out of the text (an agent) shows it is working. Each command runs after the ones before it. One that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens.
+A tick shows at once. An added task shows at once in the input, with a spinner until its command is done and the file lists it, no row moving under the keys meanwhile, so a command that reads a date out of the text (an agent) shows it is working. Each command runs after the ones before it. One that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens.
 
 Its status counts the late tasks beside an alarm, in the warning tone, when there are any, else the open tasks due by today, up to `9+`. Its fields are `title` (the most urgent), `count` and `updated`.
 

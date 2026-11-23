@@ -184,15 +184,15 @@ ShellRoot {
           && Object.keys(Plugins.get("tasks").pending).length === 0 && Plugins.get("tasks").error === "Could not tick off Undated"
       },
       {
-        name: "an added task shows at once, first, so however long the list, dim with a spinner, before its command has written the file, its after waiting for it",
+        name: "an added task shows at once in the input, as a working turn, no row moving, before its command has written the file, its after waiting for it",
         start: () => Plugins.get("tasks").submit("New", false, "echo added > \"$XDG_RUNTIME_DIR/added\""),
-        until: () => Plugins.get("tasks").items[0].label === "New" && Plugins.get("tasks").items[0].enabled === false && Plugins.get("tasks").items[0].busy
+        until: () => Plugins.get("tasks").turn?.question === "New" && Plugins.get("tasks").turn?.phase === "working" && !Plugins.get("tasks").items.some(item => item.label === "New")
           && !Array.from(Plugins.get("tasks").state.tasks).some(task => task.title === "New")
           && Plugins.get("added")?.text !== "added"
       },
       {
         name: "once the file has it, it runs like the rest, and its after has run",
-        until: () => Plugins.get("tasks").items.some(item => item.label === "New" && item.enabled) && Plugins.get("tasks").adding.length === 0 && Plugins.get("added")?.text === "added"
+        until: () => Plugins.get("tasks").turn === null && Plugins.get("tasks").items.some(item => item.label === "New") && Plugins.get("tasks").adding.length === 0 && Plugins.get("added")?.text === "added"
       },
       {
         name: "an add whose command fails drops it, says so, and skips its after",
