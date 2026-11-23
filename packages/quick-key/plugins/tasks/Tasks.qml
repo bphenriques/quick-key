@@ -130,7 +130,8 @@ Plugin {
     if (toggler.running || queue.length === 0) return;
     toggler.job = queue[0];
     queue = queue.slice(1);
-    toggler.command = commandLine(settings[toggler.job.verb], toggler.job.arg, ...("title" in toggler.job ? [toggler.job.title] : []));
+    // An unset command fails, as `false`: given none, the line would run its first argument, a task's id or title.
+    toggler.command = commandLine(settings[toggler.job.verb] || "false", toggler.job.arg, ...("title" in toggler.job ? [toggler.job.title] : []));
     toggler.running = true;
   }
 

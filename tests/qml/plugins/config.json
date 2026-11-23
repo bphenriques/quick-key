@@ -133,6 +133,18 @@
     "later": {
       "type": "command",
       "read": "echo '{\"phase\":\"later\",\"kind\":\"nope\"}'"
+    },
+    "bare": {
+      "type": "tasks",
+      "file": "tasks"
+    },
+    "ran": {
+      "type": "command",
+      "file": "ran"
+    },
+    "script": {
+      "type": "command",
+      "file": "ran.sh"
     }
   },
   "daemons": {

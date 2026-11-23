@@ -70,6 +70,16 @@ ShellRoot {
         until: () => Plugins.get("wallpaper")?.text === "sunset"
       },
       {
+        name: "a script to stand for a title",
+        start: () => Quickshell.execDetached(["sh", "-c", 'printf "#!/bin/sh\\necho ran > \\"$XDG_RUNTIME_DIR/ran\\"\\n" > "$XDG_RUNTIME_DIR/ran.sh.tmp"; chmod +x "$XDG_RUNTIME_DIR/ran.sh.tmp"; mv "$XDG_RUNTIME_DIR/ran.sh.tmp" "$XDG_RUNTIME_DIR/ran.sh"']),
+        until: () => (Plugins.get("script")?.text ?? "") !== ""
+      },
+      {
+        name: "a tasks command left unset fails, never running the title it is given",
+        start: () => Plugins.get("bare").submit(Quickshell.env("XDG_RUNTIME_DIR") + "/ran.sh", ""),
+        until: () => suite.waited >= 1500 && Plugins.get("bare").failure !== "" && Plugins.get("ran")?.text !== "ran"
+      },
+      {
         name: "a plugin in the user's folder loads",
         until: () => Plugins.get("custom")?.text === "from the user's folder"
       },
