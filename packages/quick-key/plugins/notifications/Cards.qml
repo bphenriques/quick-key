@@ -222,12 +222,7 @@ Scope {
       onBack: view.plugin.endReply()
       Component.onCompleted: set(view.plugin.replying?.draft ?? "")
       onTextChanged: view.plugin.keepDraft(view.plugin.replying, text)
-      onKeyPressed: event => {
-        const send = MenuKeys.sends(event);
-        if (!send) return;
-        event.accepted = true;
-        view.plugin.sendReply(text, send === "background");
-      }
+      onSent: background => view.plugin.sendReply(text, background)
     }
   }
 

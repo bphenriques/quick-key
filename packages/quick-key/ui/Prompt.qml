@@ -20,7 +20,10 @@ RowLayout {
   property string detail: ""
   // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys, or an owner's column (a card's icon); the glyph on its left edge, where keys start.
   property real slot: Math.max(Metrics.line, keyHint.implicitWidth)
+  // Return sends its text (`sent`), in the background with Ctrl+Shift, Shift+Return breaking the line; off, Return reaches `keyPressed` (a filter's).
+  property bool sends: true
 
+  signal sent(bool background)
   signal keyPressed(var event)
   signal tapped
   signal back
@@ -74,6 +77,12 @@ RowLayout {
     Layout.preferredHeight: implicitHeight
     activeFocusOnPress: root.active
     onKeyPressed: event => {
+      const send = root.sends ? MenuKeys.sends(event) : "";
+      if (send) {
+        root.sent(send === "background");
+        event.accepted = true;
+        return;
+      }
       root.keyPressed(event);
       if (!event.accepted && event.key === Qt.Key_Escape) {
         root.stepBack();

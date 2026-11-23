@@ -90,14 +90,14 @@ ColumnLayout {
     onFilterChanged: set(filter ? "" : root.model.draftOf(owner))
     Component.onCompleted: set(filter ? "" : root.model.draftOf(owner))
     onTextChanged: filter ? root.menu.filter.search(text) : root.model.keepDraft(text)
+    sends: !filter
+    onSent: background => send(background)
     // Tab moves on to the turn, else to the body as Shift+Tab does.
     onKeyPressed: event => {
-      const send = MenuKeys.sends(event);
       const name = MenuKeys.name(event);
       if (prompt.filter) {
         if (!root.menu.filterKey(name)) return;
-      } else if (send) prompt.send(send === "background");
-      else if (name === "Ctrl+r") {
+      } else if (name === "Ctrl+r") {
         if (!root.model.recall()) return;
       } else if (name === "Tab" && last.visible) {
         root.menu.focusOn("answer");

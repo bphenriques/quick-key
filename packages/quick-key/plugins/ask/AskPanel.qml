@@ -187,15 +187,8 @@ Scope {
       onTextChanged: panel.plugin.keepDraft(text)
       Component.onCompleted: set(panel.plugin.draft)
 
-      // Shift+Return breaks the line; the rest go to the panel.
-      onKeyPressed: event => {
-        const send = MenuKeys.sends(event);
-        if (send) prompt.send(send === "background");
-        else if (!panel.handle(event)) return;
-        event.accepted = true;
-      }
-
-      function send(background) {
+      onKeyPressed: event => event.accepted = panel.handle(event)
+      onSent: background => {
         if (!panel.plugin.send(text)) return;
         clear();
         if (background) Panels.close();
