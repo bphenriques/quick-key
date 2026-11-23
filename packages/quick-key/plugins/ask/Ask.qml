@@ -75,8 +75,6 @@ Plugin {
   property string streamed: ""
   // [{ sessionId, title, updatedAt }], as the agent lists them.
   property var conversations: []
-  // The last conversations a question from an input left, latest first, listed first in history so none is lost, even to an agent that keeps no list: [{ exchanges, session, at }].
-  property var left: []
   property bool listing: false
   property string failure: ""
   // The history the agent replays, built in place and shown once whole.
@@ -96,16 +94,8 @@ Plugin {
   error: failure
   views: ["AskPanel.qml"]
   // Assumed until the agent has said, at its start, that it keeps no list.
-  recalls: settings.ask !== "" && !busy && (left.length > 0 || !agent.started || agent.canList)
-  // A left one by its place among them (":0"), as no session id starts so.
-  items: left.map((conversation, index) => ({
-    id: ":" + index,
-    label: conversation.exchanges[0].prompt,
-    icon: Glyphs.conversation,
-    detail: Clock.recent(new Date(conversation.at)),
-    verb: "resume",
-    actions: settings.open && conversation.session ? [{ key: "o", desc: words.openTerminal, closes: true }] : []
-  })).concat(conversations.filter(conversation => !left.some(each => each.session === conversation.sessionId)).map(conversation => ({
+  recalls: settings.ask !== "" && !busy && (!agent.started || agent.canList)
+  items: conversations.map(conversation => ({
     id: conversation.sessionId,
     label: conversation.title || conversation.sessionId,
     icon: Glyphs.conversation,
@@ -114,7 +104,7 @@ Plugin {
     enabled: agent.canLoad,
     verb: "resume",
     actions: settings.open ? [{ key: "o", desc: words.openTerminal, closes: true }] : []
-  })))
+  }))
   empty: listing ? words.listing : words.none
 
   function recall() {
@@ -124,39 +114,18 @@ Plugin {
     agent.list((sessions, why) => {
       listing = false;
       conversations = sessions ?? [];
-      // An agent that keeps no list still has those left to offer.
-      failure = left.length > 0 && !agent.canList ? "" : why;
+      failure = why;
     });
     Picker.pick(name);
     return true;
   }
 
-  function select(id) {
-    if (id.startsWith(":")) return goBack(Number(id.slice(1)));
-    resume(id);
-  }
-
   function run(id, key) {
-    if (key === "o") exec(settings.open, id.startsWith(":") ? left[Number(id.slice(1))].session : id);
-  }
-
-  // Back to one left, the one now open left in its place.
-  function goBack(index) {
-    if (busy) return;
-    const back = left[index];
-    left = left.filter(each => each !== back);
-    leave();
-    exchanges = back.exchanges;
-    session = back.session;
-    show();
-  }
-
-  function leave() {
-    if (exchanges.length > 0) left = [{ exchanges: exchanges, session: session, at: new Date().toISOString() }].concat(left).slice(0, 5);
+    if (key === "o") exec(settings.open, id);
   }
 
   // The one open just shows; another loads, its history replayed (Acp.load).
-  function resume(id) {
+  function select(id) {
     if (busy) return;
     if (id !== session || exchanges.length === 0) {
       reset();
@@ -210,10 +179,7 @@ Plugin {
   // Answered above the input while the menu shows it, else as a notification; one conversation per visit.
   function submit(text, background, after) {
     if (busy || !settings.ask) return false;
-    if (!visited) {
-      leave();
-      reset();
-    }
+    if (!visited) reset();
     if (!send(text, "", after, true)) return false;
     visited = watched;
     return true;
@@ -439,7 +405,7 @@ Plugin {
   }
 
   // Kept over a reload or a restart; the agent loads the conversation again on its next turn.
-  readonly property var kept: ({ exchanges: exchanges, session: session, draft: draft, left: left })
+  readonly property var kept: ({ exchanges: exchanges, session: session, draft: draft })
   // Saved once taken, so a conversation being made never overwrites the one it takes; and once a turn settles, not per streamed piece.
   property bool taken: false
   onKeptChanged: save()
@@ -461,7 +427,6 @@ Plugin {
       exchanges = last && !last.reply && !last.error ? kept.exchanges.slice(0, -1).concat([Object.assign({}, last, { error: "Stopped", stopped: true })]) : kept.exchanges;
       session = kept.session;
       draft = kept.draft;
-      left = Array.isArray(kept.left) ? kept.left : [];
     }
     taken = true;
   }

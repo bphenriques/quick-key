@@ -205,17 +205,6 @@ ShellRoot {
         }
       },
       {
-        name: "the conversation it left is kept, first in history, and choosing it brings it back, the new one kept in its place",
-        until: () => {
-          const ask = Plugins.get("answered");
-          if (ask.left[0]?.exchanges[0].prompt !== "old" || ask.items[0]?.label !== "old") return false;
-          ask.select(ask.items[0].id);
-          const back = ask.exchanges[0].prompt === "old" && ask.session === "old" && ask.left.length === 1 && ask.left[0].exchanges[0].reply === "new";
-          Panels.close();
-          return back;
-        }
-      },
-      {
         name: "Escape leaves a run going and C-c stops it, which the agent hears; C-r lists nothing meanwhile",
         until: () => root.asked("stopped", ask => {
           if (ask.busy && ask.activity === "thinking" && !root.leftRunning) {
