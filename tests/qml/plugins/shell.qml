@@ -290,6 +290,11 @@ ShellRoot {
         until: () => Plugins.get("activated")?.text === "on"
       },
       {
+        name: "a click on a plugin read on demand reads it again once its command ends",
+        start: () => Plugins.get("clicked").activate(),
+        until: () => Plugins.get("clicked").text === "yes"
+      },
+      {
         name: "a choice made while another runs is not dropped",
         start: () => {
           Plugins.get("chooser").select("a");

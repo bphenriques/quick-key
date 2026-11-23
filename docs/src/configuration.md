@@ -1,6 +1,6 @@
 # Configuration
 
-Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `battery`, ...), a plugin's under `plugins.<name>`. The shell reloads it on save. With Nix, `programs.quick-key.settings` writes it as given. The [reference](options.md) lists every setting and its default.
+Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `battery`, ...), a plugin's under `plugins.<name>`. The shell reloads it on save; a save that is not JSON (a typo, a write caught halfway) leaves the running config in place and says so in a notification. With Nix, `programs.quick-key.settings` writes it as given. The [reference](options.md) lists every setting and its default.
 
 ```json
 {
@@ -18,7 +18,7 @@ Past the suggested look, settings draw the bar as islands (set wider apart, so a
 
 ## Checking
 
-`qs -p <the shell's folder>/check.qml` checks `config.json` and shows nothing. It prints what is wrong (a setting that does not exist, a value of another kind, a menu entry or plugin that cannot work) and exits 1. The shell logs the same as it starts. With Nix, the module runs it as the configuration builds, so a wrong setting fails the build, not the session; the shell's folder is the package's `share/quick-key`. Without a display, as in CI or over SSH, run it with `QT_QPA_PLATFORM=offscreen`.
+`qs -p <the shell's folder>/check.qml` checks `config.json` and shows nothing. It prints what is wrong (a setting that does not exist, a value of another kind, a menu entry or plugin that cannot work) and exits 1. The shell logs the same as it starts. With Nix, the module runs it as the configuration builds, so a wrong setting fails the build, not the session; the shell's folder is the package's `share/quick-key`. A plugin linked out of the store (`mkOutOfStoreSymlink`) is beyond the build's reach, so its own settings go unchecked. Without a display, as in CI or over SSH, run it with `QT_QPA_PLATFORM=offscreen`.
 
 ## Themes
 

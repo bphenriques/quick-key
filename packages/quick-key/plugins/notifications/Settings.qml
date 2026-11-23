@@ -11,6 +11,8 @@ PluginSettings {
   property var timeout: ({ low: 3, normal: 8 })
   // Notifications kept at most, shown or waiting, `limit` to 500; past it the oldest close, critical ones last.
   property int keep: 100
+  // Closed notifications kept to bring back, over a restart too, 0 to 100.
+  property int history: 20
   // The side of a card its actions sit on: right or left.
   property string actionSide: "right"
   // A card's width, in pixels, never past the screen; unset, it follows the font, 480 at 11 points.
@@ -29,8 +31,8 @@ PluginSettings {
   readonly property var corners: ["top-right", "top-left", "bottom-right", "bottom-left"]
   readonly property var sides: ["right", "left"]
   readonly property var fields: ["app", "summary", "body", "category", "urgency", "desktopEntry"]
-  readonly property var ruleKinds: ({ match: "map", app: "string", hide: "boolean", timeout: "number", urgency: "string", ignorePause: "boolean", actions: "list", default: "string", run: "string", icon: "string", silent: "boolean" })
-  readonly property var actionKinds: ({ key: "string", desc: "string", cmd: "string", closes: "boolean", icon: "string" })
+  readonly property var ruleKinds: Object.assign(Object.create(null), { match: "map", app: "string", hide: "boolean", timeout: "number", urgency: "string", ignorePause: "boolean", actions: "list", default: "string", run: "string", icon: "string", silent: "boolean" })
+  readonly property var actionKinds: Object.assign(Object.create(null), { key: "string", desc: "string", cmd: "string", closes: "boolean", icon: "string" })
   // What its commands get as NOTIFICATION_<NAME>, so a group by one of these names would hide it.
   readonly property var given: ["app", "summary", "body", "urgency", "id", "icon"]
   readonly property var urgencies: ["low", "normal", "critical"]
@@ -44,6 +46,7 @@ PluginSettings {
     if (margin < 0 || margin > 1000) found.push("sets margin to " + margin + ", not 0 to 1000");
     if (width < 100 || width > 4000) found.push("sets width to " + width + ", not 100 to 4000");
     if (keep < limit || keep > 500) found.push("sets keep to " + keep + ", not limit to 500");
+    if (history < 0 || history > 100) found.push("sets history to " + history + ", not 0 to 100");
     found.push(...Object.keys(timeout ?? {}).filter(urgency => !["low", "normal"].includes(urgency)).map(urgency => "sets timeout." + urgency + ", none of low, normal"));
     for (const urgency of ["low", "normal"]) {
       if (typeof timeout?.[urgency] !== "number" || timeout[urgency] < 0) found.push("sets timeout." + urgency + " to no number of seconds");

@@ -13,6 +13,11 @@
       "type": "command",
       "file": "activated"
     },
+    "clicked": {
+      "type": "command",
+      "read": "cat \"$XDG_RUNTIME_DIR/clicked\" 2>/dev/null || echo no",
+      "activate": "sleep 0.2; echo yes > \"$XDG_RUNTIME_DIR/clicked\""
+    },
     "watcher": {
       "type": "command",
       "watch": "echo up",

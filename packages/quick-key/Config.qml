@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // The schema of $XDG_CONFIG_HOME/quick-key/config.json: each key, its kind and its default; Validation.qml holds what else can be wrong.
 Singleton {
@@ -168,14 +169,31 @@ Singleton {
   }
   onThemeMissingChanged: if (themeMissing) console.warn("theme", adapter.theme.name, "not found in", configDir + "/themes or the presets");
 
-  // A reload rather than a re-read, so removed settings fall back to their defaults; not where a service restarts on a change instead (QUICK_KEY_WATCH_CONFIG=0, as the home-manager module sets).
+  // A save, read first: unchanged, nothing reloads; not JSON (a typo, a write caught halfway), the running config stays and says why; else a reload, so removed settings fall back to their defaults. Not where a service restarts on a change (QUICK_KEY_WATCH_CONFIG=0, as the module sets).
   FileView {
+    path: root.configDir + "/config.json"
+    watchChanges: Quickshell.env("QUICK_KEY_WATCH_CONFIG") !== "0"
+    printErrors: false
+    onFileChanged: reload()
+    onLoadFailed: if (running.text()) Quickshell.reload(false)
+    onLoaded: {
+      if (text() === running.text()) return;
+      try {
+        JSON.parse(text());
+      } catch (error) {
+        console.warn("config.json:", String(error) + "; the last good one runs");
+        return Commands.run("notify-send --app-name=quick-key --icon=dialog-warning", "config.json is not JSON", String(error) + "; the last good one runs");
+      }
+      Quickshell.reload(false);
+    }
+  }
+
+  FileView {
+    id: running
     path: root.configDir + "/config.json"
     // Read before anything binds, so nothing runs once against the defaults first.
     blockLoading: true
-    watchChanges: Quickshell.env("QUICK_KEY_WATCH_CONFIG") !== "0"
     printErrors: false
-    onFileChanged: Quickshell.reload(false)
 
     onLoadFailed: root.written = {}
     onLoaded: {

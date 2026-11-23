@@ -283,12 +283,12 @@ Plugin {
     return true;
   }
 
-  // A card that closed, the last by default, back in the stack as the newest, only to read: its sender is done with it.
+  // A card that closed, the last by default, back in the stack as the newest until dismissed, only to read: its sender is done with it.
   function restore(entry = internal.closed[internal.closed.length - 1]) {
     if (!entry) return;
     internal.closed = internal.closed.filter(each => each !== entry);
     entry.came = ++internal.seq;
-    entry.timeout = timeoutOf(entry);
+    entry.timeout = 0;
     internal.list = internal.list.concat([entry]);
     if (summoned && !internal.replying) pick(entry);
   }
@@ -297,7 +297,7 @@ Plugin {
   function itemOf(entry, closed) {
     const app = appOf(entry);
     const title = entry.summary || app || entry.appName;
-    const when = entry.arrived ? Clock.time(new Date(entry.arrived)) : "";
+    const when = entry.arrived ? Clock.recent(new Date(entry.arrived)) : "";
     const detail = asideOf(entry, title, false, when);
     return {
       id: String(entry.came),
@@ -490,7 +490,7 @@ Plugin {
     if (entry === internal.replying && !entry.hasInlineReply) interrupt();
   }
 
-  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient) or it was brought back already.
+  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient); one brought back goes back.
   function leave(entry, keep = true) {
     if (entry === internal.replying) interrupt();
     const at = shown.indexOf(entry);
@@ -499,15 +499,15 @@ Plugin {
       internal.picked = shown[at < 0 ? 0 : Math.min(at, shown.length - 1)] ?? null;
       if (internal.picked === null && internal.mode !== "closed") release();
     }
-    if (!keep || entry.restored || entry.notification.transient) return entry.destroy();
-    entry.saved = snapshot(entry);
+    if (!keep || entry.notification?.transient) return entry.destroy();
+    if (!entry.restored) entry.saved = snapshot(entry);
     entry.notification = null;
     // Its earlier self goes, by tag or by saying the same, so a chatty sender (a volume tool, a silent rule) never pushes the rest out.
     const twin = each => each.appName === entry.appName && (tagOf(entry.data) ? tagOf(each.data) === tagOf(entry.data) : each.summary === entry.summary && each.body === entry.body);
     const history = internal.building ?? internal.closed;
     history.filter(twin).forEach(each => each.destroy());
     const closed = history.filter(each => !twin(each)).concat([entry]);
-    if (closed.length > 20) closed.shift().destroy();
+    while (closed.length > settings.history) closed.shift().destroy();
     if (internal.building) internal.building = closed;
     else internal.closed = closed;
   }
@@ -517,7 +517,13 @@ Plugin {
     return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image: entry.image.startsWith("image://qsimage") ? "" : entry.image, urgency: entry.urgency, hints: ({ "image-path": entry.hints["image-path"], value: entry.hints.value, "x-dunst-stack-tag": tagOf(entry) }), desktopEntry: entry.desktopEntry, expireTimeout: -1 };
   }
 
-  Component.onCompleted: refresh()
+  // Those closed come back over a restart, as Kept holds them, never a picture's data; kept from here on, as the list's first value is told as a change too.
+  Component.onCompleted: {
+    const kept = Array.from(Kept.value(name + ".closed") ?? []);
+    internal.closed = kept.slice(Math.max(0, kept.length - settings.history)).map(each => entryOf.createObject(root, Object.assign({ came: ++internal.seq }, each)));
+    internal.closedChanged.connect(() => Kept.set(name + ".closed", internal.closed.map(entry => ({ saved: entry.saved, arrived: entry.arrived, repeats: entry.repeats, applied: entry.applied }))));
+    refresh();
+  }
 
   // A card: its notification while its sender keeps it, else what it showed; when it came, what its rules set, your unsent reply, and its time.
   component Entry: QtObject {

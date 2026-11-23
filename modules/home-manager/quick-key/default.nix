@@ -9,25 +9,32 @@ let
   cfg = config.programs.quick-key;
 
   json = pkgs.formats.json { };
-  # What the shell reads beside config.json, so the check finds a user's own plugins and themes as the shell will.
-  besides = lib.filterAttrs (
-    name: _: lib.hasPrefix "quick-key/plugins/" name || lib.hasPrefix "quick-key/themes/" name
-  ) config.xdg.configFile;
+  # The user's own plugins, so the check finds them as the shell will; it reads no theme.
+  besides = lib.filterAttrs (name: _: lib.hasPrefix "quick-key/plugins/" name) config.xdg.configFile;
   # The shell checks the settings it is given, so a wrong one fails the build, not the session.
   configFile =
     pkgs.runCommand "quick-key-config.json"
       {
-        nativeBuildInputs = [ config.programs.quickshell.package ];
+        nativeBuildInputs = [
+          config.programs.quickshell.package
+          pkgs.jq
+        ];
         settings = json.generate "quick-key-settings.json" cfg.settings;
       }
       ''
         export HOME=$TMPDIR XDG_CONFIG_HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR QT_QPA_PLATFORM=offscreen LC_ALL=C.UTF-8
         install -D $settings $TMPDIR/quick-key/config.json
+        unread=()
         ${lib.concatStrings (
-          lib.mapAttrsToList (
-            name: file: "mkdir -p \"$(dirname $TMPDIR/${name})\" && cp -rL ${file.source} $TMPDIR/${name}\n"
-          ) besides
+          lib.mapAttrsToList (name: file: ''
+            if [ -e ${file.source} ]; then mkdir -p "$(dirname $TMPDIR/${name})" && cp -rL ${file.source} $TMPDIR/${name}
+            else echo "${name} links out of the store, where the check cannot read it: its settings go unchecked" >&2; unread+=(${lib.head (lib.splitString "/" (lib.removePrefix "quick-key/plugins/" name))}); fi
+          '') besides
         )}
+        # One unread checks as a command plugin, so what names it still does.
+        if [ ''${#unread[@]} -gt 0 ]; then
+          jq --args '.plugins |= ((. // {}) | with_entries(if (.value.type // .key) | IN($ARGS.positional[]) then .value = { type: "command" } else . end))' "''${unread[@]}" < $settings > $TMPDIR/quick-key/config.json
+        fi
         timeout 60 qs -p ${cfg.package}/share/quick-key/check.qml
         cp $settings $out
       '';

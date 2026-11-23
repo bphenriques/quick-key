@@ -17,7 +17,7 @@ A click opens a card: its app comes to the front (the one window whose app id is
 
 A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time stops while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input; it starts again in full. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card in its place, its rules and its time starting again. One re-sent by its id with nothing changed restarts nothing: Quickshell tells the shell only of changes.
 
-`limit` cards show at once, `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, and their time starts once they show; a critical one shows anyway. A struck bell by the corner counts those waiting, except over a fullscreen window. Past `keep` notifications, the oldest close, critical ones only once none other is left to close, and never one on screen while the cards hold still. Pause survives a reload and a restart; the cards do not survive a restart (a deploy), as the sender still has them.
+`limit` cards show at once, `+N` counting the rest. While paused, or while a fullscreen window has focus, cards wait, and their time starts once they show; a critical one shows anyway. A struck bell by the corner counts those waiting, except over a fullscreen window. Past `keep` notifications, the oldest close, critical ones only once none other is left to close, and never one on screen while the cards hold still. Pause and the `history` last closed survive a reload and a restart; the cards do not survive a restart (a deploy), as the sender still has them.
 
 ```nix
 plugins.notifications = {
@@ -66,12 +66,12 @@ The plugin's `shortcut` only labels that key. Their keys show where they act, an
 - A digit picks a card by its place among all, so it holds still, scrolling it into view. `↑↓` move the pick, scrolling past the last one.
 - The picked card's letters run its actions. The keys stay, so one summon can clear several.
 - `RET` opens it and lets go. `x` dismisses it, the pick moving on.
-- `C-X` clears all. `C-r` brings back the last closed, of the 20 kept, unless its sender marked it transient. `C-p` pauses or resumes.
+- `C-X` clears all. `C-r` brings back the last closed, of the `history` kept, unless its sender marked it transient; it stays until dismissed, then goes back among them. `C-p` pauses or resumes.
 - `ESC`, or a click beside the cards, lets go.
 
 A key path runs as typing it would: `notifications press "2 x"`. The plugin's actions, for a binding (`notifications action <name>`) or an entry, are `summon`, `invoke` (opens the newest card), `dismiss` (the newest), `clear`, `restore` and `pause`.
 
-As a list, `{ key = "N"; desc = "Notifications"; icon = "<glyph>"; list = "notifications"; }` shows the cards in their order, then those 20 struck through, newest first, a critical one by its glyph: a digit opens a card, or brings a closed one back, and its own menu dismisses it.
+As a list, `{ key = "N"; desc = "Notifications"; icon = "<glyph>"; list = "notifications"; }` shows the cards in their order, then those closed struck through, newest first, each by its time, or its day if not today, a critical one by its glyph: a digit opens a card, or brings a closed one back, and its own menu dismisses it.
 
 ## Replies
 

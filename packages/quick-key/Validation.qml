@@ -94,7 +94,7 @@ Singleton {
       "menu.width": [200],
       "menu.columns": [1, 9],
       "audio.step": [1],
-      "audio.max": [1],
+      "audio.max": [1, 150],
       "brightness.step": [1],
       "clock.firstDayOfWeek": [-1, 6]
     })
@@ -266,7 +266,7 @@ Singleton {
   }
 
   // Each field an entry takes, its comment what it does (the docs' reference), and what it asks: `kind`, the kinds of value it takes; `level`, a level's (submenu, list or view); `needs`, one of these set; `bar`, only in a bar; `names`, a table it names one of, else a plugin; `excludes`, fields it cannot sit beside; `invalid`, what is wrong with its value, else "".
-  readonly property var fields: ({
+  readonly property var fields: Object.assign(Object.create(null), {
       // Its key, or a pair of keys sharing a row (["Down", "Up"]); a bar entry needs none.
       key: { kind: ["string", "list"] },
       // Its label, which never changes.

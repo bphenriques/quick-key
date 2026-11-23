@@ -1049,6 +1049,66 @@ ShellRoot {
         }
       },
       {
+        name: "a card brought back stays until dismissed, then goes back among those closed",
+        start: () => {
+          root.reset();
+          root.plugin.settings.timeout = ({ low: 1, normal: 1 });
+          root.send("Again");
+        },
+        until: () => {
+          const again = root.find("Again");
+          if (again && !again.restored && !("again" in root.marks)) {
+            root.mark("again");
+            root.plugin.dismiss(again);
+            root.plugin.restore();
+          }
+          if (!("again" in root.marks) || root.mark("again") < 2000) return false;
+          if (root.find("Again")?.restored && !("againGone" in root.marks)) {
+            root.mark("againGone");
+            root.plugin.dismiss(root.find("Again"));
+          }
+          const done = "againGone" in root.marks && !root.find("Again") && root.plugin.items.some(item => item.label === "Again" && item.done);
+          if (done) root.plugin.settings.timeout = ({ low: 1, normal: 30 });
+          return done;
+        }
+      },
+      {
+        name: "a closed one from another day says its day, as Clock does",
+        start: () => {
+          root.reset();
+          root.send("Old news");
+        },
+        until: () => {
+          const old = root.find("Old news");
+          if (old && !("old" in root.marks)) {
+            root.mark("old");
+            old.arrived = Date.now() - 3 * 86400000;
+            root.plugin.dismiss(old);
+          }
+          const item = root.plugin.items.find(item => item.label === "Old news" && item.done);
+          return !!item && item.detail.endsWith(Clock.day(new Date(Date.now() - 3 * 86400000)));
+        }
+      },
+      {
+        name: "those closed are kept for a restart, history of them",
+        start: () => {
+          root.plugin.settings.history = 2;
+          root.reset();
+          ["Hist 1", "Hist 2", "Hist 3"].forEach(summary => root.send(summary));
+        },
+        until: () => {
+          if (!("hist" in root.marks)) {
+            if (!root.find("Hist 1") || !root.find("Hist 2") || !root.find("Hist 3")) return false;
+            root.mark("hist");
+            root.plugin.clear();
+          }
+          const kept = Array.from(Kept.value("notifications.closed") ?? []);
+          const done = kept.length === 2 && kept.every(each => each.saved.summary.startsWith("Hist") && each.arrived > 0) && root.plugin.items.filter(item => item.done).length === 2;
+          if (done) root.plugin.settings.history = 20;
+          return done;
+        }
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
           const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c", closes: "yes" }], run: 1 });

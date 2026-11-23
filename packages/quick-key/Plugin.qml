@@ -52,8 +52,10 @@ Scope {
   property var actions: ({})
   property var words: ({})
 
+  // A source read on demand is read again once the click's command ends, so the change shows at once.
   function activate() {
-    exec(settings.activate);
+    if (settings.read) call(settings.activate, [], () => refresh());
+    else exec(settings.activate);
   }
 
   function press(path) {

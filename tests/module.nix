@@ -42,6 +42,20 @@ let
     };
   };
 
+  # A theme and a plugin linked out of the store, as the matugen recipe links its theme: the sandbox cannot read either.
+  linked = evalHome (
+    { config, ... }:
+    {
+      xdg.configFile."quick-key/themes/matugen.json".source = config.lib.file.mkOutOfStoreSymlink "/nowhere/matugen.json";
+      xdg.configFile."quick-key/plugins/mine".source = config.lib.file.mkOutOfStoreSymlink "/nowhere/mine";
+      programs.quick-key.settings = {
+        theme.name = "matugen";
+        plugins.mine.colour = "blue";
+        menu.header.left = [ "mine" ];
+      };
+    }
+  );
+
   failed = settings: lib.filter (a: !a.assertion) (evalHome { programs.quick-key.settings = settings; }).assertions;
 
   # Stands in for stylix: the options and colours its target reads.
@@ -128,6 +142,7 @@ pkgs.runCommand "quick-key-module-eval"
     grep -q -- '--config quick-key' $launcher
     grep -q 'PATH=[^:]*-hello-[^:]*/bin:[^:]*util-linux' $launcher
     jq -e '.plugins.vpn == { type: "command", read: "vpn-status" }' $config
+    jq -e '.plugins.mine == { colour: "blue" }' ${configOf linked}
     jq -e '.menu.entries | map(.key) == ["t", "v"]' $config
     jq -e '.primary == "#0000ff" and (has("border") | not)' ${cfg.xdg.configFile."quick-key/themes/mine.json".source}
     grep -q 'audio.stepp is not a setting' $rejected/testBuildFailure.log

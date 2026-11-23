@@ -76,6 +76,10 @@ ShellRoot {
     ["a plugin that is not a map of settings", { plugins: { x: "on" } }, "plugins.x takes a map of settings"],
     ["a pop-up named after what every object inherits", { popups: { show: ["toString"] } }, "popups.show: 'toString' is neither a status nor a plugin"],
     ["a status named after what every object inherits", menu([{ key: "x", desc: "X", list: "tray", submenu: [{ key: "a", desc: "A", status: "constructor", cmd: "true" }] }]), "names status 'constructor'"],
+    ["a field named after what every object inherits", menu([{ key: "x", desc: "X", cmd: "true", icon: "x", constructor: 1 }]), "sets constructor, which no entry takes"],
+    ["a rule field named after what every object inherits", { plugins: { notifications: { rules: [{ toString: "x" }] } } }, "rules[0] toString is not a setting"],
+    ["a volume past what speakers take", { audio: { max: 500 } }, "audio.max is 500, not 1 to 150"],
+    ["a closed history past what is kept", { plugins: { notifications: { history: 500 } } }, "plugins.notifications sets history to 500, not 0 to 100"],
     ["a glyph named after what every object inherits", { glyphs: { objectName: "x" } }, "glyphs.objectName is not a glyph"],
     ["an ask toolMatch that is not a pattern", { plugins: { a: { type: "ask", ask: "true", toolMatch: "([(" } } }, "plugins.a sets toolMatch to what is not a regular expression"],
     ["a look that is not one", { plugins: { x: { type: "command", show: { "true": "x" } } } }, "plugins.x.show.true takes a map"],
@@ -108,6 +112,26 @@ ShellRoot {
     ].concat(root.wrong.map(([what, config, problem]) => ({
       name: what + " is named",
       until: () => Validation.check(config).some(found => found.includes(problem))
-    })))
+    })), [
+      // A reload would start the suite over, from the file as saved, and never reach its end.
+      {
+        name: "a save that changes nothing reloads nothing",
+        start: () => root.save("{}\n"),
+        until: () => Date.now() - root.saved > 1000
+      },
+      {
+        name: "a save caught halfway keeps the running config",
+        start: () => root.save("{ \"theme\": "),
+        until: () => Date.now() - root.saved > 1000
+      }
+    ])
+  }
+
+  property real saved: 0
+
+  // Over the copy from the store, which is read-only, as an editor saves: written aside, then moved over it.
+  function save(text) {
+    saved = Date.now();
+    Quickshell.execDetached(["sh", "-c", "printf %s \"$2\" > \"$1.new\" && mv -f \"$1.new\" \"$1\"", "sh", Config.configDir + "/config.json", text]);
   }
 }
