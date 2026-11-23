@@ -611,8 +611,6 @@ Plugin {
     bodyMarkupSupported: false
     bodyHyperlinksSupported: false
     inlineReplySupported: true
-    // Closed ones are kept to bring back (C-r).
-    persistenceSupported: true
     onNotification: notification => root.arrive(notification)
   }
 
