@@ -23,7 +23,7 @@ PluginSettings {
   property bool hint: true
   // Seconds without input after which no card's time runs, so none goes while you are away; 0 lets time run.
   property int idle: 120
-  // Each { match, app, icon, hide, silent, timeout, urgency, ignorePause, actions, default, run }, applied in order (docs/src/plugins.md#rules).
+  // Each { match, app, icon, hide, silent, timeout, urgency, ignorePause, actions, default, run }, applied in order (docs/src/notifications.md#rules).
   property var rules: []
   // Prints the process id holding the notifications' name on the session bus, last on its line, so another daemon there shows as the plugin's error.
   property string owner: "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s org.freedesktop.Notifications"
