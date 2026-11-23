@@ -46,4 +46,4 @@ The shell only reads `calendar.file`, watching it for changes. `calendarSync` wr
 
 ## calendarSync
 
-`calendarSync.enable` syncs 62 days back and a year ahead, from the calendars listed in `calendarSync.calendars`, and writes that range as `synced`. A sync that fails retries a minute later, then ever less often, up to every half hour.
+`calendarSync.enable` syncs 62 days back and a year ahead, from the calendars listed in `calendarSync.calendars`, and writes that range as `synced`. Cancelled events are left out. A sync that fails retries a minute later, then ever less often, up to every half hour.

@@ -94,11 +94,13 @@ def synced-range []: nothing -> record {
 def events [config: path, synced: record]: nothing -> list {
   # A day past the last, whether khal's end is a day it lists or not.
   let end = ($synced.to | into datetime) + 1day | format date "%F"
-  let fields = [uid title start-date start-time end-date end-time all-day location calendar-color]
+  let fields = [uid title start-date start-time end-date end-time all-day location calendar-color cancelled]
   ^khal -c $config list ...($fields | each {|f| [--json $f] } | flatten) $synced.from $end
   | lines
   | each { from json }
   | flatten
+  # A cancelled meeting is not one to go to.
+  | where cancelled == ""
   | uniq-by uid start-date start-time
   | each {|e|
     let all_day = $e.all-day == "True"

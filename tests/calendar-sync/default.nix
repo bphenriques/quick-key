@@ -74,12 +74,12 @@ pkgs.runCommand "quick-key-calendar-sync"
     efail() { echo "not ok - $1"; cat events/events.json; exit 1; }
     mkdir served
     day=$(date -d tomorrow +%Y%m%d)
-    printf 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//test//EN\r\nBEGIN:VEVENT\r\nUID:lunch@test\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:%sT130000\r\nDTEND:%sT140000\r\nSUMMARY:Lunch\r\nLOCATION:Rua Augusta 120\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n' "$day" "$day" > served/work.ics
+    printf 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//test//EN\r\nBEGIN:VEVENT\r\nUID:lunch@test\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:%sT130000\r\nDTEND:%sT140000\r\nSUMMARY:Lunch\r\nLOCATION:Rua Augusta 120\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:standup@test\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:%sT090000\r\nDTEND:%sT091500\r\nSUMMARY:Standup\r\nSTATUS:CANCELLED\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n' "$day" "$day" "$day" "$day" > served/work.ics
     python3 -m http.server 8765 --bind 127.0.0.1 --directory served > server.log 2>&1 &
     for _ in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/8765) 2>/dev/null && break; sleep 0.1; done
     printf -- '- name: work\n  url: http://127.0.0.1:8765/work.ics\n  color: "#3366ff"\n' > work.yaml
     quick-key-calendar-sync work.yaml events/events.json || efail "a sync from a calendar it reaches succeeds"
-    [ "$(events)" = "[\"Lunch\",\"$(date -d tomorrow +%F)T13:00\",false,\"#3366ff\",\"Rua Augusta 120\"]" ] || efail "an event reads with its local time, its calendar's colour and where"
+    [ "$(events)" = "[\"Lunch\",\"$(date -d tomorrow +%F)T13:00\",false,\"#3366ff\",\"Rua Augusta 120\"]" ] || efail "an event reads with its local time, its calendar's colour and where, a cancelled one left out"
     jq -e '.events[0].uid | length > 0' events/events.json > /dev/null || efail "an event has a uid, which tells apart two alike"
     jq -e '.updated and (has("error") | not) and (has("syncing") | not)' events/events.json > /dev/null || efail "a sync done says when, and no longer that it syncs"
     jq -e --arg from "$(date -d '62 days ago' +%F)" --arg to "$(date -d '365 days' +%F)" '.synced == { from: $from, to: $to }' events/events.json > /dev/null || efail "a sync says the days it covers"
