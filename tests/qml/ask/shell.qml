@@ -191,6 +191,15 @@ ShellRoot {
         }
       },
       {
+        name: "an answer while the panel is hidden is told by its title and its first line as plain text",
+        until: () => {
+          const ask = Plugins.get("notifier");
+          if (!ask) return false;
+          if (!ask.exchanges.length) ask.send("## **Bold** and `code`\n\nmore");
+          return Plugins.get("notified")?.text === "Helper|Bold and code";
+        }
+      },
+      {
         name: "stepping back leaves a run going and C-c stops it, which the agent hears; C-r lists nothing meanwhile",
         until: () => root.asked("stopped", ask => {
           if (ask.busy && ask.activity === "thinking" && !root.leftRunning) {

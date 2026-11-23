@@ -149,6 +149,16 @@
     "s10log": {
       "type": "command",
       "file": "s10-log"
+    },
+    "notifier": {
+      "type": "ask",
+      "title": "Helper",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s11",
+      "notify": "printf '%s|%s' > \"$XDG_RUNTIME_DIR/notified\""
+    },
+    "notified": {
+      "type": "command",
+      "file": "notified"
     }
   }
 }

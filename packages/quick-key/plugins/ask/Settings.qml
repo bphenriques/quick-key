@@ -23,7 +23,7 @@ PluginSettings {
     }
   }
   // Given a title and a text, tells of an answer while the panel is hidden, each replacing the last by its tag; printing `default` (a click) shows the panel.
-  property string notify: "notify-send --action=default=Open --hint=string:x-dunst-stack-tag:ask --"
+  property string notify: "notify-send --app-name=\"$1\" --action=default=Open --hint=string:x-dunst-stack-tag:ask --"
   // Given the session, opens it in a terminal.
   property string open
   // The prompt's glyph, its own (the agent's face) over the one every input shares (glyphs.prompt).

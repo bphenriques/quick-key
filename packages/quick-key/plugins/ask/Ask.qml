@@ -229,7 +229,7 @@ Plugin {
     stage = "idle";
     approval = "";
     if (seen(last)) report();
-    else notify(last.error || last.reply);
+    else notify(last.error || Markup.plain(last.reply));
     if (last.reply && !last.stopped) exec(last.after);
     if (touched) exec(settings.toolRun);
     if (!shown && !seen(last)) unread = true;
