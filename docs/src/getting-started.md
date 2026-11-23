@@ -72,7 +72,7 @@ The shell logs the same as it starts, and every warning after: `journalctl --use
 Add a row of your own. The starter menu is a valid `config.json` ([`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json)): copy it, then append an entry:
 
 ```json
-{ "key": "l", "desc": "Lock", "icon": "<glyph>", "cmd": "loginctl lock-session" }
+{ "key": "l", "desc": "Lock", "icon": "󰌾", "cmd": "loginctl lock-session" }
 ```
 
 With Nix, the config that owns a tool adds its entries next to it (`lib.mkOrder` keeps the top level in order), so the menu grows with the desktop rather than in one file.
