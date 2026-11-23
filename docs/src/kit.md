@@ -7,8 +7,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | text, a word for a state or a key | `Label`, its words from `Words` |
 | a colour, dimming | a `tone` (`Tone`) |
 | a size in characters or lines | `Metrics` |
-| a glyph or an image | `Icon` |
-| a wait | `Spinner` |
+| a glyph, an image or a wait | `Icon` |
 | a row to click | `ListItem`, `StatusLine` in it |
 | a listed item (a task, a device) | `ListItem` |
 | keys: one, a legend, a list | `KeyHint`, `KeyLegend`, `KeyList` |
@@ -22,7 +21,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Label` | all text, coloured by `tone`: `normal`, `dim`, `primary`, `warning` or `alert`; bold when `strong`, the one to find first (a heading, the clock, the item in use) |
 | `Tone` | the colour of each tone, `dim` being the normal colour at reduced alpha; a panel's background; a tone washed behind something (a highlight, a track) |
 | `Metrics` | the font's character width (`cell`) and line height (`line`), for sizes given in characters or lines; the kit's fixed sizes (a row's padding, a meter, the pop-up's level) |
-| `Icon` | a glyph or an image in the same square; `recolour` draws an image as drawn, in greys, or as its shape in its tone's colour (`tint`, a symbolic icon only; any other goes grey) |
+| `Icon` | a glyph or an image in the same square; `recolour` draws an image as drawn, in greys, or as its shape in its tone's colour (`tint`, a symbolic icon only; any other goes grey); `busy` puts a wait in its place, the braille dots terminals turn at their own tempo, still when animations are off |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), a `swatch` dot after it, then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports; its text names a state (`off`, `muted`) only when there is no value |
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend |
 | `KeyHint` | a key in its gutter |
@@ -36,7 +35,6 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Prompt` | a line of text to send: a column as wide as its `key`'s name, holding the key dim while it waits (`TAB` for a level's input), else a glyph on the column's left edge, and a spinner in their place while `busy` (what it sends to takes no text); then a `TextArea`. A click while waiting reaches `tapped`. `keys` is a legend on its right (`picked`), `detail` a dim value after it |
 | `Exchange` | one turn of a conversation: the `question` a `Bubble` on the right, the answer (`text`, Markdown) plain on the left, drawn by its `phase` and `kind` (`Phase`). Working shows a spinner and `activity` until the answer streams in, then a spinner where its copy button goes until done. Blocked shows a permission in warning. Error is in alert, the question faded; idle, once stopped. `steps` are dim lines over the answer (an approval you gave). With `lines` it is compact, cut there, `overflows` saying what it cannot hold; else it all shows as `Markdown`, with a copy button (`copyable`). `next` is what Return does after it, for the prompt under it (`Words.next`); `kept` and `selected` pass its answer's selection through |
 | `Bubble` | a message in a conversation, yours (`mine`) on the right in the theme's `bubble` colour with `bubbleText`, the other's plain on the left, never glyphs, its text on the keys' edge, as wide as its content up to `maximumWidth`, or all of it when `full` (text cut at a line count cannot size it); `faded` for one that did not go through |
-| `Spinner` | a wait in one cell, the braille dots terminals turn at their own tempo, still when animations are off |
 | `Phase` | work as Rex's Program Status Protocol names it, one vocabulary for every surface: `idle`, `working`, `blocked` on you (with a `kind`), `done`, `error`; `of` reads one a source gave, `tone` draws it (blocked warns, error alerts, done is lit) |
 | `Divider` | a line between two parts of one content (the calendar's month and agenda), in the theme's `border`; never between content and its actions |
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |

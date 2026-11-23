@@ -12,7 +12,7 @@ done
 for dir in plugins/*/; do
   name=$(basename "$dir")
   grep -qs '^Plugin {' "$dir${name^}.qml" || fail "$dir: no ${name^}.qml rooted at Plugin"
-  grep -qsE '^\s*(CornerPill|OverlayWindow|PanelWindow|LazyLoader|Variants|Rectangle|Row|Column|Item|Image|Label|Icon|Spinner) \{' "$dir${name^}.qml" && fail "$dir${name^}.qml: draws; its views go in their own files (views)"
+  grep -qsE '^\s*(CornerPill|OverlayWindow|PanelWindow|LazyLoader|Variants|Rectangle|Row|Column|Item|Image|Label|Icon) \{' "$dir${name^}.qml" && fail "$dir${name^}.qml: draws; its views go in their own files (views)"
   grep -qs '^PluginSettings {' "${dir}Settings.qml" || fail "$dir: no Settings.qml rooted at PluginSettings"
   grep -qsE 'property [a-z]+ type\b' "${dir}Settings.qml" && fail "$dir: a setting named type, which names the plugin's implementation"
   for key in $(grep -rhoE '\bsettings\.[a-zA-Z]+' "$dir" | sed 's/^settings\.//' | sort -u); do

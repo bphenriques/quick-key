@@ -13,21 +13,9 @@ CornerPill {
   namespace: "dictation-indicator"
   onClicked: pill.plugin.exec(pill.plugin.settings.stop)
 
-  Item {
-    implicitWidth: Config.theme.iconSize
-    implicitHeight: Config.theme.iconSize
-
-    Icon {
-      anchors.fill: parent
-      visible: !pill.plugin.transcribing
-      tone: Audio.sourceMuted ? "dim" : "normal"
-      glyph: pill.plugin.glyph
-    }
-
-    Spinner {
-      anchors.fill: parent
-      visible: pill.plugin.transcribing
-      tone: "normal"
-    }
+  Icon {
+    busy: pill.plugin.transcribing
+    tone: Audio.sourceMuted && !busy ? "dim" : "normal"
+    glyph: pill.plugin.glyph
   }
 }

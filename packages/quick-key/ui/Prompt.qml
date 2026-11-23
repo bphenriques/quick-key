@@ -48,14 +48,6 @@ RowLayout {
     implicitWidth: root.slot
     implicitHeight: Metrics.line
 
-    Spinner {
-      anchors.left: parent.left
-      anchors.verticalCenter: parent.verticalCenter
-      visible: root.busy
-      tone: "dim"
-      size: Metrics.line
-    }
-
     KeyHint {
       id: keyHint
       anchors.left: parent.left
@@ -68,8 +60,9 @@ RowLayout {
     Icon {
       anchors.left: parent.left
       anchors.verticalCenter: parent.verticalCenter
-      visible: !root.busy && (root.active || root.key === "")
-      tone: root.active ? "primary" : "dim"
+      visible: root.busy || root.active || root.key === ""
+      busy: root.busy
+      tone: root.active && !root.busy ? "primary" : "dim"
       glyph: root.glyph
       size: Metrics.line
     }

@@ -44,14 +44,9 @@ RowLayout {
   spacing: Config.theme.spacing
 
   Icon {
-    visible: !root.busy && (glyph !== "" || source !== "")
+    busy: root.busy
     glyph: root.glyph
     source: root.image
-    tone: root.tone
-  }
-
-  Spinner {
-    visible: root.busy
     tone: root.tone
   }
 

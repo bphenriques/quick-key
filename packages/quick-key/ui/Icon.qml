@@ -17,26 +17,37 @@ Item {
   property string recolour: "colour"
   // Tinting flattens an image to its shape, so only a symbolic icon (one colour by design) is tinted; a full-colour one goes grey instead.
   readonly property string drawn: recolour === "tint" && !source.includes("symbolic") ? "grey" : recolour
+  // Still being made: in its place the braille dots terminals turn, at their own tempo; still when animations are off.
+  property bool busy: false
 
-  visible: glyph !== "" || source !== ""
+  visible: busy || glyph !== "" || source !== ""
   implicitWidth: size
   implicitHeight: size
+
+  Timer {
+    id: turning
+    property int frame: 0
+    running: root.busy && root.visible && Config.theme.animationDuration > 0
+    interval: 80
+    repeat: true
+    onTriggered: frame = (frame + 1) % 10
+  }
 
   Label {
     id: glyphLabel
     anchors.centerIn: parent
-    visible: root.source === ""
+    visible: root.busy || root.source === ""
     tone: root.tone
-    // A point is 4/3 of a pixel, so the glyph fills the square. Bindings can read the size before it is set; Qt rejects a zero point size.
-    font.pointSize: Math.max(1, root.size * 0.75)
-    text: root.glyph
+    // A point is 4/3 of a pixel, so a glyph fills the square and the dots clear a pill's border. Bindings can read the size before it is set; Qt rejects a zero point size.
+    font.pointSize: Math.max(1, root.size * (root.busy ? 0.7 : 1) * 0.75)
+    text: root.busy ? "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[turning.frame] : root.glyph
   }
 
   IconImage {
     id: image
     anchors.fill: parent
     // Tinted, it is only the shape the tone fills.
-    visible: root.source !== "" && root.drawn !== "tint"
+    visible: !root.busy && root.source !== "" && root.drawn !== "tint"
     source: root.source
     layer.enabled: root.drawn !== "colour"
     layer.effect: MultiEffect {
@@ -55,7 +66,7 @@ Item {
   // The tone's colour through the image's shape, so a white symbolic icon reads on a light theme.
   Rectangle {
     anchors.fill: parent
-    visible: root.source !== "" && root.drawn === "tint"
+    visible: !root.busy && root.source !== "" && root.drawn === "tint"
     color: glyphLabel.color
     layer.enabled: visible
     layer.effect: MultiEffect {

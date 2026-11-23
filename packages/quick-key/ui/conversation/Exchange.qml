@@ -82,7 +82,8 @@ ColumnLayout {
         visible: root.phase === "working" && root.text === ""
         spacing: Config.theme.spacing
 
-        Spinner {
+        Icon {
+          busy: true
           tone: "primary"
           size: Metrics.line
         }
@@ -144,11 +145,12 @@ ColumnLayout {
     }
 
     // Still streaming in, where the copy button shows once it is done; the prompt's glyph stays, as typing ahead is free.
-    Spinner {
+    Icon {
       Layout.alignment: Qt.AlignBottom
       Layout.leftMargin: Metrics.itemPaddingX
       Layout.bottomMargin: Metrics.itemPaddingY
       visible: root.phase === "working" && root.text !== ""
+      busy: true
       tone: "primary"
       size: Metrics.line
     }
