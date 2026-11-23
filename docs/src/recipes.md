@@ -105,7 +105,7 @@ plugins.nightLight = {
   show.active.active = true;
 };
 menu.entries = [
-  { key = "n"; desc = "Night light"; icon = "<glyph>"; activeWhen = "nightLight"; keepOpen = true;
+  { key = "N"; desc = "Night light"; icon = "<glyph>"; activeWhen = "nightLight"; keepOpen = true;
     cmd = "systemctl --user is-active -q wlsunset && systemctl --user stop wlsunset || systemctl --user start wlsunset; qs -c quick-key ipc call nightLight refresh"; }
 ];
 ```
