@@ -66,7 +66,7 @@ Scope {
 
   function run(id, key) {}
 
-  function submit(text, background, after) {
+  function submit(text, after) {
     console.warn(name + ": takes no text, so the input keeps it");
     return false;
   }

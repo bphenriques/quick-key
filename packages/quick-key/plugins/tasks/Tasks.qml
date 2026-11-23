@@ -119,7 +119,7 @@ Plugin {
   }
 
   // Shows at once, dim until the file has it.
-  function submit(text, background, after) {
+  function submit(text, after) {
     failure = "";
     adding = adding.concat([text]);
     queue = queue.concat([{ verb: "add", arg: text, after: after }]);

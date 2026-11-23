@@ -51,7 +51,7 @@ QtObject {
     const sent = input.format && (!turn || turn.phase === "error") ? input.format.replace(/\{text\}/g, () => text) : text;
     if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
     // A plugin that failed to load takes nothing.
-    else if (!plugin || plugin.submit(sent, background, input.after ?? "") === false) return false;
+    else if (!plugin || plugin.submit(sent, input.after ?? "") === false) return false;
     lastSent = text;
     if (background) menu.hide();
     return true;

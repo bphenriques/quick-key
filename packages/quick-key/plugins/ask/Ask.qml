@@ -149,7 +149,7 @@ Plugin {
   }
 
   // Answered above the input while the menu shows it, else as a notification; one conversation per visit.
-  function submit(text, background, after) {
+  function submit(text, after) {
     if (busy || !settings.ask) return false;
     if (!visited) reset();
     if (!send(text, after, true)) return false;

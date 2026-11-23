@@ -151,7 +151,7 @@ ShellRoot {
           if (!root.submitted) {
             ask.session = "old";
             ask.exchanges = [{ prompt: "old", reply: "r", error: "", stopped: false }];
-            ask.submit("new", true, "echo done > \"$XDG_RUNTIME_DIR/followed\"");
+            ask.submit("new", "echo done > \"$XDG_RUNTIME_DIR/followed\"");
             root.submitted = true;
           }
           return ask.exchanges.length === 1 && ask.exchanges[0].reply === "new" && ask.session === "s2" && !ask.shown && ask.unread && Plugins.get("followed")?.text === "done";
@@ -161,7 +161,7 @@ ShellRoot {
         name: "stepping back leaves a run going and C-c stops it, which the agent hears; C-r lists nothing meanwhile",
         until: () => root.asked("stopped", ask => {
           if (ask.busy && ask.activity === "thinking" && !root.leftRunning) {
-            root.refused = ask.submit("more", true, "") === false && !ask.act("Ctrl+r") && !ask.recall();
+            root.refused = ask.submit("more", "") === false && !ask.act("Ctrl+r") && !ask.recall();
             ask.show();
             Panels.back();
             root.leftRunning = !ask.shown && ask.busy ? "yes" : "no";
@@ -179,7 +179,7 @@ ShellRoot {
           for (const [ask, draft] of [[cleared, "failed"], [kept, "typed"]]) {
             ask.exchanges = [{ prompt: "failed", reply: "", error: "No answer", stopped: false }];
             ask.draft = draft;
-            ask.submit("new", true, "");
+            ask.submit("new", "");
           }
           return cleared.draft === "" && kept.draft === "typed";
         }
@@ -204,13 +204,13 @@ ShellRoot {
           if (!ask) return false;
           if (root.visitStep === 0) {
             ask.startVisit();
-            root.visitStep = ask.submit("one", false, "") ? 1 : 0;
+            root.visitStep = ask.submit("one", "") ? 1 : 0;
           } else if (root.visitStep === 1 && ask.turn?.text === "one") {
-            root.visitStep = ask.submit("two", false, "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" ? 2 : -1;
+            root.visitStep = ask.submit("two", "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" ? 2 : -1;
           } else if (root.visitStep === 2 && ask.turn?.text === "two" && ask.turn.phase === "done") {
             root.visitStep = ask.exchanges.length === 2 && !ask.unread ? 3 : -1;
             ask.endVisit();
-            root.visitStep = ask.turn === null && ask.submit("three", true, "") ? root.visitStep + 1 : -1;
+            root.visitStep = ask.turn === null && ask.submit("three", "") ? root.visitStep + 1 : -1;
           }
           return root.visitStep === 4 && !ask.busy && ask.exchanges.length === 1 && ask.unread;
         }
@@ -222,7 +222,7 @@ ShellRoot {
           if (!ask) return false;
           if (!root.failedSent) {
             ask.startVisit();
-            root.failedSent = ask.submit("lost", false, "");
+            root.failedSent = ask.submit("lost", "");
           }
           const done = ask.turn?.phase === "error" && ask.draft === "";
           if (done) ask.endVisit();
@@ -233,7 +233,7 @@ ShellRoot {
         name: "an answer that is a table stays marked, so the menu opens the panel on it",
         start: () => {
           Plugins.get("chooser").startVisit();
-          Plugins.get("chooser").submit("a table", false, "");
+          Plugins.get("chooser").submit("a table", "");
         },
         until: () => {
           const ask = Plugins.get("chooser");

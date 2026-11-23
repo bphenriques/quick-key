@@ -186,7 +186,7 @@ ShellRoot {
       },
       {
         name: "an added task shows at once in the input, as a working turn, no row moving, before its command has written the file, its after waiting for it",
-        start: () => Plugins.get("tasks").submit("New", false, "echo added > \"$XDG_RUNTIME_DIR/added\""),
+        start: () => Plugins.get("tasks").submit("New", "echo added > \"$XDG_RUNTIME_DIR/added\""),
         until: () => Plugins.get("tasks").turn?.question === "New" && Plugins.get("tasks").turn?.phase === "working" && !Plugins.get("tasks").items.some(item => item.label === "New")
           && !Array.from(Plugins.get("tasks").state.tasks).some(task => task.title === "New")
           && Plugins.get("added")?.text !== "added"
@@ -197,7 +197,7 @@ ShellRoot {
       },
       {
         name: "an add whose command fails drops it, says so, and skips its after",
-        start: () => Plugins.get("tasks").submit("Fail", false, "echo wrong > \"$XDG_RUNTIME_DIR/added\""),
+        start: () => Plugins.get("tasks").submit("Fail", "echo wrong > \"$XDG_RUNTIME_DIR/added\""),
         until: () => !Plugins.get("tasks").items.some(item => item.label === "Fail") && Plugins.get("tasks").queue.length === 0
           && Plugins.get("tasks").error === "Could not add Fail" && Plugins.get("added")?.text === "added"
       },
