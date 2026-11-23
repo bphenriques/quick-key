@@ -76,14 +76,17 @@ Item {
     });
   }
 
-  // Its conversations where it works, as it orders them: then([{ sessionId, title, updatedAt }]), else then(null, why).
+  // Its conversations where it works, every page, as it orders them: then([{ sessionId, title, updatedAt }]), else then(null, why).
   function list(then) {
     connect(() => {
       if (!canList) return then(null, name + " keeps no list of conversations");
-      request("session/list", { cwd: cwd }, (error, result) => {
+      const page = (cursor, sessions) => request("session/list", { cwd: cwd, cursor: cursor }, (error, result) => {
+        const all = error ? null : sessions.concat(Array.from(result.sessions ?? []));
+        if (all && result.nextCursor && result.nextCursor !== cursor) return page(result.nextCursor, all);
         if (internal.done) idleTimer.restart();
-        then(error ? null : Array.from(result.sessions ?? []), error?.message ?? "");
+        then(all, error?.message ?? "");
       });
+      page(undefined, []);
     }, why => then(null, why));
   }
 

@@ -1,5 +1,5 @@
 # The suites' stand-in ACP agent, on the SDK's agent side: argv names its session and, optionally, a behaviour; otherwise the prompt picks the answer.
-# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load, resume, a permission's outcome), and `trapped` when a turn is cancelled; it lists two conversations, and a load replays one exchange, but of `gone`, which fails.
+# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load, resume, a permission's outcome), and `trapped` when a turn is cancelled; it lists two conversations, a page each, and a load replays one exchange, but of `gone`, which fails.
 import asyncio
 import os
 import sys
@@ -79,6 +79,11 @@ class Agent:
         return ResumeSessionResponse()
 
     async def list_sessions(self, cwd=None, cursor=None, **kwargs):
+        # A page each, as an agent paging at one would list them.
+        if cursor == "2":
+            return ListSessionsResponse(
+                sessions=[SessionInfo(session_id="older", cwd=cwd or "/")]
+            )
         return ListSessionsResponse(
             sessions=[
                 SessionInfo(
@@ -86,9 +91,9 @@ class Agent:
                     cwd=cwd or "/",
                     title="An old question",
                     updated_at="2026-11-01T10:00:00Z",
-                ),
-                SessionInfo(session_id="older", cwd=cwd or "/"),
-            ]
+                )
+            ],
+            next_cursor="2",
         )
 
     async def say(self, session_id, text):

@@ -365,7 +365,7 @@ ShellRoot {
         }
       },
       {
-        name: "recall lists the agent's conversations in the picker, as it orders them, each to resume and the last activity on its right",
+        name: "recall lists the agent's conversations in the picker, every page, as it orders them, each to resume and the last activity on its right",
         until: () => {
           const ask = Plugins.get("recaller");
           if (!ask) return false;
