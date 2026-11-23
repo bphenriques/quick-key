@@ -145,23 +145,15 @@ def local-time [seconds: int]: nothing -> string {
   if ($time | str ends-with "T00:00") { $time | str substring 0..9 } else { $time }
 }
 
-# Every task todoman lists, each with its file, by list and name (`key`): todoman's own id changes as the file does, its name never.
-def todos [state: path]: nothing -> list {
-  let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY | from json
-  # Listing refreshed todoman's cache, which alone pairs its ids with files.
-  let files = open ($state | path join todoman.db) | query db "SELECT id, file_path FROM todos"
-  let lists = $state | path expand | path join tasks
-  $tasks | each {|t| let file = $files | where id == $t.id | first | get file_path; $t | insert file $file | insert key ($file | path relative-to $lists) }
-}
-
 # Open tasks, and those done in the last 14 days, so a tick stays to be undone and the done ones can be shown.
 def write-tasks [calendars: list, state: path, --synced, --error: string] {
   let since = (date now) - 14day | format date "%Y-%m-%d"
   let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
-  let tasks = todos $state
+  let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY
+  | from json
   | where {|t| not $t.completed or ($t.completed_at != null and (local-time $t.completed_at) >= $since) }
   | each {|t| {
-    id: $t.key
+    id: ($t.id | into string)
     title: $t.summary
     due: (if $t.due == null { null } else { local-time $t.due })
     done: $t.completed
@@ -275,31 +267,34 @@ def "main tasks" [calendars_file: path, events_file: path, --synced, --error: st
   write-tasks $lists $state --synced=$synced --error=$error
 }
 
-# Ticks a task off by its id in the tasks file, and writes that file again; the next sync takes it to its server.
-def "main done" [calendars_file: path, events_file: path, id: string] {
-  locked $events_file tick done $calendars_file $events_file $id
+# Ticks a task off by its id and title in the tasks file, and writes that file again; the next sync takes it to its server.
+def "main done" [calendars_file: path, events_file: path, id: int, title: string] {
+  locked $events_file tick done $calendars_file $events_file $id $title
 }
 
-def "main reopen" [calendars_file: path, events_file: path, id: string] {
-  locked $events_file tick reopen $calendars_file $events_file $id
+def "main reopen" [calendars_file: path, events_file: path, id: int, title: string] {
+  locked $events_file tick reopen $calendars_file $events_file $id $title
 }
 
-# What done and reopen run under the lock, finding the task as it is now. todoman has no command to reopen: its status goes back to needing action, the record of its completion dropped.
-def "main tick" [how: string, calendars_file: path, events_file: path, id: string] {
+# What done and reopen run under the lock. todoman numbers a task anew once its file changes outside it, so an id whose task has another title is never acted on.
+def "main tick" [how: string, calendars_file: path, events_file: path, id: int, title: string] {
   let state = $events_file | path dirname
   let config = todoman-config $state
-  let task = todos $state | where key == $id | first
+  let shown = ^todo --config $config --porcelain show $id | complete
+  if $shown.exit_code != 0 or ($shown.stdout | from json).summary != $title { error make --unspanned { msg: "tasks changed, try again" } }
   if $how == "done" {
-    let run = ^todo --config $config done $task.id | complete
+    let run = ^todo --config $config done $id | complete
     if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   } else {
-    open --raw $task.file
+    # todoman has no command to reopen: its status goes back to needing action, the record of its completion dropped.
+    let file = ^todo --config $config path $id | str trim
+    open --raw $file
     | split row "\n"
     | where {|line| not ($line =~ '^(COMPLETED|PERCENT-COMPLETE)[:;]') }
     | each {|line| $line | str replace --regex '^STATUS:COMPLETED(\r?)$' 'STATUS:NEEDS-ACTION$1' }
     | str join "\n"
-    | save -f $"($task.file).tmp"
-    mv -f $"($task.file).tmp" $task.file
+    | save -f $"($file).tmp"
+    mv -f $"($file).tmp" $file
   }
   write-tasks (task-lists $calendars_file) $state
 }

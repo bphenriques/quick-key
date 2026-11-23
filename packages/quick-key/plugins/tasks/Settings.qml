@@ -2,9 +2,9 @@ import qs
 
 // The tasks' commands, each given its arguments as $1, $2... (docs/src/tasks.md); `file` is the tasks file.
 PluginSettings {
-  // Given a task's id, ticks it off and writes the file again.
+  // Given a task's id and title, ticks it off and writes the file again.
   property string done
-  // Given a task's id, unticks it and writes the file again.
+  // Given a task's id and title, unticks it and writes the file again.
   property string reopen
   // Given a title, adds a task to the first list and writes the file again.
   property string add

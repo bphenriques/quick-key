@@ -113,7 +113,7 @@ Plugin {
     if (!task) return;
     failure = "";
     pending = Object.assign({}, pending, { [id]: !task.done });
-    queue = queue.concat([{ verb: task.done ? "reopen" : "done", arg: id }]);
+    queue = queue.concat([{ verb: task.done ? "reopen" : "done", arg: id, title: task.title }]);
     next();
   }
 
@@ -129,7 +129,7 @@ Plugin {
     if (toggler.running || queue.length === 0) return;
     toggler.job = queue[0];
     queue = queue.slice(1);
-    toggler.command = commandLine(settings[toggler.job.verb], toggler.job.arg);
+    toggler.command = commandLine(settings[toggler.job.verb], toggler.job.arg, ...("title" in toggler.job ? [toggler.job.title] : []));
     toggler.running = true;
   }
 
@@ -200,7 +200,7 @@ Plugin {
   // Each tick and add written in turn; the sync after the last takes them to the server.
   CommandProcess {
     id: toggler
-    // { verb, arg, after }: done or reopen and an id, or add and a title, then what runs once it is added.
+    // { verb, arg, title, after }: done or reopen, an id and its title, or add and a title, then what runs once it is added.
     property var job: null
     onExited: code => {
       // An add is over as its command is, whatever title the file gave it (a command may read a date out of it).
@@ -213,7 +213,7 @@ Plugin {
         root.failure = root.words.addFailed(job.arg);
       } else if (code !== 0) {
         root.pending = root.kept(id => id !== job.arg);
-        root.failure = (job.verb === "done" ? root.words.tickFailed : root.words.reopenFailed)((Array.from(root.state.tasks ?? []).find(task => task.id === job.arg)?.title ?? job.arg));
+        root.failure = (job.verb === "done" ? root.words.tickFailed : root.words.reopenFailed)(job.title);
       }
       if (root.queue.length > 0) root.next();
       else root.exec(root.settings.sync);

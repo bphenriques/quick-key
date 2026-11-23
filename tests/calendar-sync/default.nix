@@ -16,6 +16,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     cp -r ${./personal} state/vdirs/personal
     chmod -R u+w state
     sync() { quick-key-calendar-sync "$@" ${./calendars.yaml} state/events.json; }
+    tick() { quick-key-calendar-sync "$1" ${./calendars.yaml} state/events.json "$2" "$3"; }
     task() { jq -c '.tasks[] | select(.title == "Pay the bills")' state/tasks.json; }
     fail() { echo "not ok - $1"; cat state/tasks.json; exit 1; }
 
@@ -25,27 +26,28 @@ pkgs.runCommand "quick-key-calendar-sync"
     [ "$(task | jq -c '[.due, .done, .list, .priority, .color]')" = '["2026-10-06T09:00",false,"personal",1,"#ff8c00"]' ] || fail "a task reads with its local time, open, with its list, priority and calendar's colour"
 
     id=$(task | jq -r .id)
-    quick-key-calendar-sync done ${./calendars.yaml} state/events.json "$id"
+    tick done "$id" "Pay the bills"
     [ "$(task | jq .done)" = true ] || fail "done ticks it off in the tasks file"
     task | jq -r .completed | grep -q "^$(date +%Y-%m-%d)" || fail "done says when, so the done ones can be shown"
     grep -q '^STATUS:COMPLETED' state/vdirs/personal/bills.ics || fail "done marks the file completed"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "done keeps the reminder"
 
     [ "$(task | jq -r .id)" = "$id" ] || fail "a task's id outlasts a tick"
-    quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json "$id"
+    tick reopen "$id" "Pay the bills"
     [ "$(task | jq .done)" = false ] || fail "reopen unticks it in the tasks file"
     grep -q '^STATUS:NEEDS-ACTION' state/vdirs/personal/bills.ics || fail "reopen marks the file as needing action"
     ! grep -qE '^(COMPLETED|PERCENT-COMPLETE)' state/vdirs/personal/bills.ics || fail "reopen drops the record of completion"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "reopen keeps the reminder"
-    # todoman numbers a task anew once its file changes outside it, as reopen's does: a tick queued from before still finds it.
-    quick-key-calendar-sync done ${./calendars.yaml} state/events.json "$id"
-    [ "$(task | jq .done)" = true ] || fail "a tick after an untick finds the task by the id it had"
-    quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json "$id"
+    # todoman numbers a task anew once its file changes outside it, as reopen's does: an id from before may name another task.
+    id=$(task | jq -r .id)
+    ! tick done "$id" "Water the plants" 2> err || fail "a tick whose id has another title fails"
+    grep -q "tasks changed, try again" err && [ "$(task | jq .done)" = false ] || fail "a tick whose id has another title says so, touching no task"
 
     water() { jq -c '[.tasks[] | select(.title == "Water the plants")] | sort_by(.due) | map([.due, .done])' state/tasks.json; }
-    quick-key-calendar-sync done ${./calendars.yaml} state/events.json personal/water.ics
+    id=$(jq -r '.tasks[] | select(.title == "Water the plants") | .id' state/tasks.json)
+    tick done "$id" "Water the plants"
     [ "$(water)" = '[["2026-11-20",true],["2026-11-27",false]]' ] || fail "ticking a repeating task makes the next"
-    quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json personal/water.ics
+    tick reopen "$id" "Water the plants"
     [ "$(water)" = '[["2026-11-20",false],["2026-11-27",false]]' ] || fail "unticking a repeating task only reopens it, the next one todoman made kept"
 
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
@@ -55,7 +57,7 @@ pkgs.runCommand "quick-key-calendar-sync"
 
     # The file says when the lists last synced, and how the last sync went, whatever wrote it since.
     jq -c '.updated = "2026-01-01T00:00" | .error = "personal: could not sync"' state/tasks.json > state/old.json && mv state/old.json state/tasks.json
-    quick-key-calendar-sync done ${./calendars.yaml} state/events.json "$(task | jq -r .id)"
+    tick done "$(task | jq -r .id)" "Pay the bills"
     jq -e '.updated == "2026-01-01T00:00" and .error == "personal: could not sync"' state/tasks.json > /dev/null || fail "a tick keeps when it last synced, and its error"
     sync tasks --error "personal: offline"
     jq -e '.updated == "2026-01-01T00:00" and .error == "personal: offline"' state/tasks.json > /dev/null || fail "a sync that fetched no list keeps when it last synced"

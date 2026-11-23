@@ -33,16 +33,16 @@ One line, so the plugin reads it as its state:
 
 ```json
 {"updated": "2026-11-17T14:30", "error": "personal: could not sync", "tasks": [
-  {"id": "personal/electricity.ics", "title": "Pay the electricity", "due": "2026-11-20T18:00", "done": false, "list": "personal", "priority": 1, "color": "#ff8c00"},
-  {"id": "personal/plumber.ics", "title": "Call the plumber", "due": "2026-11-18", "done": true, "completed": "2026-11-17T09:12", "list": "personal", "color": "#ff8c00"}]}
+  {"id": "12", "title": "Pay the electricity", "due": "2026-11-20T18:00", "done": false, "list": "personal", "priority": 1, "color": "#ff8c00"},
+  {"id": "13", "title": "Call the plumber", "due": "2026-11-18", "done": true, "completed": "2026-11-17T09:12", "list": "personal", "color": "#ff8c00"}]}
 ```
 
 - `updated` is when the lists last synced, left out until one has; `error` is why the last sync failed. A tick or an add writes neither anew, so a file that cannot sync shows its age.
 - Times are local, without an offset; a due date without a time is due that day.
-- `id` is what `done` and `reopen` are given. It stays the same across writes, so a tick queued behind another finds its task.
+- `id` is what `done` and `reopen` are given, with `title`, so a command can tell whether the id still names that task.
 - `priority` runs from 1, the highest, to 9; unset or 0, none.
 - It holds the open tasks, and those done in the last 14 days, so a mistaken tick can be undone and `completed` has some to show.
 
 ## calendarSync
 
-A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick or an added task reaches its server; the others are only read, and new tasks go to the first. `exec.done`, `exec.reopen` and `exec.add` are the tasks plugin's commands. calendarSync writes its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks; a task's `id` is its file, by list. Ticking a repeating task makes its next one; unticking reopens only the one ticked and leaves the next, to delete in your calendar app if unwanted. A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.
+A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick or an added task reaches its server; the others are only read, and new tasks go to the first. `exec.done`, `exec.reopen` and `exec.add` are the tasks plugin's commands. calendarSync writes its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks; a task's `id` is todoman's, which numbers a task anew as its file changes, so a tick whose id no longer has its title fails ("tasks changed, try again"), touching nothing. Ticking a repeating task makes its next one; unticking reopens only the one ticked and leaves the next, to delete in your calendar app if unwanted. A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.

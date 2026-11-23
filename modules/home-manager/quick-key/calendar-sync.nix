@@ -77,8 +77,12 @@ in
       description = "Command that syncs and returns once done, for a script that reads the files after";
     };
 
-    exec.done = taskCommand "done" "a task's id" "Command that ticks a task off, given its id, for the tasks plugin";
-    exec.reopen = taskCommand "reopen" "a task's id" "Command that unticks a task, given its id, for the tasks plugin";
+    exec.done =
+      taskCommand "done" "a task's id and title"
+        "Command that ticks a task off, given its id and title, for the tasks plugin";
+    exec.reopen =
+      taskCommand "reopen" "a task's id and title"
+        "Command that unticks a task, given its id and title, for the tasks plugin";
     exec.add =
       taskCommand "add" "a task's title"
         "Command that adds a task to the first list, given its title, for the tasks plugin";
