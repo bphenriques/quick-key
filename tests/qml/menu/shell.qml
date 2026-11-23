@@ -16,6 +16,70 @@ ShellRoot {
   property int orderStep: 0
   // Whether a case pressed its key, once.
   property bool pressed: false
+  // The keyed plugin's action a key ran.
+  property string ran: ""
+
+  // A level where each key reaches something else: a row, the bar, a listed item and its own menu, the input.
+  readonly property var keyedLevel: ({ kind: "entry", entry: { list: "keyed", input: { desc: "Add", cmd: "true" },
+    submenu: [{ key: "f", desc: "Row", action: "row" }, { key: "Ctrl+y", desc: "Body", action: "row" }],
+    header: { left: [{ key: "x", desc: "Bar", action: "bar" }, { key: "y", desc: "Shadowed", action: "bar" }, { desc: "Keyed", list: "keyed" }] } } })
+  readonly property var bareLevel: ({ kind: "entry", entry: { list: "keyed" } })
+  readonly property var slashLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "/", desc: "Slash", action: "row" }] } })
+  readonly property var calendarLevel: ({ kind: "entry", entry: { view: "calendar", list: "keyed", submenu: [{ key: "Right", desc: "Right", action: "row" }] } })
+  readonly property var startFilter: () => menu.startFilter()
+
+  // What a key does, by precedence: the level it opens on, what is done first, the key, and what it runs.
+  readonly property var keyed: [
+    ["? lists the keys", keyedLevel, null, "?", "help"],
+    ["while the help shows, a row's letter only closes it", keyedLevel, () => menu.hold("Help"), "f", "help closed"],
+    ["while the help shows, ? closes it too", keyedLevel, () => menu.hold("Help"), "?", "help closed"],
+    ["Escape goes back a level", keyedLevel, null, "Escape", "back"],
+    ["with the answer focused, Tab goes to the body, not the input", keyedLevel, () => menu.focusOn("answer"), "Tab", "body"],
+    ["a view takes its keys before the level's rows", calendarLevel, null, "Right", "view"],
+    ["Tab moves to the input", keyedLevel, null, "Tab", "input"],
+    ["Tab with no input does nothing", bareLevel, null, "Tab", "nothing"],
+    ["a row's letter runs it", keyedLevel, null, "f", "row"],
+    ["a digit runs its listed item", keyedLevel, null, "1", "item"],
+    ["a digit past the list does nothing", keyedLevel, null, "5", "nothing"],
+    ["/ filters the list", keyedLevel, null, "/", "filter"],
+    ["/ runs a row bound to it rather than filter", slashLevel, null, "/", "row"],
+    ["Alt and a digit open its item's own menu", keyedLevel, null, "Alt+1", "item menu"],
+    ["Ctrl and a letter run the bar's entry", keyedLevel, null, "Ctrl+x", "bar"],
+    ["Ctrl and a letter the body binds run the body's row", keyedLevel, null, "Ctrl+y", "row"],
+    ["Ctrl and a digit run the bar list's item", keyedLevel, null, "Ctrl+1", "item"],
+    ["Ctrl, Alt and a digit open the bar item's own menu", keyedLevel, null, "Ctrl+Alt+1", "item menu"],
+    ["a bar letter without Ctrl does nothing", keyedLevel, null, "x", "nothing"],
+    ["while filtering, a digit runs the row shown", keyedLevel, startFilter, "1", "item"],
+    ["while filtering, Alt and a digit open its item's own menu", keyedLevel, startFilter, "Alt+1", "item menu"],
+    ["while filtering, a letter is left to the text", keyedLevel, startFilter, "f", "nothing"]
+  ]
+
+  // What the key did, told by what changed; the keyed item closes the menu, which is how a run of it shows.
+  function outcome(handled, was) {
+    if (ran) return ran;
+    if (!menu.open) return "item";
+    if (menu.level?.kind === "actions") return "item menu";
+    if (menu.held !== was.held) return menu.held === "Help" ? "help" : "help closed";
+    if (menu.calendar.selected.getTime() !== was.day) return "view";
+    if (menu.filtering !== was.filtering) return "filter";
+    if (menu.stack.length < was.depth) return "back";
+    if (menu.inputFocused) return "input";
+    if (was.answer && !menu.answerFocused) return "body";
+    return handled ? "taken" : "nothing";
+  }
+
+  // As press() runs a key: the filter's keys while filtering, else the level's.
+  function pressOn(level, before, name) {
+    menu.hide();
+    menu.show();
+    menu.push(level);
+    if (before) before();
+    ran = "";
+    const was = { held: menu.held, day: menu.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, answer: menu.answerFocused };
+    const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name), was);
+    menu.hide();
+    return did;
+  }
 
   ListFilter {
     id: probe
@@ -519,8 +583,26 @@ ShellRoot {
           menu.toggleEntry("1");
         },
         until: () => Plugins.get("picked")?.text === "a-1"
+      },
+      {
+        name: "the keyed plugin lists one item with a menu of its own, and runs the actions the table's rows name",
+        until: () => {
+          const plugin = Plugins.get("keyed");
+          if (!plugin) return false;
+          plugin.items = [{ id: "one", closes: true, actions: [{ key: "d" }] }];
+          plugin.actions = { row: { icon: () => "", available: () => true, run: () => root.ran = "row" }, bar: { icon: () => "", available: () => true, run: () => root.ran = "bar" } };
+          return Lists.items("keyed").length === 1;
+        }
       }
-    ]
+    ].concat(root.keyed.map(([what, level, before, name, expected]) => ({
+      name: what,
+      timeout: 0,
+      until: () => {
+        const did = root.pressOn(level, before, name);
+        if (did !== expected) console.info("# " + name + " did " + did);
+        return did === expected;
+      }
+    })))
   }
 
   MenuModel {

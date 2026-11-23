@@ -42,6 +42,9 @@
     "clicked": {
       "type": "command",
       "activate": "echo clicked > \"$XDG_RUNTIME_DIR/picked\""
+    },
+    "keyed": {
+      "type": "command"
     }
   },
   "menu": {
