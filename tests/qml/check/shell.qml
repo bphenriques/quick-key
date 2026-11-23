@@ -2,12 +2,20 @@ import QtQuick
 import Quickshell
 import qs
 
-// What the check makes of a config.json: each of `wrong` is what is wrong, a config holding it, and a part of the problem it must name.
+// What the check makes of a config.json: each of `wrong` is what is wrong, a config holding it, and a part of each problem it names, nothing else.
 ShellRoot {
   id: root
 
   function menu(entries) {
     return { menu: { entries: entries } };
+  }
+
+  // Whether the check names exactly `problems`, each by a part of it; else what it named, so a failing case says why.
+  function names(config, problems) {
+    const found = Validation.check(config);
+    const right = found.length === problems.length && problems.every(part => found.some(each => each.includes(part)));
+    if (!right) console.info("# found " + JSON.stringify(found));
+    return right;
   }
 
   readonly property var wrong: [
@@ -21,7 +29,7 @@ ShellRoot {
     ["an app icon mode that is none", { theme: { appIcons: "gray" } }, "theme.appIcons is 'gray', not one of colour, grey, tint"],
     ["a setting since renamed", { theme: { monochromeTray: true } }, "theme.monochromeTray is now theme.appIcons"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
-    ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", submenu: "abc" }] } }, "sets submenu to a string, not a list"],
+    ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", submenu: "abc" }] } }, ["sets submenu to a string, not a list", "the top level > A takes a list of entries"]],
     ["an empty row in a submenu", { menu: { entries: [{ key: "a", desc: "A", submenu: [null] }] } }, "holds something that is not an entry"],
     ["a key that is no name", { menu: { header: { right: [{ key: 5, desc: "X", status: "battery" }] } } }, "sets key to a number, not a string or a list"],
     ["a pair of keys holding no name", { menu: { header: { right: [{ key: ["a", 5], desc: "X", status: "battery" }] } } }, "sets key to no key names"],
@@ -38,13 +46,13 @@ ShellRoot {
     ["a level's bar slot misspelt", { menu: { entries: [{ key: "a", desc: "A", submenu: [], header: { rigth: [] } }] } }, "bar sets rigth, none of left, center, right"],
     ["a setting the shell does not declare", { audio: { stepp: 1 } }, "audio.stepp is not a setting"],
     ["a value of another kind", { audio: { step: "5" } }, "audio.step takes a number"],
-    ["a plugin with two sources", { plugins: { x: { watch: "a", read: "b" } } }, "more than one of watch, read and file"],
-    ["every without read", { plugins: { x: { every: 5 } } }, "sets every without read"],
-    ["a plugin with a built-in name", { plugins: { sink: {} } }, "takes a built-in name"],
+    ["a plugin with two sources", { plugins: { x: { type: "command", watch: "a", read: "b" } } }, "more than one of watch, read and file"],
+    ["every without read", { plugins: { x: { type: "command", every: 5 } } }, "sets every without read"],
+    ["a plugin with a built-in name", { plugins: { sink: { type: "command" } } }, "takes a built-in name"],
     ["a name in a bar neither a status nor a plugin", { menu: { header: { left: ["nope"] } } }, "'nope' in the top level's bar is neither a status nor a plugin"],
     ["a pop-up that is neither a status nor a plugin", { popups: { show: ["nope"] } }, "popups.show"],
-    ["a bar key the body binds with Ctrl", { menu: { header: { left: [{ key: "x", desc: "X", cmd: "true" }] }, entries: [{ key: "Ctrl+x", desc: "Y", cmd: "true" }] } }, "bar keys its body binds with Ctrl too in the top level: x"],
-    ["a bar key with a modifier", { menu: { header: { left: [{ key: "Alt+x", desc: "X", cmd: "true" }] } } }, "bar keys with a modifier"],
+    ["a bar key the body binds with Ctrl", { menu: { header: { left: [{ key: "x", desc: "X", icon: "x", cmd: "true" }] }, entries: [{ key: "Ctrl+x", desc: "Y", cmd: "true" }] } }, "bar keys its body binds with Ctrl too in the top level: x"],
+    ["a bar key with a modifier", { menu: { header: { left: [{ key: "Alt+x", desc: "X", icon: "x", cmd: "true" }] } } }, "bar keys with a modifier"],
     ["a limit outside a bar", menu([{ key: "x", desc: "X", list: "tray", limit: 3 }]), "can only set limit on a list in a bar"],
     ["a format without a status", menu([{ key: "x", desc: "X", cmd: "true", format: "{a}" }]), "can only set format with status"],
     ["an entry in the body that only shows a status", menu([{ key: "x", desc: "X", status: "battery" }]), "needs one of cmd, action, or submenu and/or list or view"],
@@ -62,7 +70,7 @@ ShellRoot {
     ["an entry on Tab, which moves to the input", menu([{ key: "Tab", desc: "X", cmd: "true" }]), "keys reserved for the menu in the top level: Tab"],
     ["a top-level input with nowhere for its text", { menu: { input: { desc: "Ask" } } }, "menu.input gives its input's text to nothing"],
     ["an input with nowhere for its text", menu([{ key: "x", desc: "X", list: "tray", input: { desc: "Add" } }]), "gives its input's text to nothing"],
-    ["an input giving its text to both a command and a plugin", { plugins: { p: {} }, menu: { entries: [{ key: "x", desc: "X", list: "tray", input: { desc: "Add", cmd: "true", plugin: "p" } }] } }, "to both input.cmd and input.plugin"],
+    ["an input giving its text to both a command and a plugin", { plugins: { p: { type: "command" } }, menu: { entries: [{ key: "x", desc: "X", list: "tray", input: { desc: "Add", cmd: "true", plugin: "p" } }] } }, "to both input.cmd and input.plugin"],
     ["an input naming a plugin that is not one", menu([{ key: "x", desc: "X", list: "tray", input: { desc: "Add", plugin: "nope" } }]), "plugin 'nope', which is not one"],
     ["an input format without its text", menu([{ key: "x", desc: "X", list: "tray", input: { desc: "Add", cmd: "true", format: "Add it" } }]), "input.format without {text}"],
     ["an ask plugin without its command", { plugins: { a: { type: "ask" } } }, "plugins.a needs ask"],
@@ -92,27 +100,31 @@ ShellRoot {
     cases: [
       {
         name: "no config, and the starter menu, have nothing wrong",
-        until: () => Config.starterEntries.length > 0 && Validation.check({}).length + Validation.check(root.menu(Array.from(Config.starterEntries))).length === 0
+        until: () => Config.starterEntries.length > 0 && root.names({}, []) && root.names(root.menu(Array.from(Config.starterEntries)), [])
       },
       {
         name: "an input handing a plugin its text, in its format, on a view in a bar has nothing wrong",
-        until: () => Validation.check({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { header: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}", after: "true" } }] } } }).length === 0
+        timeout: 0,
+        until: () => root.names({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { header: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}", after: "true" } }] } } }, [])
       },
       {
         name: "a top-level input handing a plugin its text has nothing wrong",
-        until: () => Validation.check({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" } } }).length === 0
+        timeout: 0,
+        until: () => root.names({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" } } }, [])
       },
       {
         name: "a plugin's own settings have nothing wrong",
-        until: () => Validation.check({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }).length === 0
+        timeout: 0,
+        until: () => root.names({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }, [])
       },
       {
         name: "a key renamed is named with what to write instead, and one not set is not",
         until: () => Validation.renames({ clock: { fmt: "x" } }, { "clock.fmt": "clock.format", "audio.top": "audio.max" }).join() === "clock.fmt is now clock.format"
       }
     ].concat(root.wrong.map(([what, config, problem]) => ({
-      name: what + " is named",
-      until: () => Validation.check(config).some(found => found.includes(problem))
+      name: what + " is named, and nothing else",
+      timeout: 0,
+      until: () => root.names(config, [].concat(problem))
     })), [
       // A reload would start the suite over, from the file as saved, and never reach its end.
       {
