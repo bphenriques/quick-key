@@ -423,7 +423,8 @@ Plugin {
   function arrive(notification) {
     const applied = ruled(notification);
     const tag = tagOf(notification);
-    const same = tag ? internal.list.find(each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag) : null;
+    // Its card, by tag, else one saying exactly what it says (no tag on either, no reply on it), which it renews and counts, as dunst stacks duplicates.
+    const same = tag ? internal.list.find(each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag) : internal.list.find(each => each !== internal.replying && each.notification && !tagOf(each.notification) && each.appName === notification.appName && each.summary === notification.summary && each.body === notification.body) ?? null;
     // A replacement by tag that a rule hides still takes its card, so the card goes with it.
     if (applied.hide && !same) return;
     notification.tracked = true;
@@ -433,11 +434,19 @@ Plugin {
     notification.closed.connect(() => {
       if (entry.notification === notification) root.leave(entry);
     });
-    if (old) return old.expire();
+    if (old) {
+      if (!tag) entry.repeats++;
+      return old.expire();
+    }
     internal.list = internal.list.concat([entry]);
     apply(entry, applied);
-    if (summoned && !internal.picked) pick(entry);
     if (applied.run && !notification.lastGeneration) runFor(entry, applied.run);
+    // Silent, it goes straight to those closed, to read later, as it was only ever meant to.
+    if (applied.silent) {
+      leave(entry);
+      return notification.expire();
+    }
+    if (summoned && !internal.picked) pick(entry);
     // At most `keep`, the oldest closing first and critical ones last; never the one that just came, the one you reply to, or, held still, one on screen.
     const over = internal.list.length - settings.keep;
     if (over > 0) internal.list.filter(each => each !== entry && each !== internal.replying && !(still && shown.includes(each))).sort((a, b) => critical(a) - critical(b) || a.came - b.came).slice(0, over).forEach(each => root.expire(each));
@@ -504,6 +513,8 @@ Plugin {
     readonly property bool hasInlineReply: notification?.hasInlineReply ?? false
     readonly property bool resident: notification?.resident ?? false
     property int came: 0
+    // How many times it came saying the same.
+    property int repeats: 1
     property real arrived: 0
     property var applied: ({ actions: [], values: {} })
     property string draft: ""

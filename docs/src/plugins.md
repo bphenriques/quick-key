@@ -123,6 +123,8 @@ Cards stack in a corner of the focused screen, newest by the corner, critical on
 - progress (`value`) as a meter, and a picture (album art, a screenshot) on its right;
 - its sender's actions below.
 
+The same notification again, with no tag (same app, summary and body), renews its card rather than adding one, counted on its right (`×2`), as dunst stacks duplicates.
+
 A click opens a card: its app comes to the front (the one window whose app id is its desktop entry or name, when only one is open), and its default action runs, else it is dismissed. `✕` or a right click dismisses it.
 
 A card shows for its sender's time, else its urgency's `timeout`; a critical one stays until dismissed. Time stops while the pointer is on any card, which also holds the stack still, and after `idle` seconds without input; it starts again in full. One sent again, by its id or its stack tag (`x-dunst-stack-tag`, as volume tools send), replaces its card in its place, its rules and its time starting again. One re-sent by its id with nothing changed restarts nothing: Quickshell tells the shell only of changes.
@@ -145,7 +147,9 @@ plugins.notifications = {
 Rules apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field: `app`, `summary`, `body`, `category`, `urgency` or `desktopEntry`. Anchor one with `^…$`. They are JavaScript's, with no inline flags: `[Ss]lack` matches either case. A rule with no `match` applies to all, so `{ run = "env | grep ^NOTIFICATION_ >> /tmp/notifications"; }` logs what each tool sends. A rule can set:
 
 - `app`: the app its card names, shown even where its icon would name it; `""` for none, as for `notify-send`'s own name (`match.app = "^notify-send$"`). Its commands still get the sender's as `NOTIFICATION_APP`.
+- `icon`: the card's icon, by its name in the icon theme, in place of its sender's.
 - `hide`: drops it, as it arrives or once a replacement matches. No card shows, `C-r` has nothing to bring back, and no `run` runs.
+- `silent`: no card: it goes straight to those closed, to bring back or read in the list, its `run` still running (dunst's `skip_display`).
 - `timeout`: the seconds it shows; 0, never.
 - `urgency` (`low`, `normal`, `critical`): how it shows and lasts.
 - `ignorePause`: shows it while paused; a fullscreen window still holds it, as only a critical one shows over one.

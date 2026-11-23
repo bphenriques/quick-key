@@ -1020,6 +1020,35 @@ ShellRoot {
         }
       },
       {
+        name: "the same notification twice renews one card and counts it",
+        start: () => {
+          root.reset();
+          root.send("-a", "twins", "Same", "said twice");
+        },
+        until: () => {
+          const card = root.find("Same");
+          if (!card) return false;
+          if (!("twice" in root.marks)) {
+            root.mark("twice");
+            root.send("-a", "twins", "Same", "said twice");
+            return false;
+          }
+          return card.repeats === 2 && root.plugin.ordered.filter(each => each.summary === "Same").length === 1;
+        }
+      },
+      {
+        name: "a silent rule sends it straight to those closed, and a rule's icon is the card's",
+        start: () => {
+          root.reset();
+          root.send("-a", "hushed", "Hush");
+          root.send("-a", "iconic", "Iconic");
+        },
+        until: () => {
+          const iconic = root.find("Iconic");
+          return iconic !== null && iconic.applied.icon === "dialog-information" && root.find("Hush") === null && root.plugin.items.some(item => item.label === "Hush" && item.done);
+        }
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
           const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c", closes: "yes" }], run: 1 });

@@ -115,6 +115,18 @@
             "summary": "^Hushed$"
           },
           "hide": true
+        },
+        {
+          "match": {
+            "app": "^hushed$"
+          },
+          "silent": true
+        },
+        {
+          "match": {
+            "app": "^iconic$"
+          },
+          "icon": "dialog-information"
         }
       ]
     }
