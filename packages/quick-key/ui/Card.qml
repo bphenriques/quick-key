@@ -90,12 +90,10 @@ Surface {
       Layout.fillWidth: true
       spacing: Config.theme.spacing
 
-      Label {
+      KeyHint {
         id: gutter
         Layout.alignment: Qt.AlignTop
-        Layout.preferredWidth: Metrics.cell
-        tone: "primary"
-        text: root.keysShown ? root.key : ""
+        key: root.keysShown ? root.key : ""
       }
 
       Item {
@@ -323,7 +321,6 @@ Surface {
       id: hint
       visible: root.acting
       key: parent.key
-      chars: MenuKeys.label(parent.key).length
     }
   }
 }

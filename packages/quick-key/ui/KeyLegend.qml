@@ -25,7 +25,6 @@ RowLayout {
       id: entry
       required property int index
       readonly property var hint: root.keys[index] ?? ({})
-      readonly property string label: MenuKeys.label(hint.key ?? "", true)
 
       enabled: !!hint.clickable
       verticalPadding: root.verticalPadding
@@ -35,7 +34,6 @@ RowLayout {
       KeyHint {
         key: entry.hint.key ?? ""
         paired: true
-        chars: entry.label.length
       }
 
       Label {

@@ -1,6 +1,6 @@
 import QtQuick
 
-// The key that triggers an item, in a gutter of `chars` characters so a level's labels start together.
+// The key that triggers an item, in a gutter of `chars` characters, so a level's labels start together, and never narrower than the key.
 Item {
   id: root
 
@@ -8,7 +8,7 @@ Item {
   property bool paired: false
   property int chars: 1
 
-  implicitWidth: Metrics.cell * chars
+  implicitWidth: Metrics.cell * Math.max(chars, label.text.length)
   implicitHeight: label.implicitHeight
 
   Label {

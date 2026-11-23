@@ -24,7 +24,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Icon` | a glyph or an image in the same square; `recolour` draws an image as drawn, in greys, or as its shape in its tone's colour (`tint`, a symbolic icon only; any other goes grey); `busy` puts a wait in its place, the braille dots terminals turn at their own tempo, still when animations are off |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), a `swatch` dot after it, then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports; its text names a state (`off`, `muted`) only when there is no value |
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend |
-| `KeyHint` | a key in its gutter |
+| `KeyHint` | a key in its gutter, never narrower than the key |
 | `KeyLegend` | keys a level takes beyond its rows, on one line on its bar after a content level's actions: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
 | `KeyList` | keys and what each does, a row each across the menu's columns, as `?` lists them; a click is `picked` |
 | `Meter` | a thin level bar |

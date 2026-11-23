@@ -57,7 +57,6 @@ RowLayout {
       anchors.verticalCenter: parent.verticalCenter
       visible: !root.busy && !root.active && root.key !== ""
       key: root.key
-      chars: MenuKeys.label(root.key).length
     }
 
     Icon {
