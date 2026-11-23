@@ -29,6 +29,10 @@ ShellRoot {
 
     cases: [
       {
+        name: "a plugin with static items is not ready until its source reports, so it never pops up at start",
+        until: () => Plugins.get("unread")?.items.length === 2 && !Statuses.of("unread").ready
+      },
+      {
         name: "a watch that ends takes its work with it, and leaves its result to be seen, as Rex has it",
         until: () => Plugins.get("finisher")?.phase === "done" && Plugins.get("finisher").text === "built" && !Plugins.get("finisher").busy
           && Plugins.get("worker")?.phase === "idle" && Plugins.get("worker").text === ""

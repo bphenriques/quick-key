@@ -156,7 +156,7 @@ Singleton {
       glyph: plugin.glyph, text: plugin.text, detail: plugin.detail, glyphs: Array.from(plugin.glyphs), fieldTones: plugin.fieldTones,
       fields: Object.assign({ text: plugin.text, detail: plugin.detail }, plugin.fields), tone: plugin.tone, phase: plugin.phase, active: plugin.active,
       popup: [plugin.text, plugin.detail].filter(part => part).join(" "),
-      ready: !plugin.settings.watch && !plugin.settings.read && !plugin.settings.file || Object.keys(plugin.state).length > 0
+      ready: plugin.ready
     });
     if (!status) return none;
     const fields = status.fields(pinned);

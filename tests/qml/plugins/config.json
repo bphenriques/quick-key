@@ -145,6 +145,18 @@
     "script": {
       "type": "command",
       "file": "ran.sh"
+    },
+    "unread": {
+      "type": "command",
+      "read": "sleep 3; echo b",
+      "items": [
+        {
+          "id": "a"
+        },
+        {
+          "id": "b"
+        }
+      ]
     }
   },
   "daemons": {

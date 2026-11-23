@@ -17,6 +17,8 @@ Scope {
 
   // The source's last line with `show` (else the matching static item) applied; {} without one.
   readonly property var state: compose(source.state)
+  // Its source has reported, so its first value is state, not a change; at once without a source.
+  readonly property bool ready: !settings.watch && !settings.read && !settings.file || Object.keys(source.state).length > 0
 
   property string glyph: state.glyph ?? settings.glyph
   property string text: state.text ?? ""
