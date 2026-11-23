@@ -131,7 +131,7 @@ Scope {
         visible: root.hinting
         flow: GridLayout.LeftToRight
         columns: root.menu.columns
-        columnSpacing: Config.theme.padding
+        columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
         rowSpacing: Config.theme.listSpacing
 
         Repeater {
@@ -243,7 +243,7 @@ Scope {
         visible: !root.hinting && root.menu.bodyActions.length > 0
         flow: GridLayout.LeftToRight
         columns: root.menu.columns
-        columnSpacing: Config.theme.padding
+        columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
         rowSpacing: Config.theme.listSpacing
 
         Repeater {

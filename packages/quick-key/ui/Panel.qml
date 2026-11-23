@@ -147,7 +147,8 @@ Scope {
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.bottom: inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
           anchors.bottomMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
-          width: root.width
+          // No wider than the screen leaves within its margins, whatever width a level asks for.
+          width: Math.min(root.width, parent.width - 2 * Config.theme.edgeMargin)
           height: body.implicitHeight + 2 * Config.theme.padding
 
           MouseArea {

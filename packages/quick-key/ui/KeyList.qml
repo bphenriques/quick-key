@@ -16,7 +16,7 @@ GridLayout {
 
   flow: GridLayout.LeftToRight
   columns: Config.menu.columns
-  columnSpacing: Config.theme.padding
+  columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
   rowSpacing: Config.theme.listSpacing
 
   Repeater {
