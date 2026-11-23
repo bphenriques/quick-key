@@ -130,7 +130,7 @@ Scope {
       onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
       glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
       // Until a turn says what Return does next, as the menu's input does.
-      placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
+      placeholder: panel.last ? Words.next(panel.last.phase) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
       onBack: Panels.back()
       onTextChanged: panel.plugin.keepDraft(text)
       Component.onCompleted: set(panel.plugin.draft)

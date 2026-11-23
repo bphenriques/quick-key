@@ -10,15 +10,14 @@ Singleton {
 
   // A conversation's phases, as its answer and the prompt under it say them.
   readonly property string replyPrompt: "Reply" + ellipsis
-  readonly property string approvePrompt: MenuKeys.label("Ctrl+y") + " allows, " + MenuKeys.label("Ctrl+n") + " denies, " + MenuKeys.label("Ctrl+c") + " stops" + ellipsis
   readonly property string thinking: "Thinking"
   readonly property string syncing: "syncing" + ellipsis
   // A picker's filter, empty and when it leaves nothing.
   readonly property string filterPrompt: "Filter" + ellipsis
 
-  // What Return does after a turn in `phase`, for the prompt under it: nothing while it works, where the answer says so and typing ahead is free.
-  function next(phase, kind) {
-    return phase === "working" ? "" : kind === "permission" ? approvePrompt : replyPrompt;
+  // What Return does after a turn in `phase`, for the prompt under it: nothing while it works, where the answer says so and typing ahead is free; an approval's keys are the bar's.
+  function next(phase) {
+    return phase === "working" ? "" : replyPrompt;
   }
 
   // A list's rows at rest of all it holds, when it holds more (1-9 of 14).

@@ -27,8 +27,6 @@ ColumnLayout {
 
   readonly property bool compact: lines > 0
   readonly property bool overflows: compact && (kind === "permission" || table || brief.width > 0 && brief.truncated)
-  // What Return does next, for the prompt under it.
-  readonly property string next: Words.next(phase, kind)
   // The selection to show again (Markdown.kept).
   property alias kept: answer.kept
   readonly property string tone: phase === "error" ? "alert" : kind === "permission" ? "warning" : phase === "idle" ? "dim" : ""

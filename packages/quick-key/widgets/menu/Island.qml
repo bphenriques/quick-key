@@ -73,7 +73,7 @@ ColumnLayout {
     key: filter ? "" : "Tab"
     glyph: filter ? Glyphs.search : Glyphs.prompt
     detail: filter ? root.menu.filter.count : ""
-    placeholder: filter ? Words.filterPrompt : root.model.turn ? exchange.next : root.model.input?.desc ?? ""
+    placeholder: filter ? Words.filterPrompt : root.model.turn ? Words.next(root.model.turn.phase) : root.model.input?.desc ?? ""
     // Focused, Escape while it clears, else its plugin's past conversations while it can list them.
     keys: filter || !root.menu.inputFocused ? []
       : text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }]
