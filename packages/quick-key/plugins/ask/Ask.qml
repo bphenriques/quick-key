@@ -25,6 +25,9 @@ Plugin {
     noImages: title + " takes no images",
     allow: "allow",
     deny: "deny",
+    allowQuestion: what => "Allow " + what + "?",
+    // An agent that could not carry on the conversation, starting a new one.
+    restarted: "Started a new conversation",
     stop: "stop",
     newChat: "new",
     terminal: "terminal" + Words.ellipsis
@@ -238,7 +241,7 @@ Plugin {
       question: exchange.prompt,
       image: exchange.image,
       // A stopped answer keeps what came, the stop on a line after it.
-      text: kind === "permission" ? Words.allowQuestion(approval) : exchange.stopped && exchange.reply ? exchange.reply + "\n\n" + exchange.error : exchange.error || exchange.reply,
+      text: kind === "permission" ? words.allowQuestion(approval) : exchange.stopped && exchange.reply ? exchange.reply + "\n\n" + exchange.error : exchange.error || exchange.reply,
       phase: phase,
       kind: kind,
       activity: phase === "working" ? activity : "",
@@ -493,13 +496,13 @@ Plugin {
       root.report();
     }
     onRestarted: {
-      root.activity = Words.restarted;
+      root.activity = root.words.restarted;
       root.report();
     }
     onPermission: title => {
       root.approval = title;
       if (root.seen(root.exchanges[root.exchanges.length - 1])) root.report();
-      else root.notify(Words.allowQuestion(title));
+      else root.notify(root.words.allowQuestion(title));
     }
     onHistory: (role, chunk) => {
       const last = root.recalled[root.recalled.length - 1];

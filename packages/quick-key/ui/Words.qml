@@ -9,14 +9,10 @@ Singleton {
   readonly property string ellipsis: "..."
 
   // A conversation's phases, as its answer and the prompt under it say them.
-  readonly property string thinking: "Thinking"
-  readonly property string adding: "Adding" + ellipsis
   readonly property string replyPrompt: "Reply" + ellipsis
   readonly property string pickPrompt: "A digit picks, or reply" + ellipsis
   readonly property string approvePrompt: MenuKeys.label("Ctrl+y") + " allows, " + MenuKeys.label("Ctrl+n") + " denies, " + MenuKeys.label("Ctrl+c") + " stops" + ellipsis
   readonly property string syncing: "syncing" + ellipsis
-  // An agent that could not carry on the conversation, starting a new one.
-  readonly property string restarted: "Started a new conversation"
   // A picker's filter, empty and when it leaves nothing.
   readonly property string filterPrompt: "Filter" + ellipsis
 
@@ -37,10 +33,6 @@ Singleton {
 
   function noMatch(text) {
     return "Nothing matches " + text;
-  }
-
-  function allowQuestion(what) {
-    return "Allow " + what + "?";
   }
 
   function updated(when) {

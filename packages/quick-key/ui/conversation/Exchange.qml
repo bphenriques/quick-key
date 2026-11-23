@@ -115,7 +115,7 @@ ColumnLayout {
 
         Label {
           tone: "dim"
-          text: root.activity || Words.thinking
+          text: root.activity || "Thinking"
         }
       }
 

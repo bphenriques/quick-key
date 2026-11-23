@@ -12,6 +12,7 @@ Plugin {
   readonly property string now: Clock.minuteKey(Clock.date)
   words: ({
     none: "No tasks",
+    adding: "Adding" + Words.ellipsis,
     noneDone: "No completed tasks",
     sortedBy: { due: "by due date", priority: "by priority", title: "by title", list: "by list" },
     addFailed: what => "Could not add " + what,
@@ -21,7 +22,7 @@ Plugin {
   // In the order chosen, those done as the menu opened last: a tick in the visit keeps its digit, so the same key unticks it. A tick shows before the file has it.
   readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task).sort((a, b) => root.compare(a, b))
   // A task being added shows in the input, as a turn does, so no row moves under the keys until it is listed.
-  turn: adding.length > 0 ? { question: adding.join(" · "), text: "", phase: "working", activity: Words.adding } : null
+  turn: adding.length > 0 ? { question: adding.join(" · "), text: "", phase: "working", activity: words.adding } : null
   // Kept once the level's actions step them, over a reload or a restart.
   readonly property string sort: keptSort.value ?? settings.sort
   readonly property string completed: keptCompleted.value ?? settings.completed
