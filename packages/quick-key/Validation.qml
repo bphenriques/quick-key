@@ -68,28 +68,39 @@ Singleton {
 
   // What a number takes beyond being one: 0 or more, an opacity at most 1, and these their own [least, most]: sizes past which no screen lays the shell out, so a typo fails here rather than on screen.
   readonly property var ranges: ({
-      "theme.fontSize": [4, 48],
+      "theme.fontSize": [6, 32],
       "theme.lineHeight": [0.1, 4],
       "theme.titleScale": [1, 1.5],
-      "theme.iconSize": [4, 256],
-      "menu.margin": [0, 1000],
-      "popups.margin": [0, 1000],
-      "theme.padding": [0, 100],
-      "theme.spacing": [0, 100],
-      "theme.itemPaddingX": [0, 100],
-      "theme.itemPaddingY": [0, 100],
-      "theme.listSpacing": [0, 100],
+      "theme.iconSize": [4, 128],
+      "menu.margin": [0, 400],
+      "popups.margin": [0, 400],
+      "theme.padding": [0, 50],
+      "theme.spacing": [0, 50],
+      "theme.itemPaddingX": [0, 50],
+      "theme.itemPaddingY": [0, 50],
+      "theme.listSpacing": [0, 50],
       "theme.borderWidth": [0, 20],
-      "theme.edgeMargin": [0, 1000],
+      "theme.radius": [0, 100],
+      "theme.itemRadius": [0, 100],
+      "theme.dimOpacity": [0.2, 1],
+      "theme.disabledOpacity": [0.2, 1],
+      "theme.animationDuration": [0, 2000],
+      "theme.meterLength": [8, 1000],
+      "theme.meterThickness": [1, 50],
+      "popups.timeout": [100, 60000],
+      "theme.edgeMargin": [0, 400],
       "theme.osdIconSize": [4, 256],
       "theme.osdLength": [8, 4000],
-      "menu.width": [1],
+      "menu.width": [200],
       "menu.columns": [1, 9],
       "audio.step": [1],
       "audio.max": [1],
       "brightness.step": [1],
       "clock.firstDayOfWeek": [-1, 6]
     })
+
+  // Numbers that are counts or point sizes, which a fraction would be cut from.
+  readonly property var wholes: ["theme.fontSize", "menu.columns"]
 
   function numberProblems(json) {
     const found = [];
@@ -99,6 +110,7 @@ Singleton {
         const value = json[group]?.[name];
         if (kind !== "number" || typeof value !== "number") continue;
         const [least, most] = ranges[group + "." + name] ?? [0, name.endsWith("Opacity") ? 1 : Infinity];
+        if (wholes.includes(group + "." + name) && !Number.isInteger(value)) found.push(group + "." + name + " is " + value + ", not a whole number");
         if (value < least || value > (most ?? Infinity)) found.push(group + "." + name + " is " + value + ", not " + (most === undefined || most === Infinity ? least + " or more" : least + " to " + most));
       }
     }

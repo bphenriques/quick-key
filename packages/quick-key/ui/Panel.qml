@@ -127,8 +127,10 @@ Scope {
         // Each surface's distance from the screen's edge, stacking away from it: the bar against it, then the card and the input in their order; `along` places a distance at either edge, the one place the top edge mirrors.
         QtObject {
           id: stack
+          // The margin set, but no more than a quarter of the screen, so a large one never pushes the menu off a small screen.
+          readonly property real margin: Math.min(Config.menu.margin, frame.width / 4, frame.height / 4)
           readonly property real gap: Config.theme.spacing / 2
-          readonly property real past: bar.visible ? Config.menu.margin + bar.height + gap : Config.menu.margin
+          readonly property real past: bar.visible ? margin + bar.height + gap : margin
           readonly property bool between: inputSurface.visible && !root.inputOver
           readonly property real card: between ? past + inputSurface.height + gap : past
           readonly property real input: root.inputOver ? card + cardSurface.height + gap : past
@@ -144,7 +146,7 @@ Scope {
           visible: root.barShown
           z: 1
           x: cardSurface.x
-          y: stack.along(Config.menu.margin, height)
+          y: stack.along(stack.margin, height)
           width: cardSurface.width
           // At least a title's line, so a level's bar without the clock is as tall as the top level's and the body holds still.
           height: Math.max(barRow.implicitHeight, Metrics.titleLine + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
@@ -200,11 +202,13 @@ Scope {
         Surface {
           id: cardSurface
           // Along the edge as `menu.align` says; the bar and the input follow it.
-          x: Config.menu.align === "left" ? Config.menu.margin : Config.menu.align === "right" ? parent.width - width - Config.menu.margin : (parent.width - width) / 2
+          x: Config.menu.align === "left" ? stack.margin : Config.menu.align === "right" ? parent.width - width - stack.margin : (parent.width - width) / 2
           y: stack.along(stack.card, height)
           // No wider than the screen leaves within its margins, whatever width a level asks for.
-          width: Math.min(root.width, parent.width - 2 * Config.menu.margin)
-          height: body.implicitHeight + 2 * Config.theme.padding
+          width: Math.min(root.width, parent.width - 2 * stack.margin)
+          // No taller than the screen leaves past what stacks before it, cut only when it must be.
+          height: Math.min(body.implicitHeight + 2 * Config.theme.padding, frame.height - stack.card - stack.margin)
+          clip: body.implicitHeight + 2 * Config.theme.padding > height
 
           MouseArea {
             anchors.fill: parent

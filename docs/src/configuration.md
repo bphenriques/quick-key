@@ -12,7 +12,7 @@ Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you 
 
 What you choose while logged in is kept over a reload or a restart: keep awake, unsent drafts, a list's order, an open conversation.
 
-The defaults are a suggested setup, not a ceiling. Sizes given in pixels that you leave unset follow `theme.fontSize` (`theme.iconSize`, `menu.width`), so a larger font keeps the proportions; what you set wins. The check bounds each value, and the layout keeps every surface within its screen, so no setting breaks the menu or its keys.
+The defaults are a suggested setup, not a ceiling. Sizes given in pixels that you leave unset follow `theme.fontSize` (`theme.iconSize`, `menu.width`), so a larger font keeps the proportions; what you set wins. The check bounds each value, and the layout keeps every surface within its screen (no margin past a quarter of it, no menu taller, no more columns than its width holds), so no setting breaks the menu or its keys.
 
 Past the suggested look, settings draw the bar as islands (set wider apart, so a crowded bar needs a wider menu), set titles larger and slide pop-ups in (within their margin, so one at the very edge only fades), within the same limits; the menu itself always appears at once.
 
@@ -50,7 +50,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
 | The `notifications` plugin, to see it holds the bus | `busctl` |
 
-`popups.show` lists what pops up as it changes, so another on-screen display can take any of it over. Listed, `battery` pops up as it is plugged in or out, not at every percent. A plugin pops up as a pill with its glyph and text on every change of its text, so list only plugins that change rarely (not a recording's timer).
+`popups.show` lists what pops up as it changes, so another on-screen display can take any of it over. Listed, `battery` pops up as it is plugged in or out, not at every percent. A plugin pops up as a pill with its glyph and text on every change of its text, so list only plugins that change rarely (not a recording's timer). None shows while a menu or panel is open, which shows the value itself.
 
 `battery.warn` runs once as the charge falls to `battery.low`, and once more at `battery.critical`, never for the charge the shell starts with.
 

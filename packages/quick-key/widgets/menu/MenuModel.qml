@@ -55,8 +55,8 @@ Scope {
   readonly property var barActions: content && !filtering ? actions : []
   readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed)
   readonly property int width: level?.width ?? Config.menu.width
-  // Its actions' columns: its entry's own, else menu.columns.
-  readonly property int columns: level?.entry?.columns ?? Config.menu.columns
+  // Its actions' columns: its entry's own, else menu.columns, but no more than its width holds at about twelve characters each.
+  readonly property int columns: Math.max(1, Math.min(level?.entry?.columns ?? Config.menu.columns, Math.floor(width / (12 * Metrics.cell))))
   // Why a level's list is empty, in its place; "" while it lists something.
   readonly property string emptyText: level?.entry?.list && rows.length === 0 ? (filtering && filter.emptyText) || Lists.empty(level.entry.list) : ""
   readonly property var topBar: ({ left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") })

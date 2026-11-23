@@ -25,8 +25,8 @@ Scope {
     id: transient
   }
 
-  // A menu or panel open at its own edge shows the value itself: no pop-up then, and one showing goes.
-  readonly property bool covered: Panels.top !== null && Config.popups.position === Config.menu.edge
+  // A menu or panel open shows the value itself: no pop-up then, and one showing goes.
+  readonly property bool covered: Panels.top !== null
   onCoveredChanged: if (covered) transient.hide()
 
   Fade {
@@ -76,8 +76,10 @@ Scope {
 
       // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
       readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
+      // The margin set, but no more than a quarter of its screen.
+      readonly property real margin: Math.min(Config.popups.margin, screen.width / 4, screen.height / 4)
       // Sliding, in from the edge it sits at.
-      readonly property real room: Math.min(fade.distance, Config.popups.margin)
+      readonly property real room: Math.min(fade.distance, margin)
       readonly property real left: (1 - fade.value) * room
       readonly property point slide: Qt.point(Config.popups.position === "right" ? left : Config.popups.position === "left" ? -left : 0, Config.popups.position === "bottom" ? left : Config.popups.position === "top" ? -left : 0)
       // A level no longer than half its screen.
@@ -87,10 +89,10 @@ Scope {
       anchors.top: Config.popups.position === "top"
       anchors.bottom: Config.popups.position === "bottom"
       // Larger by the room a slide needs on its edge's side, the margin smaller by as much.
-      margins.right: Config.popups.margin - (Config.popups.position === "right" ? room : 0)
-      margins.left: Config.popups.margin - (Config.popups.position === "left" ? room : 0)
-      margins.top: Config.popups.margin - (Config.popups.position === "top" ? room : 0)
-      margins.bottom: Config.popups.margin - (Config.popups.position === "bottom" ? room : 0)
+      margins.right: margin - (Config.popups.position === "right" ? room : 0)
+      margins.left: margin - (Config.popups.position === "left" ? room : 0)
+      margins.top: margin - (Config.popups.position === "top" ? room : 0)
+      margins.bottom: margin - (Config.popups.position === "bottom" ? room : 0)
       WlrLayershell.namespace: "quick-key-osd"
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {

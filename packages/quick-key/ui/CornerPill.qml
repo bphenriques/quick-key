@@ -53,11 +53,13 @@ Scope {
         anchors.top: !Config.atTop
         anchors.bottom: Config.atTop
         anchors.right: true
-        margins.top: Config.theme.edgeMargin + CornerPills.offset(root)
-        margins.bottom: Config.theme.edgeMargin + CornerPills.offset(root)
+        // The margin set, but no more than a quarter of its screen.
+        readonly property real margin: Math.min(Config.theme.edgeMargin, modelData.width / 4, modelData.height / 4)
+        margins.top: margin + CornerPills.offset(root)
+        margins.bottom: margin + CornerPills.offset(root)
         // Larger by the room a slide needs on the right, the margin smaller by as much.
-        readonly property real room: Math.min(fade.distance, Config.theme.edgeMargin)
-        margins.right: Config.theme.edgeMargin - room
+        readonly property real room: Math.min(fade.distance, margin)
+        margins.right: margin - room
         onImplicitHeightChanged: root.height = implicitHeight + Config.theme.spacing
         Component.onCompleted: root.height = implicitHeight + Config.theme.spacing
         WlrLayershell.namespace: "quick-key-" + root.namespace
