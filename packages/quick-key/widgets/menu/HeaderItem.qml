@@ -44,6 +44,8 @@ ListItem {
     glyph: root.item.icon ?? ""
     tone: root.item.active ? "primary" : root.item.image ? "normal" : "dim"
     recolour: root.item.image ? Config.theme.appIcons : "colour"
+    // An image (a tray app's) as tall as the text: it fills its square, where a glyph does not.
+    size: root.item.image ? Metrics.line : Config.theme.iconSize
   }
 
   // An app's name beside its icon (its menu's bar), an app without an icon, or how many more there are.
