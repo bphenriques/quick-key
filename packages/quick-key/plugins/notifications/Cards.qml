@@ -16,7 +16,6 @@ Scope {
   readonly property var settings: plugin.settings
   readonly property bool top: settings.corner.startsWith("top")
   readonly property bool right: settings.corner.endsWith("right")
-  readonly property real margin: Math.min(Config.theme.edgeMargin, (screen?.width ?? Infinity) / 4, (screen?.height ?? Infinity) / 4)
   readonly property var cards: top ? plugin.shown : plugin.shown.slice().reverse()
   // Whether any card shown has an app's icon: without one, no card keeps a column for it, so neither side sits empty.
   readonly property bool icons: plugin.shown.some(entry => iconOf(entry) !== "")
@@ -94,13 +93,13 @@ Scope {
       anchors.right: view.right
       anchors.left: !view.right
       // In the corner pills' corner (recording), past them as they stack, a gap more.
-      readonly property real pills: view.right && view.top && CornerPills.order.length > 0 ? Config.theme.edgeMargin + CornerPills.height + Config.theme.spacing : 0
-      margins.top: view.top ? Math.max(view.margin, pills) : view.margin
-      margins.bottom: view.top ? view.margin : Math.max(view.margin, pills)
-      margins.right: view.margin
-      margins.left: view.margin
+      readonly property real pills: view.right && view.top && CornerPills.order.length > 0 ? window.edgeMargin + CornerPills.height + Config.theme.spacing : 0
+      margins.top: view.top ? Math.max(window.edgeMargin, pills) : window.edgeMargin
+      margins.bottom: view.top ? window.edgeMargin : Math.max(window.edgeMargin, pills)
+      margins.right: window.edgeMargin
+      margins.left: window.edgeMargin
       // No wider than its screen within the margins, whatever width is set.
-      implicitWidth: Math.min(view.settings.width, (view.screen?.width ?? view.settings.width) - 2 * view.margin)
+      implicitWidth: Math.min(view.settings.width, (view.screen?.width ?? view.settings.width) - 2 * window.edgeMargin)
       implicitHeight: stack.implicitHeight
       WlrLayershell.namespace: "quick-key-notifications"
       WlrLayershell.keyboardFocus: view.plugin.summoned ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

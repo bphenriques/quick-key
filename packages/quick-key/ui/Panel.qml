@@ -62,6 +62,7 @@ Scope {
     active: internal.loaded && dismiss.item !== null
 
     OverlayWindow {
+      id: window
       visible: root.shown
       // The whole screen, so bodies of different sizes never resize the window: a resize shows the old size for a frame.
       anchors.top: true
@@ -104,8 +105,7 @@ Scope {
         // Each surface's distance from the screen's bottom, stacking up from it: the bar against it, then the card and the input in their order.
         QtObject {
           id: stack
-          // No more than a quarter of the screen, so a large margin never pushes the menu off a small one.
-          readonly property real margin: Math.min(Config.theme.edgeMargin, frame.width / 4, frame.height / 4)
+          readonly property real margin: window.edgeMargin
           readonly property real gap: Config.theme.spacing / 2
           readonly property real past: bar.visible ? margin + bar.height + gap : margin
           readonly property bool between: inputSurface.visible && !root.inputOver

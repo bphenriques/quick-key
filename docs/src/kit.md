@@ -45,7 +45,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Panels` | the surfaces the keyboard opens as one stack of their owners: the top one shows, `open` covers or brings one back, `back` shows what it covered, `close` hides them all; and the top level's right slot a plugin's panel's bar repeats |
 | `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
-| `OverlayWindow`, `DismissArea` | a popup above everything; the click-outside catcher under it, one per screen |
+| `OverlayWindow`, `DismissArea` | a popup above everything, `edgeMargin` from its screen's edge (`theme.edgeMargin`, no more than a quarter of the screen); the click-outside catcher under it, one per screen |
 | `CornerPill` | a pill in the top-right corner of every screen while `shown`, fading in and out, stacked under the pills already showing; `hovered` and `clicked` for its pointer |
 | `CornerPills` | the corner pills on screen, in the order they showed, which is the order they stack in, each as tall as it draws, and the stack's `height` for what sits under it |
 | `Transient` | shown for a moment on `show()`, held while `held`, ignoring startup's replayed state until `armed` |

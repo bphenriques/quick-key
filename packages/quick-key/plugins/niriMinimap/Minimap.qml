@@ -86,11 +86,12 @@ Scope {
     active: fade.loaded && view.screen !== null
 
     OverlayWindow {
+      id: window
       screen: view.screen
       anchors.top: true
       anchors.left: true
-      margins.top: Config.theme.edgeMargin
-      margins.left: Config.theme.edgeMargin
+      margins.top: window.edgeMargin
+      margins.left: window.edgeMargin
       WlrLayershell.namespace: "quick-key-minimap"
       mask: Region {}
 

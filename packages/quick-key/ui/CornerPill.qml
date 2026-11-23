@@ -47,9 +47,8 @@ Scope {
         // Top right, as the cards are by default.
         anchors.top: true
         anchors.right: true
-        readonly property real margin: Math.min(Config.theme.edgeMargin, modelData.width / 4, modelData.height / 4)
-        margins.top: margin + CornerPills.offset(root)
-        margins.right: margin
+        margins.top: window.edgeMargin + CornerPills.offset(root)
+        margins.right: window.edgeMargin
         onImplicitHeightChanged: root.height = implicitHeight + Config.theme.spacing
         Component.onCompleted: root.height = implicitHeight + Config.theme.spacing
         WlrLayershell.namespace: "quick-key-" + root.namespace
