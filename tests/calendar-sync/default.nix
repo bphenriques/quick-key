@@ -20,6 +20,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     fail() { echo "not ok - $1"; cat state/tasks.json; exit 1; }
 
     sync tasks
+    jq -e 'has("updated") | not' state/tasks.json > /dev/null || fail "a tasks file never synced says no sync"
     [ "$(jq '.tasks | length' state/tasks.json)" = 1 ] || fail "a task done more than 14 days ago is left out"
     [ "$(task | jq -c '[.due, .done, .list, .priority, .color]')" = '["2026-10-06T09:00",false,"personal",1,"#ff8c00"]' ] || fail "a task reads with its local time, open, with its list, priority and calendar's colour"
 
@@ -41,6 +42,15 @@ pkgs.runCommand "quick-key-calendar-sync"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"
     grep -lq '^SUMMARY:-Call the plumber' state/vdirs/personal/*.ics || fail "add writes it to the first list"
     [ ! -e state/__pycache__ ] || fail "todoman leaves no bytecode beside its config"
+
+    # The file says when the lists last synced, and how the last sync went, whatever wrote it since.
+    jq -c '.updated = "2026-01-01T00:00" | .error = "personal: could not sync"' state/tasks.json > state/old.json && mv state/old.json state/tasks.json
+    quick-key-calendar-sync done ${./calendars.yaml} state/events.json "$(task | jq -r .id)"
+    jq -e '.updated == "2026-01-01T00:00" and .error == "personal: could not sync"' state/tasks.json > /dev/null || fail "a tick keeps when it last synced, and its error"
+    sync tasks --error "personal: offline"
+    jq -e '.updated == "2026-01-01T00:00" and .error == "personal: offline"' state/tasks.json > /dev/null || fail "a sync that fetched no list keeps when it last synced"
+    sync tasks --synced
+    jq -e --arg today "$(date +%Y-%m-%d)" '(.updated | startswith($today)) and (has("error") | not)' state/tasks.json > /dev/null || fail "a sync that fetched the lists says when, and clears the error"
 
     # Events, from a calendar served as an http one is, dated from today so it falls in the weeks the month reads.
     events() { jq -c '.events[] | [.title, .start, .allDay, .color, .location]' events/events.json; }

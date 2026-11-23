@@ -35,6 +35,7 @@ One line, so the plugin reads it as its state:
   {"id": "3", "title": "Call the plumber", "due": "2026-11-18", "done": true, "completed": "2026-11-17T09:12", "list": "personal", "color": "#ff8c00"}]}
 ```
 
+- `updated` is when the lists last synced, left out until one has; `error` is why the last sync failed. A tick or an add writes neither anew, so a file that cannot sync shows its age.
 - Times are local, without an offset; a due date without a time is due that day.
 - `id` is what `done` and `reopen` are given. It need not outlast the next write.
 - `priority` runs from 1, the highest, to 9; unset or 0, none.

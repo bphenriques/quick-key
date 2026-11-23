@@ -138,7 +138,7 @@ def local-time [seconds: int]: nothing -> string {
 }
 
 # Open tasks, and those done in the last 14 days, so a tick stays to be undone and the done ones can be shown.
-def write-tasks [calendars: list, state: path, error?: string] {
+def write-tasks [calendars: list, state: path, --synced, --error: string] {
   let since = (date now) - 14day | format date "%Y-%m-%d"
   let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
   let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY
@@ -154,10 +154,14 @@ def write-tasks [calendars: list, state: path, error?: string] {
     priority: ($t.priority | default 0)
     color: ($colors | get --optional $t.list | default "")
   } }
-  let content = { updated: (date now | format date "%Y-%m-%dT%H:%M"), tasks: $tasks }
   let file = $state | path join tasks.json
+  # `updated` is when the lists last synced and `error` the last sync's, so a tick or a failed sync never makes stale tasks look fresh.
+  let previous = try { open $file } catch { {} }
+  let updated = if $synced { date now | format date "%Y-%m-%dT%H:%M" } else { $previous.updated? }
+  let error = if $synced { $error } else { $error | default $previous.error? }
+  let content = { updated: $updated, error: $error, tasks: $tasks }
   # One line, as quick-key reads a plugin's file.
-  (if $error == null { $content } else { $content | insert error $error }) | to json --raw | save -f $"($file).tmp"
+  $content | reject ...($content | columns | where {|c| ($content | get $c) == null }) | to json --raw | save -f $"($file).tmp"
   mv -f $"($file).tmp" $file
 }
 
@@ -218,7 +222,9 @@ def main [calendars_file: path, events_file: path] {
     rm -rf ($state | path join tasks) ($state | path join tasks.json)
   } else {
     let failed = $failures | where name in $lists.name
-    locked $events_file tasks $calendars_file $events_file ...(if ($failed | is-empty) { [] } else { [--error (failure $failed)] })
+    # Only a sync that fetched a list makes the tasks newer, as the events.
+    let synced = if ($failed | length) < ($lists | length) { [--synced] } else { [] }
+    locked $events_file tasks $calendars_file $events_file ...$synced ...(if ($failed | is-empty) { [] } else { [--error (failure $failed)] })
   }
 
   if ($failures | is-empty) {
@@ -245,12 +251,12 @@ def locked [events_file: path, ...args] {
   ^flock ($events_file | path dirname | path join lock) nu $env.CURRENT_FILE ...$args
 }
 
-# Writes the tasks file from what is already synced, without syncing.
-def "main tasks" [calendars_file: path, events_file: path, --error: string] {
+# Writes the tasks file from what is already synced, without syncing: `--synced` after a sync that fetched the lists, `--error` after one that failed.
+def "main tasks" [calendars_file: path, events_file: path, --synced, --error: string] {
   let state = $events_file | path dirname
   let lists = task-lists $calendars_file
   write-todoman-config $lists $state
-  write-tasks $lists $state $error
+  write-tasks $lists $state --synced=$synced --error=$error
 }
 
 # Ticks a task off by its id in the tasks file, and writes that file again; the next sync takes it to its server.
