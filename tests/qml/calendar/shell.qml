@@ -6,6 +6,12 @@ import qs.widgets.menu.calendar
 
 // The calendar's dates and the events it shows on them; the events are events.json's, around 12 November 2026.
 ShellRoot {
+  // An event's times on a day, as the time column says them.
+  function times(title, day) {
+    const row = Calendar.timeline.find(row => row.event.title === title && row.key === Clock.dayKey(day));
+    return events.times(row.event, row.day).join("|");
+  }
+
   Suite {
     cases: [
       {
@@ -19,7 +25,7 @@ ShellRoot {
       {
         name: "an event shows on every day it overlaps, all-day ones first",
         until: () => Calendar.timeline.map(row => row.key.slice(8) + " " + row.event.title).join() ===
-          "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call"
+          "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call,26 Standup"
       },
       {
         name: "a day gives its events and their colours, each once, for the month's dots",
@@ -27,9 +33,68 @@ ShellRoot {
           && Calendar.colorsOn(new Date(2026, 10, 12)).join() === "#33b679,#4285f4" && Calendar.colorsOn(new Date(2026, 10, 15)).length === 0
       },
       {
+        name: "a timed event's times take one line; one running past its day says when it ends, a middle day all day",
+        until: () => [
+          times("Standup", new Date(2026, 10, 26)), times("Call", new Date(2026, 10, 25)),
+          times("Night shift", new Date(2026, 10, 12)), times("Night shift", new Date(2026, 10, 13)), times("Night shift", new Date(2026, 10, 14)),
+          times("Trip", new Date(2026, 10, 20)), times("Trip", new Date(2026, 10, 21))
+        ].join() === "09:00–09:15|,09:00|,22:00|to Sat 01:00,All day|to Sat 01:00,to 01:00|,All day|to Sat,All day|"
+      },
+      {
+        name: "a day's heading says its year only when it is not this one",
+        until: () => {
+          const year = Clock.date.getFullYear();
+          const thisYear = [new Date(year, 0, 15), new Date(year, 6, 15)].find(day => Math.abs(Clock.daysFrom(day)) > 1);
+          return Clock.heading(new Date(year + 1, 5, 15)).endsWith(" " + (year + 1)) && !Clock.heading(thisYear).includes(String(year));
+        }
+      },
+      {
+        name: "the days the file was synced over are known, so a day past them is not taken for one without events",
+        until: () => Calendar.synced(new Date(2026, 10, 12)) && Calendar.synced(new Date(2027, 10, 12))
+          && !Calendar.synced(new Date(2027, 10, 13)) && !Calendar.synced(new Date(2026, 8, 10))
+      },
+      {
+        name: "today starts at its first timed event not over yet, another day at its first",
+        until: () => {
+          const now = Clock.date.getTime();
+          const today = Clock.dayKey(Clock.date);
+          const rows = [
+            { key: "2000-01-01", event: { allDay: false, end: new Date(2000, 0, 1, 10) } },
+            { key: today, event: { allDay: true, end: new Date(now + 86400000) } },
+            { key: today, event: { allDay: false, end: new Date(now - 60000) } },
+            { key: today, event: { allDay: false, end: new Date(now + 3600000) } }
+          ];
+          return Calendar.firstOn(rows, today) === 3 && Calendar.firstOn(rows, "2000-01-01") === 0 && Calendar.firstOn(rows, "1999-01-01") === 0;
+        }
+      },
+      {
+        name: "on a narrow list the times fold under each title",
+        until: () => !events.folded && narrow.folded && events.lineCount(Calendar.timeline[6]) === 1 && narrow.lineCount(Calendar.timeline[6]) === 2
+      },
+      {
         name: "the events follow the selected day from one day with events to another",
         start: () => events.selected = new Date(2026, 10, 25),
         until: () => events.contentY > 0
+      },
+      {
+        name: "the last day scrolls to the top as any other, under its heading",
+        start: () => events.selected = new Date(2026, 10, 26),
+        until: () => {
+          const item = events.itemAtIndex(events.rows.length - 1);
+          return !!item && Math.abs(item.y - events.contentY - events.headingHeight) < 1;
+        }
+      },
+      {
+        name: "Return on a focused event shows it whole, Escape hides it, then leaves the event",
+        until: () => {
+          menu.calendar.select(new Date(2026, 10, 12));
+          menu.calendar.handleKey("Return");
+          const focused = menu.calendar.focused !== "" && !menu.calendar.details;
+          menu.calendar.handleKey("Return");
+          const shown = menu.calendar.details;
+          return focused && shown && menu.calendar.stepBack() && !menu.calendar.details && menu.calendar.focused !== ""
+            && menu.calendar.stepBack() && menu.calendar.focused === "" && !menu.calendar.stepBack();
+        }
       }
     ]
   }
@@ -38,6 +103,13 @@ ShellRoot {
   CalendarEvents {
     id: events
     width: 400
+    height: 100
+    selected: new Date(2026, 10, 12)
+  }
+
+  CalendarEvents {
+    id: narrow
+    width: 150
     height: 100
     selected: new Date(2026, 10, 12)
   }

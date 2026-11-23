@@ -82,9 +82,9 @@ Singleton {
     return !!moment && date - moment >= minutes * 60000;
   }
 
-  // A day as a heading: Yesterday, Today or Tomorrow, else in full (Wednesday 26 November), in sentence case where the locale writes names lowercase (pt's terça-feira).
+  // A day as a heading: Yesterday, Today or Tomorrow, else in full (Wednesday 26 November), with its year when not this one, in sentence case where the locale writes names lowercase (pt's terça-feira).
   function heading(moment) {
-    const text = nearDays[daysFrom(moment)] ?? format(moment, "%A %-d %B");
+    const text = nearDays[daysFrom(moment)] ?? format(moment, moment.getFullYear() === date.getFullYear() ? "%A %-d %B" : "%A %-d %B %Y");
     return text[0].toUpperCase() + text.slice(1);
   }
 
@@ -92,6 +92,12 @@ Singleton {
   function monthHeading(moment) {
     const text = locale.standaloneMonthName(moment.getMonth()) + " " + moment.getFullYear();
     return text[0].toUpperCase() + text.slice(1);
+  }
+
+  // A later day under the heading of `from`: its weekday within a week, else its date (3 Dec), with its time when `timed` (Sat 18:00).
+  function dayAfter(moment, from, timed) {
+    const day = moment - from < 7 * 86400000 ? weekdays[moment.getDay()] : format(moment, "%-d %b");
+    return timed ? day + " " + time(moment) : day;
   }
 
   // A day as the files key it: 2026-11-12.

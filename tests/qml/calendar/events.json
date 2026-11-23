@@ -1,8 +1,10 @@
 {
+  "synced": { "from": "2026-09-11", "to": "2027-11-12" },
   "events": [
     { "title": "Night shift", "start": "2026-11-12T22:00", "end": "2026-11-14T01:00", "color": "#4285f4" },
     { "title": "Holiday", "start": "2026-11-12", "end": "2026-11-12", "allDay": true, "color": "#33b679" },
     { "title": "Trip", "start": "2026-11-20", "end": "2026-11-21", "allDay": true, "color": "#33b679" },
-    { "title": "Call", "start": "2026-11-25T09:00", "end": "2026-11-25T09:00", "color": "#4285f4" }
+    { "title": "Call", "start": "2026-11-25T09:00", "end": "2026-11-25T09:00", "color": "#4285f4" },
+    { "title": "Standup", "start": "2026-11-26T09:00", "end": "2026-11-26T09:15", "color": "#4285f4" }
   ]
 }

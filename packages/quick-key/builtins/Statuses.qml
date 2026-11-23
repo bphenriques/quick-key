@@ -142,8 +142,9 @@ Singleton {
     const updated = Calendar.syncing ? Words.syncing : Calendar.updated ? Words.updated(Clock.when(Calendar.updated, true)) : "";
     const next = Calendar.next;
     if (!next) return { updated };
-    // An all-day event under way is today's.
-    const when = next.allDay ? Clock.day(next.start < Clock.date ? Clock.date : next.start) : Clock.when(next.start, true);
+    // An all-day event under way is today's, a timed one says when it ends.
+    const when = next.allDay ? Clock.day(next.start < Clock.date ? Clock.date : next.start)
+      : next.start <= Clock.date ? Words.until(Clock.when(next.end, true)) : Clock.when(next.start, true);
     return { title: next.title, when, updated };
   }
 }

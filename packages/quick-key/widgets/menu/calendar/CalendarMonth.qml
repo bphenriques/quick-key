@@ -23,6 +23,8 @@ Item {
   readonly property real dotGap: Config.theme.spacing / 4
   // More would spill into the next day.
   readonly property int maxDots: 4
+  // Seven cells as wide as their dots: narrower, the grid would spill past the month onto the events.
+  readonly property real minimumWidth: 7 * (maxDots * dotSize + (maxDots - 1) * dotGap + 2 * Config.theme.itemPaddingX)
   // Tighter than a menu row: six weeks of them stack up.
   readonly property real cellPadding: Config.theme.itemPaddingY / 2
   // By month, so a day picked within it rebuilds nothing.
@@ -81,6 +83,9 @@ Item {
         required property date modelData
         readonly property bool isToday: modelData.toDateString() === Clock.date.toDateString()
         readonly property bool inMonth: modelData.getMonth() === root.month
+        readonly property var colors: Calendar.enabled ? Calendar.colorsOn(modelData) : []
+        // Past the dots there is room for, the last says there are more.
+        readonly property bool more: colors.length > root.maxDots
 
         Layout.fillWidth: true
         Layout.preferredWidth: 1
@@ -109,7 +114,7 @@ Item {
             spacing: root.dotGap
 
             Repeater {
-              model: Calendar.enabled ? Calendar.colorsOn(cell.modelData).slice(0, root.maxDots) : []
+              model: cell.colors.slice(0, cell.more ? root.maxDots - 1 : root.maxDots)
 
               Swatch {
                 required property string modelData
@@ -117,6 +122,13 @@ Item {
                 fill: modelData
                 tone: cell.inMonth ? "normal" : "dim"
               }
+            }
+
+            Swatch {
+              visible: cell.more
+              size: root.dotSize
+              fill: Tone.color("normal")
+              tone: "dim"
             }
           }
         }

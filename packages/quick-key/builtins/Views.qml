@@ -11,12 +11,8 @@ Singleton {
       legend: model => model.legend,
       error: () => Calendar.syncing ? "" : Calendar.error,
       handleKey: (model, name) => model.handleKey(name),
-      // A day's event in focus, before the level.
-      stepBack: model => {
-        if (!model.focused) return false;
-        model.clearFocus();
-        return true;
-      },
+      // A focused event's details, then the focus, before the level.
+      stepBack: model => model.stepBack(),
       reset: model => model.reset(),
       clear: model => model.clearFocus()
     }

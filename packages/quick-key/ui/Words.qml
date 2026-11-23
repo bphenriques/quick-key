@@ -47,6 +47,20 @@ Singleton {
     return "updated " + when;
   }
 
+  // When an event runs: all day, from one time to another, or to when it ends.
+  readonly property string allDay: "All day"
+  function range(from, to) {
+    return from + "–" + to;
+  }
+  function until(when) {
+    return "to " + when;
+  }
+
+  // What a line says beside another (09:00–09:15 · Rua Augusta 120), the empty left out.
+  function beside(parts) {
+    return parts.filter(part => part).join(" · ");
+  }
+
   // Why an empty list says it is empty.
   readonly property string emptyTray: "No apps in the tray"
   readonly property string emptyNetworks: "No saved networks in range"
@@ -60,6 +74,8 @@ Singleton {
   readonly property string noSong: "No song playing"
   readonly property string noDevice: "No device connected"
   readonly property string noEvents: "No events"
+  // A day past the range the events file was synced over.
+  readonly property string notSynced: "Not synced"
   readonly property string noPowerProfiles: "No power profiles"
   // A battery warning: its title, and how much is left.
   readonly property string batteryLow: "Battery low"
@@ -97,6 +113,7 @@ Singleton {
   readonly property string clear: "clear"
   readonly property string copy: "copy"
   readonly property string day: "day"
+  readonly property string details: "details"
   readonly property string event: "event"
   readonly property string events: "events"
   readonly property string help: "keys"

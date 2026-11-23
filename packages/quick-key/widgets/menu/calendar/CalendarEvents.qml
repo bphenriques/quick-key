@@ -12,6 +12,8 @@ ListView {
 
   required property var selected
   property string focused: ""
+  // Whether the focused event shows whole, over the rows below it.
+  property bool details: false
 
   signal picked(var row)
 
@@ -33,15 +35,27 @@ ListView {
   spacing: Config.theme.spacing / 2
   boundsBehavior: Flickable.StopAtBounds
 
-  // Keeps the focused event, else the selected day, in view, with room above it for its day's heading.
+  // The focused event's row, while it exists, for its details to sit over.
+  property Item focusedItem: null
+
+  // Keeps the focused event, else the selected day, in view; today rests on its first timed event not over yet when the day's start leaves it out.
   function follow() {
     // Its height can be set before its rows exist.
     if (!rows) return;
     const at = rows.findIndex(row => focused ? row.id === focused : row.key === selectedKey);
     if (at < 0) return;
     positionViewAtIndex(at, focused ? ListView.Contain : ListView.Beginning);
+    showHeading(at, !focused);
+    const now = focused ? at : Calendar.firstOn(rows, selectedKey);
+    const item = itemAtIndex(now);
+    if (now > at && !(item && fits(item.y, item.height))) positionViewAtIndex(now, ListView.Beginning);
+    focusedItem = focused ? itemAtIndex(at) : null;
+  }
+
+  // Room above a day's first row for its heading, the heading on top when `top`: ListView leaves either to its estimate of what is above.
+  function showHeading(at, top) {
     const item = itemAtIndex(at);
-    if (item && item.y - contentY < headingHeight)
+    if (item && rows[at - 1]?.key !== rows[at].key && (top || item.y - contentY < headingHeight))
       contentY = Math.max(originY, item.y - headingHeight);
   }
 
@@ -50,33 +64,59 @@ ListView {
   onFocusedChanged: follow()
   onHeightChanged: follow()
 
-  // The left column's lines on `day`: "All day" (with its last day when later), else start and end, `...` for another day.
+  // The time column's lines on `day`: all day, else start to end; one running past the day says when it ends (to Sat 18:00).
   function times(event, day) {
     const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
-    // Ending at midnight, an event ends on the day before.
-    const last = new Date(event.end - 1);
-    if (event.allDay || (event.start <= day && event.end >= dayEnd))
-      return ["All day", event.end > dayEnd ? "to " + Clock.day(last) : ""];
-    return [
-      event.start < day ? Words.ellipsis : Clock.time(event.start),
-      event.end > dayEnd ? Words.ellipsis : event.end > event.start ? Clock.time(event.end) : ""
-    ];
+    // An all-day event ends at the midnight after its last day.
+    const ends = event.end > dayEnd ? Words.until(Clock.dayAfter(event.allDay ? new Date(event.end - 1) : event.end, day, !event.allDay)) : "";
+    if (event.allDay || (event.start <= day && event.end >= dayEnd)) return [Words.allDay, ends];
+    if (event.start < day) return [Words.until(Clock.time(event.end)), ""];
+    if (ends) return [Clock.time(event.start), ends];
+    return [event.end > event.start ? Words.range(Clock.time(event.start), Clock.time(event.end)) : Clock.time(event.start), ""];
   }
 
-  // Whether it ends in view; only the bottom counts, or the top row would blink while the list scrolls to a new day.
+  // As wide as the longest the time column says (to Sat 18:00), so titles start together.
+  readonly property int timeChars: {
+    const time = Clock.time(new Date(2000, 0, 1, 12, 30));
+    const weekday = Clock.weekdays.reduce((longest, name) => name.length > longest.length ? name : longest);
+    return Math.max(Words.until(weekday + " " + time).length, Words.range(time, time).length, Words.allDay.length);
+  }
+  readonly property real swatchWidth: Config.theme.fontSize / 4
+  // Below about 12 characters left for titles, the times fold into each title's second line.
+  readonly property bool folded: width - 2 * Config.theme.itemPaddingX - swatchWidth - timeChars * Metrics.cell - 2 * Config.theme.spacing < 12 * Metrics.cell
+
+  // Lines a row takes: two for an end, a place, or times folded under the title.
+  function lineCount(row) {
+    if (!row?.event) return 1;
+    return folded || times(row.event, row.day)[1] || row.event.location ? 2 : 1;
+  }
+
+  function rowHeight(row) {
+    return lineCount(row) * Metrics.line + 2 * Config.theme.itemPaddingY;
+  }
+
+  // Whether it is whole in view: a sliver of a row reads as a glitch, at either edge.
   function fits(y, height) {
-    return y + height <= contentY + root.height + 1;
+    return y >= contentY - 1 && y + height <= contentY + root.height + 1;
   }
 
-  // The height of a day's first row, one line or two (an end, a place): what its heading needs below it to be shown.
-  function firstRowHeight(key) {
-    const first = rows.find(row => row.key === key);
-    const twoLines = first?.event && (times(first.event, first.day)[1] || first.event.location);
-    return (twoLines ? 2 : 1) * Metrics.line + 2 * Config.theme.itemPaddingY;
+  // Whether the details cover any of it: what they partly cover goes whole, as a sliver would show under them.
+  function covered(y, height) {
+    return card.visible && y < card.y + card.height && y + height > card.y;
   }
 
   readonly property real headingPadding: Config.theme.spacing / 2
   readonly property real headingHeight: Metrics.line + headingPadding
+  // The last day, heading and rows, which the footer lets scroll to the top as any other day does.
+  readonly property real lastDayHeight: {
+    const last = rows.length ? rows[rows.length - 1].key : "";
+    return rows.filter(row => row.key === last).reduce((sum, row) => sum + rowHeight(row) + spacing, headingHeight);
+  }
+
+  footer: Item {
+    width: root.width
+    height: Math.max(0, root.height - root.lastDayHeight)
+  }
 
   section.property: "key"
   // Each day's heading scrolls with its rows: pinned on top, it would need a fill of its own over a translucent panel.
@@ -92,7 +132,7 @@ ListView {
     Item {
       anchors.fill: parent
       // Only with room for its first event under it: a heading alone at the bottom says nothing.
-      visible: root.fits(day.y, day.height + root.firstRowHeight(day.section))
+      visible: root.fits(day.y, day.height + root.rowHeight(root.rows.find(row => row.key === day.section))) && !root.covered(day.y, day.height)
 
       Label {
         id: heading
@@ -110,11 +150,12 @@ ListView {
     required property var modelData
     readonly property var event: modelData.event
     readonly property var lines: event ? root.times(event, modelData.day) : ["", ""]
-    readonly property bool compact: !lines[1] && !event?.location
+    readonly property bool twoLines: root.lineCount(modelData) === 2
+    // What is over dims, so what is ahead stands out.
+    readonly property string textTone: event && event.end <= Clock.date ? "dim" : "normal"
 
     width: ListView.view.width
-    // Whole or not at all: a sliver of a row reads as a glitch.
-    visible: root.fits(y, height)
+    visible: root.fits(y, height) && !root.covered(y, height)
     enabled: !!event
     dimsWhenDisabled: false
     current: !!event && modelData.id === root.focused
@@ -123,30 +164,35 @@ ListView {
     Label {
       visible: !row.event
       tone: "dim"
-      text: Words.noEvents
+      text: Calendar.synced(row.modelData.day) ? Words.noEvents : Words.notSynced
     }
 
     Swatch {
       visible: !!row.event
       Layout.fillHeight: true
-      size: Config.theme.fontSize / 4
+      size: root.swatchWidth
       fill: row.event?.color ?? "transparent"
+      tone: row.textTone
     }
 
-    // As wide as "to Wed 30", so titles start together.
     ColumnLayout {
-      visible: !!row.event
-      Layout.minimumWidth: 9 * Metrics.cell
+      visible: !!row.event && !root.folded
+      Layout.minimumWidth: root.timeChars * Metrics.cell
       Layout.maximumWidth: Layout.minimumWidth
       Layout.alignment: Qt.AlignTop
       spacing: 0
 
       Label {
+        Layout.fillWidth: true
+        elide: Text.ElideRight
+        tone: row.textTone
         text: row.lines[0]
       }
 
       Label {
-        visible: !row.compact
+        visible: row.twoLines
+        Layout.fillWidth: true
+        elide: Text.ElideRight
         tone: "dim"
         text: row.lines[1]
       }
@@ -161,15 +207,63 @@ ListView {
       Label {
         Layout.fillWidth: true
         elide: Text.ElideRight
+        tone: row.textTone
         text: row.event?.title ?? ""
       }
 
       Label {
-        visible: !row.compact
+        visible: row.twoLines
         Layout.fillWidth: true
         elide: Text.ElideRight
         tone: "dim"
-        text: row.event?.location ?? ""
+        text: root.folded ? Words.beside([row.lines.filter(line => line).join(" "), row.event?.location]) : row.event?.location ?? ""
+      }
+    }
+  }
+
+  // The focused event whole, over the rows below it, or above where the list ends.
+  Surface {
+    id: card
+    readonly property var row: root.focusedItem ? root.focusedItem.modelData : null
+
+    // Among the rows, so it scrolls with them; ListView keeps its own children apart.
+    parent: root.contentItem
+    visible: root.details && !!row?.event
+    // Over the rows and their headings, which ListView raises itself.
+    z: 10
+    width: root.width
+    height: whole.implicitHeight + 2 * Config.theme.itemPaddingY
+    y: root.focusedItem ? Math.max(root.contentY, Math.min(root.focusedItem.y, root.contentY + root.height - height)) : 0
+    radius: Config.theme.itemRadius
+    // Opaque, as the rows it covers would show through.
+    color: Tone.surface(1)
+
+    ColumnLayout {
+      id: whole
+      x: Config.theme.itemPaddingX
+      y: Config.theme.itemPaddingY
+      width: card.width - 2 * Config.theme.itemPaddingX
+      spacing: 0
+
+      Label {
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        strong: true
+        text: card.row?.event?.title ?? ""
+      }
+
+      Label {
+        Layout.fillWidth: true
+        tone: "dim"
+        text: card.row?.event ? root.times(card.row.event, card.row.day).filter(line => line).join(" ") : ""
+      }
+
+      Label {
+        visible: text !== ""
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        tone: "dim"
+        text: card.row?.event?.location ?? ""
       }
     }
   }

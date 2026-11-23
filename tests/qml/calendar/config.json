@@ -1,5 +1,8 @@
 {
   "calendar": {
     "remind": ""
+  },
+  "clock": {
+    "locale": "en_GB"
   }
 }

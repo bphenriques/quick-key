@@ -9,6 +9,8 @@ QtObject {
   readonly property var selected: internal.selected
   // The event in focus, by its row id in Calendar.timeline, so a new read of the file keeps it; "" while the keys move the day.
   readonly property string focused: internal.focused
+  // Whether the focused event shows whole, its title and place unshortened.
+  readonly property bool details: internal.details
 
   readonly property string title: Clock.monthHeading(selected)
   // Each moves the selected day by [years, months, days], or back to today (null); the arrows go unlisted, the grid shows them.
@@ -20,7 +22,7 @@ QtObject {
     { key: "t", what: Words.today, clickable: true, moves: { t: null } },
     { key: "Return", what: Words.events, clickable: true }
   ]
-  readonly property var eventKeys: [{ key: ["Up", "Down"], what: Words.event }]
+  readonly property var eventKeys: [{ key: ["Up", "Down"], what: Words.event }, { key: "Return", what: Words.details }]
   readonly property var legend: focused ? eventKeys : keys.filter(entry => !entry.unlisted)
 
   // Today, with no event in focus: how a calendar level opens.
@@ -30,25 +32,36 @@ QtObject {
 
   function select(day) {
     internal.selected = day;
-    internal.focused = "";
+    clearFocus();
   }
 
   function focus(row) {
     internal.focused = row.id;
     internal.selected = row.day;
+    internal.details = false;
   }
 
   function clearFocus() {
     internal.focused = "";
+    internal.details = false;
   }
 
-  // Whether the key was a calendar key, acting on it: Return focuses events, arrows step them; Escape leaves them (MenuModel.stepBack).
+  // Escape's step within the level: the details, then the focus; false with neither to leave.
+  function stepBack() {
+    if (details) internal.details = false;
+    else if (focused) clearFocus();
+    else return false;
+    return true;
+  }
+
+  // Whether the key was a calendar key, acting on it: Return focuses events, then shows the focused one whole; arrows step them; Escape steps back (MenuModel.stepBack).
   function handleKey(name) {
     const rows = Calendar.timeline;
     const at = focused ? rows.findIndex(row => row.id === focused) : -1;
     if (name === "Return") {
-      const first = rows.find(row => row.key >= Clock.dayKey(selected));
-      if (first) focus(first);
+      const first = Calendar.firstOn(rows, Clock.dayKey(selected));
+      if (at >= 0) internal.details = true;
+      else if (first >= 0) focus(rows[first]);
       return true;
     }
     if (at >= 0 && (name === "Up" || name === "Down")) {
@@ -74,5 +87,6 @@ QtObject {
   readonly property QtObject internal: QtObject {
     property var selected: new Date()
     property string focused: ""
+    property bool details: false
   }
 }

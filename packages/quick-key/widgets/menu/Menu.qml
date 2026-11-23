@@ -204,6 +204,7 @@ Scope {
           CalendarMonth {
             // Two fifths of the level, but room for seven columns of three characters, the events beside it giving way first.
             Layout.preferredWidth: Math.max(7 * 3.5 * Metrics.cell, parent.width * 2 / 5)
+            Layout.minimumWidth: minimumWidth
             Layout.alignment: Qt.AlignTop
             title: root.menu.calendar.title
             selected: root.menu.calendar.selected
@@ -225,6 +226,7 @@ Scope {
             visible: Calendar.enabled
             selected: root.menu.calendar.selected
             focused: root.menu.calendar.focused
+            details: root.menu.calendar.details
             onPicked: row => root.menu.calendar.focus(row)
           }
         }

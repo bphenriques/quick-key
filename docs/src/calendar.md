@@ -6,15 +6,19 @@
 
 - Arrows move the selected day by a day or a week.
 - `Ctrl+←→` moves a month, `Ctrl+↑↓` a year, `t` goes back to today.
-- `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns.
+- `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns. On an event, `Return` shows it whole, its title and place unshortened, until `ESC`.
 
-A dot under a day marks each colour of its events. The month and year head the grid, its keys sit on the bar, and a failed sync says why under the events.
+A dot under a day marks each colour of its events, up to four; with more, the last is grey. The month and year head the grid, its keys sit on the bar, and a failed sync says why under the events.
 
-The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it. Its fields are `title`, `when` and `updated`: how old the events are, or `syncing...` while a sync runs. A Sync button in the level's bar shows only its icon, spinning while the sync runs, `updated` on hover; past `calendar.staleAfter` it turns warning with `updated` beside it:
+The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it; one under way says when it ends (`to 12:00`). Its fields are `title`, `when` and `updated`: how old the events are, or `syncing...` while a sync runs. A Sync button in the level's bar shows only its icon, spinning while the sync runs, `updated` on hover; past `calendar.staleAfter` it turns warning with `updated` beside it:
 
 ```nix
 header.right = [ { key = "s"; desc = "Sync"; icon = "<glyph>"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
 ```
+
+## Events
+
+Each day heads its events, with its year when not this one. A timed event takes one line, `09:00–09:15`, and its place a second. One running past its day says when it ends (`to Sat 18:00`), and the days it fills are all day. What is over dims. Today opens at its first timed event not over yet when the day's start would leave it out of view, and any day, the last included, scrolls to the top. A row that does not fit whole is not drawn. On a level too narrow for titles beside the times, the times fold into each title's second line.
 
 ## The events file
 
@@ -23,6 +27,7 @@ The shell only reads `calendar.file`, watching it for changes. `calendarSync` wr
 ```json
 {
   "updated": "2026-11-12T14:30",
+  "synced": { "from": "2026-09-11", "to": "2027-11-12" },
   "error": "personal: could not sync",
   "events": [
     { "title": "Dentist", "start": "2026-11-12T14:00", "end": "2026-11-12T15:00", "color": "#4285f4", "location": "Rua Augusta 120" },
@@ -33,10 +38,11 @@ The shell only reads `calendar.file`, watching it for changes. `calendarSync` wr
 
 - Times are local, without an offset. An all-day event's `end` is its last day.
 - A repeating event is one entry per occurrence.
-- `location`, `error` and `syncing: true` are optional.
+- `synced` is the first and last day the events cover: a day past them says `Not synced`, not `No events`.
+- `location`, `synced`, `error` and `syncing: true` are optional.
 
 `calendar.remind` reminds of each timed event, `calendar.remindBefore` minutes before it starts.
 
 ## calendarSync
 
-`calendarSync.enable` syncs 62 days back and a year ahead, from the calendars listed in `calendarSync.calendars`.
+`calendarSync.enable` syncs 62 days back and a year ahead, from the calendars listed in `calendarSync.calendars`, and writes that range as `synced`.

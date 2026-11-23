@@ -30,6 +30,18 @@ Singleton {
     return [...new Set(eventsOn(day).map(event => event.color))];
   }
 
+  // Whether the file covers a day, by the range it was synced over; a file that names none covers every day.
+  function synced(day) {
+    const key = Clock.dayKey(day);
+    return !store.synced || key >= store.synced.from && key <= store.synced.to;
+  }
+
+  // Where a day starts in `rows` (the timeline's), for the list to rest on and Return to focus: today, its first timed event not over yet; else the day's first row.
+  function firstOn(rows, key) {
+    const now = key === Clock.dayKey(Clock.date) ? rows.findIndex(row => row.key === key && row.event && !row.event.allDay && row.event.end > Clock.date) : -1;
+    return now >= 0 ? now : rows.findIndex(row => row.key >= key);
+  }
+
   // Text on one line, as a row shows it: an address often comes as several.
   function line(text) {
     return (text ?? "").trim().replace(/\s*\n\s*/g, ", ");
@@ -42,6 +54,8 @@ Singleton {
     property var updated: null
     property bool syncing: false
     property string error: ""
+    // { from, to }, the first and last day synced, as the file keys them; null when it says none.
+    property var synced: null
     property var events: []
     property var days: ({})
     property var timeline: []
@@ -79,6 +93,7 @@ Singleton {
       updated = json.updated ? Clock.parse(json.updated) : null;
       syncing = !!json.syncing;
       error = json.error ?? "";
+      synced = json.synced?.from && json.synced?.to ? { from: json.synced.from, to: json.synced.to } : null;
       loaded = true;
     }
 
@@ -89,6 +104,7 @@ Singleton {
       updated = null;
       syncing = false;
       error = "";
+      synced = null;
       loaded = false;
     }
   }
