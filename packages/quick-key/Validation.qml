@@ -237,7 +237,7 @@ Singleton {
     const found = [];
     for (const slot of Object.keys(header ?? {})) {
       if (!slots.includes(slot)) found.push("menu: " + path + "'s bar sets " + slot + ", none of left, center, right");
-      else if (header[slot] != null && Config.kind(header[slot]) !== "list") found.push("menu: " + path + "'s bar sets " + slot + " to no list");
+      else if (header[slot] != null && Config.kind(header[slot]) !== "list") found.push((path === "the top level" ? "menu.header." : "menu: " + path + "'s header.") + slot + " takes a list");
     }
     if (entries.length < given.length || bar.some(part => Config.kind(part) !== "map" && typeof part !== "string")) found.push("menu: " + path + " holds something that is not an entry");
     const wrong = (which, why) => {
