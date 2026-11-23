@@ -29,7 +29,7 @@ PluginSettings {
   // The prompt's glyph, its own (the agent's face) over the one every input shares (glyphs.prompt).
   property string promptGlyph
   // What the empty prompt says, {title} for the title.
-  property string placeholder: "Ask {title}"
+  property string placeholder: "Ask {title}..."
   // The conversation's height, in lines, declared so the panel holds still.
   property int lines: 14
 

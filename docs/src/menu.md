@@ -72,14 +72,14 @@ Dates and times are said one way everywhere, in `clock.locale`: a time as the lo
 
 ## Input
 
-An entry's `input` floats a line of text over its level's body, a bar entry's too. `menu.input` does over the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask"; plugin = "assistant"; }`).
+An entry's `input` floats a line of text over its level's body, a bar entry's too. `menu.input` does over the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask..."; plugin = "assistant"; }`).
 
-An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then gives the keys back to the body, as `TAB` does. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right.
+An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then gives the keys back to the body, as `TAB` does. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right. Empty, it shows its `desc`, which ends in `...`, as what waits on you does.
 
 The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
 
 ```nix
-{ key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; input = { desc = "Add a task"; }; }
+{ key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; input = { desc = "Add a task..."; }; }
 ```
 
 `format` wraps the text that starts a conversation (`{text}`). `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
@@ -94,7 +94,7 @@ An input writes, never filters. Put an agent's input only on a level showing wha
 {
   key = "c"; desc = "Calendar"; status = "clock"; view = "calendar";
   input = {
-    desc = "Add an event"; plugin = "assistant"; after = "calendar-sync";
+    desc = "Add an event..."; plugin = "assistant"; after = "calendar-sync";
     format = "Add this event to my calendar, or nothing if it has no day: {text}";
   };
 }
