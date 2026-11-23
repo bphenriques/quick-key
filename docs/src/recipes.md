@@ -34,11 +34,8 @@ The menu closes as it runs; `keepOpen = true` keeps it open, for a command you r
 { key = "s"; desc = "Screenshot"; icon = "<glyph>"; submenu = [
   { key = "s"; desc = "Screen"; icon = "<glyph>"; cmd = "grim"; }
   { key = "r"; desc = "Region..."; icon = "<glyph>"; cmd = ''grim -g "$(slurp)"''; }
-  { key = [ "Left" "Right" ]; desc = "Wallpaper"; icon = "<glyph>"; cmd = [ "wallpaper previous" "wallpaper next" ]; keepOpen = true; }
 ]; }
 ```
-
-Two keys with a command each share a row.
 
 ### Open an entry from a compositor key
 
