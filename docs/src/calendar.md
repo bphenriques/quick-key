@@ -22,7 +22,7 @@ Each day heads its events, with its year when not this one. A timed event takes 
 
 ## The events file
 
-The shell only reads `calendar.file`, watching it for changes. `calendarSync` writes it from a list of calendars (vdirsyncer, khal), but anything that writes this works:
+The shell only reads `calendar.file`, watching it for changes; until it exists, the month shows alone. `calendarSync` writes it from a list of calendars (vdirsyncer, khal), but anything that writes this works:
 
 ```json
 {
