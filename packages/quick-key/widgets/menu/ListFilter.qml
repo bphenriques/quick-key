@@ -33,7 +33,7 @@ QtObject {
   // Only what the state changes, Escape while it clears.
   readonly property var legend: (rows.length > 0 ? [{ key: rows.length > 1 ? "1-" + rows.length : "1", what: Words.choose }, { key: ["Up", "Down"], what: Words.move }] : [])
     .concat(item ? [{ key: "Return", what: item.verb || Words.pick, clickable: true }] : [])
-    .concat(item?.actions?.length > 0 || item?.app?.hasMenu ?[{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
+    .concat(item?.actions?.length > 0 || item?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
     .concat(query ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
 
   // Case and accents aside, so "cafe" finds "Café".
