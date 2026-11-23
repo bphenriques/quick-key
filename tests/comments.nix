@@ -1,4 +1,4 @@
-# AGENTS.md's comment rule: one line, so two comment lines in a row fail.
+# AGENTS.md's comment rule: a line, or a short block of up to four for a contract, so a fifth comment line in a row fails.
 { pkgs, self }:
 pkgs.runCommand "quick-key-comments" { } ''
   cd ${self}
@@ -7,8 +7,8 @@ pkgs.runCommand "quick-key-comments" { } ''
     case $file in *.qml) marker='//' ;; *) marker='#' ;; esac
     awk -v marker="$marker" -v file="$file" '
       { comment = index($0, marker) && substr($0, match($0, /[^ \t]/), length(marker)) == marker && $0 !~ /^#!/ }
-      comment && previous { print file ":" NR ": a comment over one line"; failed = 1 }
-      { previous = comment }
+      { run = comment ? run + 1 : 0 }
+      run == 5 { print file ":" NR ": a comment over four lines"; failed = 1 }
       END { exit failed }
     ' "$file" || status=1
   done

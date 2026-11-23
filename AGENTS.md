@@ -53,7 +53,12 @@ The rest:
 ## Comments
 
 - Default to none. Comment only what the code can't say: the why, a non-obvious constraint, a cross-file pointer.
-- One line, never two in a row (`tests/comments.nix` fails the check). Never restate code or repeat what the docs say.
+- One line by default. A contract the code cannot show (a table's fields, a protocol's steps) may take a short block of up to four lines; `tests/comments.nix` fails a longer one. Never restate code or repeat what the docs say.
+
+## Commits
+
+- One purpose per commit. The subject says what changed in under 72 characters; the body says why.
+- Only the owner edits this file.
 
 ## Writing style (docs, README)
 
