@@ -171,6 +171,8 @@ Singleton {
   // A reload rather than a re-read, so removed settings fall back to their defaults; not where a service restarts on a change instead (QUICK_KEY_WATCH_CONFIG=0, as the home-manager module sets).
   FileView {
     path: root.configDir + "/config.json"
+    // Read before anything binds, so nothing runs once against the defaults first.
+    blockLoading: true
     watchChanges: Quickshell.env("QUICK_KEY_WATCH_CONFIG") !== "0"
     printErrors: false
     onFileChanged: Quickshell.reload(false)

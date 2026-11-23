@@ -23,20 +23,15 @@ Scope {
     id: internal
 
     property bool hovered: false
-    property bool stacked: false
   }
 
   Fade {
     id: fade
     shown: root.shown
-    onLoadedChanged: {
-      internal.stacked = loaded;
-      loaded ? CornerPills.add(root) : CornerPills.remove(root);
-    }
+    onLoadedChanged: loaded ? CornerPills.add(root) : CornerPills.remove(root)
   }
 
-  // Only one that stacked: reaching CornerPills while a reload tears this generation down would make it again, in no generation.
-  Component.onDestruction: if (internal.stacked) CornerPills.remove(root)
+  Component.onDestruction: CornerPills.remove(root)
 
   LazyLoader {
     active: fade.loaded

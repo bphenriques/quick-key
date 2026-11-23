@@ -13,6 +13,11 @@ Singleton {
   readonly property string artist: internal.xml ? internal.field("DB_LEAD_ARTIST_NAME") : internal.track?.trackArtist ?? ""
   readonly property bool repeat: (internal.player?.loopState ?? MprisLoopState.None) !== MprisLoopState.None
   readonly property bool shuffle: internal.player?.shuffle ?? false
+  // What the player takes: one that cannot ignores the call, so its action dims instead.
+  readonly property bool canPlay: internal.player?.canTogglePlaying ?? false
+  readonly property bool canSkip: !!(internal.player?.canGoNext || internal.player?.canGoPrevious)
+  readonly property bool canRepeat: internal.player?.loopSupported ?? false
+  readonly property bool canShuffle: internal.player?.shuffleSupported ?? false
 
   function togglePlaying() {
     internal.player?.togglePlaying();

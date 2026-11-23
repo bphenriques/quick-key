@@ -617,6 +617,8 @@ Plugin {
   // Away from the keyboard, no time runs: with no history, one shown meanwhile would be gone unseen.
   IdleMonitor {
     id: idle
+    // Your input alone: keep awake or a playing video inhibit idle, and the cards would then expire with no one there.
+    respectInhibitors: false
     enabled: root.settings.idle > 0
     timeout: root.settings.idle
   }

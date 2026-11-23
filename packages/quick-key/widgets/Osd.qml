@@ -64,6 +64,8 @@ Scope {
     OverlayWindow {
       id: window
 
+      // The focused screen, named, so its size is known before the surface maps; left to the compositor, Qt would guess another.
+      screen: Quickshell.screens.find(each => each.name === Compositor.focusedOutput) ?? Quickshell.screens[0]
       readonly property var status: Statuses.builtin[root.kind] ?? null
       readonly property var plugin: Plugins.get(root.kind)
       readonly property var fields: status ? status.fields((id, name) => name) : ({})
