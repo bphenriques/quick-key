@@ -20,7 +20,7 @@ ShellRoot {
 
   readonly property var wrong: [
     ["a fractional font size", { theme: { fontSize: 11.5 } }, "theme.fontSize is 11.5, not a whole number"],
-    ["a margin past any screen", { menu: { margin: 1000 } }, "menu.margin is 1000, not 0 to 400"],
+    ["a margin past any screen", { theme: { edgeMargin: 1000 } }, "theme.edgeMargin is 1000, not 0 to 400"],
     ["a font past any screen", { theme: { fontSize: 500 } }, "theme.fontSize is 500, not 6 to 32"],
     ["padding past any screen", { theme: { padding: 5000 } }, "theme.padding is 5000, not 0 to 50"],
     ["a level of 40 columns", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: [], columns: 40 }] } }, "1 to 9 columns"],

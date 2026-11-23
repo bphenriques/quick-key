@@ -75,7 +75,10 @@ Singleton {
       "theme.motion": "removed: pop-ups always fade",
       "glyphs.link": "removed: an answer's links stay in its text",
       "menu.inputSide": "removed: a level's input always sits past its body",
-      "popups.position": "removed: the pop-up always sits at the right edge"
+      "popups.position": "removed: the pop-up always sits at the right edge",
+      "menu.margin": "removed: every surface sits theme.edgeMargin from the edge",
+      "popups.margin": "removed: every surface sits theme.edgeMargin from the edge",
+      "plugins.notifications.margin": "removed: every surface sits theme.edgeMargin from the edge"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -278,7 +281,7 @@ Singleton {
         property int itemPaddingY: 5
         // The gap between a list's rows, in pixels.
         property int listSpacing: 0
-        // The distance from the screen's edge to the menu, pop-ups and cards, in pixels, unless each sets its own `margin`.
+        // The distance from the screen's edge to the menu, its panels, pop-ups and cards, in pixels.
         property int edgeMargin: 35
         // The pop-up's level bar length and icon size, in pixels; unset, they follow the font, 160 and 28 at 11 points.
         property int osdLength: Math.round(160 * fontSize / 11)
@@ -299,8 +302,6 @@ Singleton {
         }
         // A level's width in pixels, unless its entry sets `width`; unset, it follows the font, 960 at 11 points, never past the screen.
         property int width: Math.round(960 * adapter.theme.fontSize / 11)
-        // Its distance from the screen's edge, in pixels, and its panels'.
-        property int margin: adapter.theme.edgeMargin
         // The columns a level lays its actions out in, unless its entry sets `columns`.
         property int columns: 2
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
@@ -334,8 +335,6 @@ Singleton {
         property int timeout: 1500
         // The statuses and plugins whose changes pop up, by name; battery's as it is plugged in or out, bluetooth's as it turns on or off or a device connects or leaves.
         property var show: ["sink", "source", "brightness", "keyboardLayout", "keepAwake"]
-        // Its distance from the screen's edge, in pixels.
-        property int margin: adapter.theme.edgeMargin
       }
 
       property JsonObject audio: JsonObject {

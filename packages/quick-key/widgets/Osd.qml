@@ -74,7 +74,7 @@ Scope {
       readonly property real length: Math.min(Config.theme.osdLength, screen.height / 2 || Config.theme.osdLength)
       // At the right edge, centred along it.
       anchors.right: true
-      margins.right: Math.min(Config.popups.margin, screen.width / 4, screen.height / 4)
+      margins.right: Math.min(Config.theme.edgeMargin, screen.width / 4, screen.height / 4)
       WlrLayershell.namespace: "quick-key-osd"
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {

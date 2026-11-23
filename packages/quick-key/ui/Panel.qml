@@ -105,7 +105,7 @@ Scope {
         QtObject {
           id: stack
           // No more than a quarter of the screen, so a large margin never pushes the menu off a small one.
-          readonly property real margin: Math.min(Config.menu.margin, frame.width / 4, frame.height / 4)
+          readonly property real margin: Math.min(Config.theme.edgeMargin, frame.width / 4, frame.height / 4)
           readonly property real gap: Config.theme.spacing / 2
           readonly property real past: bar.visible ? margin + bar.height + gap : margin
           readonly property bool between: inputSurface.visible && !root.inputOver

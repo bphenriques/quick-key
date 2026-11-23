@@ -26,7 +26,7 @@ jq '
 mkdir -p "$work/config/quick-key"
 ln -s "${XDG_CONFIG_HOME:-$HOME/.config}/fontconfig" "$work/config/fontconfig"
 jq --arg file "$work/events.json" --arg agent "$python $here/agent.py" '
-  .menu.width = 960 | .theme.edgeMargin = 35 | del(.menu.margin)
+  .menu.width = 960 | .theme.edgeMargin = 35
   | .calendar.file = $file | del(.calendar.remind) | .menu.entries |= map(select(.list != "wifi"))
   | .plugins.ask = { ask: $agent, title: "Assistant" } | if .menu.input then .menu.input.desc = "Ask Assistant" else . end
 ' "${XDG_CONFIG_HOME:-$HOME/.config}/quick-key/config.json" > "$work/config/quick-key/config.json"
