@@ -9,7 +9,7 @@ Its status counts the late tasks beside an alarm, in the warning tone, when ther
 ```nix
 plugins.tasks = {
   file = config.programs.quick-key.calendarSync.tasksFile;
-  inherit (config.programs.quick-key.calendarSync.exec) done reopen sync;
+  inherit (config.programs.quick-key.calendarSync.exec) done reopen add sync;
   sort = "due";
   completed = "hidden";
 };
