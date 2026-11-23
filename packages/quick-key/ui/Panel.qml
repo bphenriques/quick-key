@@ -123,7 +123,7 @@ Scope {
         Keys.onPressed: event => root.keyPressed(event)
         Keys.onReleased: event => root.keyReleased(event)
 
-        // Each surface's distance from the screen's edge, stacking away from it: the bar against it, then the card and the input in their order; `along` places a distance at either edge, the one place the top edge mirrors.
+        // Each surface's distance from the screen's bottom, stacking up from it: the bar against it, then the card and the input in their order.
         QtObject {
           id: stack
           // No more than a quarter of the screen, so a large margin never pushes the menu off a small one.
@@ -133,10 +133,6 @@ Scope {
           readonly property bool between: inputSurface.visible && !root.inputOver
           readonly property real card: between ? past + inputSurface.height + gap : past
           readonly property real input: root.inputOver ? card + cardSurface.height + gap : past
-
-          function along(distance, height) {
-            return Config.atTop ? distance : frame.height - distance - height;
-          }
         }
 
         // Over the card, so a tip on its items shows over it.
@@ -145,7 +141,7 @@ Scope {
           visible: root.barShown
           z: 1
           x: cardSurface.x
-          y: stack.along(stack.margin, height)
+          y: frame.height - stack.margin - height
           width: cardSurface.width
           // At least a title's line, so a level's bar without the clock is as tall as the top level's and the body holds still.
           height: Math.max(barRow.implicitHeight, Metrics.titleLine + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
@@ -202,7 +198,7 @@ Scope {
           id: cardSurface
           // Along the edge as `menu.align` says; the bar and the input follow it.
           x: Config.menu.align === "left" ? stack.margin : Config.menu.align === "right" ? parent.width - width - stack.margin : (parent.width - width) / 2
-          y: stack.along(stack.card, height)
+          y: frame.height - stack.card - height
           // No wider than the screen leaves within its margins, whatever width a level asks for.
           width: Math.min(root.width, parent.width - 2 * stack.margin)
           // No taller than the screen leaves past what stacks before it, cut only when it must be.
@@ -230,7 +226,7 @@ Scope {
           id: inputSurface
           visible: root.inputShown
           x: cardSurface.x
-          y: stack.along(stack.input, height)
+          y: frame.height - stack.input - height
           width: cardSurface.width
           height: inputContent.implicitHeight + Config.theme.padding
 

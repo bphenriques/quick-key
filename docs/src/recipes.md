@@ -251,18 +251,15 @@ menu.header.center = [ "uptime" ];
 
 The last line a command prints is the text beside the glyph. For text a script writes, give `file` instead ([State a script writes](#state-a-script-writes)).
 
-### A bar on top, as islands
+### A bar as islands
 
 ```nix
-menu.edge = "top";
 menu.islands = true;
-menu.margin = 10;
-popups.position = "top";
 ```
 
-![The menu at the top, its bar split into islands over the body](images/islands.png)
+![The menu's bar split into islands over the body](images/islands.png)
 
-The bar sits on top, each slot on an island of its own, and pop-ups show there too. It is still the menu: it shows on a key and hides on `ESC`, so it does not replace a bar that is always there. Keep waybar for that, with `theme.besideBars = true` so the menu keeps clear of it. A bar down a side of the screen, or one that sizes itself to what it shows, is not on offer: a level keeps a top or bottom edge and its width.
+Each of the bar's slots sits on an island of its own. It is still the menu: it shows on a key and hides on `ESC`, so it does not replace a bar that is always there. Keep waybar for that, with `theme.besideBars = true` so the menu keeps clear of it. A bar at the top or down a side, or one that sizes itself to what it shows, is not on offer: a level keeps the bottom edge and its width.
 
 ## The look
 

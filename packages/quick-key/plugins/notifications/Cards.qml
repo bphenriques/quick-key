@@ -94,7 +94,7 @@ Scope {
       anchors.right: view.right
       anchors.left: !view.right
       // In the corner pills' corner (recording), past them as they stack, a gap more.
-      readonly property real pills: view.right && view.top !== Config.atTop && CornerPills.order.length > 0 ? Config.theme.edgeMargin + CornerPills.height + Config.theme.spacing : 0
+      readonly property real pills: view.right && view.top && CornerPills.order.length > 0 ? Config.theme.edgeMargin + CornerPills.height + Config.theme.spacing : 0
       margins.top: view.top ? Math.max(view.margin, pills) : view.margin
       margins.bottom: view.top ? view.margin : Math.max(view.margin, pills)
       // Larger by the room a slide needs on its corner's side, the margin smaller by as much.

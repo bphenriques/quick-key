@@ -65,9 +65,10 @@ Singleton {
     }
   }
 
-  // Keys renamed, by their old path to their new one: a config still setting an old one fails its check saying what to write instead. A rename adds its line here.
+  // Keys renamed or removed, by their old path to what to write instead: a config still setting an old one fails its check saying so. A rename adds its line here.
   readonly property var renamed: ({
-      "theme.monochromeTray": "theme.appIcons, true as \"grey\""
+      "theme.monochromeTray": "theme.appIcons, true as \"grey\"",
+      "menu.edge": "removed: the menu always sits at the bottom"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -159,8 +160,6 @@ Singleton {
   }
 
   readonly property bool themeMissing: userTheme.missing && shippedTheme.missing
-  // The menu at the top edge, where everything that stacks from it is mirrored.
-  readonly property bool atTop: adapter.menu.edge === "top"
 
   // A theme file missing as the shell started has no change to watch: read again as the menu opens.
   function refresh() {
@@ -294,8 +293,6 @@ Singleton {
         property int columns: 2
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
         property var input: null
-        // The screen edge the menu and plugins' panels sit at, its bar against it: bottom or top.
-        property string edge: "bottom"
         // Where along that edge: left, center or right.
         property string align: "center"
         // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.

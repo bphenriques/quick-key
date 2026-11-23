@@ -7,14 +7,12 @@ import qs.ui
 import qs.ui.conversation
 
 // The menu input island (InputModel): the last turn (Exchange) over the line to send; filtering, the line is the filter.
-GridLayout {
+ColumnLayout {
   id: root
 
   required property MenuModel menu
   readonly property InputModel model: menu.island
-  // One column: the prompt nearest the screen's edge, the turn beyond it, so at the top edge (Config.atTop) the order flips.
-  columns: 1
-  rowSpacing: Config.theme.spacing / 2
+  spacing: Config.theme.spacing / 2
 
   // Lit while Tab has it; a click, or Return then, opens the plugin's panel on the whole conversation.
   ListItem {
@@ -25,10 +23,8 @@ GridLayout {
     readonly property bool expands: visible && exchange.overflows && root.model.turn !== root.model.expandedTurn && root.model.turn?.phase !== "working"
     visible: root.model.turn !== null && !root.menu.filtering
     Layout.fillWidth: true
-    Layout.row: Config.atTop ? 1 : 0
     // The height held sits beyond it, outside what Tab lights, so the turn stays next to the prompt.
-    Layout.topMargin: Config.atTop ? 0 : Math.max(0, last.tallest - exchange.implicitHeight)
-    Layout.bottomMargin: Config.atTop ? Math.max(0, last.tallest - exchange.implicitHeight) : 0
+    Layout.topMargin: Math.max(0, last.tallest - exchange.implicitHeight)
     // Outset by its padding, so the turn lines up with the prompt.
     Layout.leftMargin: -Config.theme.itemPaddingX
     Layout.rightMargin: -Config.theme.itemPaddingX
@@ -73,7 +69,6 @@ GridLayout {
   Prompt {
     id: prompt
     Layout.fillWidth: true
-    Layout.row: Config.atTop ? 0 : 1
     // Filtering, it is the filter: its glyph, its range on the right.
     readonly property bool filter: root.menu.filtering
     active: root.menu.inputFocused || filter

@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A pill in the right corner away from the menu's edge of every screen while `shown`, fading in and out, stacked under the pills already showing.
+// A pill in the top-right corner of every screen while `shown`, fading in and out, stacked under the pills already showing.
 Scope {
   id: root
 
@@ -44,13 +44,11 @@ Scope {
         required property var modelData
         screen: modelData
 
-        // On the right, in the corner away from the menu's edge, as the cards are by default.
-        anchors.top: !Config.atTop
-        anchors.bottom: Config.atTop
+        // Top right, as the cards are by default.
+        anchors.top: true
         anchors.right: true
         readonly property real margin: Math.min(Config.theme.edgeMargin, modelData.width / 4, modelData.height / 4)
         margins.top: margin + CornerPills.offset(root)
-        margins.bottom: margin + CornerPills.offset(root)
         // Larger by the room a slide needs on the right, the margin smaller by as much.
         readonly property real room: Math.min(fade.distance, margin)
         margins.right: margin - room

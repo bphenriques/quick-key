@@ -29,11 +29,9 @@ Surface {
   height: label.implicitHeight + 2 * Config.theme.itemPaddingY
   radius: Config.theme.itemRadius
   anchors.horizontalCenter: parent.horizontalCenter
-  // Away from the edge the menu sits at, so it never leaves the screen.
-  anchors.bottom: Config.atTop ? undefined : parent.top
-  anchors.top: Config.atTop ? parent.bottom : undefined
+  // Above, away from the menu's edge, so it never leaves the screen.
+  anchors.bottom: parent.top
   anchors.bottomMargin: Config.theme.spacing
-  anchors.topMargin: Config.theme.spacing
 
   Label {
     id: label
