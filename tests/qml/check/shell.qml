@@ -11,6 +11,8 @@ ShellRoot {
   }
 
   readonly property var wrong: [
+    ["an app icon mode that is none", { theme: { appIcons: "gray" } }, "theme.appIcons is 'gray', not one of colour, grey, tint"],
+    ["a setting since renamed", { theme: { monochromeTray: true } }, "theme.monochromeTray is now theme.appIcons"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
     ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", submenu: "abc" }] } }, "sets submenu to no list of entries"],
     ["an empty row in a submenu", { menu: { entries: [{ key: "a", desc: "A", submenu: [null] }] } }, "holds something that is not an entry"],

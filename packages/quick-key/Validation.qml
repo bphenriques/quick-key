@@ -53,7 +53,7 @@ Singleton {
     if (moved.length) return moved;
     const kinds = Config.undeclared(json);
     if (kinds.length) return kinds;
-    const values = numberProblems(json).concat(colourProblems(json.theme ?? {}));
+    const values = numberProblems(json).concat(colourProblems(json.theme ?? {}), choiceProblems(json));
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
@@ -92,6 +92,18 @@ Singleton {
     const [low, critical] = [json.battery?.low ?? Config.battery.low, json.battery?.critical ?? Config.battery.critical];
     if (critical >= low) found.push("battery.critical is " + critical + ", not below battery.low (" + low + ")");
     return found;
+  }
+
+  // What a text setting with a few meanings takes, by its path.
+  readonly property var choices: ({
+      "theme.appIcons": ["colour", "grey", "tint"]
+    })
+
+  function choiceProblems(json) {
+    return Object.keys(choices).filter(path => {
+      const value = path.split(".").reduce((at, key) => at?.[key], json);
+      return value !== undefined && !choices[path].includes(value);
+    }).map(path => path + " is '" + path.split(".").reduce((at, key) => at?.[key], json) + "', not one of " + choices[path].join(", "));
   }
 
   // A colour as Qt reads it: #rgb, #rrggbb, or #aarrggbb with its alpha first; any other text would draw black. Its names are Config.colors'.

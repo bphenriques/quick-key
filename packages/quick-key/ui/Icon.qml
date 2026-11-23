@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import Quickshell.Widgets
@@ -11,8 +13,8 @@ Item {
   property string source: ""
   property string tone: "normal"
   property real size: Config.theme.iconSize
-  // An image in greys, to sit with the glyphs beside it.
-  property bool monochrome: false
+  // An image as drawn ("colour"), in greys ("grey"), or as its shape in the tone's colour ("tint").
+  property string recolour: "colour"
 
   visible: glyph !== "" || source !== ""
   implicitWidth: size
@@ -32,9 +34,13 @@ Item {
     anchors.fill: parent
     visible: root.source !== ""
     source: root.source
-    layer.enabled: root.monochrome
+    layer.enabled: root.recolour !== "colour"
     layer.effect: MultiEffect {
-      saturation: -1
+      saturation: root.recolour === "grey" ? -1 : 0
+      // Brightened to white first, so the colour is the tone's whatever the icon's own.
+      brightness: root.recolour === "tint" ? 1 : 0
+      colorization: root.recolour === "tint" ? 1 : 0
+      colorizationColor: glyphLabel.color
     }
     // An image has no colour to dim, so a dim one fades instead.
     opacity: root.tone === "dim" ? Config.theme.dimOpacity : 1

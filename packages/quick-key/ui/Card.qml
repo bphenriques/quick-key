@@ -6,10 +6,10 @@ import qs
 Surface {
   id: root
 
-  // An app's icon at a glyph's size, in greys when `monochrome`; its column stays without one while `iconColumn`, so every card's text starts in one place, which its owner turns off when no card has one.
+  // An app's icon at a glyph's size, recoloured by `recolour` (Icon's); its column stays without one while `iconColumn`, so every card's text starts in one place, which its owner turns off when no card has one.
   property string icon: ""
   property bool iconColumn: true
-  property bool monochrome: false
+  property string recolour: "colour"
   // A picture (album art, a screenshot) on the right, square and three lines tall.
   property string image: ""
   property string title: ""
@@ -106,7 +106,7 @@ Surface {
         Icon {
           anchors.centerIn: parent
           source: root.icon
-          monochrome: root.monochrome
+          recolour: root.recolour
           tone: "normal"
         }
       }

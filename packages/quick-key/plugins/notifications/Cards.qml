@@ -150,7 +150,7 @@ Scope {
                 readonly property var hint: entry?.hints.value
 
                 width: stack.width
-                monochrome: Config.theme.monochromeTray
+                recolour: Config.theme.appIcons
                 iconColumn: view.icons
                 icon: entry ? view.iconOf(entry) : ""
                 image: entry ? view.pictureOf(entry) : ""

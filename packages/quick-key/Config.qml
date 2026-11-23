@@ -66,7 +66,9 @@ Singleton {
   }
 
   // Keys renamed, by their old path to their new one: a config still setting an old one fails its check saying what to write instead. A rename adds its line here.
-  readonly property var renamed: ({})
+  readonly property var renamed: ({
+      "theme.monochromeTray": "theme.appIcons, true as \"grey\""
+    })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
   function over(declared, value) {
@@ -205,8 +207,10 @@ Singleton {
         property int itemRadius: 6
         // An icon's size, in pixels.
         property int iconSize: 24
-        // Tray icons in a bar in greys, like the glyphs beside them.
-        property bool monochromeTray: false
+        // Apps' own icons (the tray's, a notification's): "colour" as drawn, "grey" like the glyphs beside them, or "tint", in the text's colour, which keeps a white symbolic icon legible on a light theme.
+        property string appIcons: "colour"
+        // The menu, pop-ups and cards keep clear of space another bar reserves, instead of covering it.
+        property bool besideBars: false
         // Outlines and dividers, in device pixels.
         property int borderWidth: 1
         // The gap between items, in pixels.

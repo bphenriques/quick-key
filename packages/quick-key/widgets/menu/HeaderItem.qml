@@ -43,7 +43,7 @@ ListItem {
     source: root.item.image ?? ""
     glyph: root.item.icon ?? ""
     tone: root.item.active ? "primary" : root.item.image ? "normal" : "dim"
-    monochrome: !!root.item.image && Config.theme.monochromeTray
+    recolour: root.item.image ? Config.theme.appIcons : "colour"
   }
 
   // An app's name beside its icon (its menu's bar), an app without an icon, or how many more there are.
