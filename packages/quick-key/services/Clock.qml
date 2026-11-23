@@ -20,6 +20,7 @@ Singleton {
   readonly property var dayKey: Lib.dayKey
   readonly property var minuteKey: Lib.minuteKey
   readonly property var parse: Lib.parse
+  readonly property var moved: Lib.moved
 
   function time(moment) {
     return Lib.time(moment, names);

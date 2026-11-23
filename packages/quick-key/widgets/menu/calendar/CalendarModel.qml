@@ -82,12 +82,8 @@ QtObject {
     return true;
   }
 
-  // A month or year away keeps the day, or the month's last when it has fewer.
   function moveSelected(years, months, days) {
-    const year = selected.getFullYear() + years;
-    const month = selected.getMonth() + months;
-    const last = new Date(year, month + 1, 0).getDate();
-    select(new Date(year, month, Math.min(selected.getDate(), last) + days));
+    select(Clock.moved(selected, years, months, days));
   }
 
   readonly property QtObject internal: QtObject {

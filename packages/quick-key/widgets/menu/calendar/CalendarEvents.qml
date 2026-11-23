@@ -21,26 +21,11 @@ ListView {
 
   readonly property string selectedKey: Clock.dayKey(selected)
 
-  // The timeline, with the selected day in it even when it has no events; kept apart from `model`, which cannot be read while ListView replaces it.
-  readonly property var rows: {
-    const ids = earlierIds ? earlierIds.split("\n") : [];
-    const at = Calendar.timeline.findIndex(row => row.key >= selectedKey);
-    if (at >= 0 && Calendar.timeline[at].key === selectedKey) return fold(Calendar.timeline, ids);
-    const before = at < 0 ? Calendar.timeline.length : at;
-    const day = Clock.parse(selectedKey);
-    return fold(Calendar.timeline.slice(0, before).concat([{ id: "", key: selectedKey, day, event: null }], Calendar.timeline.slice(before)), ids);
-  }
+  // Kept apart from `model`, which cannot be read while ListView replaces it.
+  readonly property var rows: Calendar.rowsFrom(selectedKey, earlierIds ? earlierIds.split("\n") : [])
 
   // Today's events that are over, by id: a string, so the clock's minute rebuilds the rows only as one ends.
   readonly property string earlierIds: unfolded ? "" : Calendar.timeline.filter(row => Calendar.earlier(row)).map(row => row.id).join("\n")
-
-  // `rows` with those of `ids` folded into one line where the first was, so what is over leaves today's heading and what is next in view.
-  function fold(rows, ids) {
-    const first = rows.find(row => ids.includes(row.id));
-    if (!first) return rows;
-    const line = { id: first.key + " earlier", key: first.key, day: first.day, event: null, earlier: rows.filter(row => ids.includes(row.id)).map(row => row.event) };
-    return rows.filter(row => row === first || !ids.includes(row.id)).map(row => row === first ? line : row);
-  }
 
   // An array model, unlike the kit's count models: sections need roles, and rows change as a day is picked or the file read, not under the pointer.
   model: rows

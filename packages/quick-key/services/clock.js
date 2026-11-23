@@ -95,6 +95,14 @@ function minuteKey(moment) {
   return Qt.formatDateTime(moment, "yyyy-MM-ddTHH:mm");
 }
 
+// A day `years`, `months` and `days` away; a month or year away keeps its day, or the month's last when it has fewer.
+function moved(day, years, months, days) {
+  const year = day.getFullYear() + years;
+  const month = day.getMonth() + months;
+  const last = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day.getDate(), last) + days);
+}
+
 // "2026-11-12" or "2026-11-12T14:00" as local time: Date would read a bare date as UTC.
 function parse(text) {
   const [date, time] = text.split("T");

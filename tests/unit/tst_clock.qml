@@ -64,6 +64,14 @@ TestCase {
     compare(Clock.abbreviated(["janv.", "juin", "juil."]), ["janv", "juin", "juil"]);
   }
 
+  // A month or year away keeps the day, or the month's last when it has fewer.
+  function test_moved() {
+    compare(Clock.dayKey(Clock.moved(new Date(2027, 0, 31), 0, 1, 0)), "2027-02-28");
+    compare(Clock.dayKey(Clock.moved(new Date(2028, 1, 29), 1, 0, 0)), "2029-02-28");
+    compare(Clock.dayKey(Clock.moved(new Date(2026, 11, 31), 0, 0, 1)), "2027-01-01");
+    compare(Clock.dayKey(Clock.moved(new Date(2026, 10, 25), 0, 0, -7)), "2026-11-18");
+  }
+
   // As local time, both ways: Date would read a bare date as UTC.
   function test_keys() {
     compare(Clock.parse("2026-11-12").getTime(), new Date(2026, 10, 12).getTime());

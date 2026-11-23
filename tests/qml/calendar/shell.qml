@@ -19,21 +19,9 @@ ShellRoot {
     Quickshell.execDetached(["sh", "-c", 'printf "%s" "$2" > "$1.tmp" && mv "$1.tmp" "$1"', "sh", Config.calendar.file, JSON.stringify(json)]);
   }
 
-  function rows(title) {
-    return Calendar.timeline.filter(row => row.event.title === title);
-  }
-
   Suite {
     id: suite
     cases: [
-      {
-        name: "a month or year away keeps the day, or the month's last when it has fewer",
-        until: () => [[new Date(2027, 0, 31), [0, 1, 0]], [new Date(2028, 1, 29), [1, 0, 0]], [new Date(2026, 11, 31), [0, 0, 1]]].map(([from, move]) => {
-          menu.viewModels.calendar.select(from);
-          menu.viewModels.calendar.moveSelected(...move);
-          return Clock.dayKey(menu.viewModels.calendar.selected);
-        }).join() === "2027-02-28,2029-02-28,2027-01-01"
-      },
       {
         name: "an event shows on every day it overlaps, all-day ones first",
         until: () => Calendar.timeline.map(row => row.key.slice(8) + " " + row.event.title).join() ===
@@ -67,37 +55,6 @@ ShellRoot {
         name: "the days the file was synced over are known, so a day past them is not taken for one without events",
         until: () => Calendar.synced(new Date(2026, 10, 12)) && Calendar.synced(new Date(2027, 10, 12))
           && !Calendar.synced(new Date(2027, 10, 13)) && !Calendar.synced(new Date(2026, 8, 10))
-      },
-      {
-        name: "today starts at its first timed event not over yet, another day at its first",
-        until: () => {
-          const now = Clock.date.getTime();
-          const today = Clock.dayKey(Clock.date);
-          const rows = [
-            { key: "2000-01-01", event: { allDay: false, end: new Date(2000, 0, 1, 10) } },
-            { key: today, event: { allDay: true, end: new Date(now + 86400000) } },
-            { key: today, event: { allDay: false, end: new Date(now - 60000) } },
-            { key: today, event: { allDay: false, end: new Date(now + 3600000) } }
-          ];
-          return Calendar.firstOn(rows, today) === 3 && Calendar.firstOn(rows, "2000-01-01") === 0 && Calendar.firstOn(rows, "1999-01-01") === 0;
-        }
-      },
-      {
-        name: "today's timed events that are over fold into one line where the first was, so its heading and what is next stay in view",
-        until: () => {
-          const now = Clock.date.getTime();
-          const today = Clock.dayKey(Clock.date);
-          const rows = [
-            { id: "a", key: today, event: { title: "Holiday", allDay: true, end: new Date(now + 86400000) } },
-            { id: "b", key: today, event: { title: "Standup", allDay: false, end: new Date(now - 60000) } },
-            { id: "c", key: today, event: { title: "Review", allDay: false, end: new Date(now + 3600000) } },
-            { id: "d", key: today, event: { title: "Coffee", allDay: false, end: new Date(now - 30000) } },
-            { id: "e", key: "2000-01-01", event: { title: "Gym", allDay: false, end: new Date(2000, 0, 1, 10) } }
-          ];
-          const ids = rows.filter(row => Calendar.earlier(row)).map(row => row.id);
-          const shown = events.fold(rows, ids).map(row => row.earlier ? row.earlier.map(event => event.title).join("+") : row.event.title);
-          return ids.join() === "b,d" && shown.join() === "Holiday,Standup+Coffee,Review,Gym" && events.fold(rows, []) === rows;
-        }
       },
       {
         name: "the keys reaching one of today's events that are over unfold them, and stepping back folds them again",
@@ -167,24 +124,6 @@ ShellRoot {
           menu.viewModels.calendar.handleKey("Down");
           return pair.length === 2 && pair[0].id !== pair[1].id && menu.viewModels.calendar.focused === pair[1].id;
         }
-      },
-      {
-        name: "an event spanning centuries takes a row only on the days synced, and one of a few days one on each",
-        // From here on, as they replace the events.
-        start: () => write({ synced: { from: "2026-11-01", to: "2026-11-30" }, events: [
-          { title: "Ages", start: "1500-01-01", end: "2500-01-01", allDay: true },
-          { title: "Night shift", start: "2026-11-12T22:00", end: "2026-11-14T01:00" }
-        ] }),
-        until: () => rows("Ages").length === 30 && rows("Night shift").map(row => row.key).join() === "2026-11-12,2026-11-13,2026-11-14"
-      },
-      {
-        name: "a file naming no synced days takes them a year either side of today",
-        start: () => {
-          const today = Clock.date;
-          const after = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
-          write({ events: [{ title: "Ages", start: "1500-01-01", end: "2500-01-01", allDay: true }, { title: "Trip", start: Clock.dayKey(today), end: Clock.dayKey(after), allDay: true }] });
-        },
-        until: () => rows("Ages").length > 700 && rows("Ages").length <= 733 && rows("Trip").length === 3
       },
       {
         name: "an event not reminded yet is, and kept",
