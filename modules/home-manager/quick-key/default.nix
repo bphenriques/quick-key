@@ -179,6 +179,8 @@ in
       };
       Service = {
         ExecStart = "${launcher}";
+        # The restart above follows a change, so the shell does not reload itself as well: a reload over a restart only tears down what goes anyway.
+        Environment = [ "QUICK_KEY_WATCH_CONFIG=0" ];
         Restart = "on-failure";
       };
       Install.WantedBy = [ config.wayland.systemd.target ];
