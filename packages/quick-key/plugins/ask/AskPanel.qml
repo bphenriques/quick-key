@@ -285,6 +285,7 @@ Scope {
         onTapped: panel.plugin.focusPrompt()
         onBack: Panels.back()
         empty: text === "" && !panel.plugin.image
+        detail: panel.plugin.imageRefused ? panel.plugin.words.noImages : ""
         onCleared: panel.plugin.clearImage()
         onTextChanged: panel.plugin.keepDraft(text)
         Component.onCompleted: set(panel.plugin.draft)

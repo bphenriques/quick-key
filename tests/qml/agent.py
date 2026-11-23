@@ -1,5 +1,5 @@
 # The suites' stand-in ACP agent, on the SDK's agent side: argv names its session and, optionally, a behaviour; otherwise the prompt picks the answer.
-# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load), and `trapped` when a turn is cancelled; it lists two conversations, and a load replays one exchange.
+# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load, resume, a permission's outcome), and `trapped` when a turn is cancelled; it lists two conversations, and a load replays one exchange.
 import asyncio
 import os
 import sys
@@ -12,10 +12,13 @@ from acp.schema import (
     LoadSessionResponse,
     NewSessionResponse,
     PermissionOption,
+    PromptCapabilities,
     PromptResponse,
+    ResumeSessionResponse,
     SessionCapabilities,
     SessionInfo,
     SessionListCapabilities,
+    SessionResumeCapabilities,
     ToolCallUpdate,
 )
 
@@ -45,10 +48,15 @@ class Agent:
         trace("initialize")
         return InitializeResponse(
             protocol_version=acp.PROTOCOL_VERSION,
+            # `resume` resumes but cannot load; `pictures` takes images.
             agent_capabilities=AgentCapabilities(
-                load_session=True,
+                load_session=BEHAVIOUR != "resume",
+                prompt_capabilities=PromptCapabilities(image=BEHAVIOUR == "pictures"),
                 session_capabilities=SessionCapabilities(
-                    list=SessionListCapabilities()
+                    list=SessionListCapabilities(),
+                    resume=SessionResumeCapabilities()
+                    if BEHAVIOUR == "resume"
+                    else None,
                 ),
             ),
         )
@@ -63,6 +71,10 @@ class Agent:
         )
         await self.say(session_id, "from before")
         return LoadSessionResponse()
+
+    async def resume_session(self, cwd, session_id, mcp_servers=None, **kwargs):
+        trace("resume " + session_id)
+        return ResumeSessionResponse()
 
     async def list_sessions(self, cwd=None, cursor=None, **kwargs):
         return ListSessionsResponse(
@@ -94,9 +106,50 @@ class Agent:
                 tool_call=ToolCallUpdate(tool_call_id="t1", title="rm"),
                 options=options,
             )
-            await self.say(
-                session_id, getattr(answer.outcome, "option_id", "cancelled")
+            outcome = getattr(answer.outcome, "option_id", "cancelled")
+            trace("permission " + outcome)
+            await self.say(session_id, outcome)
+        elif BEHAVIOUR == "twice":
+            # Two at once, the second offering to allow only for good.
+            asked = [
+                ("one", [("allow", "allow_once"), ("deny", "reject_once")]),
+                ("two", [("always", "allow_always"), ("deny", "reject_once")]),
+            ]
+            answers = await asyncio.gather(
+                *(
+                    self.conn.request_permission(
+                        session_id=session_id,
+                        tool_call=ToolCallUpdate(tool_call_id=title, title=title),
+                        options=[
+                            PermissionOption(option_id=id, name=id, kind=kind)
+                            for id, kind in options
+                        ],
+                    )
+                    for title, options in asked
+                )
             )
+            await self.say(
+                session_id,
+                " ".join(
+                    getattr(answer.outcome, "option_id", "cancelled")
+                    for answer in answers
+                ),
+            )
+        elif BEHAVIOUR in ("late", "deaf") and text == "slow":
+            # `late` still speaks after a cancel, `deaf` never answers it.
+            await self.conn.session_update(
+                session_id, acp.start_tool_call("t1", "thinking")
+            )
+            if BEHAVIOUR == "deaf":
+                await asyncio.sleep(30)
+            await self.cancelled.wait()
+            await asyncio.sleep(0.5)
+            await self.say(session_id, "late")
+            return PromptResponse(stop_reason="cancelled")
+        elif BEHAVIOUR == "late":
+            # Slower than the stopped turn's last words, so they would land in it.
+            await asyncio.sleep(1)
+            await self.say(session_id, text)
         elif BEHAVIOUR == "work":
             await self.conn.session_update(
                 session_id, acp.start_tool_call("t1", "thinking")
@@ -127,4 +180,4 @@ class Agent:
         self.cancelled.set()
 
 
-asyncio.run(acp.run_agent(Agent()))
+asyncio.run(acp.run_agent(Agent(), use_unstable_protocol=True))

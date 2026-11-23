@@ -114,6 +114,58 @@
       "type": "ask",
       "ask": "true",
       "notify": ""
+    },
+    "asked": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s6 approve",
+      "notify": ""
+    },
+    "s6log": {
+      "type": "command",
+      "file": "s6-log"
+    },
+    "twice": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s7 twice",
+      "notify": ""
+    },
+    "late": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s8 late",
+      "notify": ""
+    },
+    "s8log": {
+      "type": "command",
+      "file": "s8-log"
+    },
+    "deaf": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s9 deaf",
+      "notify": ""
+    },
+    "s9log": {
+      "type": "command",
+      "file": "s9-log"
+    },
+    "resumer": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s10 resume",
+      "notify": ""
+    },
+    "s10log": {
+      "type": "command",
+      "file": "s10-log"
+    },
+    "imageless": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s11",
+      "notify": "",
+      "pasteImage": "true"
+    },
+    "pictured": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s12 pictures",
+      "notify": ""
     }
   }
 }

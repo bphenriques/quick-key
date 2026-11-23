@@ -20,6 +20,8 @@ Plugin {
     noImage: "Could not read the image",
     openTerminal: "Terminal" + Words.ellipsis,
     approval: (allowed, what) => (allowed ? "Allowed: " : "Denied: ") + what,
+    notOnce: what => "Cancelled, not offered once: " + what,
+    noImages: title + " takes no images",
     allow: "allow",
     deny: "deny",
     stop: "stop",
@@ -49,6 +51,8 @@ Plugin {
   property string draft: ""
   // A file under $XDG_RUNTIME_DIR, attached to the next prompt.
   property string image: ""
+  // C-v, refused, says so until the prompt changes.
+  property bool imageRefused: false
   readonly property bool shown: Panels.top === root
   property bool typing: true
   property bool unread: false
@@ -327,19 +331,22 @@ Plugin {
     notifier.running = true;
   }
 
-  // Without an image, the text paste it would have been.
+  // Without an image, the text paste it would have been; an agent that said it takes none is not sent one.
   function pasteImage() {
+    imageRefused = agent.started && !agent.canImage;
+    if (imageRefused) return true;
     const path = Quickshell.env("XDG_RUNTIME_DIR") + "/" + name + "-" + Date.now();
     call(settings.pasteImage, [path], code => code === 0 ? root.image = path : root.pasteText());
     return true;
   }
 
-  // Allow or deny once; an agent offering neither for the answer is told it was cancelled.
+  // Allow or deny once; an agent offering neither for the answer is told it was cancelled. The next request it holds shows next.
   function answerApproval(allowed) {
     if (!approval) return;
-    agent.answer(allowed);
-    setLast({ steps: (exchanges[exchanges.length - 1].steps ?? []).concat([words.approval(allowed, approval)]) });
+    const what = approval;
     approval = "";
+    const once = agent.answer(allowed);
+    setLast({ steps: (exchanges[exchanges.length - 1].steps ?? []).concat([once ? words.approval(allowed, what) : words.notOnce(what)]) });
   }
 
   function copy() {
@@ -391,6 +398,7 @@ Plugin {
   // Kept as it changes, so it outlasts a reload.
   function keepDraft(text) {
     draft = text;
+    imageRefused = false;
   }
 
   // True when the key was the panel's. Waiting, `?` lists them and letters do what their Ctrl chords do, but for `y`.

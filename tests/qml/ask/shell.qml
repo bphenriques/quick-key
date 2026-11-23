@@ -36,6 +36,9 @@ ShellRoot {
   property int resumeStep: 0
   property bool listedOnce: false
   property bool recalledOnce: false
+  property var lateStep: ({})
+  property real resumerAt: 0
+  property bool resumed: false
 
   // Sends a prompt once the plugin has loaded, then whether `done` holds for it.
   function asked(name, done) {
@@ -43,6 +46,18 @@ ShellRoot {
     if (!ask) return false;
     if (!ask.exchanges.length) ask.send("hello");
     return done(ask);
+  }
+
+  // Stops a slow turn and sends the next at once, then whether `done` holds for it.
+  function stoppedThenSent(name, done) {
+    const ask = Plugins.get(name);
+    if (!ask) return false;
+    if (!lateStep[name]) lateStep[name] = ask.send("slow", "") ? 1 : -1;
+    else if (lateStep[name] === 1 && ask.activity === "thinking") {
+      ask.stop();
+      lateStep[name] = ask.send("next", "") ? 2 : -1;
+    }
+    return lateStep[name] === 2 && !ask.busy && ask.exchanges[0].stopped && ask.exchanges[1]?.reply === "next" && done(ask);
   }
 
   Suite {
@@ -110,6 +125,52 @@ ShellRoot {
           }
           return root.blocked && root.bareY === "kept" && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";
         })
+      },
+      {
+        name: "stopping while it waits on an approval answers the request cancelled",
+        until: () => root.asked("asked", ask => {
+          if (ask.approval === "rm") ask.stop();
+          return !ask.busy && ask.exchanges[0].stopped && Plugins.get("s6log")?.text === "permission cancelled";
+        })
+      },
+      {
+        name: "approvals asked at once are each answered in turn, and one offered only for good is cancelled, saying so",
+        until: () => root.asked("twice", ask => {
+          if (ask.approval) ask.answerApproval(true);
+          return !ask.busy && ask.exchanges[0].reply === "allow cancelled" && JSON.stringify(ask.exchanges[0].steps) === JSON.stringify(["Allowed: one", ask.words.notOnce("two")]);
+        })
+      },
+      {
+        name: "a turn sent right after a stop waits for the stopped one, so none of its last words land in it",
+        until: () => root.stoppedThenSent("late", ask => Plugins.get("s8log")?.text === "initialize")
+      },
+      {
+        name: "an agent deaf to the stop is stopped, and the turn waiting on it starts it again",
+        timeout: 8000,
+        until: () => root.stoppedThenSent("deaf", ask => Plugins.get("s9log")?.text === "load s9")
+      },
+      {
+        name: "once gone, an agent that resumes but cannot load resumes the session, not a new one",
+        until: () => root.asked("resumer", ask => {
+          if (!root.resumerAt && !ask.busy && ask.exchanges[0].reply === "hello" && ask.send("bye", "")) root.resumerAt = Date.now();
+          if (!root.resumed && root.resumerAt && !ask.busy && Date.now() - root.resumerAt > 1500) root.resumed = ask.send("again", "");
+          return root.resumed && !ask.busy && ask.exchanges[2].reply === "again" && Plugins.get("s10log")?.text === "resume s10" && ask.session === "s10";
+        })
+      },
+      {
+        name: "an image goes only to an agent that takes them: one that said it does not fails the turn saying so, and C-v then refuses with that word",
+        until: () => {
+          const ask = Plugins.get("imageless");
+          const pictured = Plugins.get("pictured");
+          if (!ask || !pictured) return false;
+          const file = Quickshell.env("XDG_CONFIG_HOME") + "/quick-key/config.json";
+          if (!ask.exchanges.length) {
+            ask.send("p", file);
+            pictured.send("p", file);
+          }
+          if (ask.busy || pictured.busy || ask.exchanges[0].error !== ask.words.noImages) return false;
+          return pictured.exchanges[0].reply === "p" && ask.act("Ctrl+v") && ask.imageRefused && ask.image === file;
+        }
       },
       {
         name: "typing, Escape leaves clearing and stepping back to the prompt; waiting, it hides, a letter acts and its key gives the prompt the keys again",
