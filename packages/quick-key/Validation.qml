@@ -360,8 +360,6 @@ Singleton {
     if (named.length) found.push("formats " + named.join(", ") + ", which " + entry.status + " has not (" + (status.names.map(name => "{" + name + "}").join(", ") || "none") + ")");
     if (typeof entry.desc !== "string") found.push("needs a desc");
     if (!inBar && !keys.length) found.push("needs a key");
-    if (does > 1 || does === 0 && !(inBar && entry.status != null))
-      found.push("needs one of cmd, action, or submenu and/or list or view" + (inBar ? ", or only a status" : ""));
     if (inBar && entry.list == null && entry.status == null && entry.icon == null && entry.action == null) found.push("shows nothing: needs a status, an icon or an action");
     // A plugin's actions are its own, known only once it runs: on a level listing one, any name may be one.
     if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is not built in nor its level's plugin's");
@@ -371,6 +369,9 @@ Singleton {
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
     if (entry.input != null) found.push(...inputProblems(entry, plugins));
+    // Only when nothing else is wrong with it, which is often why it does nothing (command for cmd).
+    if (!found.length && (does > 1 || does === 0 && !(inBar && entry.status != null)))
+      found.push("needs one of cmd, action, submenu, list or view" + (inBar ? ", or only a status" : ""));
     return found;
   }
 }
