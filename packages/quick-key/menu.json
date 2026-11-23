@@ -21,7 +21,7 @@
           },
           {
             "key": "a",
-            "desc": "Apps",
+            "desc": "Apps...",
             "icon": "󰀻",
             "list": "streams",
             "submenu": [
@@ -40,7 +40,10 @@
               }
             ]
           }
-        ]
+        ],
+        "list": "sinks",
+        "width": 720,
+        "columns": 1
       },
       {
         "key": "A",
@@ -60,7 +63,10 @@
             "desc": "Mute",
             "action": "sourceMute"
           }
-        ]
+        ],
+        "list": "sources",
+        "width": 720,
+        "columns": 1
       },
       {
         "key": "n",

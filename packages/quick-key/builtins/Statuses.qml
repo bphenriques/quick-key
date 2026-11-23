@@ -10,7 +10,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned), value(fields) as { text, detail, glyphs }; optional fieldTones(), tone(), phase(), strong, meter() (below 0, none), muted(), adjust (the pair action the OSD wheel runs), popup and popupWidth (the OSD pill text and its widest), change() (what is worth a pop-up), ready() (its first value is state, not a change).
+  // Each: glyph(), fields(pinned), value(fields) as { text, detail, glyphs }; optional fieldTones(), tone(), phase(), strong, meter() (below 0, none), muted(), adjust (the pair action the OSD wheel runs), popup and popupWidth (the OSD pill text and its widest), change() (what is worth a pop-up), ready() (its first value is state, not a change), brief (its value beside its icon in a bar).
   readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
@@ -95,6 +95,7 @@ Singleton {
     },
     keyboardLayout: {
       glyph: () => Glyphs.keyboard,
+      brief: true,
       fields: () => ({ layout: KeyboardLayout.label || KeyboardLayout.name }),
       format: "{layout}",
       popupWidth: () => Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)),

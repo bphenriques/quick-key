@@ -36,6 +36,11 @@ if ! read -r -t 30 -u 3 display socket; then
 fi
 export WAYLAND_DISPLAY=$display NIRI_SOCKET=$socket
 
+# A steps file runs a copy, whose path keys a saved state of its own (pause, drafts, a list's order), so one run never leaves it for the next; by hand, the tree itself, so an edit reloads.
+if [ -n "${3:-}" ]; then
+  cp -r --no-preserve=mode "$dir" "$work/shell"
+  dir=$work/shell
+fi
 XDG_CONFIG_HOME=$work/config XDG_STATE_HOME=$work/state quickshell -p "$dir" > "$work/quickshell.log" 2>&1 &
 shell_pid=$!
 
@@ -50,7 +55,8 @@ if [ -n "${3:-}" ]; then
   wtype -k Shift_L
   # shellcheck source=/dev/null
   . "$(realpath "$3")"
-  grep -E "WARN (scene|qml)|TypeError" "$work/quickshell.log" >&2 || true
+  # Its colour codes sit between WARN and its category, so they go first.
+  sed 's/\x1b\[[0-9;]*m//g' "$work/quickshell.log" | grep -E "WARN (scene|qml)|TypeError" >&2 || true
   exit
 fi
 
