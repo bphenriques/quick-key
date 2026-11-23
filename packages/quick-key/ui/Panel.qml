@@ -122,7 +122,7 @@ Scope {
           y: frame.height - stack.margin - height
           width: cardSurface.width
           // At least a padded line, so a level's bar without the clock is as tall as the top level's and the body holds still.
-          height: Math.max(barRow.implicitHeight, Metrics.line + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
+          height: Math.max(barRow.implicitHeight, Metrics.line + 2 * Metrics.itemPaddingY) + Config.theme.padding / 2
 
           // One surface behind the row; with `menu.islands`, one behind each item its content lists in `islands`, and the statuses.
           Repeater {
@@ -217,8 +217,8 @@ Scope {
             anchors.left: parent.left
             anchors.right: parent.right
             // Inset as a row's content is, so its key column lines up with the body's keys.
-            anchors.leftMargin: Config.theme.padding + Config.theme.itemPaddingX
-            anchors.rightMargin: Config.theme.padding + Config.theme.itemPaddingX
+            anchors.leftMargin: Config.theme.padding + Metrics.itemPaddingX
+            anchors.rightMargin: Config.theme.padding + Metrics.itemPaddingX
             active: root.inputShown
             focus: root.inputFocused
             sourceComponent: root.input

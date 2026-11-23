@@ -21,7 +21,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 |---|---|
 | `Label` | all text, coloured by `tone`: `normal`, `dim`, `primary`, `warning` or `alert`; bold when `strong`, the one to find first (a heading, the clock, the item in use) |
 | `Tone` | the colour of each tone, `dim` being the normal colour at reduced alpha; a panel's background; a tone washed behind something (a highlight, a track) |
-| `Metrics` | the font's character width (`cell`) and line height (`line`), for sizes given in characters or lines |
+| `Metrics` | the font's character width (`cell`) and line height (`line`), for sizes given in characters or lines; the kit's fixed sizes (a row's padding, a meter, the pop-up's level) |
 | `Icon` | a glyph or an image in the same square; `recolour` draws an image as drawn, in greys, or as its shape in its tone's colour (`tint`, a symbolic icon only; any other goes grey) |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), a `swatch` dot after it, then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports; its text names a state (`off`, `muted`) only when there is no value |
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend |

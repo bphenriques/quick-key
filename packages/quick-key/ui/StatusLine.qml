@@ -116,7 +116,7 @@ RowLayout {
   Meter {
     visible: root.meter >= 0
     Layout.leftMargin: Config.theme.spacing / 2
-    Layout.preferredWidth: Config.theme.meterLength
+    Layout.preferredWidth: Metrics.meterLength
     value: Math.max(0, root.meter)
     tone: root.meterTone
   }

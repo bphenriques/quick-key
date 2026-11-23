@@ -12,8 +12,8 @@ Rectangle {
   readonly property bool vertical: orientation === Qt.Vertical
   readonly property real filled: Math.max(0, Math.min(1, value))
 
-  implicitWidth: vertical ? Config.theme.meterThickness : 0
-  implicitHeight: vertical ? 0 : Config.theme.meterThickness
+  implicitWidth: vertical ? Metrics.meterThickness : 0
+  implicitHeight: vertical ? 0 : Metrics.meterThickness
   radius: Math.min(Config.theme.itemRadius, Math.min(width, height) / 2)
   color: Tone.wash("normal")
 

@@ -253,7 +253,7 @@ Scope {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: Config.theme.padding - Config.theme.itemPaddingX
+        anchors.leftMargin: Config.theme.padding - Metrics.itemPaddingX
         anchors.rightMargin: Config.theme.padding
         keys: view.plugin.keys
       }
@@ -265,7 +265,7 @@ Scope {
         anchors.left: parent.left
         anchors.right: parent.right
         // The keys' own padding, so they line up with the cards' digits.
-        anchors.leftMargin: Config.theme.padding - Config.theme.itemPaddingX
+        anchors.leftMargin: Config.theme.padding - Metrics.itemPaddingX
         anchors.rightMargin: Config.theme.padding
         spacing: Config.theme.spacing
 

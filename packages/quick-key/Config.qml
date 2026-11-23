@@ -79,7 +79,14 @@ Singleton {
       "menu.margin": "removed: every surface sits theme.edgeMargin from the edge",
       "popups.margin": "removed: every surface sits theme.edgeMargin from the edge",
       "plugins.notifications.margin": "removed: every surface sits theme.edgeMargin from the edge",
-      "plugins.notifications.actionSide": "removed: a card's actions sit on its right"
+      "plugins.notifications.actionSide": "removed: a card's actions sit on its right",
+      "theme.osdLength": "removed: a fixed size of the kit",
+      "theme.osdIconSize": "removed: a fixed size of the kit",
+      "theme.meterThickness": "removed: a fixed size of the kit",
+      "theme.meterLength": "removed: a fixed size of the kit",
+      "theme.itemPaddingX": "removed: a fixed size of the kit",
+      "theme.itemPaddingY": "removed: a fixed size of the kit",
+      "theme.listSpacing": "removed: a fixed size of the kit"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -277,19 +284,8 @@ Singleton {
         property int spacing: 8
         // The space inside a panel's or a card's edge, in pixels.
         property int padding: 14
-        // A row's padding across and down, in pixels.
-        property int itemPaddingX: 8
-        property int itemPaddingY: 5
-        // The gap between a list's rows, in pixels.
-        property int listSpacing: 0
         // The distance from the screen's edge to the menu, its panels, pop-ups and cards, in pixels.
         property int edgeMargin: 35
-        // The pop-up's level bar length and icon size, in pixels; unset, they follow the font, 160 and 28 at 11 points.
-        property int osdLength: Math.round(160 * fontSize / 11)
-        property int osdIconSize: Math.round(28 * fontSize / 11)
-        // A meter's thickness, and its length in a row, in pixels.
-        property int meterThickness: 6
-        property int meterLength: 48
       }
 
       property JsonObject menu: JsonObject {

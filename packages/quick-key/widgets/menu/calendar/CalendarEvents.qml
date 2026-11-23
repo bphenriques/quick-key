@@ -103,7 +103,7 @@ ListView {
   }
   readonly property real swatchWidth: Config.theme.fontSize / 4
   // Below about 12 characters left for titles, the times fold into each title's second line.
-  readonly property bool folded: width - 2 * Config.theme.itemPaddingX - swatchWidth - timeChars * Metrics.cell - 2 * Config.theme.spacing < 12 * Metrics.cell
+  readonly property bool folded: width - 2 * Metrics.itemPaddingX - swatchWidth - timeChars * Metrics.cell - 2 * Config.theme.spacing < 12 * Metrics.cell
 
   // Lines a row takes: two for an end, a place, or times folded under the title.
   function lineCount(row) {
@@ -112,7 +112,7 @@ ListView {
   }
 
   function rowHeight(row) {
-    return lineCount(row) * Metrics.line + 2 * Config.theme.itemPaddingY;
+    return lineCount(row) * Metrics.line + 2 * Metrics.itemPaddingY;
   }
 
   // Whether it is whole in view: a sliver of a row reads as a glitch, at either edge.
@@ -159,7 +159,7 @@ ListView {
   component DayHeading: Label {
     required property var day
 
-    leftPadding: Config.theme.itemPaddingX
+    leftPadding: Metrics.itemPaddingX
     topPadding: root.headingPadding
     tone: "dim"
     strong: true

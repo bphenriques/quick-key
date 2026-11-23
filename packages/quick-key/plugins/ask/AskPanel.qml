@@ -109,8 +109,8 @@ Scope {
         Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(panel.plugin.settings.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra
-        Layout.leftMargin: Config.theme.itemPaddingX
-        Layout.rightMargin: Config.theme.itemPaddingX
+        Layout.leftMargin: Metrics.itemPaddingX
+        Layout.rightMargin: Metrics.itemPaddingX
         clip: true
         // What scrolled away above fades out, so a cut bubble shows no edge; only while something is cut.
         layer.enabled: !atYBeginning

@@ -290,4 +290,4 @@ theme = {
 
 ![The calendar in tokyo-night, rounder and more see-through](images/look.png)
 
-Each size and opacity is a setting, bounded by the check; the [reference](options.md) lists them.
+The [reference](options.md) lists the theme's sizes and opacities, each bounded by the check.

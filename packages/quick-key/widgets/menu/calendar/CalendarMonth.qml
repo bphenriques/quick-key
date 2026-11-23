@@ -24,9 +24,9 @@ Item {
   // More would spill into the next day.
   readonly property int maxDots: 4
   // Seven cells as wide as their dots: narrower, the grid would spill past the month onto the events.
-  readonly property real minimumWidth: 7 * (maxDots * dotSize + (maxDots - 1) * dotGap + 2 * Config.theme.itemPaddingX)
+  readonly property real minimumWidth: 7 * (maxDots * dotSize + (maxDots - 1) * dotGap + 2 * Metrics.itemPaddingX)
   // Tighter than a menu row: six weeks of them stack up.
-  readonly property real cellPadding: Config.theme.itemPaddingY / 2
+  readonly property real cellPadding: Metrics.itemPaddingY / 2
   // By month, so a day picked within it rebuilds nothing.
   readonly property int year: selected.getFullYear()
   readonly property int month: selected.getMonth()
@@ -38,11 +38,11 @@ Item {
   }
 
   // The last week ends on a menu row's padding, the half its cells give up added back.
-  implicitHeight: titleLabel.implicitHeight + Config.theme.itemPaddingY + grid.implicitHeight + cellPadding
+  implicitHeight: titleLabel.implicitHeight + Metrics.itemPaddingY + grid.implicitHeight + cellPadding
 
   Label {
     id: titleLabel
-    x: Config.theme.itemPaddingX
+    x: Metrics.itemPaddingX
     strong: true
     text: root.title
   }
@@ -50,7 +50,7 @@ Item {
   GridLayout {
     id: grid
     anchors.top: titleLabel.bottom
-    anchors.topMargin: Config.theme.itemPaddingY
+    anchors.topMargin: Metrics.itemPaddingY
     anchors.left: parent.left
     anchors.right: parent.right
     columns: 7
@@ -66,7 +66,7 @@ Item {
         required property int index
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        Layout.bottomMargin: Config.theme.itemPaddingY
+        Layout.bottomMargin: Metrics.itemPaddingY
         horizontalAlignment: Text.AlignHCenter
         tone: "dim"
         // Some locales' short names are whole words (pt: segunda): three letters, fewer where the column is narrower.

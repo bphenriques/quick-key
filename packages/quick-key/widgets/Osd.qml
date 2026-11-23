@@ -71,7 +71,7 @@ Scope {
       readonly property string tone: status.muted ? "dim" : status.tone || (status.active ? "primary" : "normal")
 
       // A level no longer than half its screen.
-      readonly property real length: Math.min(Config.theme.osdLength, screen.height / 2 || Config.theme.osdLength)
+      readonly property real length: Math.min(Metrics.osdLength, screen.height / 2 || Metrics.osdLength)
       // At the right edge, centred along it.
       anchors.right: true
       margins.right: Math.min(Config.theme.edgeMargin, screen.width / 4, screen.height / 4)
@@ -94,7 +94,7 @@ Scope {
         width: implicitWidth
         height: implicitHeight
         visible: window.metered
-        implicitWidth: Config.theme.osdIconSize + 2 * Config.theme.padding
+        implicitWidth: Metrics.osdIconSize + 2 * Config.theme.padding
         implicitHeight: levelColumn.implicitHeight + 2 * Config.theme.padding
 
         // The wheel runs the pair action the status names; a pill adjusts nothing.
@@ -122,7 +122,7 @@ Scope {
           }
 
           Icon {
-            size: Config.theme.osdIconSize
+            size: Metrics.osdIconSize
             tone: window.tone
             glyph: window.status.glyph
           }

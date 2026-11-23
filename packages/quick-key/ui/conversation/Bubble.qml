@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs
+import qs.ui
 
 // A message in a conversation: yours (`mine`) a bubble on the right, the other plain on the left; as wide as its content, up to `maximumWidth`.
 Rectangle {
@@ -14,11 +15,11 @@ Rectangle {
   // As wide as it may be, whatever it holds: text cut at a line count reports the width it was cut to, and sized by it the bubble would never settle.
   property bool full: false
 
-  readonly property real paddingX: mine ? Config.theme.itemPaddingX : 0
+  readonly property real paddingX: mine ? Metrics.itemPaddingX : 0
 
   Layout.alignment: mine ? Qt.AlignRight : Qt.AlignLeft
   Layout.preferredWidth: full ? maximumWidth : Math.min(column.implicitWidth + 2 * paddingX, maximumWidth)
-  implicitHeight: column.implicitHeight + 2 * Config.theme.itemPaddingY
+  implicitHeight: column.implicitHeight + 2 * Metrics.itemPaddingY
   radius: Config.theme.itemRadius * 2
   color: mine ? Config.colors.bubble : "transparent"
   opacity: faded ? Config.theme.disabledOpacity : 1
@@ -28,8 +29,8 @@ Rectangle {
     anchors.fill: parent
     anchors.leftMargin: root.paddingX
     anchors.rightMargin: root.paddingX
-    anchors.topMargin: Config.theme.itemPaddingY
-    anchors.bottomMargin: Config.theme.itemPaddingY
+    anchors.topMargin: Metrics.itemPaddingY
+    anchors.bottomMargin: Metrics.itemPaddingY
     spacing: Config.theme.spacing / 2
   }
 }

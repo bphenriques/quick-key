@@ -10,7 +10,7 @@ Rectangle {
   property bool dimsWhenDisabled: true
   // The item the keys are on (a selected day, an event in focus), highlighted as the pointer does.
   property bool current: false
-  property real verticalPadding: Config.theme.itemPaddingY
+  property real verticalPadding: Metrics.itemPaddingY
 
   readonly property bool hovered: mouse.containsMouse
 
@@ -18,9 +18,9 @@ Rectangle {
   signal secondaryActivated
   signal scrolled(bool up)
 
-  implicitWidth: row.implicitWidth + 2 * Config.theme.itemPaddingX
+  implicitWidth: row.implicitWidth + 2 * Metrics.itemPaddingX
   // Squeezed in a layout, no narrower than its content can go (its text shortened, never its icons).
-  Layout.minimumWidth: row.Layout.minimumWidth + 2 * Config.theme.itemPaddingX
+  Layout.minimumWidth: row.Layout.minimumWidth + 2 * Metrics.itemPaddingX
   implicitHeight: row.implicitHeight + 2 * verticalPadding
   radius: Config.theme.itemRadius
   // Disabled rows dim whole, images included.
@@ -33,8 +33,8 @@ Rectangle {
     anchors.verticalCenter: parent.verticalCenter
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.leftMargin: Config.theme.itemPaddingX
-    anchors.rightMargin: Config.theme.itemPaddingX
+    anchors.leftMargin: Metrics.itemPaddingX
+    anchors.rightMargin: Metrics.itemPaddingX
     spacing: Config.theme.spacing
   }
 

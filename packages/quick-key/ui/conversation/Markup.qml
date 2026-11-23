@@ -205,7 +205,7 @@ Singleton {
 
   // The wash on a table of its own, as Qt's rich text draws a cell's padding outside the cell's background.
   function code(lines, top) {
-    return opening(top, true) + "<tr><td><table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" bgcolor=\"" + css(Tone.wash("normal", 0.5)) + "\"><tr><td style=\"padding:" + Config.theme.itemPaddingY + "px " + Config.theme.itemPaddingX
+    return opening(top, true) + "<tr><td><table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" bgcolor=\"" + css(Tone.wash("normal", 0.5)) + "\"><tr><td style=\"padding:" + Metrics.itemPaddingY + "px " + Metrics.itemPaddingX
       + "px; white-space:pre-wrap\">" + lines.map(escaped).join("<br>") + "</td></tr></table></td></tr>" + closing(1);
   }
 
@@ -216,7 +216,7 @@ Singleton {
   // Columns apart, the header bold over one divider: as the menu lists, never a grid.
   function table(header, separator, rows, top) {
     const aligns = separator.map(cell => /^:-+:$/.test(cell) ? "center" : /-:$/.test(cell) ? "right" : "left");
-    const pad = Config.theme.itemPaddingY;
+    const pad = Metrics.itemPaddingY;
     const row = (values, bold) => "<tr>" + header.map((unused, i) => "<td align=\"" + (aligns[i] ?? "left") + "\" style=\"padding:" + (bold ? 0 : pad) + "px 0 " + pad + "px 0\">"
       + (bold ? "<b>" + inline(values[i] ?? "") + "</b>" : inline(values[i] ?? "")) + "</td>").join(spacer(2 * Config.theme.spacing)) + "</tr>";
     return opening(top, false) + row(header, true) + divider(2 * header.length - 1) + rows.map(cells => row(cells, false)).join("") + closing(2 * header.length - 1);

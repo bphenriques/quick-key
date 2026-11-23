@@ -84,7 +84,7 @@ Surface {
     id: layout
     anchors.fill: parent
     anchors.margins: Config.theme.padding
-    spacing: Config.theme.itemPaddingY
+    spacing: Metrics.itemPaddingY
 
     RowLayout {
       Layout.fillWidth: true
@@ -115,7 +115,7 @@ Surface {
       ColumnLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
-        spacing: Config.theme.itemPaddingY
+        spacing: Metrics.itemPaddingY
 
         RowLayout {
           Layout.fillWidth: true

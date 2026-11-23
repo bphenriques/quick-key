@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import qs
 
 // Keys a level takes beyond its rows, on one line: each key as KeyHint shows it, then what it does; a single key also takes a click.
 RowLayout {
@@ -11,7 +10,7 @@ RowLayout {
   // [{ key, what, clickable }], a key being a name or a pair of names (["Left", "Right"]).
   property var keys: []
   // Each entry's, as a row's; 0 to sit on a line of text.
-  property real verticalPadding: Config.theme.itemPaddingY
+  property real verticalPadding: Metrics.itemPaddingY
 
   signal picked(var key)
 

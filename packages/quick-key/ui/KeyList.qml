@@ -17,7 +17,7 @@ GridLayout {
   flow: GridLayout.LeftToRight
   columns: Config.menu.columns
   columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
-  rowSpacing: Config.theme.listSpacing
+  rowSpacing: 0
 
   Repeater {
     model: root.keys.length

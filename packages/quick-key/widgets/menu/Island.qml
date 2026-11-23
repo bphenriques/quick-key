@@ -26,11 +26,11 @@ ColumnLayout {
     // The height held sits beyond it, outside what Tab lights, so the turn stays next to the prompt.
     Layout.topMargin: Math.max(0, last.tallest - exchange.implicitHeight)
     // Outset by its padding, so the turn lines up with the prompt.
-    Layout.leftMargin: -Config.theme.itemPaddingX
-    Layout.rightMargin: -Config.theme.itemPaddingX
+    Layout.leftMargin: -Metrics.itemPaddingX
+    Layout.rightMargin: -Metrics.itemPaddingX
     onVisibleChanged: if (!visible) last.tallest = 0
     onExpandsChanged: if (expands) settle.restart()
-    verticalPadding: Config.theme.itemPaddingY / 2
+    verticalPadding: Metrics.itemPaddingY / 2
     current: root.menu.answerFocused
     onActivated: root.model.expand()
 

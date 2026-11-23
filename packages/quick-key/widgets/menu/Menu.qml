@@ -118,7 +118,7 @@ Scope {
         flow: GridLayout.LeftToRight
         columns: root.menu.columns
         columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
-        rowSpacing: Config.theme.listSpacing
+        rowSpacing: 0
 
         Repeater {
           model: root.menu.hints.length
@@ -136,7 +136,7 @@ Scope {
 
       Label {
         visible: !root.hinting && !root.menu.filtering && root.menu.emptyText !== ""
-        Layout.leftMargin: Config.theme.itemPaddingX
+        Layout.leftMargin: Metrics.itemPaddingX
         tone: "dim"
         text: root.menu.emptyText
       }
@@ -144,9 +144,9 @@ Scope {
       // Filtering, as tall as its rows were, so nothing moves as the filter narrows.
       ColumnLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: root.menu.filtering ? root.menu.filterSlots * filledRow.implicitHeight + (root.menu.filterSlots - 1) * spacing : -1
+        Layout.preferredHeight: root.menu.filtering ? root.menu.filterSlots * filledRow.implicitHeight : -1
         visible: !root.hinting && (root.menu.rows.length > 0 || root.menu.filtering)
-        spacing: Config.theme.listSpacing
+        spacing: 0
 
         // A filled row's height, for the rows held while filtering.
         MenuRow {
@@ -158,8 +158,8 @@ Scope {
 
         Label {
           visible: root.menu.filtering && root.menu.emptyText !== ""
-          Layout.leftMargin: Config.theme.itemPaddingX
-          Layout.topMargin: Config.theme.itemPaddingY
+          Layout.leftMargin: Metrics.itemPaddingX
+          Layout.topMargin: Metrics.itemPaddingY
           tone: "dim"
           text: root.menu.emptyText
         }
@@ -199,7 +199,7 @@ Scope {
         flow: GridLayout.LeftToRight
         columns: root.menu.columns
         columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
-        rowSpacing: Config.theme.listSpacing
+        rowSpacing: 0
 
         Repeater {
           model: root.menu.bodyActions.length
@@ -222,8 +222,8 @@ Scope {
 
       Label {
         Layout.fillWidth: true
-        Layout.leftMargin: Config.theme.itemPaddingX
-        Layout.rightMargin: Config.theme.itemPaddingX
+        Layout.leftMargin: Metrics.itemPaddingX
+        Layout.rightMargin: Metrics.itemPaddingX
         visible: !root.hinting && root.menu.error !== ""
         // Alert, not warning: the warning hue sits too close to calendar colours to read as a fault.
         tone: "alert"

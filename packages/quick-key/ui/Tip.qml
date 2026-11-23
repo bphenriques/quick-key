@@ -25,8 +25,8 @@ Surface {
 
   visible: fade.loaded && text !== ""
   opacity: fade.value
-  width: label.implicitWidth + 2 * Config.theme.itemPaddingX
-  height: label.implicitHeight + 2 * Config.theme.itemPaddingY
+  width: label.implicitWidth + 2 * Metrics.itemPaddingX
+  height: label.implicitHeight + 2 * Metrics.itemPaddingY
   radius: Config.theme.itemRadius
   anchors.horizontalCenter: parent.horizontalCenter
   // Above, away from the menu's edge, so it never leaves the screen.
