@@ -179,6 +179,8 @@ The plugin's `shortcut` only labels that key. Their keys show where they act, an
 
 A key path runs as typing it would: `notifications press "2 x"`. The plugin's actions, for a binding (`notifications action <name>`) or an entry, are `summon`, `invoke` (opens the newest card), `dismiss` (the newest), `clear`, `restore` and `pause`.
 
+As a list, `{ key = "N"; desc = "Notifications"; icon = "<glyph>"; list = "notifications"; }` shows the cards, newest first, then those 20 struck through: a digit opens a card, or brings a closed one back, and its own menu dismisses it.
+
 ### Replies
 
 A sender that takes a reply (the protocol's `inline-reply` action) gets one first among its card's actions, on `TAB`. The prompt takes the actions' place, one line that scrolls, so the card keeps its height, and holds the keys until you leave it:

@@ -995,6 +995,31 @@ ShellRoot {
         }
       },
       {
+        name: "as a list: the cards, then the closed struck; choosing a closed one brings it back",
+        start: () => {
+          root.plugin.release();
+          root.reset();
+          ["L1", "L2"].forEach(summary => root.send(summary));
+        },
+        until: () => {
+          const p = root.plugin;
+          if (!("listed" in root.marks)) {
+            if (!root.find("L1") || !root.find("L2")) return false;
+            root.mark("listed");
+            p.dismiss(root.find("L1"));
+            return false;
+          }
+          const items = p.items;
+          if (!("chose" in root.marks)) {
+            if (items.length < 2 || items[0].label !== "L2" || items[0].done || !items.some(item => item.label === "L1" && item.done)) return false;
+            root.mark("chose");
+            p.select(items.find(item => item.label === "L1").id);
+            return false;
+          }
+          return root.find("L1") !== null && p.items.filter(item => item.label === "L1").length === 1 && !p.items.find(item => item.label === "L1").done;
+        }
+      },
+      {
         name: "the settings' check names what is wrong, and passes these",
         until: () => {
           const problems = root.plugin.settings.ruleProblems({ match: { nope: "x", body: "(", summary: "(?<app>x)" }, extra: 1, timeout: -1, urgency: "loud", ignorePause: "yes", actions: [{ key: "x", desc: "D", cmd: "c" }, { key: "q", cmd: "c", closes: "yes" }], run: 1 });

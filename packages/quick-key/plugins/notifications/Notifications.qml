@@ -78,8 +78,12 @@ Plugin {
       helpReply: "Reply",
       helpClear: "Clear all",
       helpRestore: "Bring back the last closed",
-      helpPause: "Pause or resume"
+      helpPause: "Pause or resume",
+      dismiss: "Dismiss"
     })
+  // As a list, for an entry with `list` set to its name: the cards, then the last closed, newest first; choosing one opens it, or brings a closed one back.
+  items: atRest.map(entry => itemOf(entry, false)).concat(internal.closed.slice().reverse().map(entry => itemOf(entry, true)))
+  empty: words.none
   actions: ({
       summon: { icon: () => Glyphs.notifications, available: () => true, run: () => root.summon() },
       pause: { icon: () => root.glyph, state: root.name, available: () => true, run: () => root.togglePause() },
@@ -261,15 +265,43 @@ Plugin {
     return true;
   }
 
-  // The last card that closed, back in the stack as the newest, only to read: its sender is done with it.
-  function restore() {
-    const entry = internal.closed[internal.closed.length - 1];
+  // A card that closed, the last by default, back in the stack as the newest, only to read: its sender is done with it.
+  function restore(entry = internal.closed[internal.closed.length - 1]) {
     if (!entry) return;
-    internal.closed = internal.closed.slice(0, -1);
+    internal.closed = internal.closed.filter(each => each !== entry);
     entry.came = ++internal.seq;
     entry.timeout = timeoutOf(entry);
     internal.list = internal.list.concat([entry]);
     if (summoned && !internal.replying) pick(entry);
+  }
+
+  // A card as a list's item, by when it came: its title, its app and time aside, struck once closed.
+  function itemOf(entry, closed) {
+    const app = appOf(entry);
+    const title = entry.summary || app;
+    const when = entry.arrived ? Clock.time(new Date(entry.arrived)) : "";
+    const detail = [app.toLowerCase() === title.toLowerCase() ? "" : app, when].filter(part => part).join(" · ");
+    return {
+      id: String(entry.came),
+      label: title,
+      icon: Glyphs.notifications,
+      detail: detail,
+      tone: critical(entry) ? "alert" : "",
+      done: closed,
+      closes: true,
+      actions: closed ? [] : [{ key: "x", desc: words.dismiss, icon: Glyphs.close }]
+    };
+  }
+
+  function select(id) {
+    const live = internal.list.find(entry => String(entry.came) === id);
+    if (live) return open(live);
+    restore(internal.closed.find(entry => String(entry.came) === id));
+  }
+
+  function run(id, key) {
+    const live = internal.list.find(entry => String(entry.came) === id);
+    if (live && key === "x") dismiss(live);
   }
 
   // When it came, once it has waited a minute or more (held by pause, idle or a fullscreen window): so an old one never reads as new.
