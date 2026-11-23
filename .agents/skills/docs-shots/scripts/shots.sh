@@ -22,11 +22,12 @@ jq '
       | with_entries(select(.value != null))) }
 ' "$here/../../record-tour/scripts/events.json" > "$work/events.json"
 
-# The live config with those events, minus Wi-Fi, whose status names the network, and the canned agent under a generic name.
+# The live config with those events, minus Wi-Fi, whose status names the network, the canned agent under a generic name, and the sizes the frames below expect.
 mkdir -p "$work/config/quick-key"
 ln -s "${XDG_CONFIG_HOME:-$HOME/.config}/fontconfig" "$work/config/fontconfig"
 jq --arg file "$work/events.json" --arg agent "$python $here/agent.py" '
-  .calendar.file = $file | del(.calendar.remind) | .menu.entries |= map(select(.list != "wifi"))
+  .menu.width = 960 | .theme.edgeMargin = 35 | del(.menu.margin)
+  | .calendar.file = $file | del(.calendar.remind) | .menu.entries |= map(select(.list != "wifi"))
   | .plugins.ask = { ask: $agent, title: "Assistant" } | if .menu.input then .menu.input.desc = "Ask Assistant" else . end
 ' "${XDG_CONFIG_HOME:-$HOME/.config}/quick-key/config.json" > "$work/config/quick-key/config.json"
 
@@ -36,7 +37,9 @@ name=$(jq -r .name <<<"$output")
 back=$(niri msg --json workspaces | jq '.[] | select(.is_focused) | .idx')
 empty=$(niri msg --json workspaces | jq --arg o "$name" '[.[] | select(.output == $o and .active_window_id == null)] | max_by(.idx) | .idx')
 
-XDG_CONFIG_HOME=$work/config quickshell -p "$shell" > "$work/qs.log" 2>&1 &
+# A copy, whose path keys a saved state of its own, so no earlier run's conversation shows.
+cp -r --no-preserve=mode "$shell" "$work/shell"
+XDG_CONFIG_HOME=$work/config quickshell -p "$work/shell" > "$work/qs.log" 2>&1 &
 pid=$!
 trap 'quickshell kill --pid $pid >/dev/null 2>&1 || kill $pid; niri msg action focus-workspace "$back"; rm -rf "$work"' EXIT
 niri msg action focus-workspace "$empty"
@@ -53,7 +56,7 @@ shot() {
 ipc() { quickshell ipc --pid "$pid" call "$@"; }
 
 ipc menu toggle; shot menu 1008 290; ipc menu toggle; sleep 0.5
-ipc menu toggleEntry a; shot speakers 688 309; ipc menu toggleEntry a; sleep 0.5
+ipc menu toggleEntry a; shot speakers 768 309; ipc menu toggleEntry a; sleep 0.5
 ipc menu toggleEntry c; shot calendar 1008 450; ipc menu toggleEntry c; sleep 0.5
 ipc ask activate; sleep 1
 wtype -k Shift_L
