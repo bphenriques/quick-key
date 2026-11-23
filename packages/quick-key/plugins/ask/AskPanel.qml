@@ -145,9 +145,8 @@ Scope {
 
     barShown: true
     statuses: true
-    islands: Config.menu.islands
     bar: RowLayout {
-      // The legend on an island of its own with `menu.islands`, the statuses on another.
+      // With `menu.islands`, the legend on an island of its own.
       readonly property var islands: [legend]
 
       // Only what the state changes; fixed keys are listed on `?`.

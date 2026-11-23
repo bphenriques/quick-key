@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Window
 import Quickshell
 import Quickshell.Wayland
 import qs
@@ -21,8 +20,6 @@ Scope {
   property Component body
   property bool inputShown: false
   property bool inputOver: false
-  // The bar drawn as islands, one behind each item its content lists in `islands`, rather than as one surface.
-  property bool islands: false
   property bool inputFocused: false
   property Component input
 
@@ -76,12 +73,9 @@ Scope {
       // Clicks beside the bar and the card reach the dismiss area below.
       mask: Region {
         item: cardSurface
+        // The bar by its surfaces: as islands, a click between them reaches the dismiss area too.
         Region {
-          item: bar.visible && !root.islands ? bar : null
-        }
-        // As islands, a click between them reaches the dismiss area too.
-        Region {
-          regions: Array.from({ length: islandRegions.count }, (_, i) => islandRegions.objectAt(i))
+          regions: Array.from({ length: islands.count }, (_, i) => islands.itemAt(i)?.region)
         }
         Region {
           item: inputSurface.visible ? inputSurface : null
@@ -91,27 +85,11 @@ Scope {
         item: cardSurface
         radius: Config.theme.radius
         Region {
-          item: bar.visible && !root.islands ? bar : null
-          radius: Config.theme.radius
-        }
-        Region {
-          regions: Array.from({ length: islandRegions.count }, (_, i) => islandRegions.objectAt(i))
+          regions: Array.from({ length: islands.count }, (_, i) => islands.itemAt(i)?.region)
         }
         Region {
           item: inputSurface.visible ? inputSurface : null
           radius: Config.theme.radius
-        }
-      }
-
-      Instantiator {
-        id: islandRegions
-        model: islandsDrawn.count
-
-        // Each island by the bar it sits on, so it follows the bar too.
-        PlacedRegion {
-          required property int index
-          over: islandsDrawn.count > index ? islandsDrawn.itemAt(index) : null
-          at: Qt.point(bar.x + (over?.x ?? 0), bar.y + (over?.y ?? 0))
         }
       }
 
@@ -136,7 +114,7 @@ Scope {
         }
 
         // Over the card, so a tip on its items shows over it.
-        Surface {
+        Item {
           id: bar
           visible: root.barShown
           z: 1
@@ -145,17 +123,20 @@ Scope {
           width: cardSurface.width
           // At least a padded line, so a level's bar without the clock is as tall as the top level's and the body holds still.
           height: Math.max(barRow.implicitHeight, Metrics.line + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
-          // As islands, only what is behind each item shows.
-          color: root.islands ? "transparent" : Tone.surface()
-          border.width: root.islands ? 0 : Config.theme.borderWidth / Screen.devicePixelRatio
 
+          // One surface behind the row; with `menu.islands`, one behind each item its content lists in `islands`, and the statuses.
           Repeater {
-            id: islandsDrawn
-            // What its content lists, and the statuses Panel adds on the right.
-            model: root.islands ? (barContent.item?.islands ?? []).concat(statusesContent.item ? [statusesContent.item] : []) : []
+            id: islands
+            model: Config.menu.islands ? (barContent.item?.islands ?? []).concat(statusesContent.item ? [statusesContent.item] : []) : [barRow]
 
             Surface {
+              id: island
               required property Item modelData
+              // By the bar it sits on, so it follows the bar too.
+              readonly property Region region: PlacedRegion {
+                over: island
+                at: Qt.point(bar.x + island.x, bar.y + island.y)
+              }
               visible: modelData.visible && modelData.width > 0
               // Its item's place in the bar, each holder's offset up to the bar's row, read again as any moves; widened by the bar's padding, so the outer islands meet the card's edges.
               x: {
