@@ -397,6 +397,14 @@ ShellRoot {
         until: () => Plugins.get("recaller").stage === "idle" && Plugins.get("recaller").exchanges[0]?.reply === "from before"
       },
       {
+        name: "a conversation that fails to load says why, rather than starting a new one in its place",
+        start: () => Plugins.get("recaller").select("gone"),
+        until: () => {
+          const ask = Plugins.get("recaller");
+          return ask.stage === "idle" && ask.exchanges.length === 0 && ask.error === "Resource not found" && ask.session === "";
+        }
+      },
+      {
         name: "an agent that ends before listing says why, and the list is empty",
         until: () => {
           const ask = Plugins.get("unlisted");

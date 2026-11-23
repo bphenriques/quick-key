@@ -188,7 +188,8 @@ Item {
     if (!session || !method) return fresh(!!session);
     request(method, { sessionId: session, cwd: cwd, mcpServers: [] }, error => {
       if (!live()) return;
-      if (error?.code === authRequired) return fail(refusal(error));
+      // Loading for its history, a new conversation would pass for the one asked for.
+      if (error?.code === authRequired || error && internal.replaying) return fail(refusal(error));
       if (error) return fresh(true);
       use(session);
     });

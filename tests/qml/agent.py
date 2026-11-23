@@ -1,5 +1,5 @@
 # The suites' stand-in ACP agent, on the SDK's agent side: argv names its session and, optionally, a behaviour; otherwise the prompt picks the answer.
-# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load, resume, a permission's outcome), and `trapped` when a turn is cancelled; it lists two conversations, and a load replays one exchange.
+# It leaves traces in $XDG_RUNTIME_DIR for the cases: `<session>-log` (initialize, load, resume, a permission's outcome), and `trapped` when a turn is cancelled; it lists two conversations, and a load replays one exchange, but of `gone`, which fails.
 import asyncio
 import os
 import sys
@@ -66,6 +66,8 @@ class Agent:
 
     async def load_session(self, cwd, session_id, mcp_servers=None, **kwargs):
         trace("load " + session_id)
+        if session_id == "gone":
+            raise acp.RequestError.resource_not_found(session_id)
         await self.conn.session_update(
             session_id, acp.update_user_message_text("what was it?")
         )

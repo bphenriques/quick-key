@@ -170,6 +170,7 @@ Plugin {
   function resumed(outcome) {
     stage = "idle";
     failure = outcome.error ?? "";
+    if (!outcome.loaded) session = "";
     exchanges = !outcome.loaded ? [] : recalled.map(entry => {
       const shaped = Markup.options(entry.reply);
       return { prompt: entry.prompt.trim(), image: "", reply: shaped.text, error: "", stopped: false, after: "", input: false, options: shaped.options, table: Markup.hasTable(entry.reply) };
