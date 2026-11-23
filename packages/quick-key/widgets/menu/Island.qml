@@ -11,8 +11,7 @@ GridLayout {
 
   required property MenuModel menu
   readonly property InputModel model: menu.island
-  // The prompt sits nearest the screen's edge, the turn beyond it: at the top edge (Config.atTop), the order flips.
-
+  // One column: the prompt nearest the screen's edge, the turn beyond it, so at the top edge (Config.atTop) the order flips.
   columns: 1
   rowSpacing: Config.theme.spacing / 2
 

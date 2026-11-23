@@ -44,7 +44,7 @@ Singleton {
       }
       const given = Config.pluginSettings(object, spec);
       if (given.unknown.length) console.warn("plugin", name + ": ignoring unknown settings:", given.unknown.join(", "));
-      if (given.mistyped.length) console.warn("plugin", name + ": ignoring settings of another kind:", given.mistyped.join(", "));
+      if (given.mistyped.length) console.warn("plugin", name + ": ignoring", given.mistyped.join("; "));
       for (const [key, value] of Object.entries(given.values)) object[key] = value;
       return object;
     }

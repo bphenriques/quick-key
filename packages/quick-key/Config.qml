@@ -75,12 +75,14 @@ Singleton {
     return kind(declared) === "map" && kind(value) === "map" ? Object.assign({}, declared, value) : value;
   }
 
-  // A plugin's part of config.json over the settings it declares (`declared`, made with their defaults): the values it can take, a map over its default map; and the keys it cannot, undeclared or of another kind. The loader and the check both read it this way.
+  // A plugin's part of config.json over the settings it declares (`declared`, made with their defaults): the values it can take, a map over its default map; the keys it does not declare; and what is of another kind, as `undeclared` words it, a map's own keys too. The loader and the check both read it this way.
   function pluginSettings(declared, spec) {
     const [values, unknown, mistyped] = [{}, [], []];
+    const kinds = kindsOf(declared);
     for (const key of Object.keys(spec).filter(key => key !== "type")) {
-      if (!settable(declared, key)) unknown.push(key);
-      else if (declared[key] !== null && kind(spec[key]) !== kind(declared[key])) mistyped.push(key);
+      const wrong = settable(declared, key) ? undeclared({ [key]: spec[key] }, kinds) : null;
+      if (wrong === null) unknown.push(key);
+      else if (wrong.length) mistyped.push(...wrong);
       else values[key] = over(declared[key], spec[key]);
     }
     return { values, unknown, mistyped };
@@ -246,9 +248,9 @@ Singleton {
         property int listSpacing: 0
         // The distance from the screen's edge to the menu, pop-ups and cards, in pixels, unless each sets its own `margin`.
         property int edgeMargin: 35
-        // The pop-up's level bar length and icon size, in pixels.
-        property int osdLength: 160
-        property int osdIconSize: 28
+        // The pop-up's level bar length and icon size, in pixels; unset, they follow the font, 160 and 28 at 11 points.
+        property int osdLength: Math.round(160 * fontSize / 11)
+        property int osdIconSize: Math.round(28 * fontSize / 11)
         // A meter's thickness, and its length in a row, in pixels.
         property int meterThickness: 6
         property int meterLength: 48
@@ -306,9 +308,9 @@ Singleton {
         property int timeout: 1500
         // The statuses and plugins whose changes pop up, by name; battery's as it is plugged in or out.
         property var show: ["sink", "source", "brightness", "keyboardLayout", "keepAwake"]
-        // The screen edge a pop-up sits at, centred along it: right, left, top or bottom; at the top or bottom a level reads across. The corner pills stay top right.
+        // The screen edge a pop-up sits at, centred along it: right, left, top or bottom; at the top or bottom a level reads across.
         property string position: "right"
-        // Its distance from the screen's edge, in pixels, and the corner pills'.
+        // Its distance from the screen's edge, in pixels.
         property int margin: adapter.theme.edgeMargin
       }
 

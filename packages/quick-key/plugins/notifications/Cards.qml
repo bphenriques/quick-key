@@ -92,9 +92,10 @@ Scope {
       anchors.bottom: !view.top
       anchors.right: view.right
       anchors.left: !view.right
-      // In the top right, under the corner pills (recording) as they stack, a gap more past them.
-      margins.top: view.settings.margin + (view.right && CornerPills.order.length > 0 ? CornerPills.height + Config.theme.spacing : 0)
-      margins.bottom: view.settings.margin
+      // In the corner pills' corner (recording), past them as they stack, a gap more.
+      readonly property real pills: view.right && view.top !== Config.atTop && CornerPills.order.length > 0 ? CornerPills.height + Config.theme.spacing : 0
+      margins.top: view.settings.margin + (view.top ? pills : 0)
+      margins.bottom: view.settings.margin + (view.top ? 0 : pills)
       margins.right: view.settings.margin
       margins.left: view.settings.margin
       // No wider than its screen within the margins, whatever width is set.
@@ -181,7 +182,7 @@ Scope {
                 readonly property string app: entry ? view.plugin.appOf(entry) : ""
                 title: entry?.summary || app
                 // Its count, its app where nothing else names it (its icon from the theme may), and when it came once it has waited.
-                aside: !entry ? "" : [entry.repeats > 1 ? "×" + entry.repeats : "", view.plugin.appShown(entry, title, icon !== ""), view.plugin.ageOf(entry)].filter(part => part).join(" · ")
+                aside: !entry ? "" : view.plugin.asideOf(entry, title, icon !== "", view.plugin.ageOf(entry))
                 body: entry?.body ?? ""
                 tone: entry && view.plugin.critical(entry) ? "alert" : ""
                 meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1

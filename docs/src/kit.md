@@ -19,10 +19,10 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 
 | Component | Use |
 |---|---|
-| `Label` | all text, coloured by `tone`: `normal`, `dim`, `primary`, `warning` or `alert`; bold when `strong`, the one to find first (a heading, the clock, the item in use) |
+| `Label` | all text, coloured by `tone`: `normal`, `dim`, `primary`, `warning` or `alert`; bold when `strong`, the one to find first (a heading, the clock, the item in use); a `title` (the clock, a card's summary) at `theme.titleScale` |
 | `Tone` | the colour of each tone, `dim` being the normal colour at reduced alpha; a panel's background; a tone washed behind something (a highlight, a track) |
-| `Metrics` | the font's character width (`cell`) and line height (`line`), for sizes given in characters or lines |
-| `Icon` | a glyph or an image in the same square; `recolour` draws an image as drawn, in greys or in its tone's colour |
+| `Metrics` | the font's character width (`cell`) and line height (`line`), and a title's line (`titleLine`), for sizes given in characters or lines |
+| `Icon` | a glyph or an image in the same square; `recolour` draws an image as drawn, in greys, or as its shape in its tone's colour (`tint`, a symbolic icon only; any other goes grey) |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports; its text names a state (`off`, `muted`) only when there is no value |
 | `ItemLine` | a listed item's `StatusLine`: lit and bold while `active`, dim and struck through once `done`, its value in its own `itemTone` (a late date), its own `itemMeter`; the menu's rows draw a status over it |
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend, `allowQuestion` |
@@ -50,10 +50,10 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
 | `OverlayWindow`, `DismissArea` | a popup above everything; the click-outside catcher under it, one per screen |
-| `CornerPill` | a pill top right on every screen while `shown`, fading in and out, stacked under the pills already showing; `hovered` and `clicked` for its pointer |
+| `CornerPill` | a pill on the right of every screen, in the corner away from the menu's edge, while `shown`, fading in and out, stacked under the pills already showing; `hovered` and `clicked` for its pointer |
 | `CornerPills` | the corner pills on screen, in the order they showed, which is the order they stack in, each as tall as it draws, and the stack's `height` for what sits under it |
 | `Transient` | shown for a moment on `show()`, held while `held`, ignoring startup's replayed state until `armed` |
-| `Fade` | fades a surface in and out over `theme.animationDuration`; `loaded` holds a `LazyLoader` until it has faded out; the menu appears and closes at once, since its background blur cannot fade with it and a fade-out would hold the keyboard |
+| `Fade` | fades a surface in and out over `theme.animationDuration`, its `offset` the distance still to travel when `theme.motion` slides it in from its edge; `loaded` holds a `LazyLoader` until it has faded out; the menu appears and closes at once, since its background blur cannot fade with it and a fade-out would hold the keyboard |
 | `MenuKeys` | key names as entries declare them (`Ctrl+Left`), their hints, the gutter a key column takes (`gutter`, a character past a letter), and keys for an app's own menu, keeping letters from the labels its app supplies |
 | `Glyphs` | the icon set, Material Design from Nerd Fonts, each an escape (`"\u{F05A9}"`) named after its entry; `glyphs` in the config overrides any by that name (`wifi`, `audioDevices`, `batteryLevels`) |
 | `Clock` | a date or a time said in `clock.locale`: `time`, `day`, `when`, `recent`, a day's `heading` and a month's `monthHeading` in sentence case, `stale` past `minutes`, the `parse`d and `format`ted forms |

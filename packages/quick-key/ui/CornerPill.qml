@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A pill in the top right corner of every screen while `shown`, fading in and out, stacked under the pills already showing.
+// A pill in the right corner away from the menu's edge of every screen while `shown`, fading in and out, stacked under the pills already showing.
 Scope {
   id: root
 
@@ -43,10 +43,13 @@ Scope {
         required property var modelData
         screen: modelData
 
-        anchors.top: true
+        // On the right, in the corner away from the menu's edge, as the cards are by default.
+        anchors.top: !Config.atTop
+        anchors.bottom: Config.atTop
         anchors.right: true
-        margins.top: Config.popups.margin + CornerPills.offset(root)
-        margins.right: Config.popups.margin
+        margins.top: Config.theme.edgeMargin + CornerPills.offset(root)
+        margins.bottom: Config.theme.edgeMargin + CornerPills.offset(root)
+        margins.right: Config.theme.edgeMargin
         onImplicitHeightChanged: root.height = implicitHeight
         Component.onCompleted: root.height = implicitHeight
         WlrLayershell.namespace: "quick-key-" + root.namespace

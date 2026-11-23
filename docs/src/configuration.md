@@ -14,7 +14,7 @@ What you choose while logged in is kept over a reload or a restart: keep awake, 
 
 The defaults are a suggested setup, not a ceiling. Sizes given in pixels that you leave unset follow `theme.fontSize` (`theme.iconSize`, `menu.width`), so a larger font keeps the proportions; what you set wins. The check bounds each value, and the layout keeps every surface within its screen, so no setting breaks the menu or its keys.
 
-Beyond the suggested look: `menu.islands` draws the bar's actions and slots apart, each on an island, as waybar's islands do; `theme.titleScale` sets the clock and a card's summary larger, up to 1.5 times the font; `theme.motion = "slide"` brings pop-ups, corner pills and cards in from their edge as they fade. The menu itself always appears at once.
+Past the suggested look, settings draw the bar as islands, set titles larger and slide pop-ups in, within the same limits; the menu itself always appears at once.
 
 ## Checking
 
@@ -50,7 +50,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
 | The `notifications` plugin, to see it holds the bus | `busctl` |
 
-`popups.show` lists what pops up as it changes, so another on-screen display can take any of it over. Listed, `battery` pops up as it is plugged in or out, not at every percent. A plugin pops up as a pill with its glyph and text on every change of its text, so list only plugins that change rarely (not a recording's timer). `popups.position` puts it at the right, left, top or bottom of the screen, a level reading across at the top or bottom.
+`popups.show` lists what pops up as it changes, so another on-screen display can take any of it over. Listed, `battery` pops up as it is plugged in or out, not at every percent. A plugin pops up as a pill with its glyph and text on every change of its text, so list only plugins that change rarely (not a recording's timer).
 
 `battery.warn` runs once as the charge falls to `battery.low`, and once more at `battery.critical`, never for the charge the shell starts with.
 

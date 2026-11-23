@@ -110,6 +110,11 @@ Plugin {
     return entry.applied.app === undefined && (iconShown || words(title).includes(words(app))) ? "" : app;
   }
 
+  // What sits beside a card's or an item's title: how many times it came, its app where nothing else names it, and when.
+  function asideOf(entry, title, iconShown, when) {
+    return [entry.repeats > 1 ? "×" + entry.repeats : "", appShown(entry, title, iconShown), when].filter(part => part).join(" · ");
+  }
+
   // Its sender's, unless a rule sets another.
   function urgencyOf(entry) {
     return entry.applied.urgency ?? settings.urgencies[entry.urgency] ?? "normal";
@@ -288,7 +293,7 @@ Plugin {
     const app = appOf(entry);
     const title = entry.summary || app;
     const when = entry.arrived ? Clock.time(new Date(entry.arrived)) : "";
-    const detail = [entry.repeats > 1 ? "×" + entry.repeats : "", appShown(entry, title, false), when].filter(part => part).join(" · ");
+    const detail = asideOf(entry, title, false, when);
     return {
       id: String(entry.came),
       label: title,

@@ -82,6 +82,7 @@ Singleton {
       "theme.borderWidth": [0, 20],
       "theme.edgeMargin": [0, 1000],
       "theme.osdIconSize": [4, 256],
+      "theme.osdLength": [8, 4000],
       "menu.width": [1],
       "menu.columns": [1, 9],
       "audio.step": [1],
@@ -185,9 +186,7 @@ Singleton {
       }
       const given = Config.pluginSettings(defaults, plugin);
       found.push(...given.unknown.map(key => at + "." + key + " is not a setting"));
-      const known = Object.assign({}, plugin);
-      for (const key of ["type"].concat(given.unknown)) delete known[key];
-      found.push(...Config.undeclared(known, Config.kindsOf(defaults), at + "."));
+      found.push(...given.mistyped.map(problem => at + "." + problem));
       defaults.destroy();
       // Its own checks on what it declares, so every problem shows at once, not one build at a time.
       const object = settings.createObject(null, given.values);
