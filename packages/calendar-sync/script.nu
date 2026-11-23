@@ -292,8 +292,9 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: strin
     let run = ^todo --config $config done $task.id | complete
     if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   } else {
-    # A repeating task's tick moved its rule to the next one todoman made: unticking takes it back, that one gone.
-    let next = $todos | where {|t| $t.recurring and not $t.completed and $t.list == $task.list and $t.summary == $task.summary and ($t.due | default 0) >= ($task.due | default 0) } | sort-by {|t| $t.due | default 0 } | get --optional 0
+    # A repeating task's tick moved its rule to the next one todoman made: undone within ten minutes (a mistaken tick), that one goes and the rule comes back; an older instance only reopens.
+    let undone = $task.completed_at != null and ((date now | format date "%s" | into int) - $task.completed_at) < 600
+    let next = if not $undone { null } else { $todos | where {|t| $t.recurring and not $t.completed and $t.list == $task.list and $t.summary == $task.summary and ($t.due | default 0) >= ($task.due | default 0) } | sort-by {|t| $t.due | default 0 } | get --optional 0 }
     let rule = if $next == null { [] } else { open --raw $next.file | split row "BEGIN:VTODO" | last | split row "\n" | where {|line| $line =~ '^RRULE[:;]' } }
     open --raw $task.file
     | split row "\n"
