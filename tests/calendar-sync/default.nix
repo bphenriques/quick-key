@@ -6,6 +6,7 @@ pkgs.runCommand "quick-key-calendar-sync"
       self.packages.${pkgs.stdenv.hostPlatform.system}.quick-key-calendar-sync
       pkgs.jq
       pkgs.python3
+      pkgs.todoman
     ];
     TZDIR = "${pkgs.tzdata}/share/zoneinfo";
   }
@@ -17,6 +18,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     chmod -R u+w state
     sync() { quick-key-calendar-sync "$@" ${./calendars.yaml} state/events.json; }
     tick() { quick-key-calendar-sync "$1" ${./calendars.yaml} state/events.json "$2" "$3"; }
+    todo() { PYTHONDONTWRITEBYTECODE=1 command todo --config state/todoman.py --porcelain "$@"; }
     task() { jq -c '.tasks[] | select(.title == "Pay the bills")' state/tasks.json; }
     fail() { echo "not ok - $1"; cat state/tasks.json; exit 1; }
 
@@ -49,6 +51,10 @@ pkgs.runCommand "quick-key-calendar-sync"
     [ "$(water)" = '[["2026-11-20",true],["2026-11-27",false]]' ] || fail "ticking a repeating task makes the next"
     tick reopen "$id" "Water the plants"
     [ "$(water)" = '[["2026-11-20",false],["2026-11-27",false]]' ] || fail "unticking a repeating task only reopens it, the next one todoman made kept"
+
+    # A long line folds onto the next after a space (RFC 5545): reopen drops a folded completion whole, the folded note beside it as it was.
+    tick reopen "$(todo list --status ANY | jq '.[] | select(.summary == "Done long ago") | .id')" "Done long ago"
+    diff <(sed '/^COMPLETED/,+1d; /^PERCENT-COMPLETE/d; s/^STATUS:COMPLETED/STATUS:NEEDS-ACTION/' ${./personal/old.ics}) state/vdirs/personal/old.ics || fail "reopen reads folded lines whole"
 
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"

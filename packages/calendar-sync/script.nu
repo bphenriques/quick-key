@@ -286,13 +286,11 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: int, 
     let run = ^todo --config $config done $id | complete
     if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   } else {
-    # todoman has no command to reopen: its status goes back to needing action, the record of its completion dropped.
+    # todoman has no command to reopen: its status goes back to needing action, its completion dropped with the lines it folds onto (RFC 5545), all three a VTODO's alone.
     let file = ^todo --config $config path $id | str trim
     open --raw $file
-    | split row "\n"
-    | where {|line| not ($line =~ '^(COMPLETED|PERCENT-COMPLETE)[:;]') }
-    | each {|line| $line | str replace --regex '^STATUS:COMPLETED(\r?)$' 'STATUS:NEEDS-ACTION$1' }
-    | str join "\n"
+    | str replace --all --regex '(?m)^(COMPLETED|PERCENT-COMPLETE)[:;].*\n([ \t].*\n)*' ''
+    | str replace --regex '(?m)^STATUS:COMPLETED(\r?)$' 'STATUS:NEEDS-ACTION$1'
     | save -f $"($file).tmp"
     mv -f $"($file).tmp" $file
   }
