@@ -30,6 +30,7 @@ Keys:
 - `C-c` stops the run, cancelling what it waits to be allowed, and keeps what it had answered so far. Leaving never stops it.
 - `C-y` allows an approval once and `C-n` denies it, the run going on. Neither answers for good: an agent offering only that hears the request cancelled. Each stays in the conversation as a dim line. `C-l` starts a new conversation, `C-o` moves it to a terminal, and `C-r`, between turns, lists past conversations.
 - `C-C` (Shift with `C-c`, as terminals copy) copies the last answer, and `PgUp` and `PgDn` scroll the conversation. The prompt keeps the keys throughout, and the bar shows only those that act now.
+- `C-?`, `?` with Ctrl since the prompt has the keys, lists the rest in the conversation's place. Any key closes the list.
 
 A question from an input starts a new conversation, as a quick-entry window does, the one it leaves staying in the agent's own list. History is that list (ACP's `session/list`, in `cwd`), in its order, each with its last activity, filtered in the menu as a shell's reverse search is. `RET` resumes one, its history replayed (`session/load`), and its own menu (`M-RET`) has `o`, which opens it in a terminal. An agent that cannot load them dims them, and one that cannot list them says so. An input that gives Ask its text takes `C-r` too.
 

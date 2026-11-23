@@ -166,8 +166,9 @@ ShellRoot {
           { key: Qt.Key_Left, modifiers: Qt.ControlModifier, text: "" },
           { key: Qt.Key_C, modifiers: Qt.ControlModifier | Qt.AltModifier, text: "\u0003" },
           { key: Qt.Key_Question, modifiers: Qt.ShiftModifier, text: "?" },
+          { key: Qt.Key_Question, modifiers: Qt.ControlModifier | Qt.ShiftModifier, text: "\u001f" },
           { key: Qt.Key_Shift, modifiers: Qt.ShiftModifier, text: "" }
-        ].map(event => MenuKeys.name(event))) === '["A","Ctrl+Left","Ctrl+Alt+c","?",""]'
+        ].map(event => MenuKeys.name(event))) === '["A","Ctrl+Left","Ctrl+Alt+c","?","Ctrl+?",""]'
       },
       {
         name: "an action brings its icon and pairing, and dims with nothing to act on",
@@ -435,7 +436,7 @@ ShellRoot {
         }
       },
       {
-        name: "? lists only keys that act: a hold while it lists something, M-1 while an item has its own menu",
+        name: "? lists only keys that act: a hold while it lists something, M-1 while an item has its own menu; the top level's bar shows ?",
         until: () => {
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "acting" } });
@@ -444,8 +445,9 @@ ShellRoot {
             menu.stack = level ? [level] : [];
             return menu.help.map(key => key.key).join();
           };
-          return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && listed({ kind: "entry", entry: { list: "acting" } }) === "Alt+1,/,Escape"
-            && listed({ kind: "entry", entry: { list: "devices" } }) === "/,Escape";
+          const hinted = () => menu.legend.some(key => key.key === "?");
+          return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && hinted() && listed({ kind: "entry", entry: { list: "acting" } }) === "Alt+1,/,Escape"
+            && !hinted() && listed({ kind: "entry", entry: { list: "devices" } }) === "/,Escape";
         }
       },
       {

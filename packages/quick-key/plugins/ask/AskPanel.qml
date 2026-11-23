@@ -24,12 +24,12 @@ Scope {
   // Escape clicked in the legend, for the prompt.
   signal escaped
 
+  // The plugin's keys first, so any key closes its list of them.
   function handle(event) {
-    if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
-      paged(event.key === Qt.Key_PageDown);
-      return true;
-    }
-    return plugin.act(MenuKeys.name(event));
+    if (plugin.act(MenuKeys.name(event))) return true;
+    if (event.key !== Qt.Key_PageUp && event.key !== Qt.Key_PageDown) return false;
+    paged(event.key === Qt.Key_PageDown);
+    return true;
   }
 
   function keep(turn, selection) {
@@ -98,8 +98,22 @@ Scope {
     }
 
     body: ColumnLayout {
+      // In the conversation's place and height, next to the prompt, as the menu's `?` lists its keys.
+      Item {
+        visible: panel.plugin.helping
+        Layout.fillWidth: true
+        Layout.preferredHeight: thread.Layout.preferredHeight
+
+        KeyList {
+          anchors.bottom: parent.bottom
+          width: parent.width
+          keys: panel.plugin.help
+        }
+      }
+
       Thread {
         id: thread
+        visible: !panel.plugin.helping
         onWidthChanged: panel.threadWidth = width
         Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true

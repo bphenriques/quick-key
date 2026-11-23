@@ -28,7 +28,10 @@ Plugin {
     restarted: "Started a new conversation",
     stop: "stop",
     newChat: "new",
-    terminal: "terminal" + Words.ellipsis
+    terminal: "terminal" + Words.ellipsis,
+    helpBreak: "Break the line",
+    helpScrollUp: "Scroll up",
+    helpScrollDown: "Scroll down"
   })
   // Each key once, `what` and `shows` for the legend; it runs only while it shows, `run` returning false to leave it to the prompt.
   readonly property var keys: [
@@ -39,14 +42,26 @@ Plugin {
     { key: "Ctrl+C", what: Words.copy, shows: () => !busy && !!exchanges[exchanges.length - 1]?.reply, run: () => copy() },
     { key: "Ctrl+l", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
     { key: "Ctrl+o", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
-    { key: "Ctrl+r", what: Words.history, shows: () => recalls, run: () => recall() }
+    { key: "Ctrl+r", what: Words.history, shows: () => recalls, run: () => recall() },
+    // `?` with Ctrl, as the prompt has the keys throughout.
+    { key: "Ctrl+?", what: Words.help, shows: () => true, run: () => helping = true }
   ].filter(entry => entry.when !== false)
+  // The keys the bar leaves out, listed in the conversation's place while `helping`; any key closes them.
+  readonly property var help: [
+    { key: "Shift+Return", desc: words.helpBreak },
+    { key: "Page_Up", desc: words.helpScrollUp },
+    { key: "Page_Down", desc: words.helpScrollDown },
+    { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave },
+    { key: "Escape", desc: Words.helpEscape }
+  ]
+  property bool helping: false
 
   // [{ prompt, reply, error, stopped, after, input, table, steps }], the last streaming while busy; `input` when a level input sent it.
   property var exchanges: []
   property alias session: agent.session
   property string draft: ""
   readonly property bool shown: Panels.top === root
+  onShownChanged: helping = false
   property bool unread: false
   // "working" on a turn (send), "resuming" a conversation it replays (resume), else "idle", as the agent's end sets it (close).
   property string stage: "idle"
@@ -291,6 +306,11 @@ Plugin {
 
   // True when the key was the panel's; Escape and the rest are the prompt's, which has the keys throughout.
   function act(key) {
+    // Any key closes the list, but a modifier alone, which has no name.
+    if (helping && key) {
+      helping = false;
+      return true;
+    }
     // Tab would type a tab.
     if (key === "Tab" || key === "Backtab") return true;
     const entry = keys.find(entry => entry.key === key);

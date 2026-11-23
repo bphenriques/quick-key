@@ -88,6 +88,15 @@ ShellRoot {
         }
       },
       {
+        name: "C-? lists the keys the bar leaves out, as ? does elsewhere; any key but a modifier alone closes it, typing nothing",
+        until: () => {
+          const ask = Plugins.get("keyed");
+          const listed = ask.act("Ctrl+?") && ask.helping && ask.help.some(key => key.key === "Shift+Return") && ask.keys.some(key => key.key === "Ctrl+?" && key.shows());
+          const kept = !ask.act("") && ask.helping;
+          return listed && kept && ask.act("x") && !ask.helping && !ask.act("x");
+        }
+      },
+      {
         name: "an answer renders as rich text of the kit's own: its HTML escaped, a link and an image by their text, a table's header bold",
         until: () => {
           const html = Markup.html("<img src=x onerror=y> [site](https://example.com) ![pic](https://example.com/a.png)\n\n| A | B |\n|---|---|\n| 1 | 2 |");

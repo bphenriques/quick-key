@@ -38,6 +38,8 @@ Singleton {
     case Qt.Key_Enter: return "Return";
     case Qt.Key_Escape: return "Escape";
     case Qt.Key_Backspace: return "BackSpace";
+    // Named with Ctrl too, so a surface whose prompt has the keys lists them on C-?.
+    case Qt.Key_Question: return "?";
     }
     if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) return String.fromCharCode(event.key);
     if (event.key >= Qt.Key_A && event.key <= Qt.Key_Z) {

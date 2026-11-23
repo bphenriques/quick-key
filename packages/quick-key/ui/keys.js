@@ -18,7 +18,7 @@ function label(key, paired = false) {
 }
 
 function shortName(name) {
-  const symbols = { Up: "↑", Down: "↓", Left: "←", Right: "→", space: "SPC", Space: "SPC", Tab: "TAB", Backtab: "S-TAB", Return: "RET", BackSpace: "DEL", Escape: "ESC" };
+  const symbols = { Up: "↑", Down: "↓", Left: "←", Right: "→", space: "SPC", Space: "SPC", Tab: "TAB", Backtab: "S-TAB", Return: "RET", BackSpace: "DEL", Escape: "ESC", Page_Up: "PgUp", Page_Down: "PgDn" };
   const [, chord, base] = name.match(/^((?:(?:Ctrl|Alt|Mod|Super|Shift)\+)*)(.*)$/);
   const modifiers = chord.split("+");
   const shift = modifiers.includes("Shift");
