@@ -7,6 +7,7 @@ import qs
 import qs.services
 import qs.ui
 import qs.ui.conversation
+import "exchanges.js" as Exchanges
 
 // An ACP agent in a panel, kept running between turns (docs/src/plugins.md).
 Plugin {
@@ -177,22 +178,8 @@ Plugin {
     return !!exchange?.input && watched;
   }
 
-  // As an Exchange draws it (Phase): blocked on an approval while running.
   function describe(exchange) {
-    const working = exchange === exchanges[exchanges.length - 1] && stage === "working";
-    const phase = working ? (approval ? "blocked" : "working")
-      : exchange.stopped ? "idle" : exchange.error ? "error" : "done";
-    const kind = phase === "blocked" ? "permission" : "";
-    return {
-      question: exchange.prompt,
-      // A stopped answer keeps what came, the stop on a line after it.
-      text: kind === "permission" ? words.allowQuestion(approval) : exchange.stopped && exchange.reply ? exchange.reply + "\n\n" + exchange.error : exchange.error || exchange.reply,
-      phase: phase,
-      kind: kind,
-      activity: phase === "working" ? activity : "",
-      table: !!exchange.table,
-      steps: exchange.steps ?? []
-    };
+    return Exchanges.described(exchange, exchange === exchanges[exchanges.length - 1] && stage === "working", approval, activity, words.allowQuestion);
   }
 
   // For the menu, while it shows it (Plugin.turn).
@@ -205,11 +192,7 @@ Plugin {
   function send(prompt, after = "", input = false) {
     prompt = prompt.trim();
     if (!prompt || busy || !settings.ask) return false;
-    // Asking again what failed replaces that exchange, keeping its `after`.
-    const last = exchanges[exchanges.length - 1];
-    const retried = last && last.error && last.prompt === prompt;
-    const kept = retried ? exchanges.slice(0, -1) : exchanges;
-    exchanges = kept.concat([{ prompt: prompt, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || watched }]);
+    exchanges = Exchanges.sent(exchanges, prompt, after, input || watched);
     stage = "working";
     approval = "";
     activity = "";
@@ -224,10 +207,7 @@ Plugin {
   function close(outcome) {
     if (stage === "resuming") return resumed(outcome);
     flush();
-    // Stopped, what streamed stays: people stop because they have read enough.
-    if (!outcome.answered) return finish({ reply: outcome.stopped ? exchanges[exchanges.length - 1].reply : "", error: outcome.error ?? "Stopped", stopped: !!outcome.stopped });
-    const text = exchanges[exchanges.length - 1].reply;
-    finish({ reply: text, table: Markup.hasTable(text) });
+    finish(Exchanges.closed(exchanges[exchanges.length - 1], outcome, words.noAnswer, Markup.hasTable));
   }
 
   // Replaced, not edited, so what draws it hears.
@@ -245,7 +225,7 @@ Plugin {
   }
 
   function finish(answer) {
-    const last = setLast({ reply: answer.reply ?? "", error: answer.error ?? (answer.reply ? "" : words.noAnswer), stopped: !!answer.stopped, table: !!answer.table });
+    const last = setLast(answer);
     stage = "idle";
     approval = "";
     if (seen(last)) report();
@@ -335,9 +315,7 @@ Plugin {
   function take() {
     const kept = Kept.value(name);
     if (kept) {
-      // A turn a restart cut short reads as stopped, as one you stopped does, not as answered with nothing.
-      const last = kept.exchanges[kept.exchanges.length - 1];
-      exchanges = last && !last.reply && !last.error ? kept.exchanges.slice(0, -1).concat([Object.assign({}, last, { error: "Stopped", stopped: true })]) : kept.exchanges;
+      exchanges = Exchanges.restored(kept.exchanges);
       session = kept.session;
       draft = kept.draft;
     }
@@ -367,8 +345,7 @@ Plugin {
       if (!flushing.running) flushing.start();
     }
     onTool: title => {
-      // An MCP tool by its server (mcp__meals__plan_week: meals), the rest by name.
-      root.activity = title.startsWith("mcp__") ? title.split("__")[1] : title;
+      root.activity = Exchanges.activityOf(title);
       if (root.settings.toolPattern && root.settings.toolPattern.test(title)) root.touched = true;
       root.report();
     }
@@ -381,13 +358,7 @@ Plugin {
       if (root.seen(root.exchanges[root.exchanges.length - 1])) root.report();
       else root.notify(root.words.allowQuestion(title));
     }
-    onHistory: (role, chunk) => {
-      const last = root.recalled[root.recalled.length - 1];
-      if (role === "user" && (!last || last.reply)) root.recalled.push({ prompt: chunk, reply: "" });
-      else if (role === "user") last.prompt += chunk;
-      else if (last) last.reply += chunk;
-      else root.recalled.push({ prompt: "", reply: chunk });
-    }
+    onHistory: (role, chunk) => Exchanges.replayed(root.recalled, role, chunk)
     onEnded: outcome => root.close(outcome)
   }
 
