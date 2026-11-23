@@ -1,8 +1,9 @@
-# Docs site: the mdBook in docs/, the reference (the settings Config.qml and each plugin declare, the module's options) generated over its placeholder.
+# Docs site: the mdBook in docs/, the reference (the settings and names the shell declares, then the module's options) generated over its placeholder.
 { pkgs, self }:
 let
   inherit (pkgs) lib;
   repo = "https://github.com/bphenriques/quick-key";
+  shell = self.packages.${pkgs.stdenv.hostPlatform.system}.quick-key;
 
   # Only the options are read, so the module's home-manager config targets can stay undeclared.
   eval = lib.evalModules {
@@ -33,25 +34,24 @@ let
       };
   };
 in
-pkgs.runCommand "quick-key-docs" { nativeBuildInputs = [ pkgs.mdbook ]; } ''
-  cp -r --no-preserve=mode ${./docs} book
+pkgs.runCommand "quick-key-docs"
   {
-    echo "# Reference"; echo
-    echo "## Settings"; echo
-    echo 'Every key of `config.json` (`programs.quick-key.settings` with Nix), with its default, as the shell declares them. A command given values gets them as `$1`, `$2`.'; echo
-    # Config.qml's adapter, a heading and a block per top-level key.
-    sed -n '/^      id: adapter$/,/^    }$/p' ${./packages/quick-key/Config.qml} | sed '1,2d;$d;s/^      //' \
-      | awk '/^\/\/ /{c=c $0 "\n"; next} /^property /{if (o) print "```\n"; n=$3; sub(/:$/, "", n); printf "### %s\n\n```qml\n%s", n, c; c=""; o=1} NF{print} END{print "```\n"}'
-    echo "## Plugin settings"; echo
-    echo 'Every plugin takes these, under `plugins.<name>`, then its own. A plugin'"'"'s `name: value` is its default for one of these.'; echo
-    # A Settings.qml's top level: each setting it declares or sets, with its comment and its whole value; its helpers left out.
-    settings() { echo '```qml'; awk 'm{print; if (/^  [])}]/) m=0; next} /^  \/\/ /{c=c $0 "\n"; next} /^  (property [a-z]+ [A-Za-z]+|[a-z][A-Za-z]*:)/{printf "%s%s\n", c, $0; m=/[[({]$/} {c=""}' "$1" | sed 's/^  //'; echo '```'; echo; }
-    settings ${./packages/quick-key/PluginSettings.qml}
-    for file in ${./packages/quick-key/plugins}/*/Settings.qml; do
-      if grep -qE '^  (property |[a-z][A-Za-z]*:)' "$file"; then echo "### $(basename "$(dirname "$file")")"; echo; settings "$file"; fi
-    done
-    echo "## Module options"; echo
-    cat ${optionsDoc.optionsCommonMark}
-  } > book/src/options.md
-  mdbook build book -d $out
-''
+    nativeBuildInputs = [
+      pkgs.mdbook
+      pkgs.quickshell
+    ];
+  }
+  ''
+    cp -r --no-preserve=mode ${./docs} book
+    # The shell, run headless, writes what it declares; the XDG folders stay unexpanded, so a default under them reads as written.
+    export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR/run XDG_CONFIG_HOME='$XDG_CONFIG_HOME' XDG_STATE_HOME='$XDG_STATE_HOME' QT_QPA_PLATFORM=offscreen LC_ALL=C.UTF-8
+    mkdir -p $XDG_RUNTIME_DIR
+    cp -r --no-preserve=mode ${shell}/share/quick-key shell
+    cp ${./docs/reference.qml} shell/reference.qml
+    OUT=$PWD/book/src/options.md SOURCE=${repo}/blob/main/packages/quick-key/ timeout 60 qs -p shell/reference.qml
+    {
+      echo "## Module options"; echo
+      cat ${optionsDoc.optionsCommonMark}
+    } >> book/src/options.md
+    mdbook build book -d $out
+  ''

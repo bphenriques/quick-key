@@ -64,6 +64,6 @@ The rest:
 
 ## Docs
 
-- `nix build .#docs` builds the mdBook in `docs/`. Chapters in `docs/src/`, ordered by `SUMMARY.md`. `docs.nix` generates the reference: the settings as `Config.qml` declares them, then the module's options. Preview with `mdbook serve docs`.
+- `nix build .#docs` builds the mdBook in `docs/`. Chapters in `docs/src/`, ordered by `SUMMARY.md`. `docs.nix` generates the reference by running `docs/reference.qml` in the shell, headless: the settings, an entry's fields and the built-in names as the shell declares them, each described by the comment above it, then the module's options. A setting or field without a comment shows none there. Preview with `mdbook serve docs`.
 - Chapters explain the model, never the options.
 - Update the chapter in the same change as the behaviour.

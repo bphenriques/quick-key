@@ -99,6 +99,11 @@ Singleton {
       "clock.firstDayOfWeek": [-1, 6]
     })
 
+  // A number's [least, most] by its path, most undefined or Infinity for none.
+  function range(path) {
+    return ranges[path] ?? [0, path.endsWith("Opacity") ? 1 : Infinity];
+  }
+
   // Numbers that are counts or point sizes, which a fraction would be cut from.
   readonly property var wholes: ["theme.fontSize", "menu.columns"]
 
@@ -109,7 +114,7 @@ Singleton {
       for (const [name, kind] of Object.entries(kinds)) {
         const value = json[group]?.[name];
         if (kind !== "number" || typeof value !== "number") continue;
-        const [least, most] = ranges[group + "." + name] ?? [0, name.endsWith("Opacity") ? 1 : Infinity];
+        const [least, most] = range(group + "." + name);
         if (wholes.includes(group + "." + name) && !Number.isInteger(value)) found.push(group + "." + name + " is " + value + ", not a whole number");
         if (value < least || value > (most ?? Infinity)) found.push(group + "." + name + " is " + value + ", not " + (most === undefined || most === Infinity ? least + " or more" : least + " to " + most));
       }
@@ -260,27 +265,46 @@ Singleton {
     return found;
   }
 
-  // Each field an entry takes, and what it asks of the rest: `level`, a level's (submenu, list or view); `needs`, one of these set; `bar`, only in a bar; `names`, a table it names one of, else a plugin; `excludes`, fields it cannot sit beside; `invalid`, what is wrong with its value, else "".
+  // Each field an entry takes, its comment what it does (the docs' reference), and what it asks: `kind`, the kinds of value it takes; `level`, a level's (submenu, list or view); `needs`, one of these set; `bar`, only in a bar; `names`, a table it names one of, else a plugin; `excludes`, fields it cannot sit beside; `invalid`, what is wrong with its value, else "".
   readonly property var fields: ({
-      key: {},
-      desc: {},
-      cmd: {},
-      action: {},
-      icon: {},
-      width: { invalid: width => typeof width === "number" && width >= 1 ? "" : "sets width to " + width + ", no size in pixels" },
-      submenu: {},
-      keepOpen: { needs: ["cmd", "action"] },
-      activeWhen: { names: States.builtin },
-      columns: { level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 && columns <= 9 ? "" : "sets columns, which only a level of 1 to 9 columns takes" },
-      list: { names: Lists.builtin },
-      pins: { needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits" : "" },
-      view: { excludes: ["list"], invalid: view => view in Views.builtin ? "" : "shows view '" + view + "', which is not built in" },
-      status: { names: Statuses.builtin },
-      format: { needs: ["status"] },
-      header: { level: true },
-      shortcut: { bar: true },
-      limit: { bar: true, needs: ["list"], invalid: limit => limit >= 1 && limit <= 9 ? "" : "limits its list to " + limit + ", not 1 to 9 digits" },
-      input: { level: true }
+      // Its key, or a pair of keys sharing a row (["Down", "Up"]); a bar entry needs none.
+      key: { kind: ["string", "list"] },
+      // Its label, which never changes.
+      desc: { kind: "string" },
+      // A shell command, which closes the menu; a list pairs one with each key.
+      cmd: { kind: ["string", "list"] },
+      // A built-in action, or one of the plugin its level lists.
+      action: { kind: "string" },
+      // Its glyph; an action brings its own.
+      icon: { kind: "string" },
+      // Its level's width in pixels, over menu.width.
+      width: { kind: "number", invalid: width => width >= 1 ? "" : "sets width to " + width + ", no size in pixels" },
+      // Its level's entries.
+      submenu: { kind: "list" },
+      // Keeps the menu open once its cmd runs.
+      keepOpen: { kind: "boolean", needs: ["cmd", "action"] },
+      // Lights it while the state it names is on.
+      activeWhen: { kind: "string", names: States.builtin },
+      // The columns its level lays its actions out in, over menu.columns.
+      columns: { kind: "number", level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 && columns <= 9 ? "" : "sets columns, which only a level of 1 to 9 columns takes" },
+      // Its level lists these items on digits.
+      list: { kind: "string", names: Lists.builtin },
+      // The ids of items kept on their digits, in order, dim while absent.
+      pins: { kind: "list", needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits" : "" },
+      // Its level shows this view in place of a menu.
+      view: { kind: "string", excludes: ["list"], invalid: view => view in Views.builtin ? "" : "shows view '" + view + "', which is not built in" },
+      // Live state on the right of its row.
+      status: { kind: "string", names: Statuses.builtin },
+      // Its status's fields to show ("{song}"), what follows a | kept whole on the right.
+      format: { kind: "string", needs: ["status"] },
+      // Its level's bar: left, center and right, as menu.header.
+      header: { kind: "map", level: true },
+      // Its compositor key (Mod+N), only a label: shown while Super is held.
+      shortcut: { kind: "string", bar: true },
+      // The most items of its list a bar shows; past it, +N.
+      limit: { kind: "number", bar: true, needs: ["list"], invalid: limit => limit >= 1 && limit <= 9 ? "" : "limits its list to " + limit + ", not 1 to 9 digits" },
+      // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, format, after }.
+      input: { kind: "map", level: true }
     })
 
   // What each set field asks of the rest, as `fields` says.
@@ -290,6 +314,11 @@ Singleton {
     for (const [field, rule] of Object.entries(fields)) {
       const value = entry[field];
       if (value == null) continue;
+      const kinds = [].concat(rule.kind);
+      if (!kinds.includes(Config.kind(value))) {
+        found.push("sets " + field + " to a " + Config.kind(value) + ", not a " + kinds.join(" or a "));
+        continue;
+      }
       if (rule.bar && !inBar || rule.level && !level || rule.needs && !rule.needs.some(other => entry[other] != null))
         found.push("can only set " + field + (rule.level ? " on a level with submenu, list or view" : rule.bar ? (rule.needs ? " on a " + rule.needs.join(" or ") : "") + " in a bar" : " with " + rule.needs.join(" or ")));
       if (rule.names && !(value in rule.names) && !plugins.includes(value)) found.push("names " + field + " '" + value + "', neither built in nor a plugin");
@@ -305,8 +334,7 @@ Singleton {
     const unknown = Object.keys(entry).filter(key => !(key in fields));
     const keys = [].concat(entry.key ?? []);
     const rows = Config.kind(entry.submenu) === "list" ? Array.from(entry.submenu).filter(row => Config.kind(row) === "map") : [];
-    if (!keys.every(key => typeof key === "string")) found.push("sets key to no key name");
-    if (entry.submenu != null && Config.kind(entry.submenu) !== "list") found.push("sets submenu to no list of entries");
+    if (Config.kind(entry.key) === "list" && !keys.every(key => typeof key === "string")) found.push("sets key to no key names");
     const action = Actions.builtin[entry.action];
     const level = entry.submenu != null || entry.list != null || entry.view != null;
     const does = [entry.cmd != null, entry.action != null, level].filter(set => set).length;

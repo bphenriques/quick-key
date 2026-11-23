@@ -193,7 +193,7 @@ Singleton {
       id: adapter
 
       property JsonObject theme: JsonObject {
-        // A theme by file name: yours in $XDG_CONFIG_HOME/quick-key/themes/, else a preset (catppuccin-mocha, catppuccin-latte, gruvbox-dark, nord, tokyo-night).
+        // A theme by file name: yours in $XDG_CONFIG_HOME/quick-key/themes/, else a preset in themes/.
         property string name
         // Colours (#rrggbb) over the theme's own.
         property string background
