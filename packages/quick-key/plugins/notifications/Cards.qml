@@ -307,12 +307,10 @@ Scope {
         visible: view.plugin.held > 0
 
         Icon {
-          anchors.verticalCenter: parent.verticalCenter
           glyph: Glyphs.notificationsPaused
         }
 
         Label {
-          anchors.verticalCenter: parent.verticalCenter
           text: view.plugin.held
         }
       }

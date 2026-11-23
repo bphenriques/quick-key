@@ -1,7 +1,8 @@
 import QtQuick
+import QtQuick.Layouts
 import qs
 
-// A rounded capsule around a row of content, outlined like a panel, or in its tone for a state (recording).
+// A rounded capsule around a row of content, centred on its line, outlined like a panel, or in its tone for a state (recording).
 Surface {
   id: root
 
@@ -15,7 +16,7 @@ Surface {
   radius: Math.min(height / 2, 2 * Config.theme.radius)
   border.color: tone ? Tone.color(tone) : Config.colors.border
 
-  Row {
+  RowLayout {
     id: row
     anchors.centerIn: parent
     spacing: Config.theme.spacing

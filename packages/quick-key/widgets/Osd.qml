@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs
@@ -141,16 +142,13 @@ Scope {
         radius: Config.theme.radius
 
         Icon {
-          anchors.verticalCenter: parent.verticalCenter
           tone: window.tone
           glyph: window.status.glyph
         }
 
         Label {
-          id: value
-          anchors.verticalCenter: parent.verticalCenter
           // As wide as its widest value where the glyph alone says little, so the pill holds still as the value changes.
-          width: (window.status.popupWidth || window.status.popup.length) * Metrics.cell
+          Layout.preferredWidth: (window.status.popupWidth || window.status.popup.length) * Metrics.cell
           tone: window.tone
           text: window.status.popup
         }

@@ -70,7 +70,6 @@ Scope {
           height: parent.height
 
           Loader {
-            anchors.verticalCenter: parent.verticalCenter
             sourceComponent: root.content
           }
         }
