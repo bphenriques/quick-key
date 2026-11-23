@@ -156,8 +156,9 @@ Scope {
                 image: entry ? view.pictureOf(entry) : ""
                 readonly property string app: entry ? view.plugin.appOf(entry) : ""
                 title: entry?.summary || app
-                // The app, unless the title already says it, and when it came once it has waited.
-                aside: !entry ? "" : [app.toLowerCase() === title.toLowerCase() ? "" : app, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
+                // The app where nothing else names it: one a rule names always shows; else not when the title says it or its icon from the theme shows it, so a picture (a song's cover) or no icon keeps it. Then when it came, once it has waited.
+                readonly property bool named: entry !== null && entry.applied.app === undefined && (title.toLowerCase().includes(app.toLowerCase()) || icon !== "")
+                aside: !entry ? "" : [named ? "" : app, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
                 body: entry?.body ?? ""
                 tone: entry && view.plugin.critical(entry) ? "alert" : ""
                 meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1

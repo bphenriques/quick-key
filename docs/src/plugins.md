@@ -118,7 +118,7 @@ The plugin's status is a bell with the count, struck and lit while paused, and a
 
 Cards stack in a corner of the focused screen, newest by the corner, critical ones first. A card shows:
 
-- its app's icon, the summary in bold, and the app on its right, with when it came once it has waited a minute;
+- its app's icon, the summary in bold, and the app on its right where nothing else names it (not when the title says it or its icon shows it, so a song's cover keeps it), with when it came once it has waited a minute;
 - the body in two lines, as plain text: the server tells senders it takes no markup;
 - progress (`value`) as a meter, and a picture (album art, a screenshot) on its right;
 - its sender's actions below.
@@ -144,7 +144,7 @@ plugins.notifications = {
 
 Rules apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field: `app`, `summary`, `body`, `category`, `urgency` or `desktopEntry`. Anchor one with `^…$`. They are JavaScript's, with no inline flags: `[Ss]lack` matches either case. A rule with no `match` applies to all, so `{ run = "env | grep ^NOTIFICATION_ >> /tmp/notifications"; }` logs what each tool sends. A rule can set:
 
-- `app`: the app its card names, `""` for none, as for a music player whose card says what plays; its commands still get the sender's as `NOTIFICATION_APP`.
+- `app`: the app its card names, shown even where its icon would name it; `""` for none, as for `notify-send`'s own name (`match.app = "^notify-send$"`). Its commands still get the sender's as `NOTIFICATION_APP`.
 - `hide`: drops it, as it arrives or once a replacement matches. No card shows, `C-r` has nothing to bring back, and no `run` runs.
 - `timeout`: the seconds it shows; 0, never.
 - `urgency` (`low`, `normal`, `critical`): how it shows and lasts.
