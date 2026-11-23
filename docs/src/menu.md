@@ -47,6 +47,8 @@ The label is `desc`, and never changes. Every row of a level carries an icon (`i
 
 A level is as wide as its entry's `width`, else `menu.width`, and lays its actions out in its entry's `columns`, else `menu.columns` (`columns = 1` for a level of three, so none sits alone). Neither is measured from what it shows, so it holds still. Entries flow across, so order decides neighbours. At the top the columns are equal, so values line up; in a level the last hugs its rows against the right edge. Make the menu wider before adding columns or truncating.
 
+The menu sits at the bottom of the screen, centred, its bar against the edge. `menu.edge = "top"` mirrors it, the bar on top and everything stacking downward, and `menu.align` places it `left`, `center` or `right`; a plugin's panel follows. A level's input sits past its body, or, with `menu.inputSide = "bar"`, between the body and the bar, where a body of another height moves it less. Nothing else moves: the bar never sits apart from the body, and every level keeps one edge. At the top edge, move the notifications' `corner` to the bottom if the two meet.
+
 ## Bars
 
 `menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules. An entry's `header` is its level's, with the same slots, and a level with nothing for its bar is its body alone. A bar holds content (a song, its modes), never a title. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`).

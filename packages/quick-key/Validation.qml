@@ -97,7 +97,10 @@ Singleton {
 
   // What a text setting with a few meanings takes, by its path.
   readonly property var choices: ({
-      "theme.appIcons": ["colour", "grey", "tint"]
+      "theme.appIcons": ["colour", "grey", "tint"],
+      "menu.edge": ["bottom", "top"],
+      "menu.align": ["left", "center", "right"],
+      "menu.inputSide": ["body", "bar"]
     })
 
   function choiceProblems(json) {

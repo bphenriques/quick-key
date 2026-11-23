@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A surface the keyboard opens (the menu, a plugin's panel) at the bottom centre: an optional bar at the edge, the card over it and an optional input, over the card (`inputOver`, a level's island) or between it and the bar; one shown at a time, its owner on top of Panels; a click anywhere else dismisses it.
+// A surface the keyboard opens (the menu, a plugin's panel) at the screen's edge (`menu.edge`, `menu.align`): an optional bar at the edge, the card past it and an optional input, past the card (`inputOver`, a level's island) or between it and the bar; one shown at a time, its owner on top of Panels; a click anywhere else dismisses it.
 Scope {
   id: root
 
@@ -20,6 +20,8 @@ Scope {
   property Component body
   property bool inputShown: false
   property bool inputOver: false
+  // At the top edge everything stacks downward, mirrored.
+  readonly property bool atTop: Config.menu.edge === "top"
   // Whether the input has the keys, else the body.
   property bool inputFocused: false
   property Component input
@@ -101,23 +103,27 @@ Scope {
         Keys.onPressed: event => root.keyPressed(event)
         Keys.onReleased: event => root.keyReleased(event)
 
-        // Where the card and the input stack from: over the bar, else the edge.
+        // Where the card and the input stack from, away from the edge: past the bar, else the edge.
         Item {
           id: base
           anchors.left: parent.left
           anchors.right: parent.right
-          anchors.bottom: bar.visible ? bar.top : parent.bottom
+          anchors.bottom: root.atTop ? undefined : bar.visible ? bar.top : parent.bottom
+          anchors.top: !root.atTop ? undefined : bar.visible ? bar.bottom : parent.top
           anchors.bottomMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
+          anchors.topMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
         }
 
-        // Over the card, so a tip on its items shows above it.
+        // Over the card, so a tip on its items shows over it.
         Surface {
           id: bar
           visible: root.barShown
           z: 1
-          anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: parent.bottom
+          anchors.horizontalCenter: card.horizontalCenter
+          anchors.bottom: root.atTop ? undefined : parent.bottom
+          anchors.top: root.atTop ? parent.top : undefined
           anchors.bottomMargin: Config.theme.edgeMargin
+          anchors.topMargin: Config.theme.edgeMargin
           width: card.width
           height: barRow.implicitHeight + Config.theme.padding / 2
 
@@ -144,9 +150,12 @@ Scope {
 
         Surface {
           id: card
-          anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
+          // Along the edge as `menu.align` says; the bar and the input follow it.
+          x: Config.menu.align === "left" ? Config.theme.edgeMargin : Config.menu.align === "right" ? parent.width - width - Config.theme.edgeMargin : (parent.width - width) / 2
+          anchors.bottom: root.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
+          anchors.top: !root.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.bottom : base.top
           anchors.bottomMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
+          anchors.topMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
           // No wider than the screen leaves within its margins, whatever width a level asks for.
           width: Math.min(root.width, parent.width - 2 * Config.theme.edgeMargin)
           height: body.implicitHeight + 2 * Config.theme.padding
@@ -171,9 +180,11 @@ Scope {
         Surface {
           id: inputSurface
           visible: root.inputShown
-          anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: root.inputOver ? card.top : base.bottom
+          anchors.horizontalCenter: card.horizontalCenter
+          anchors.bottom: root.atTop ? undefined : root.inputOver ? card.top : base.bottom
+          anchors.top: !root.atTop ? undefined : root.inputOver ? card.bottom : base.top
           anchors.bottomMargin: root.inputOver ? Config.theme.spacing / 2 : 0
+          anchors.topMargin: root.inputOver ? Config.theme.spacing / 2 : 0
           width: card.width
           height: inputContent.implicitHeight + Config.theme.padding
 

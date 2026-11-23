@@ -81,7 +81,7 @@ Scope {
     namespace: "menu"
     width: root.menu.width
     barShown: root.menu.barShown
-    inputOver: true
+    inputOver: Config.menu.inputSide === "body"
     onDismissed: root.menu.hide()
     // As Escape does, but never closing the top level.
     onSecondaryClicked: if (root.menu.level) root.menu.stepBack()
@@ -118,9 +118,9 @@ Scope {
       onImplicitHeightChanged: if (!root.hinting) restHeight = implicitHeight
       spacing: Config.theme.padding
 
-      // Fewer keys than rows leave the top of the body empty rather than shrink it, the keys next to the bar.
+      // Fewer keys than rows leave the body's far side empty rather than shrink it, the keys next to the bar: above them, or below at the top edge.
       Item {
-        visible: root.hinting && body.restHeight > hints.implicitHeight + body.spacing
+        visible: Config.menu.edge !== "top" && root.hinting && body.restHeight > hints.implicitHeight + body.spacing
         Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
       }
 
@@ -146,6 +146,12 @@ Scope {
             chars: root.menu.keyChars(root.menu.hints)
           }
         }
+      }
+
+      // The same room below the keys at the top edge, as the bar is above them.
+      Item {
+        visible: Config.menu.edge === "top" && root.hinting && body.restHeight > hints.implicitHeight + body.spacing
+        Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
       }
 
       // An empty list says why, in its place.
@@ -258,7 +264,7 @@ Scope {
             // Hugging, it fills no further than itself; not filling at all would fix it at its full width, past the card.
             Layout.fillWidth: true
             Layout.preferredWidth: hugs ? -1 : 1
-            Layout.maximumWidth: hugs ? implicitWidth : Number.POSITIVE_INFINITY
+            Layout.maximumWidth: hugs ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
             chars: index % actionsGrid.columns === 0 && root.menu.rows.length ? Math.max(root.menu.columnChars(index, actionsGrid.columns), root.menu.keyChars(root.menu.rows)) : root.menu.columnChars(index, actionsGrid.columns)
           }
         }

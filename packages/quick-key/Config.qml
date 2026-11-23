@@ -252,6 +252,12 @@ Singleton {
         property int columns: 2
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
         property var input: null
+        // The screen edge the menu and plugins' panels sit at, its bar against it: bottom or top.
+        property string edge: "bottom"
+        // Where along that edge: left, center or right.
+        property string align: "center"
+        // Where a level's input sits: past its body ("body"), or between the body and the bar ("bar"), where a body of another height moves it less.
+        property string inputSide: "body"
       }
 
       property JsonObject clock: JsonObject {
