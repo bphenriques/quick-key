@@ -7,6 +7,7 @@ import Quickshell.Wayland
 import qs
 import qs.services
 import qs.ui
+import "stack.js" as Stack
 
 // A notification server: Quickshell speaks the protocol; this decides what shows and for how long, and Cards.qml draws it. Each card is an Entry, which a replacement updates in place.
 Plugin {
@@ -20,16 +21,10 @@ Plugin {
   readonly property bool summoned: Panels.top === root
   // Summoned or under the pointer, nothing moves and no time runs: those there keep their order, newcomers going after them.
   readonly property bool still: summoned || internal.hovered
-  // Critical first, then newest.
-  readonly property var atRest: internal.list.slice().sort((a, b) => critical(b) - critical(a) || b.came - a.came)
-  // Held still, the order they had then, so a replacement turning one critical moves no digit; newcomers after them.
-  readonly property var ordered: {
-    if (!internal.holding) return atRest;
-    const held = new Set(internal.held);
-    return internal.held.filter(entry => internal.list.includes(entry)).concat(internal.list.filter(entry => !held.has(entry)).sort((a, b) => a.came - b.came));
-  }
+  readonly property var atRest: Stack.atRest(internal.list)
+  readonly property var ordered: internal.holding ? Stack.heldOrder(internal.list, internal.held) : atRest
   // Summoned, the held ones show too.
-  readonly property var showable: summoned ? ordered : ordered.filter(entry => critical(entry) || !internal.fullscreen && (!paused || !!entry.applied.ignorePause))
+  readonly property var showable: summoned ? ordered : ordered.filter(entry => Stack.critical(entry) || !internal.fullscreen && (!paused || !!entry.applied.ignorePause))
   // `limit` at a time, the window following the pick; a card's digit is its place among all, so it holds still.
   readonly property var shown: showable.slice(internal.first, internal.first + settings.limit)
   readonly property int more: showable.length - shown.length
@@ -91,30 +86,9 @@ Plugin {
       restore: { icon: () => Glyphs.notifications, available: () => internal.closed.length > 0, run: () => root.restore() }
     })
 
-  function critical(entry) {
-    return urgencyOf(entry) === "critical";
-  }
-
-  // The app a card names: its sender's, unless a rule renames it, or hides it with "".
-  function appOf(entry) {
-    return entry.applied.app ?? entry.appName;
-  }
-
-  // The app a card or an item names, "" where nothing needs it: a name a rule sets always shows; else not when the title says it as a whole word ("Go" is not in "Good") or its icon shows it, so a song's cover keeps it.
-  function appShown(entry, title, iconShown) {
-    const app = appOf(entry);
-    const words = text => " " + text.toLowerCase().replace(/[\s!-\/:-@[-`{-~]+/g, " ").trim() + " ";
-    return entry.applied.app === undefined && (iconShown || words(title).includes(words(app))) ? "" : app;
-  }
-
   // What sits beside a card's or an item's title: how many times it came, its app where nothing else names it, and when.
   function asideOf(entry, title, iconShown, when) {
-    return Words.beside([entry.repeats > 1 ? "×" + entry.repeats : "", appShown(entry, title, iconShown), when]);
-  }
-
-  // Its sender's, unless a rule sets another.
-  function urgencyOf(entry) {
-    return entry.applied.urgency ?? settings.urgencies[entry.urgency] ?? "normal";
+    return Words.beside([entry.repeats > 1 ? "×" + entry.repeats : "", Stack.appShown(entry, title, iconShown), when]);
   }
 
   function togglePause() {
@@ -295,17 +269,16 @@ Plugin {
 
   // A card as a list's item, by when it came: its title, its app and time aside, struck once closed.
   function itemOf(entry, closed) {
-    const app = appOf(entry);
-    const title = entry.summary || app || entry.appName;
+    const title = entry.summary || Stack.app(entry) || entry.appName;
     const when = entry.arrived ? Clock.recent(new Date(entry.arrived)) : "";
     const detail = asideOf(entry, title, false, when);
     return {
       id: String(entry.came),
       label: title,
       // Critical by its glyph too, not by colour alone.
-      icon: critical(entry) ? Glyphs.urgent : Glyphs.notifications,
+      icon: Stack.critical(entry) ? Glyphs.urgent : Glyphs.notifications,
       detail: detail,
-      tone: critical(entry) ? "alert" : "",
+      tone: Stack.critical(entry) ? "alert" : "",
       done: closed,
       closes: true,
       actions: closed ? [] : [{ key: "x", desc: words.dismiss, icon: Glyphs.close }]
@@ -365,55 +338,13 @@ Plugin {
     call(settings.owner, [], (code, output) => internal.error = code === 0 && Number(output.trim().split(/\s+/).pop()) === Quickshell.processId ? "" : words.taken);
   }
 
-  // What the rules that match it set, in order, later ones winning, actions adding up but one on a key taken before replacing it; `values` the text its named groups found.
   function ruled(notification) {
-    const fields = {
-      app: notification.appName,
-      summary: notification.summary,
-      body: notification.body,
-      category: String(notification.hints.category ?? ""),
-      urgency: settings.urgencies[notification.urgency],
-      desktopEntry: notification.desktopEntry
-    };
-    const applied = { actions: [], values: {} };
-    for (const rule of Array.from(settings.rules)) {
-      const values = {};
-      const matched = Object.entries(rule.match ?? {}).every(([field, pattern]) => {
-        const found = new RegExp(pattern).exec(fields[field] ?? "");
-        settings.groupNames(pattern).forEach((name, i) => {
-          if (found && name) values[name] = found[i + 1] ?? "";
-        });
-        return found !== null;
-      });
-      if (!matched) continue;
-      const actions = Array.from(rule.actions ?? []);
-      const kept = applied.actions.filter(action => !actions.some(other => other.key === action.key));
-      Object.assign(applied, rule, { actions: kept.concat(actions), values: Object.assign(applied.values, values) });
-    }
-    return applied;
+    return Stack.rules(notification, settings.rules, settings.groupNames);
   }
 
   // What a rule's labels and commands read: its app, summary, body, urgency and id, its picture or icon as a file (`icon`, as niri sends a screenshot), and what its groups found.
   function valuesOf(entry) {
-    return Object.assign({ app: entry.appName, summary: entry.summary, body: entry.body, urgency: urgencyOf(entry), id: String(entry.id), icon: fileOf(entry) || iconOf(entry) }, entry.applied.values);
-  }
-
-  // Its icon as sent: a file or a name, from its image-path hint (notify-send -i), else its app icon (niri's screenshot).
-  function iconOf(entry) {
-    return String(entry.hints["image-path"] ?? entry.hints["image_path"] ?? "") || entry.appIcon || "";
-  }
-
-  // Its icon as a path when it is a file, else "".
-  function fileOf(entry) {
-    const icon = iconOf(entry);
-    if (icon.startsWith("/")) return icon;
-    const path = icon.replace(/^file:\/\/(localhost)?(?=\/)/, "");
-    if (path === icon) return "";
-    try {
-      return decodeURIComponent(path);
-    } catch (error) {
-      return path;
-    }
+    return Object.assign({ app: entry.appName, summary: entry.summary, body: entry.body, urgency: Stack.urgency(entry), id: String(entry.id), icon: Stack.iconFile(entry) || Stack.icon(entry) }, entry.applied.values);
   }
 
   // A rule's command, given them in its environment as NOTIFICATION_<NAME>, as dunst gives DUNST_*.
@@ -423,30 +354,12 @@ Plugin {
     Commands.runWith(cmd, environment);
   }
 
-  // Milliseconds it shows: a rule's, else 0 for a critical one, else its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's.
-  function timeoutOf(entry) {
-    // Within what a timer holds, and a millisecond at least, as a fraction of one would round to 0, never.
-    if (entry.applied.timeout !== undefined) return entry.applied.timeout > 0 ? Math.min(2147483647, Math.max(1, Math.round(entry.applied.timeout * 1000))) : 0;
-    if (critical(entry)) return 0;
-    if (entry.expireTimeout >= 0) return entry.expireTimeout;
-    return 1000 * (urgencyOf(entry) === "low" ? settings.timeout.low : settings.timeout.normal);
-  }
-
-  // Volume and brightness tools replace their last one by a tag; one that is no text (a bare true) names nothing.
-  function tagOf(notification) {
-    const tag = notification.hints["x-dunst-stack-tag"] ?? notification.hints["x-canonical-private-synchronous"];
-    return typeof tag === "string" ? tag : "";
-  }
-
   // A hidden one is left untracked, so Quickshell drops it; one by the tag of a card from its app takes that card, as a replacement by id does; `run` runs for a new one only, not one kept over a reload.
   function arrive(notification) {
     const applied = ruled(notification);
-    const tag = tagOf(notification);
+    const tag = Stack.tag(notification);
     // Its card, by tag, else one saying exactly what it says (no tag on either, no reply on it), which it renews and counts, as dunst stacks duplicates.
-    const tagged = each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag;
-    const twin = each => each !== internal.replying && each.notification && !tagOf(each.notification)
-      && each.appName === notification.appName && each.summary === notification.summary && each.body === notification.body;
-    const same = internal.list.find(tag ? tagged : twin) ?? null;
+    const same = internal.list.find(each => each.notification && Stack.twin(notification, each) && (tag || !Stack.tag(each) && each !== internal.replying)) ?? null;
     // A replacement by tag that a rule hides still takes its card, so the card goes with it; a duplicate it hides leaves its twin be.
     if (applied.hide && !(same && tag)) return;
     notification.tracked = true;
@@ -476,10 +389,8 @@ Plugin {
       return notification.expire();
     }
     if (summoned && !internal.picked) pick(entry);
-    // At most `keep`, the oldest closing first and critical ones last; never the one that just came, the one you reply to, or, held still, one on screen.
-    const over = internal.list.length - settings.keep;
-    const closable = internal.list.filter(each => each !== entry && each !== internal.replying && !(still && shown.includes(each)));
-    if (over > 0) closable.sort((a, b) => critical(a) - critical(b) || a.came - b.came).slice(0, over).forEach(each => root.expire(each));
+    // At most `keep`; never the one that just came, the one you reply to, or, held still, one on screen.
+    Stack.evicted(internal.list, settings.keep, [entry, internal.replying].concat(still ? shown : [])).forEach(each => root.expire(each));
   }
 
   // Its rules and time, as it comes and as its sender replaces it, by id or tag: one that now hides goes, not to bring back; one that now takes no reply ends yours.
@@ -491,7 +402,7 @@ Plugin {
       return notification.expire();
     }
     entry.applied = applied;
-    entry.timeout = timeoutOf(entry);
+    entry.timeout = Stack.timeout(entry, settings.timeout);
     if (entry.timer.running) entry.timer.restart();
     if (entry === internal.replying && !entry.hasInlineReply) interrupt();
   }
@@ -499,10 +410,10 @@ Plugin {
   // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient).
   function leave(entry, keep = true) {
     if (entry === internal.replying) interrupt();
-    const at = shown.indexOf(entry);
+    const before = shown;
     internal.list = internal.list.filter(each => each !== entry);
     if (internal.picked === entry) {
-      internal.picked = shown[at < 0 ? 0 : Math.min(at, shown.length - 1)] ?? null;
+      internal.picked = Stack.successor(entry, before, shown);
       if (internal.picked === null && internal.mode !== "closed") release();
     }
     if (!keep || entry.notification?.transient) return entry.destroy();
@@ -513,9 +424,8 @@ Plugin {
   function shelved(history, entry) {
     if (!entry.restored) entry.saved = snapshot(entry);
     entry.notification = null;
-    const twin = each => each.appName === entry.appName && (tagOf(entry.data) ? tagOf(each.data) === tagOf(entry.data) : each.summary === entry.summary && each.body === entry.body);
-    history.filter(twin).forEach(each => each.destroy());
-    const closed = history.filter(each => !twin(each)).concat([entry]);
+    history.filter(each => Stack.twin(entry, each)).forEach(each => each.destroy());
+    const closed = history.filter(each => !Stack.twin(entry, each)).concat([entry]);
     while (closed.length > settings.history) closed.shift().destroy();
     return closed;
   }
@@ -523,7 +433,7 @@ Plugin {
   // What a card shows, kept once its sender is done with it; a picture sent as data goes with its sender.
   function snapshot(entry) {
     const image = entry.image.startsWith("image://qsimage") ? "" : entry.image;
-    const hints = { "image-path": entry.hints["image-path"], value: entry.hints.value, "x-dunst-stack-tag": tagOf(entry) };
+    const hints = { "image-path": entry.hints["image-path"], value: entry.hints.value, "x-dunst-stack-tag": Stack.tag(entry) };
     return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image, urgency: entry.urgency, hints,
       desktopEntry: entry.desktopEntry, expireTimeout: -1 };
   }

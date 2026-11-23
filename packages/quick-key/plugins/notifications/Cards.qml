@@ -7,6 +7,7 @@ import Quickshell.Wayland
 import qs
 import qs.services
 import qs.ui
+import "stack.js" as Stack
 
 // The cards in their corner of the focused screen, the newest by the corner; only the cards take the pointer. Summoned, it takes the keys where it is, its bar where its pills sit.
 Scope {
@@ -23,13 +24,13 @@ Scope {
   // A picture, as the protocol orders them: image data, which Quickshell serves as image://qsimage, else an icon sent as a file (album art, a screenshot).
   function pictureOf(entry) {
     if (entry.image.startsWith("image://qsimage")) return entry.image;
-    const file = plugin.fileOf(entry);
+    const file = Stack.iconFile(entry);
     return file ? "file://" + file.split("/").map(encodeURIComponent).join("/") : "";
   }
 
   // An icon sent by its name, from the theme, at a glyph's size; a rule's own first.
   function iconOf(entry) {
-    const icon = entry.applied.icon || (plugin.fileOf(entry) ? "" : plugin.iconOf(entry));
+    const icon = entry.applied.icon || (Stack.iconFile(entry) ? "" : Stack.icon(entry));
     // Tinted, its symbolic version first, which tint draws in the text's colour.
     return !icon ? "" : (Config.theme.appIcons === "tint" && Quickshell.iconPath(icon + "-symbolic", true)) || Quickshell.iconPath(icon, true);
   }
@@ -175,12 +176,12 @@ Scope {
                 iconColumn: view.icons
                 icon: entry ? view.iconOf(entry) : ""
                 image: entry ? view.pictureOf(entry) : ""
-                readonly property string app: entry ? view.plugin.appOf(entry) : ""
+                readonly property string app: entry ? Stack.app(entry) : ""
                 title: entry?.summary || app || (entry?.appName ?? "")
                 // Its count, its app where nothing else names it (its icon from the theme may), and when it came once it has waited.
                 aside: !entry ? "" : view.plugin.asideOf(entry, title, icon !== "", view.plugin.ageOf(entry))
                 body: entry?.body ?? ""
-                tone: entry && view.plugin.critical(entry) ? "alert" : ""
+                tone: entry && Stack.critical(entry) ? "alert" : ""
                 meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
                 meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
                 actions: view.plugin.actionsOf(entry)

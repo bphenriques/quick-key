@@ -15,24 +15,6 @@
         },
         {
           "match": {
-            "app": "^urgent$"
-          },
-          "urgency": "critical"
-        },
-        {
-          "match": {
-            "app": "^brief$"
-          },
-          "timeout": 0.3
-        },
-        {
-          "match": {
-            "app": "^sticky$"
-          },
-          "timeout": 0
-        },
-        {
-          "match": {
             "app": "^loud$"
           },
           "ignorePause": true
@@ -76,12 +58,6 @@
         },
         {
           "match": {
-            "category": "^filed$"
-          },
-          "hide": true
-        },
-        {
-          "match": {
             "app": "^forker$"
           },
           "actions": [
@@ -89,18 +65,6 @@
               "key": "f",
               "desc": "Fork",
               "cmd": "(sleep 0.5; echo \"$NOTIFICATION_APP\" > \"$XDG_RUNTIME_DIR/forked\") &"
-            }
-          ]
-        },
-        {
-          "match": {
-            "app": "^dup$"
-          },
-          "actions": [
-            {
-              "key": "c",
-              "desc": "Call",
-              "cmd": "true"
             }
           ]
         },

@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import "stack.js" as Stack
 
 // The notifications' settings (docs/src/notifications.md); `owner` the one tool it names, the standard busctl.
 PluginSettings {
@@ -30,7 +31,7 @@ PluginSettings {
   readonly property var actionKinds: Object.assign(Object.create(null), { key: "string", desc: "string", cmd: "string", closes: "boolean", icon: "string" })
   // What its commands get as NOTIFICATION_<NAME>, so a group by one of these names would hide it.
   readonly property var given: ["app", "summary", "body", "urgency", "id", "icon"]
-  readonly property var urgencies: ["low", "normal", "critical"]
+  readonly property var urgencies: Stack.urgencies
 
   function problems() {
     const found = [];

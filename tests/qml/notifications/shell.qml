@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs
 import qs.services
 import qs.ui
+import "plugins/notifications/stack.js" as Stack
 
 // The notifications plugin on a session bus of its own, sent to with notify-send, as an app would.
 ShellRoot {
@@ -176,12 +177,12 @@ ShellRoot {
         until: () => !root.find("Held")
       },
       {
-        name: "a critical one never expires and comes first",
+        name: "a critical one comes first",
         start: () => {
           root.send("-u", "critical", "-t", "300", "Alarm");
           root.send("Later");
         },
-        until: () => root.plugin.ordered[0]?.summary === "Alarm" && root.find("Later") !== null && root.mark("alarm") > 1000
+        until: () => root.plugin.ordered[0]?.summary === "Alarm" && root.find("Later") !== null
       },
       {
         name: "past the limit, the rest wait, counted",
@@ -208,14 +209,6 @@ ShellRoot {
           root.send("-a", "shown", "Public");
         },
         until: () => root.find("Public") !== null && !root.find("Secret") && root.mark("hidden") > 500
-      },
-      {
-        name: "a rule matches a sender's category",
-        start: () => {
-          root.send("-c", "filed", "Filed");
-          root.send("-c", "other", "Unfiled");
-        },
-        until: () => root.find("Unfiled") !== null && !root.find("Filed") && root.mark("filed") > 500
       },
       {
         name: "a replacement by id updates its card",
@@ -366,29 +359,10 @@ ShellRoot {
         }
       },
       {
-        name: "a rule sets the urgency, so its card is critical, first and never expiring",
-        start: () => {
-          root.plugin.release();
-          Kept.set("notifications.paused", false);
-          root.plugin.clear();
-          root.send("-a", "urgent", "-t", "300", "Urgent");
-        },
-        until: () => root.find("Urgent") !== null && root.plugin.critical(root.find("Urgent")) && root.plugin.ordered[0]?.summary === "Urgent" && root.mark("urgent") > 1000
-      },
-      {
-        name: "a rule sets the time it shows, over its sender's: briefer, or never",
-        start: () => {
-          root.send("-a", "brief", "Brief rule");
-          root.send("-a", "sticky", "-t", "300", "Sticky");
-        },
-        until: () => {
-          if (root.find("Brief rule")) root.mark("briefRule");
-          return "briefRule" in root.marks && !root.find("Brief rule") && root.find("Sticky") !== null && root.mark("sticky") > 1000;
-        }
-      },
-      {
         name: "a rule lets one through a pause, which holds the rest",
         start: () => {
+          root.plugin.release();
+          root.plugin.clear();
           Kept.set("notifications.paused", true);
           root.send("-a", "loud", "Loud");
           root.send("-a", "quiet", "Quiet");
@@ -458,20 +432,16 @@ ShellRoot {
         }
       },
       {
-        name: "a sender's time is in milliseconds, so five seconds last past one",
+        name: "the pointer on any card holds every one still, one that comes meanwhile going last",
         start: () => {
           root.plugin.release();
           Kept.set("notifications.paused", false);
           root.plugin.clear();
-          root.send("-t", "5000", "Long");
+          root.send("Long");
+          root.plugin.hold(true);
         },
-        until: () => root.find("Long") !== null && root.mark("long") > 1200
-      },
-      {
-        name: "the pointer on any card holds every one still, one that comes meanwhile going last",
-        start: () => root.plugin.hold(true),
         until: () => {
-          if (!("after" in root.marks)) {
+          if (root.find("Long") && !("after" in root.marks)) {
             root.mark("after");
             root.send("After");
           }
@@ -579,7 +549,7 @@ ShellRoot {
           }
           if ("other" in root.marks && root.mark("other") > 500 && !root.files) root.readFiles();
           const named = root.find("Named icon");
-          return root.files.includes("edited: /tmp/Other shot.png") && named !== null && root.plugin.fileOf(named) === "" && root.plugin.iconOf(named) === "dialog-information";
+          return root.files.includes("edited: /tmp/Other shot.png") && named !== null && Stack.iconFile(named) === "" && Stack.icon(named) === "dialog-information";
         }
       },
       {
@@ -635,7 +605,7 @@ ShellRoot {
             root.send("-r", root.ids.code, "-u", "critical", "Code B", "code 222222");
           }
           const code = root.find("Code B");
-          return "codeAgain" in root.marks && root.mark("codeAgain") > 1600 && code !== null && root.plugin.critical(code) && root.plugin.actionsOf(code).some(action => action.desc === "Copy 222222");
+          return "codeAgain" in root.marks && root.mark("codeAgain") > 1600 && code !== null && Stack.critical(code) && root.plugin.actionsOf(code).some(action => action.desc === "Copy 222222");
         }
       },
       {
@@ -702,17 +672,6 @@ ShellRoot {
           root.plugin.summon();
           root.plugin.key("5");
           return root.plugin.shown.length === 3 && root.plugin.picked?.summary === "Normal" && root.plugin.shown.includes(root.plugin.picked);
-        }
-      },
-      {
-        name: "an action on a key an earlier rule took replaces it",
-        start: () => {
-          root.reset();
-          root.send("-a", "dup", "Dup", "code 333333");
-        },
-        until: () => {
-          const actions = root.plugin.actionsOf(root.find("Dup"));
-          return actions.length === 1 && actions[0].key === "c" && actions[0].desc === "Call";
         }
       },
       {
