@@ -60,7 +60,7 @@ ShellRoot {
     if (!menu.open) return "item";
     if (menu.level?.kind === "actions") return "item menu";
     if (menu.held !== was.held) return menu.held === "Help" ? "help" : "help closed";
-    if (menu.calendar.selected.getTime() !== was.day) return "view";
+    if (menu.viewModels.calendar.selected.getTime() !== was.day) return "view";
     if (menu.filtering !== was.filtering) return "filter";
     if (menu.stack.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
@@ -75,7 +75,7 @@ ShellRoot {
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, answer: menu.answerFocused };
+    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, answer: menu.answerFocused };
     const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name), was);
     menu.hide();
     return did;
