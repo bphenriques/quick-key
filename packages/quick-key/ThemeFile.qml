@@ -1,27 +1,34 @@
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
-// A theme's colours; a change reloads the shell, so removed colours fall back too.
+// A theme's colours, read again as the file changes, so one you edit or a tool rewrites (matugen, pywal) shows at once, and a colour it drops falls back.
 FileView {
-  readonly property alias palette: adapter
+  id: root
+
+  // Each colour by name, as #rgb, #rrggbb or #aarrggbb; set only here, as it loads.
+  property var palette: ({})
   property bool missing: false
 
   watchChanges: true
   printErrors: false
-  onFileChanged: Quickshell.reload(false)
-  onLoaded: missing = false
-  onLoadFailed: missing = true
-
-  JsonAdapter {
-    id: adapter
-    property string background
-    property string foreground
-    property string primary
-    property string alert
-    property string warning
-    property string border
-    property string bubble
-    property string bubbleText
+  onFileChanged: reload()
+  onLoadFailed: {
+    missing = true;
+    palette = {};
+  }
+  onLoaded: {
+    missing = false;
+    let read = {};
+    try {
+      read = JSON.parse(root.text());
+    } catch (error) {
+      console.warn("theme", root.path, "is no JSON:", error);
+    }
+    const colours = {};
+    for (const [name, value] of Object.entries(read && typeof read === "object" ? read : {})) {
+      if (typeof value === "string" && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) colours[name] = value;
+      else console.warn("theme", root.path + ":", name, "is no colour (#rrggbb, or #aarrggbb):", JSON.stringify(value));
+    }
+    palette = colours;
   }
 }

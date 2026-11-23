@@ -24,9 +24,9 @@ What you choose while logged in is kept over a reload or a restart: keep awake, 
 { "background": "#2e3440", "foreground": "#d8dee9", "primary": "#88c0d0", "alert": "#bf616a", "warning": "#ebcb8b" }
 ```
 
-A colour set in `theme` itself wins over the theme's. Anything that writes the file works: a matugen or pywal template for colours from the wallpaper, or, with Nix, `programs.quick-key.themes.<name>`. A misspelt name logs a warning, and fails the build on Nix.
+A colour set in `theme` itself wins over the theme's. Colours are `#rrggbb` (or `#aarrggbb`, alpha first, as Qt reads it); one that is not is skipped with a warning. Anything that writes the file works: your editor, a matugen or pywal template for colours from the wallpaper ([recipe](recipes.md#colours-from-the-wallpaper)), or, with Nix, `programs.quick-key.themes.<name>`. Saving it applies it at once. A misspelt name logs a warning, and fails the build on Nix.
 
-With [stylix](https://github.com/nix-community/stylix), the module themes the shell like one of stylix's own targets: on whenever stylix themes every target (`stylix.autoEnable`), else with `stylix.targets.quick-key.enable = true`. It sets the colours (`border` from `base03`), the monospace font, and the popups' font size and opacity, each as a default your own `theme` settings override. Stylix's popups are opaque by default, which hides the background blur; `stylix.opacity.popups = 0.92` keeps it.
+With [stylix](https://github.com/nix-community/stylix), the module themes the shell like one of stylix's own targets: on whenever stylix themes every target (`stylix.autoEnable`), else with `stylix.targets.quick-key.enable = true`. It writes its colours as a theme named `stylix` (`border` from `base03`), picked unless you name another, and sets the monospace font and the popups' font size and opacity, each a default your own `theme` settings override. Stylix's popups are opaque by default, which hides the background blur; `stylix.opacity.popups = 0.92` keeps it.
 
 `glyphs` overrides any icon by its name in the kit's `Glyphs`, in the shape of its default: one glyph, a list (`batteryLevels`, one per 10%), or a map (`{ "audioDevices": { "headset": "<glyph>" } }`).
 

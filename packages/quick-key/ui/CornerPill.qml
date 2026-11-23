@@ -47,6 +47,11 @@ Scope {
         margins.top: Config.theme.edgeMargin + root.slot * (implicitHeight + Config.theme.spacing)
         margins.right: Config.theme.edgeMargin
         WlrLayershell.namespace: "quick-key-" + root.namespace
+        // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
+        BackgroundEffect.blurRegion: Region {
+          item: pill
+          radius: pill.radius
+        }
 
         implicitWidth: pill.implicitWidth
         implicitHeight: pill.implicitHeight

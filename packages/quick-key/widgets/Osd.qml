@@ -72,6 +72,11 @@ Scope {
       anchors.right: true
       margins.right: Config.theme.edgeMargin
       WlrLayershell.namespace: "quick-key-osd"
+      // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
+      BackgroundEffect.blurRegion: Region {
+        item: window.metered ? bar : pill
+        radius: Config.theme.radius
+      }
 
       implicitWidth: metered ? bar.implicitWidth : pill.implicitWidth
       implicitHeight: metered ? bar.implicitHeight : pill.implicitHeight
