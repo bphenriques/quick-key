@@ -37,7 +37,15 @@ Bind `"${config.programs.quick-key.exec.ipc} menu toggle"` to a compositor key t
 I built it for my own [desktop](https://github.com/bphenriques/dotfiles). It is open by design: if it interests you, let me know!
 
 > [!WARNING]
-> **Work in progress.** Linux only, and the option surface still moves. Built and tested on niri; on another Wayland compositor all but the keyboard layout and output details work (see [Compositor](https://bphenriques.github.io/quick-key/compositor.html)).
+> **For personal use, for now.** Linux only, and settings may change between releases. Built and tested on niri; on another Wayland compositor all but the keyboard layout and output details work (see [Compositor](https://bphenriques.github.io/quick-key/compositor.html)).
+
+## Scope
+
+Releases stay 0.x: nothing is promised stable. A release's notes list what breaks, and a setting that is renamed or removed fails the check, saying what to write instead.
+
+- **In:** the menu (levels, keys, key paths, filtering, the bar, inputs); what every desktop has (audio and apps' volume, the microphone, network, Bluetooth, power and battery, backlight and outputs, the tray, music, the keyboard layout, keep awake); the pop-up for changes; the calendar read from a file any tool can write; command and QML plugins; the check as the configuration builds.
+- **Shipped plugins:** tasks; ask, quick turns with an ACP agent (longer work moves to a terminal); notifications (experimental); recording, dictation, dunst and a niri minimap. `calendar-sync` (experimental) is one writer of the calendar and tasks files.
+- **Out:** a launcher, a permanent bar, a settings app; compositors other than niri until someone runs one; finding Wi-Fi networks or pairing Bluetooth devices; an agent client that does a terminal agent's job; reading a tool's own output format.
 
 ## Support
 
