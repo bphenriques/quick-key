@@ -146,13 +146,16 @@ def local-time [seconds: int]: nothing -> string {
 }
 
 # Open tasks, and those done in the last 14 days, so a tick stays to be undone and the done ones can be shown.
-def write-tasks [calendars: list, state: path, --synced, --error: string] {
+def shown [state: path]: nothing -> list {
   let since = (date now) - 14day | format date "%Y-%m-%d"
-  let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
-  let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY
+  ^todo --config (todoman-config $state) --porcelain list --status ANY
   | from json
   | where {|t| not $t.completed or ($t.completed_at != null and (local-time $t.completed_at) >= $since) }
-  | each {|t| {
+}
+
+def write-tasks [calendars: list, state: path, --synced, --error: string] {
+  let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
+  let tasks = shown $state | each {|t| {
     id: ($t.id | into string)
     title: $t.summary
     due: (if $t.due == null { null } else { local-time $t.due })
@@ -276,14 +279,14 @@ def "main reopen" [calendars_file: path, events_file: path, id: int, title: stri
   locked $events_file tick reopen $calendars_file $events_file $id $title
 }
 
-# What done and reopen run under the lock. todoman numbers a task anew once its file changes outside it, so an id whose task has another title is never acted on.
+# What done and reopen run under the lock. todoman numbers tasks anew as their files change, an id landing on another alike, so only the one task shown with that title, open for done and done for reopen, is acted on.
 def "main tick" [how: string, calendars_file: path, events_file: path, id: int, title: string] {
   let state = $events_file | path dirname
   let config = todoman-config $state
-  let shown = ^todo --config $config --porcelain show $id | complete
-  let task = if $shown.exit_code == 0 { $shown.stdout | from json } else { {} }
-  if $task.summary? != $title { error make --unspanned { msg: "tasks changed, try again" } }
-  if $how == "done" and $task.recurring {
+  let alike = shown $state | where {|t| $t.summary == $title and $t.completed == ($how == "reopen") }
+  if $id not-in $alike.id { error make --unspanned { msg: "tasks changed, try again" } }
+  if ($alike | length) > 1 { error make --unspanned { msg: $"two tasks are called ($title): tick it in your calendar app" } }
+  if $how == "done" and $alike.0.recurring {
     # todoman makes a repeating task's next one.
     let run = ^todo --config $config done $id | complete
     if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }

@@ -41,6 +41,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     diff <(others ${./personal/bills.ics}) <(others state/vdirs/personal/bills.ics) && completed state/vdirs/personal/bills.ics \
       || fail "done marks the file completed, every other line as it was, a start not before the due date included"
     ! grep -qv $'\r$' state/vdirs/personal/bills.ics || fail "done keeps a file's line endings"
+    ! tick done "$(task | jq -r .id)" "Pay the bills" 2> err && grep -q "tasks changed, try again" err || fail "a done of a task done already fails, as its id may since name another alike"
 
     # todoman numbers a task anew once its file changes outside it, as a tick's does: an id from before may name another task.
     id=$(task | jq -r .id)
@@ -61,17 +62,28 @@ pkgs.runCommand "quick-key-calendar-sync"
     [ "$(water)" = '[["2026-11-20",false],["2026-11-27",false]]' ] || fail "unticking a repeating task only reopens it, the next one todoman made kept"
 
     # A long line folds onto the next after a space (RFC 5545): reopen drops a folded completion whole, the folded note beside it as it was.
-    tick reopen "$(todo list --status ANY | jq '.[] | select(.summary == "Done long ago") | .id')" "Done long ago"
+    ! tick reopen "$(todo list --status ANY | jq '.[] | select(.summary == "Done long ago") | .id')" "Done long ago" 2> err && grep -q "tasks changed, try again" err \
+      || fail "a tick of a task the file leaves out fails, as its id may since name another alike"
+    sed "s/^COMPLETED:20260102/COMPLETED:$(date -u +%Y%m%d)/" ${./personal/old.ics} > state/vdirs/personal/old.ics
+    sync tasks
+    tick reopen "$(jq -r '.tasks[] | select(.title == "Done long ago") | .id' state/tasks.json)" "Done long ago"
     diff <(others ${./personal/old.ics}) <(others state/vdirs/personal/old.ics) || fail "reopen reads folded lines whole"
     grep -qx $'STATUS:NEEDS-ACTION\r' state/vdirs/personal/old.ics || fail "reopen marks the file as needing action, in its line endings"
 
     # A tick leaves every line it does not set: a parameter, a property on two lines and a time's zone are kept.
-    cp ${./added/errands.ics} state/vdirs/personal/errands.ics && chmod u+w state/vdirs/personal/errands.ics
+    install -m 644 ${./added}/errands.ics state/vdirs/personal/errands.ics
     sync tasks
     tick done "$(jq -r '.tasks[] | select(.title == "Run errands") | .id' state/tasks.json)" "Run errands"
-    diff <(others ${./added/errands.ics}) <(others state/vdirs/personal/errands.ics) && completed state/vdirs/personal/errands.ics \
+    diff <(others ${./added}/errands.ics) <(others state/vdirs/personal/errands.ics) && completed state/vdirs/personal/errands.ics \
       || fail "done keeps every line it does not set, a language, categories on two lines and a time's zone included"
     ! grep -q $'\r' state/vdirs/personal/errands.ics || fail "done keeps a file's bare newlines"
+
+    # Two tasks alike: an id renumbered onto the other still has its title, so a tick of either is refused rather than guessed.
+    for f in milk-home milk-office; do install -m 644 ${./added}/$f.ics state/vdirs/personal/$f.ics; done
+    sync tasks
+    ! tick done "$(jq -r 'first(.tasks[] | select(.title == "Buy milk")) | .id' state/tasks.json)" "Buy milk" 2> err || fail "a done of one of two open tasks alike fails"
+    grep -q "two tasks are called Buy milk" err && cmp ${./added}/milk-home.ics state/vdirs/personal/milk-home.ics && cmp ${./added}/milk-office.ics state/vdirs/personal/milk-office.ics \
+      || fail "a done of one of two open tasks alike says so, touching neither"
 
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"
