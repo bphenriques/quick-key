@@ -63,9 +63,12 @@ Scope {
     { key: "Ctrl+", desc: Words.helpBarKeys },
     { key: "Super+", desc: Words.helpCompositor },
     { key: "Alt+1", desc: Words.helpItemMenu }
-  ].concat(slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [], island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpBackground }] : [], island.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [], [
-    { key: "Escape", desc: Words.helpEscape }
-  ])
+  ].concat(
+    slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
+    island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpBackground }] : [],
+    island.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
+    [{ key: "Escape", desc: Words.helpEscape }]
+  )
   readonly property bool slashFilters: !!level?.entry?.list && !find(items, "/")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
   readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name)))
@@ -98,7 +101,9 @@ Scope {
         content: level => !!(level.entry.list || level.entry.view),
         bar: level => root.slotsOf(level.entry.header ?? {}),
         // Own rows by letter (inLevel: a value beside the label, with its meter), then the list by digit.
-        items: level => Array.from(level.entry.submenu ?? []).map(entry => Object.assign(root.itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true })).concat(root.numbered(level.entry.list, level.entry.pins))
+        items: level => Array.from(level.entry.submenu ?? [])
+          .map(entry => Object.assign(root.itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true }))
+          .concat(root.numbered(level.entry.list, level.entry.pins))
       },
       menu: {
         content: () => false,
@@ -441,7 +446,9 @@ Scope {
     const bar = (header, prefix, depth) => {
       for (const slot of ["left", "center", "right"]) {
         for (const part of Array.from(header?.[slot] ?? [])) {
-          if (typeof part !== "string" && part.key) lines.push("  ".repeat(depth) + "- " + MenuKeys.names(part.key).map(name => "`" + (prefix + " Ctrl+" + name).trim() + "`").join(" ") + " " + (part.desc ?? part.status ?? ""));
+          if (typeof part === "string" || !part.key) continue;
+          const keys = MenuKeys.names(part.key).map(name => "`" + (prefix + " Ctrl+" + name).trim() + "`").join(" ");
+          lines.push("  ".repeat(depth) + "- " + keys + " " + (part.desc ?? part.status ?? ""));
         }
       }
     };

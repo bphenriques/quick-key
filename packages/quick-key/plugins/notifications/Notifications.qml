@@ -215,14 +215,16 @@ Plugin {
   function actionsOf(entry) {
     if (!entry || entry.restored) return [];
     const values = valuesOf(entry);
-    const ruled = Array.from(entry.applied.actions).map(action => ({ desc: action.desc.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all), key: action.key, glyph: action.icon ?? "", run: () => {
+    const filled = text => text.replace(/\{(\w+)\}/g, (all, name) => values[name] ?? all);
+    const ruled = Array.from(entry.applied.actions).map(action => ({ desc: filled(action.desc), key: action.key, glyph: action.icon ?? "", run: () => {
         root.runFor(entry, action.cmd);
         if (action.closes !== false) root.dismiss(entry);
       } }));
     const actions = Array.from(entry.actions).filter(action => action.identifier !== "default");
     const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwxyz");
     // A sender that says its actions are icons (action-icons) names one by each's identifier.
-    const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], source: entry.hints["action-icons"] ? Quickshell.iconPath(action.identifier + "-symbolic", true) || Quickshell.iconPath(action.identifier, true) : "", run: () => action.invoke() }));
+    const icon = action => entry.hints["action-icons"] ? Quickshell.iconPath(action.identifier + "-symbolic", true) || Quickshell.iconPath(action.identifier, true) : "";
+    const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], source: icon(action), run: () => action.invoke() }));
     const reply = entry.hasInlineReply ? [{ desc: Words.replyPrompt, key: "Tab", run: () => root.reply(entry) }] : [];
     return reply.concat(ruled, own);
   }
@@ -385,8 +387,10 @@ Plugin {
         });
         return found !== null;
       });
+      if (!matched) continue;
       const actions = Array.from(rule.actions ?? []);
-      if (matched) Object.assign(applied, rule, { actions: applied.actions.filter(action => !actions.some(other => other.key === action.key)).concat(actions), values: Object.assign(applied.values, values) });
+      const kept = applied.actions.filter(action => !actions.some(other => other.key === action.key));
+      Object.assign(applied, rule, { actions: kept.concat(actions), values: Object.assign(applied.values, values) });
     }
     return applied;
   }
@@ -441,7 +445,10 @@ Plugin {
     const applied = ruled(notification);
     const tag = tagOf(notification);
     // Its card, by tag, else one saying exactly what it says (no tag on either, no reply on it), which it renews and counts, as dunst stacks duplicates.
-    const same = tag ? internal.list.find(each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag) : internal.list.find(each => each !== internal.replying && each.notification && !tagOf(each.notification) && each.appName === notification.appName && each.summary === notification.summary && each.body === notification.body) ?? null;
+    const tagged = each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag;
+    const twin = each => each !== internal.replying && each.notification && !tagOf(each.notification)
+      && each.appName === notification.appName && each.summary === notification.summary && each.body === notification.body;
+    const same = internal.list.find(tag ? tagged : twin) ?? null;
     // A replacement by tag that a rule hides still takes its card, so the card goes with it; a duplicate it hides leaves its twin be.
     if (applied.hide && !(same && tag)) return;
     notification.tracked = true;
@@ -473,7 +480,8 @@ Plugin {
     if (summoned && !internal.picked) pick(entry);
     // At most `keep`, the oldest closing first and critical ones last; never the one that just came, the one you reply to, or, held still, one on screen.
     const over = internal.list.length - settings.keep;
-    if (over > 0) internal.list.filter(each => each !== entry && each !== internal.replying && !(still && shown.includes(each))).sort((a, b) => critical(a) - critical(b) || a.came - b.came).slice(0, over).forEach(each => root.expire(each));
+    const closable = internal.list.filter(each => each !== entry && each !== internal.replying && !(still && shown.includes(each)));
+    if (over > 0) closable.sort((a, b) => critical(a) - critical(b) || a.came - b.came).slice(0, over).forEach(each => root.expire(each));
   }
 
   // Its rules and time, as it comes and as its sender replaces it, by id or tag: one that now hides goes, not to bring back; one that now takes no reply ends yours.
@@ -514,7 +522,10 @@ Plugin {
 
   // What a card shows, kept once its sender is done with it; a picture sent as data goes with its sender.
   function snapshot(entry) {
-    return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image: entry.image.startsWith("image://qsimage") ? "" : entry.image, urgency: entry.urgency, hints: ({ "image-path": entry.hints["image-path"], value: entry.hints.value, "x-dunst-stack-tag": tagOf(entry) }), desktopEntry: entry.desktopEntry, expireTimeout: -1 };
+    const image = entry.image.startsWith("image://qsimage") ? "" : entry.image;
+    const hints = { "image-path": entry.hints["image-path"], value: entry.hints.value, "x-dunst-stack-tag": tagOf(entry) };
+    return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image, urgency: entry.urgency, hints,
+      desktopEntry: entry.desktopEntry, expireTimeout: -1 };
   }
 
   // Those closed come back over a restart, as Kept holds them, never a picture's data; kept from here on, as the list's first value is told as a change too.
@@ -554,7 +565,8 @@ Plugin {
     property string draft: ""
     property int timeout: 0
     // What a replacement changes, by id or tag: once for all of it, its rules and time again.
-    readonly property string signature: notification ? [notification.id, notification.appName, notification.summary, notification.body, notification.urgency, notification.expireTimeout, JSON.stringify(notification.hints), Array.from(notification.actions).map(action => action.identifier).join()].join("\n") : ""
+    readonly property string signature: notification ? [notification.id, notification.appName, notification.summary, notification.body, notification.urgency,
+        notification.expireTimeout, JSON.stringify(notification.hints), Array.from(notification.actions).map(action => action.identifier).join()].join("\n") : ""
     readonly property var renew: () => {
       if (entry.notification && entry.plugin.ordered.includes(entry)) entry.plugin.apply(entry, entry.plugin.ruled(entry.notification));
     }

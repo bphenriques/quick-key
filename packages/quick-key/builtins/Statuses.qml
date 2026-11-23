@@ -38,7 +38,8 @@ Singleton {
     music: {
       names: ["song", "title", "artist", "state"],
       glyph: () => !Music.present || !Music.title ? Glyphs.musicOff : Music.playing ? Glyphs.music : Glyphs.musicPaused,
-      fields: () => !Music.present || !Music.title ? { song: Words.noSong } : { song: Music.title + (Music.artist ? " · " + Music.artist : ""), title: Music.title, artist: Music.artist, state: Music.playing ? "" : Words.paused },
+      fields: () => !Music.present || !Music.title ? { song: Words.noSong }
+        : { song: Music.title + (Music.artist ? " · " + Music.artist : ""), title: Music.title, artist: Music.artist, state: Music.playing ? "" : Words.paused },
       value: fields => ({
         text: fields.song,
         detail: "",

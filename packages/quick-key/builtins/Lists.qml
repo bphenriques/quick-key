@@ -24,7 +24,9 @@ Singleton {
     wifi: {
       icon: Glyphs.wifi,
       empty: () => Network.wifiEnabled ? Words.emptyNetworks : Words.emptyWifiOff,
-      items: () => Network.known.map(network => ({ id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, busy: network.stateChanging, select: () => root.toggle(network) }))
+      items: () => Network.known.map(network => ({
+        id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, busy: network.stateChanging, select: () => root.toggle(network)
+      }))
     },
     bluetooth: {
       icon: Glyphs.bluetooth,
@@ -84,7 +86,9 @@ Singleton {
       verb: item.verb ?? "",
       closes: item.closes ?? false,
       select: () => plugin.select(item.id),
-      actions: Array.from(item.actions ?? []).map(action => ({ key: action.key, desc: action.desc ?? action.key, icon: action.icon ?? "", closes: action.closes ?? false, select: () => plugin.run(item.id, action.key) }))
+      actions: Array.from(item.actions ?? []).map(action => ({
+        key: action.key, desc: action.desc ?? action.key, icon: action.icon ?? "", closes: action.closes ?? false, select: () => plugin.run(item.id, action.key)
+      }))
     }));
   }
 

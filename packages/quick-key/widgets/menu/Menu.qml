@@ -221,7 +221,8 @@ Scope {
             Layout.fillWidth: true
             Layout.preferredWidth: hugs ? -1 : 1
             Layout.maximumWidth: hugs ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
-            chars: index % actionsGrid.columns === 0 && root.menu.rows.length ? Math.max(root.menu.columnChars(index, actionsGrid.columns), root.menu.keyChars(root.menu.rows)) : root.menu.columnChars(index, actionsGrid.columns)
+            readonly property int columnChars: root.menu.columnChars(index, actionsGrid.columns)
+            chars: index % actionsGrid.columns === 0 && root.menu.rows.length ? Math.max(columnChars, root.menu.keyChars(root.menu.rows)) : columnChars
           }
         }
       }

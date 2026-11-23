@@ -116,7 +116,8 @@ Singleton {
         if (kind !== "number" || typeof value !== "number") continue;
         const [least, most] = range(group + "." + name);
         if (wholes.includes(group + "." + name) && !Number.isInteger(value)) found.push(group + "." + name + " is " + value + ", not a whole number");
-        if (value < least || value > (most ?? Infinity)) found.push(group + "." + name + " is " + value + ", not " + (most === undefined || most === Infinity ? least + " or more" : least + " to " + most));
+        const bounds = most === undefined || most === Infinity ? least + " or more" : least + " to " + most;
+        if (value < least || value > (most ?? Infinity)) found.push(group + "." + name + " is " + value + ", not " + bounds);
       }
     }
     const [low, critical] = [json.battery?.low ?? Config.battery.low, json.battery?.critical ?? Config.battery.critical];
@@ -141,7 +142,9 @@ Singleton {
 
   // A colour as Qt reads it: #rgb, #rrggbb, or #aarrggbb with its alpha first; any other text would draw black. Its names are Config.colors'.
   function colourProblems(theme) {
-    return Object.keys(Config.colors).filter(name => typeof theme[name] === "string" && theme[name] !== "" && !/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(theme[name])).map(name => "theme." + name + ": '" + theme[name] + "' is no colour (#rrggbb, or #aarrggbb)");
+    const colour = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+    return Object.keys(Config.colors).filter(name => typeof theme[name] === "string" && theme[name] !== "" && !colour.test(theme[name]))
+      .map(name => "theme." + name + ": '" + theme[name] + "' is no colour (#rrggbb, or #aarrggbb)");
   }
 
   // Each old key, by its path, that json still sets.
@@ -155,8 +158,9 @@ Singleton {
 
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices); objectName is what Glyphs inherits as a QObject.
   function glyphProblems(glyphs) {
+    const kind = name => typeof Glyphs[name] === "string" ? "glyph" : Array.isArray(Glyphs[name]) ? "list of glyphs" : "map of glyphs";
     return Object.keys(glyphs).map(name => !(name in Glyphs) || name === "objectName" || typeof Glyphs[name] === "function" ? "glyphs." + name + " is not a glyph"
-      : Config.kind(glyphs[name]) !== Config.kind(Glyphs[name]) ? "glyphs." + name + " takes a " + (typeof Glyphs[name] === "string" ? "glyph" : Array.isArray(Glyphs[name]) ? "list of glyphs" : "map of glyphs") : "").filter(problem => problem);
+      : Config.kind(glyphs[name]) !== Config.kind(Glyphs[name]) ? "glyphs." + name + " takes a " + kind(name) : "").filter(problem => problem);
   }
 
   function pluginProblems(plugins) {
@@ -178,8 +182,10 @@ Singleton {
       // Every plugin's look and static items, as Plugin.compose reads them: a look by value, an item matched by its id as the source's value, a string.
       if (Config.kind(plugin.show) === "map")
         found.push(...Object.keys(plugin.show).filter(value => Config.kind(plugin.show[value]) !== "map").map(value => at + ".show." + value + " takes a map: glyph, text, detail, active, tone"));
-      if (Config.kind(plugin.items) === "list")
-        found.push(...Array.from(plugin.items).map((item, i) => Config.kind(item) === "map" && typeof item.id === "string" ? "" : at + ".items[" + i + "] takes a map with a string id").filter(problem => problem));
+      const items = Config.kind(plugin.items) === "list" ? Array.from(plugin.items) : [];
+      items.forEach((item, i) => {
+        if (Config.kind(item) !== "map" || typeof item.id !== "string") found.push(at + ".items[" + i + "] takes a map with a string id");
+      });
       let settings = null;
       for (const url of Config.pluginUrls(name, plugin)) {
         const component = Qt.createComponent(url.replace(/[^/]*$/, "Settings.qml"));
@@ -319,8 +325,11 @@ Singleton {
         found.push("sets " + field + " to a " + Config.kind(value) + ", not a " + kinds.join(" or a "));
         continue;
       }
-      if (rule.bar && !inBar || rule.level && !level || rule.needs && !rule.needs.some(other => entry[other] != null))
-        found.push("can only set " + field + (rule.level ? " on a level with submenu, list or view" : rule.bar ? (rule.needs ? " on a " + rule.needs.join(" or ") : "") + " in a bar" : " with " + rule.needs.join(" or ")));
+      if (rule.bar && !inBar || rule.level && !level || rule.needs && !rule.needs.some(other => entry[other] != null)) {
+        const needs = rule.needs ? rule.needs.join(" or ") : "";
+        const where = rule.level ? " on a level with submenu, list or view" : rule.bar ? (needs ? " on a " + needs : "") + " in a bar" : " with " + needs;
+        found.push("can only set " + field + where);
+      }
       if (rule.names && !(value in rule.names) && !plugins.includes(value)) found.push("names " + field + " '" + value + "', neither built in nor a plugin");
       for (const other of rule.excludes ?? []) if (entry[other] != null) found.push("cannot combine " + field + " with " + other);
       if (rule.invalid && rule.invalid(value)) found.push(rule.invalid(value));
