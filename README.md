@@ -45,7 +45,7 @@ Releases stay 0.x: nothing is promised stable. A release's notes list what break
 
 - **In:** the menu (levels, keys, key paths, filtering, the bar, inputs); what every desktop has (audio and apps' volume, the microphone, network, Bluetooth, power and battery, backlight and outputs, the tray, music, the keyboard layout, keep awake); the pop-up for changes; the calendar read from a file any tool can write; command and QML plugins; the check as the configuration builds.
 - **Shipped plugins:** tasks; ask, quick turns with an ACP agent (longer work moves to a terminal); notifications (experimental); recording, dictation, dunst and a niri minimap. `calendar-sync` (experimental) is one writer of the calendar and tasks files.
-- **Out:** a launcher, a permanent bar, a settings app; compositors other than niri until someone runs one; finding Wi-Fi networks or pairing Bluetooth devices; an agent client that does a terminal agent's job; reading a tool's own output format.
+- **Out:** a launcher, a permanent bar, a settings app; backends for compositors other than niri (the rest works without one); finding Wi-Fi networks or pairing Bluetooth devices; an agent client that does a terminal agent's job; reading a tool's own output format.
 
 ## Support
 
