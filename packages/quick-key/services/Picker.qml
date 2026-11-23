@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Asks the menu for a list by name (Lists), filtered in place on a level of its own: what a plugin's panel opens (Ask's C-r), over it, so Escape shows the panel again (Panels).
+// Asks the menu for a list by name, filtered on a level of its own over the plugin panel that asked (Ask C-r), so Escape shows the panel again.
 Singleton {
   signal requested(string list)
 

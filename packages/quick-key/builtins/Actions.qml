@@ -5,7 +5,7 @@ import Quickshell
 import qs.services
 import qs.ui
 
-// The built-in actions by name; an entry's `action` names one in place of `cmd`, its icon and lit state overridable; a table without a prototype, so no name every object inherits (toString) is one.
+// Built-in actions by name, run in place of an entry's `cmd`; no prototype, as in Statuses.qml.
 Singleton {
   // Each: run(second, list, menu), told whether a pair's second key was pressed, given its level's list and the menu; detail(list), a value beside it; available(list); icon(), showing its state where it has one; the state lighting it; pair; closes, to hide the menu first.
   readonly property var builtin: Object.assign(Object.create(null), {

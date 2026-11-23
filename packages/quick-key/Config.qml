@@ -138,7 +138,6 @@ Singleton {
   readonly property var starterEntries: starter.entries
   readonly property var starterHeader: starter.header
 
-  // A slot of the top level's bar: as set, else the starter's.
   function headerSlot(slot) {
     return adapter.menu.header[slot] ?? starter.header[slot] ?? [];
   }

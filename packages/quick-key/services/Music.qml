@@ -18,7 +18,6 @@ Singleton {
     internal.player?.togglePlaying();
   }
 
-  // The previous track, or the next one when `forward`.
   function skip(forward) {
     if (forward) internal.player?.next();
     else internal.player?.previous();

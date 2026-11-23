@@ -31,7 +31,6 @@ RowLayout {
   // A picture of the value beside it (0 to 1), the volume or brightness; below 0, none.
   property real meter: -1
   property string meterTone: "primary"
-  // Its text struck through, for what is done.
   property bool struck: false
   // Its text bold, the one to find first (the clock).
   property bool strong: false
@@ -39,7 +38,6 @@ RowLayout {
   property bool heading: false
   // Still being made: a spinner in place of its icon.
   property bool busy: false
-  // Its label (the title, else the text) shown.
   property bool labelShown: true
   readonly property bool titled: title !== ""
 

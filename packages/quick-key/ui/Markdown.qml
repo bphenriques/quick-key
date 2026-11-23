@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs
 
-// An agent's answer as its Markdown says (ACP's text format): tables, lists, emphasis, code, quotes; a selection is copied, as a terminal does. Rendered by Markup.html, so nothing is fetched and no HTML runs, a piece at a time, so a stream redraws only its last; links are rows of their own.
+// An agent's answer, rendered by Markup.html a piece at a time so a stream redraws only its last; a selection is copied, as a terminal does.
 ColumnLayout {
   id: root
 

@@ -76,7 +76,6 @@ Scope {
 
       // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
       readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
-      // The margin set, but no more than a quarter of its screen.
       readonly property real margin: Math.min(Config.popups.margin, screen.width / 4, screen.height / 4)
       // Sliding, in from the edge it sits at.
       readonly property real room: Math.min(fade.distance, margin)

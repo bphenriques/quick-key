@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import qs
 
-// The names on the system bus, running or started on demand (Config.daemons.list), read at start and as the menu opens: a built-in that needs a daemon is offered only where it is (power profiles).
+// Names on the system bus, running or activatable, read at start and as the menu opens: a built-in needing a daemon (power profiles) is offered only where it is.
 Singleton {
   function has(name) {
     return internal.names.includes(name);

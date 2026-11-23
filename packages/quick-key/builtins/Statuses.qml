@@ -6,11 +6,11 @@ import qs
 import qs.services
 import qs.ui
 
-// The built-in statuses by name; `status` and the header name one of these or a plugin; a table without a prototype, so no name every object inherits (toString) is one.
+// Built-in statuses by name; a table without a prototype, so no name every object inherits (toString) is one.
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name, optionally fieldTones() by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own); change() what is a change worth a pop-up (else all it shows), ready() whether its source has reported, its first value then being state, not a change (else at once).
+  // Each: glyph(), fields(pinned), value(fields) as { text, detail, glyphs }; optional fieldTones(), tone(), phase(), strong, meter() (below 0, none), muted(), adjust (the pair action the OSD wheel runs), popup and popupWidth (the OSD pill text and its widest), change() (what is worth a pop-up), ready() (its first value is state, not a change).
   readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),

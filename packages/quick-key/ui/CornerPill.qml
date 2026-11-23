@@ -53,7 +53,6 @@ Scope {
         anchors.top: !Config.atTop
         anchors.bottom: Config.atTop
         anchors.right: true
-        // The margin set, but no more than a quarter of its screen.
         readonly property real margin: Math.min(Config.theme.edgeMargin, modelData.width / 4, modelData.height / 4)
         margins.top: margin + CornerPills.offset(root)
         margins.bottom: margin + CornerPills.offset(root)

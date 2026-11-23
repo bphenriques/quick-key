@@ -11,7 +11,6 @@ ListView {
   id: root
 
   required property var selected
-  // The row in focus, by its id; "" for none.
   property string focused: ""
 
   signal picked(var row)

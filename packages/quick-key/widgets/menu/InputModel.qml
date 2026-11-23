@@ -3,25 +3,24 @@ import Quickshell
 import qs
 import qs.services
 
-// A level's input and what it starts (docs/src/menu.md#input): the text it takes, where that goes, the turn it answers with, its drafts and the visit; the menu keeps which of its parts has the keys.
+// A level's input and what it starts (docs/src/menu.md#input); the menu keeps which part has the keys.
 QtObject {
   id: root
 
   required property MenuModel menu
 
-  // The text a level takes under its body (an entry's `input`, or `menu.input` at the top level): { desc, cmd, plugin, format, after }.
+  // { desc, cmd, plugin, format, after }: an entry's `input`, or `menu.input` at the top level.
   readonly property var input: menu.level === null ? Config.menu.input ?? null : menu.level.entry?.input ?? null
-  // The plugin an input without a `cmd` gives its text: its own, else the one the level lists.
+  // Without a `cmd`: its own plugin, else the one the level lists.
   readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.level?.entry?.list ?? "") : null
   readonly property bool busy: plugin?.busy ?? false
-  // The turn of the conversation the input started (Plugin.turn), its options a digit picks.
   readonly property var turn: plugin?.turn ?? null
   readonly property var choices: turn?.options ?? []
   onTurnChanged: if (!turn && menu.answerFocused) menu.focusOn("body")
   // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
 
-  // Each input's unsent text, by the input, kept as the menu closes and over a reload (Kept), as Ask keeps its draft.
+  // By input, kept as the menu closes and over a reload (Kept).
   readonly property var drafts: keptDrafts.value ?? ({})
   readonly property KeptValue keptDrafts: KeptValue {
     key: "drafts"
@@ -40,10 +39,10 @@ QtObject {
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
   property var expandedTurn: null
 
-  // A key of the input's, clicked in the bar's legend (Escape's step, a send in the background), for the prompt.
+  // An input key clicked in the bar legend, for the prompt.
   signal picked(var key)
 
-  // The input's text, to its command as $1, else its plugin; whether it was taken, so the input keeps it if not.
+  // True when taken; the input keeps the text if not.
   function submit(text, background) {
     text = text.trim();
     if (!text || !input || busy) return false;
@@ -57,12 +56,10 @@ QtObject {
     return true;
   }
 
-  // The plugin's past conversations (C-r), on a level over this one; whether it has any to show.
   function recall() {
     return !!plugin?.recall();
   }
 
-  // An option of the answer, sent as the next message.
   function pick(index) {
     const option = choices[index];
     return option !== undefined && submit(option, false);

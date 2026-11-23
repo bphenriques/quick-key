@@ -11,7 +11,6 @@ Singleton {
 
   // Whether the file has been read; until then the month shows alone.
   readonly property bool enabled: store.loaded
-  // When the file was written, or null without one.
   readonly property var updated: store.updated
   // Whether a sync is running, and why the last one failed ("" when it did not): the file's own word.
   readonly property bool syncing: store.syncing
@@ -27,7 +26,6 @@ Singleton {
     return store.days[Clock.dayKey(day)] ?? [];
   }
 
-  // The colours of a day's events, each once, in the order eventsOn gives.
   function colorsOn(day) {
     return [...new Set(eventsOn(day).map(event => event.color))];
   }
@@ -44,12 +42,10 @@ Singleton {
     property var updated: null
     property bool syncing: false
     property string error: ""
-    // By start.
     property var events: []
-    // By day key.
     property var days: ({})
     property var timeline: []
-    // The events reminded of, by id, so each is once.
+    // By id, so each is reminded once.
     property var reminded: ({})
 
     function read(json) {

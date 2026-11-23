@@ -11,7 +11,6 @@ Singleton {
   readonly property date date: clock.date
   readonly property var locale: Config.clock.locale ? Qt.locale(Config.clock.locale) : Qt.locale()
   readonly property int firstDayOfWeek: Config.clock.firstDayOfWeek >= 0 ? Config.clock.firstDayOfWeek : locale.firstDayOfWeek
-  // Config.clock.format, else the locale's long date and short time.
   readonly property string text: Config.clock.format ? format(date, Config.clock.format)
     : date.toLocaleDateString(locale, Locale.LongFormat) + " " + date.toLocaleTimeString(locale, Locale.ShortFormat)
 
@@ -42,7 +41,6 @@ Singleton {
   // Short day and month names, cut to three letters where that still tells them apart (en_GB's Sept), without a closing dot (fr's janv.).
   readonly property var weekdays: abbreviated(Array.from({ length: 7 }, (_, day) => locale.dayName(day, Locale.ShortFormat)))
   readonly property var months: abbreviated(Array.from({ length: 12 }, (_, month) => locale.monthName(month, Locale.ShortFormat)))
-  // The days next to today, as said.
   readonly property var nearDays: ({ "-1": "yesterday", "0": "today", "1": "tomorrow" })
 
   function abbreviated(names) {

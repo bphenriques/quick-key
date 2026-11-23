@@ -9,15 +9,12 @@ import qs.services
 import qs.ui
 import qs.widgets.menu.calendar
 
-// The keyboard menu with live status: entries come from programs.quick-key.settings.menu.entries.
 Scope {
   id: root
 
   readonly property MenuModel menu: MenuModel {}
-  // While a held modifier lists keys in place of the body.
   readonly property bool hinting: menu.hints.length > 0
 
-  // The modifier whose keys show when held: Ctrl the bar's, Super the compositor's.
   function modifier(event) {
     if (event.key === Qt.Key_Control) return "Ctrl";
     if (event.key === Qt.Key_Super_L || event.key === Qt.Key_Super_R || event.key === Qt.Key_Meta) return "Super";
@@ -52,12 +49,10 @@ Scope {
       root.menu.toggleEntry(key);
     }
 
-    // A key path from the top level, as typing it would run it (`a 2`).
     function press(path: string): bool {
       return root.menu.press(path);
     }
 
-    // Every key path, as Markdown.
     function keys(): string {
       return root.menu.keyMap();
     }
@@ -95,7 +90,6 @@ Scope {
 
     bar: MenuHeader {
       menu: root.menu
-      // Filtering, the filter's keys; else as typed.
       onPicked: key => root.menu.filtering ? (key === "Escape" ? root.menu.island.picked(key) : root.menu.filterKey(key)) : root.menu.handleName(key)
     }
 
@@ -149,7 +143,6 @@ Scope {
         Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
       }
 
-      // An empty list says why, in its place.
       Label {
         visible: !root.hinting && !root.menu.filtering && root.menu.emptyText !== ""
         Layout.leftMargin: Config.theme.itemPaddingX
@@ -157,7 +150,7 @@ Scope {
         text: root.menu.emptyText
       }
 
-      // What a level lists, apart from its actions and across the full width; filtering, as tall as its rows were, so nothing moves as the filter narrows.
+      // Filtering, as tall as its rows were, so nothing moves as the filter narrows.
       ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: root.menu.filtering ? root.menu.filterSlots * filledRow.implicitHeight + (root.menu.filterSlots - 1) * spacing : -1
@@ -199,7 +192,7 @@ Scope {
         }
       }
 
-      // The month, and the events from its selected day beside it as tall as the month, 2 to 3; built only while shown, as it is most of what an opening builds.
+      // Built only while shown, as it is most of what an opening builds.
       Loader {
         Layout.fillWidth: true
         active: root.menu.viewModel === root.menu.calendar
@@ -237,7 +230,7 @@ Scope {
         }
       }
 
-      // A menu's entries, in declared columns flowing across; hidden when empty, since an empty GridLayout keeps its last height.
+      // Hidden when empty, since an empty GridLayout keeps its last height.
       GridLayout {
         id: actionsGrid
         Layout.fillWidth: true

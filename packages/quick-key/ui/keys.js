@@ -2,12 +2,10 @@
 
 // Key names and labels, pure, so a unit test reads them without a shell (tests/unit); MenuKeys hands them on.
 
-// The names an entry key stands for: a single name or a list of them.
 function names(key) {
   return typeof key === "string" ? [key] : Array.from(key);
 }
 
-// Whether an entry key matches a key name.
 function matches(key, name) {
   return names(key).includes(name);
 }

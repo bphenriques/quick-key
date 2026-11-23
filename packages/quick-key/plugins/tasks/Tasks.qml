@@ -3,7 +3,7 @@ import qs
 import qs.services
 import qs.ui
 
-// Tasks from a file (docs/src/tasks.md): how many are due by today as its status, each on a digit to tick and untick, and the level's input to add one.
+// Tasks from a file (docs/src/tasks.md).
 Plugin {
   id: root
 
@@ -20,21 +20,21 @@ Plugin {
   readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
     .sort((a, b) => root.compare(a, b))
     .concat(adding.map(title => ({ id: "", title, adding: true })))
-  // From the settings until the level's actions step them, then kept, a reload included (Kept), until the shell restarts.
+  // Kept over a reload once the level actions step them, until the shell restarts.
   readonly property string sort: keptSort.value ?? settings.sort
   readonly property string completed: keptCompleted.value ?? settings.completed
-  // Ticks not in the file yet, by id: done or not; titles added and not in it yet; and their commands, run one at a time.
+  // Ticks and adds not in the file yet, and their commands, run one at a time.
   property var pending: ({})
   property var adding: []
   property var queue: []
   // The last tick or add that failed, until the next one or opening: it shows above the file's own error.
   property string failure: ""
-  // Open and due by today, late first.
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
   readonly property var late: due.filter(task => task.due.slice(0, 10) < today)
+  readonly property var updated: state.updated ? Clock.parse(state.updated) : null
   // Done as the menu opened: hidden for the visit, so a tick made in it stays to untick.
   property var settled: []
-  // The tasks reminded of, by id and due, so each is once.
+  // By id and due, so each is reminded once.
   property var reminded: ({})
 
   text: ""
@@ -43,7 +43,7 @@ Plugin {
     sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.words.sortedBy[root.sort], available: () => true, run: () => Kept.set(root.name + ".sort", root.after(root.settings.sorts, root.sort)) },
     completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => Kept.set(root.name + ".completed", root.after(root.settings.shows, root.completed)) }
   })
-  // How many are late, beside the alarm, else how many are due by today; two characters at most, so the row holds still.
+  // At most two characters, so the row holds still.
   detail: {
     const count = late.length || due.length;
     return count > 9 ? "9+" : count > 0 ? String(count) : "";
@@ -51,11 +51,8 @@ Plugin {
   tone: late.length > 0 ? "warning" : ""
   glyphs: late.length > 0 ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
-  fields: {
-    const updated = state.updated ? Clock.parse(state.updated) : null;
-    return ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" });
-  }
-  fieldTones: ({ updated: Clock.stale(state.updated ? Clock.parse(state.updated) : null, settings.staleAfter) ? "warning" : "" })
+  fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" })
+  fieldTones: ({ updated: Clock.stale(updated, settings.staleAfter) ? "warning" : "" })
   items: tasks.map(task => {
     const late = !task.done && !!task.due && task.due.slice(0, 10) < today;
     return {
@@ -65,7 +62,6 @@ Plugin {
       glyphs: late ? [Glyphs.late] : [],
       detail: task.due ? Clock.when(Clock.parse(task.due), task.due.includes("T")) : "",
       done: !!task.done,
-      // Settled as the menu opened, so a tick made in the visit stays to untick, whichever is shown.
       hidden: root.completed === "hidden" ? !!task.done && root.settled.includes(task.id) : root.completed === "only" && !task.done && !root.settled.includes(task.id),
       busy: !!task.adding,
       enabled: !task.adding,
@@ -90,7 +86,6 @@ Plugin {
     return due || title;
   }
 
-  // The next of a cycle, back to the first after the last.
   function after(cycle, current) {
     return cycle[(cycle.indexOf(current) + 1) % cycle.length];
   }
@@ -105,7 +100,7 @@ Plugin {
     next();
   }
 
-  // An added task shows at once, dim until the file has it; its command waits its turn as a tick does.
+  // Shows at once, dim until the file has it.
   function submit(text, background, after) {
     failure = "";
     adding = adding.concat([text]);
@@ -127,7 +122,6 @@ Plugin {
     adding = adding.filter(title => !Array.from(state.tasks ?? []).some(task => task.title === title));
   }
 
-  // The pending ticks that pass a test, by id and done.
   function kept(test) {
     return Object.keys(pending).reduce((kept, id) => test(id, pending[id]) ? Object.assign(kept, { [id]: pending[id] }) : kept, {});
   }
@@ -136,7 +130,6 @@ Plugin {
   function refresh() {
     failure = "";
     settled = tasks.filter(task => task.done).map(task => task.id);
-    const updated = state.updated ? Clock.parse(state.updated) : null;
     if (!updated || Clock.stale(updated, settings.syncAfter)) exec(settings.sync);
   }
 
@@ -172,7 +165,7 @@ Plugin {
     }
   }
 
-  // Each tick and add is written to the file in turn; a failed one shows the file's state again. The sync after the last takes them to the server.
+  // Each tick and add written in turn; the sync after the last takes them to the server.
   CommandProcess {
     id: toggler
     // { verb, arg, after }: done or reopen and an id, or add and a title, then what runs once it is added.

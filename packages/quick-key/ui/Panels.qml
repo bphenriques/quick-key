@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// The surfaces the keyboard opens, as one stack of their owners (the menu, a plugin): the top one shows, opening one covers the one under it, stepping back shows that one again, and closing hides them all. Also the top level's right slot, which the menu registers for a plugin's panel's bar.
+// The surfaces the keyboard opens, one stack of their owners (the menu, a plugin) of which the top shows; also the top level right slot, which the menu registers for a plugin panel bar.
 Singleton {
   property var stack: []
   readonly property var top: stack[stack.length - 1] ?? null
@@ -15,7 +15,6 @@ Singleton {
     stack = at < 0 ? stack.concat([owner]) : stack.slice(0, at + 1);
   }
 
-  // Closes the top, showing the one under it again.
   function back() {
     stack = stack.slice(0, -1);
   }

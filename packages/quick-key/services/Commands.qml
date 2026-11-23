@@ -12,7 +12,6 @@ Singleton {
     return ["sh", "-c", shell + args.map((_, i) => ' "$' + (i + 1) + '"').join(""), "sh", ...args];
   }
 
-  // Runs it and forgets it; nothing when unset.
   function run(shell, ...args) {
     if (shell) Quickshell.execDetached(line(shell, ...args));
   }

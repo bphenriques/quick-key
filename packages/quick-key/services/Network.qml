@@ -6,7 +6,6 @@ import Quickshell.Networking
 
 // The connection in use, and the Wi-Fi radio with its saved networks in range.
 Singleton {
-  // "wifi", "wired" or "none".
   readonly property string kind: internal.device === null ? "none" : internal.device.type === DeviceType.Wired ? "wired" : "wifi"
   readonly property string ssid: kind === "wifi" ? (internal.device.networks.values.find(network => network.connected)?.name ?? internal.device.name) : ""
   readonly property bool wifiPresent: internal.wifi !== null

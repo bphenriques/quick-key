@@ -7,28 +7,23 @@ import Quickshell
 import qs
 import qs.ui
 
-// Ask's panel while shown, where the menu opens: the conversation, the prompt and its keys, over the state in Ask.qml.
 Scope {
   id: panel
 
   required property var plugin
-  // How much taller than a line the prompt is, which the conversation gives up.
+  // The prompt's height past a line, which the conversation gives up.
   property real inputExtra: 0
-  // The conversation's width, which a bubble takes most of at most: read from the conversation, not the exchange, whose width its bubbles make.
+  // Read from the conversation, not the exchange, whose width its bubbles make.
   property real threadWidth: 0
-  // Every key the panel takes, for `?`: Ask's table, the one its legend and its keys read too.
-  readonly property var help: plugin.keys
-  // The last turn as drawn, for what Return does next.
+  // For the placeholder.
   readonly property var last: plugin.exchanges.length > 0 ? plugin.describe(plugin.exchanges[plugin.exchanges.length - 1]) : null
-  // An answer's selection, kept while its turn is scrolled away or the panel hidden: { turn, piece, start, end }; another conversation drops it.
+  // { turn, piece, start, end }, kept while scrolled away or hidden; another conversation drops it.
   property var selection: null
 
-  // Page Up and Down, for the conversation.
   signal paged(bool down)
-  // A key of the prompt's clicked in the legend: Escape's step, or sending in the background.
+  // A prompt key clicked in the legend.
   signal promptPicked(var key)
 
-  // A key for the panel, from the prompt or, while it waits, the panel; whether it was the panel's.
   function handle(event) {
     if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
       paged(event.key === Qt.Key_PageDown);
@@ -37,19 +32,18 @@ Scope {
     return plugin.act(MenuKeys.name(event));
   }
 
-  // A turn's answer selected (kept for it) or cleared (dropped, if it was the one kept).
   function keep(turn, selection) {
     if (selection) panel.selection = Object.assign({ turn: turn }, selection);
     else if (panel.selection && panel.selection.turn === turn) panel.selection = null;
   }
 
-  // The web links in a reply, each once, without the punctuation that ends a sentence.
+  // Each once, without a sentence's closing punctuation.
   function links(text) {
     const found = (text.match(/https?:\/\/[^\s<>"'()\[\]]+/g) ?? []).map(url => url.replace(/[.,;:!?]+$/, ""));
     return [...new Set(found)];
   }
 
-  // A link as read: its host, then the last part of its path (recipes.example.com › bacalhau-com-natas).
+  // Its host, then the last part of its path: recipes.example.com › bacalhau-com-natas.
   function linkLabel(url) {
     const [, host, path] = url.match(/^https?:\/\/([^\/?#]+)([^?#]*)/) ?? [null, url, ""];
     const last = path.split("/").filter(part => part !== "").pop();
@@ -61,7 +55,7 @@ Scope {
     return host + " › " + page.replace(/\.html?$/, "");
   }
 
-  // Opened by the desktop's link handler, design rule 2's one exception; the panel hides so the browser shows.
+  // Design rule 2's one exception; the panel hides so the browser shows.
   component LinkRow: ListItem {
     id: link
     property string url
@@ -85,7 +79,6 @@ Scope {
     }
   }
 
-  // A prompt and what came of it, drawn by its state (Exchange), then its links as rows.
   component Turn: ColumnLayout {
     id: turn
     required property int index
@@ -106,7 +99,7 @@ Scope {
       text: (turn.drawn.text ?? "").split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
       phase: turn.drawn.phase ?? "done"
       kind: turn.drawn.kind ?? ""
-      // The time too, once the wait is noticeable, which only the panel's clock counts.
+      // The wait too, once noticeable.
       activity: [turn.drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
       options: turn.drawn.options ?? []
       table: !!turn.drawn.table
@@ -145,7 +138,6 @@ Scope {
     namespace: panel.plugin.name
     inputShown: true
     inputFocused: panel.plugin.typing
-    // Waiting, the panel's own keys.
     onKeyPressed: event => event.accepted = panel.handle(event)
     // Hidden, the conversation is kept.
     onDismissed: Panels.close()
@@ -153,12 +145,11 @@ Scope {
     barShown: true
     statuses: true
     islands: Config.menu.islands
-    // Its keys on the left, the statuses Panel adds on the right.
     bar: RowLayout {
       // The legend on an island of its own with `menu.islands`, the statuses on another.
       readonly property var islands: [legend]
 
-      // Only what the state changes, each while it applies; the fixed keys are `?`'s.
+      // Only what the state changes; fixed keys are listed on `?`.
       KeyLegend {
         id: legend
         // Each key as it runs now (Ask.typedAs): waiting, a chord's letter alone.
@@ -179,7 +170,7 @@ Scope {
     body: ColumnLayout {
       spacing: Config.theme.padding
 
-      // The conversation, built only where it shows, so a long one opens as fast as a short one; laid out from the newest up, so it rests at its end however tall the turns built meanwhile, a streaming answer growing upward.
+      // Built only where it shows, so a long conversation opens as fast as a short one; laid out from the newest up, so it rests at its end however tall the turns built meanwhile.
       ListView {
         id: thread
         visible: !panel.plugin.helping
@@ -188,8 +179,7 @@ Scope {
         onWidthChanged: panel.threadWidth = width
         Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
-        // Its lines, but no more than most of its screen.
-        Layout.preferredHeight: Math.min(panel.plugin.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra
+        Layout.preferredHeight: Math.min(panel.plugin.settings.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra
         Layout.leftMargin: Config.theme.itemPaddingX
         Layout.rightMargin: Config.theme.itemPaddingX
         clip: true
@@ -201,7 +191,6 @@ Scope {
           maskThresholdMin: 0.5
           maskSpreadAtMin: 1
         }
-        // Wider between exchanges than within one, so each reads as a unit.
         spacing: Config.theme.padding
         boundsBehavior: Flickable.StopAtBounds
         model: panel.plugin.exchanges.length
@@ -225,7 +214,7 @@ Scope {
           }
         }
 
-        // An empty conversation says so, as an empty list does, or why it is empty: one being resumed, or one that could not be.
+        // An empty conversation says so, or that it is being resumed or could not be.
         Label {
           // On the view itself, not its content, which a list laid out upward places out of sight while empty.
           parent: thread
@@ -238,7 +227,7 @@ Scope {
         }
       }
 
-      // The conversation's alpha while scrolled: clear at the top, opaque a line down.
+      // Clear at the top, opaque a line down.
       Rectangle {
         id: fadeMask
         visible: false
@@ -259,7 +248,7 @@ Scope {
         }
       }
 
-      // `?`: every key the panel takes, in the conversation's place and height, so the panel holds still.
+      // In the conversation's place and height, so the panel holds still.
       Item {
         visible: panel.plugin.helping
         Layout.fillWidth: true
@@ -268,8 +257,7 @@ Scope {
         KeyList {
           anchors.left: parent.left
           anchors.right: parent.right
-          keys: panel.help
-          // Runs as the key does, as the menu's list does.
+          keys: panel.plugin.keys
           onPicked: key => panel.plugin.runListed(key)
         }
       }
@@ -280,7 +268,7 @@ Scope {
       // A prompt taller than a line takes its height from the conversation, so the panel holds still.
       onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
 
-      // Pasted for the next prompt; Escape clears it with the text.
+      // Escape clears it with the text.
       Thumbnail {
         Layout.leftMargin: Metrics.line + Config.theme.spacing
         path: panel.plugin.image
@@ -290,7 +278,7 @@ Scope {
         id: prompt
         Layout.fillWidth: true
         glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
-        // Who it asks until a turn says what Return does next, as the menu's input does.
+        // Until a turn says what Return does next, as the menu's input does.
         placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
         active: panel.plugin.typing
         key: "Tab"
@@ -301,7 +289,7 @@ Scope {
         onTextChanged: panel.plugin.keepDraft(text)
         Component.onCompleted: set(panel.plugin.draft)
 
-        // Return sends, Ctrl+Shift+Return sends in the background and Shift+Return breaks the line; the rest go to the panel, as the legend's clicks do.
+        // Shift+Return breaks the line; the rest go to the panel.
         onKeyPressed: event => {
           const send = MenuKeys.sends(event);
           if (send) prompt.send(send === "background");
@@ -327,7 +315,7 @@ Scope {
         Connections {
           target: panel.plugin
 
-          // The draft as Ask changes it: a failed prompt put back, or dropped with its conversation.
+          // A failed prompt put back, or dropped with its conversation.
           function onDraftChanged() {
             if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft);
           }

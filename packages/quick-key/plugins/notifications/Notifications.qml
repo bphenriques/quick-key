@@ -32,7 +32,6 @@ Plugin {
   readonly property var showable: summoned ? ordered : ordered.filter(entry => critical(entry) || !internal.fullscreen && (!paused || !!entry.applied.ignorePause))
   // `limit` at a time, the window following the pick; a card's digit is its place among all, so it holds still.
   readonly property var shown: showable.slice(internal.first, internal.first + settings.limit)
-  // Those showable but not shown.
   readonly property int more: showable.length - shown.length
   // None under a fullscreen window: the count would sit over it.
   readonly property int held: internal.fullscreen ? 0 : ordered.length - showable.length
@@ -543,7 +542,6 @@ Plugin {
     readonly property bool hasInlineReply: notification?.hasInlineReply ?? false
     readonly property bool resident: notification?.resident ?? false
     property int came: 0
-    // How many times it came saying the same.
     property int repeats: 1
     property real arrived: 0
     property var applied: ({ actions: [], values: {} })
@@ -589,7 +587,6 @@ Plugin {
       return at < 0 ? within : Math.max(at - root.settings.limit + 1, Math.min(within, at));
     }
     property var list: []
-    // The last closed, to bring back.
     property var closed: []
     // While clearing, the closed history being built.
     property var building: null
@@ -598,7 +595,6 @@ Plugin {
     property var replying: null
     property string mode: "cards"
     property bool copied: false
-    // Arrivals counted.
     property int seq: 0
     // Held still, and the order then.
     property bool holding: false

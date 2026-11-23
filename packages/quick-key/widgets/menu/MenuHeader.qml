@@ -25,7 +25,6 @@ RowLayout {
   // What each island holds with `menu.islands`: the actions, then each slot's items, which Panel draws apart.
   readonly property var islands: [actions, leftSlot.content, centreSlot.content, rightSlot.content]
 
-  // A key of the legend clicked.
   signal picked(var key)
 
   // Never widens the menu: a bar whose icons cannot fit overflows instead (rule 4: make the menu wider).
@@ -40,7 +39,6 @@ RowLayout {
     // Shrinks, never grows: past their glyphs alone, its rows' text gives way, as the slots' does.
     Layout.fillWidth: true
     Layout.maximumWidth: implicitWidth
-    // A column's gap, as between a menu's rows.
     spacing: Config.theme.padding
 
     Repeater {

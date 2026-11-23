@@ -16,7 +16,6 @@ Scope {
   readonly property var settings: plugin.settings
   readonly property bool top: settings.corner.startsWith("top")
   readonly property bool right: settings.corner.endsWith("right")
-  // The margin set, but no more than a quarter of its screen.
   readonly property real margin: Math.min(settings.margin, (screen?.width ?? Infinity) / 4, (screen?.height ?? Infinity) / 4)
   readonly property var cards: top ? plugin.shown : plugin.shown.slice().reverse()
   // Whether any card shown has an app's icon: without one, no card keeps a column for it, so neither side sits empty.

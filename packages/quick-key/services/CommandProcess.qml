@@ -5,7 +5,6 @@ import Quickshell.Io
 Process {
   id: root
 
-  // Its last line on stderr, this run.
   property string complaint: ""
 
   onStarted: complaint = ""

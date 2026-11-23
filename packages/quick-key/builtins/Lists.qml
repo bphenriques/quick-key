@@ -5,7 +5,7 @@ import Quickshell
 import qs.services
 import qs.ui
 
-// The built-in lists by name; `list` names one of these or a plugin; a table without a prototype, so no name every object inherits (toString) is one.
+// Built-in lists by name; no prototype, as in Statuses.qml.
 Singleton {
   id: root
 
@@ -82,7 +82,6 @@ Singleton {
     }));
   }
 
-  // Why a list is empty, in its own words.
   function empty(list) {
     return builtin[list]?.empty() ?? Plugins.get(list)?.empty ?? "";
   }

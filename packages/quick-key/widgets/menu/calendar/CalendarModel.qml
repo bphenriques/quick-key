@@ -21,7 +21,6 @@ QtObject {
     { key: "Return", what: Words.events, clickable: true }
   ]
   readonly property var eventKeys: [{ key: ["Up", "Down"], what: Words.event }]
-  // Shown under the header (KeyLegend).
   readonly property var legend: focused ? eventKeys : keys.filter(entry => !entry.unlisted)
 
   // Today, with no event in focus: how a calendar level opens.
@@ -39,7 +38,6 @@ QtObject {
     internal.selected = row.day;
   }
 
-  // No event in focus, the day staying.
   function clearFocus() {
     internal.focused = "";
   }
@@ -73,7 +71,6 @@ QtObject {
     select(new Date(year, month, Math.min(selected.getDate(), last) + days));
   }
 
-  // Its own state, written only by its functions.
   readonly property QtObject internal: QtObject {
     property var selected: new Date()
     property string focused: ""

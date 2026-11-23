@@ -7,11 +7,10 @@ import qs
 import qs.services
 import qs.ui
 
-// Quick turns with an ACP agent in a panel, the agent kept running between turns; its settings are in docs/src/plugins.md.
+// An ACP agent in a panel, kept running between turns (docs/src/plugins.md).
 Plugin {
   id: root
 
-  readonly property int lines: settings.lines
   words: ({
     resuming: "Resuming" + Words.ellipsis,
     newConversation: "New conversation",
@@ -26,7 +25,7 @@ Plugin {
     newChat: "new",
     terminal: "terminal" + Words.ellipsis
   })
-  // Its keys, each once: what `?` lists (`desc`), the legend's word while it applies (`what`, `shows`), and what one it handles runs (`run`, false when it leaves the key to the prompt).
+  // Each key once: `desc` for `?`, `what` and `shows` for the legend, `run` returning false to leave the key to the prompt.
   readonly property var keys: [
     { key: "Tab", desc: Words.helpTab },
     { key: "Shift+Return", desc: "Break the line" },
@@ -42,41 +41,36 @@ Plugin {
     { key: "Escape", desc: Words.helpEscape }
   ].filter(entry => entry.when !== false)
 
-  // [{ prompt, image, reply, error, stopped, after, input, options, table, steps }], the last one streaming in while busy; `input` when a level's input sent it, or its panel while expanded from one.
+  // [{ prompt, image, reply, error, stopped, after, input, options, table, steps }], the last streaming while busy; `input` when a level input sent it.
   property var exchanges: []
-  // The conversation, as the agent knows it (Acp).
   property alias session: agent.session
   property string draft: ""
-  // An image pasted for the next prompt, as a file under $XDG_RUNTIME_DIR.
+  // A file under $XDG_RUNTIME_DIR, attached to the next prompt.
   property string image: ""
-  // On top of Panels.
   readonly property bool shown: Panels.top === root
-  // Whether the prompt has the keys; it does as the panel opens, and Tab moves them.
   property bool typing: true
   property bool unread: false
-  // A turn, or a load replaying an earlier conversation, under way.
+  // A turn, or a load replaying a conversation, under way.
   property bool running: false
-  // Whether this visit (the menu showing its input) sent it a turn, so the next send continues that conversation.
+  // This visit sent it a turn, so the next send continues that conversation.
   property bool visited: false
-  // `?` with the prompt dim: the panel's keys in place of the conversation, until the next key.
+  // `?` with the prompt dim: the panel keys until the next key.
   property bool helping: false
-  // What a digit picks: the last answer's options, once it is in.
   readonly property var choices: busy ? [] : exchanges[exchanges.length - 1]?.options ?? []
-  // What the agent waits to be allowed to run, and what it is doing.
   property string approval: ""
   property string activity: ""
-  // A tool `toolMatch` names ran this turn.
+  // A tool `toolMatch` matches ran this turn.
   property bool touched: false
-  // The answer's pieces since the last flush: applied at most every 50 ms, so a fast stream costs a few redraws a second, not one a piece.
+  // Applied at most every 50 ms, so a fast stream redraws a few times a second.
   property string streamed: ""
-  // Its past conversations as the agent lists them ([{ sessionId, title, updatedAt }]), while it lists them, and why it could not.
+  // [{ sessionId, title, updatedAt }], as the agent lists them.
   property var conversations: []
   property bool listing: false
   property string failure: ""
-  // A conversation being resumed, and its history as the agent replays it, built in place and shown once whole.
+  // The history the agent replays, built in place and shown once whole.
   property bool resuming: false
   property var recalled: []
-  // Seconds the current run has taken, ticking only while it runs and the panel shows.
+  // Seconds the run has taken, ticking only while it runs and shows.
   property int sentAt: 0
   property int now: 0
   readonly property int waited: Math.max(0, now - sentAt)
@@ -85,14 +79,12 @@ Plugin {
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText
 
-  // Its work (Phase): a run, blocked on an approval, else what you have not seen (an answer done, a failure); its status shows only while it has one to report.
   phase: running ? (approval ? "blocked" : "working") : unread ? (exchanges[exchanges.length - 1]?.error ? "error" : "done") : "idle"
   kind: approval ? "permission" : ""
   glyph: phase !== "idle" ? settings.glyph : ""
   error: failure
   views: ["AskPanel.qml"]
   recalls: settings.ask !== ""
-  // The open one lit; one the agent cannot carry on dims.
   items: conversations.map(conversation => ({
     id: conversation.sessionId,
     label: conversation.title || conversation.sessionId,
@@ -105,7 +97,6 @@ Plugin {
   }))
   empty: listing ? words.listing : words.none
 
-  // Its past conversations, listed afresh each time, in the picker.
   function recall() {
     if (!settings.ask) return false;
     listing = true;
@@ -127,7 +118,7 @@ Plugin {
     if (key === "o") exec(settings.open, id);
   }
 
-  // An earlier conversation in the panel, between turns: the one open just shows, another loads, its history replayed (Acp.load).
+  // The one open just shows; another loads, its history replayed (Acp.load).
   function resume(id) {
     if (busy) return;
     if (id !== session || exchanges.length === 0) {
@@ -140,7 +131,6 @@ Plugin {
     show();
   }
 
-  // The history replayed, as exchanges, the last one's options waiting as a fresh answer's do; stopped or failed, none.
   function resumed(outcome) {
     resuming = false;
     running = false;
@@ -167,13 +157,12 @@ Plugin {
     typing = true;
   }
 
-  // The whole conversation, over the menu, for what the answer over an input cannot fit (Plugin.expand).
+  // For what the answer over an input cannot fit (Plugin.expand).
   function expand() {
     show();
     return true;
   }
 
-  // An option of the last answer, sent as the next message.
   function pick(index) {
     const option = choices[index];
     if (option === undefined) return false;
@@ -182,7 +171,7 @@ Plugin {
 
   onShownChanged: helping = false
 
-  // An input's text, answered above it while the menu shows it (the last answer staying until the next), else as a notification; one conversation per visit.
+  // Answered above the input while the menu shows it, else as a notification; one conversation per visit.
   function submit(text, background, after) {
     if (busy || !settings.ask) return false;
     if (!visited) reset();
@@ -191,17 +180,17 @@ Plugin {
     return true;
   }
 
-  // Whether the menu shows this turn's answer, above the input that sent it.
+  // The menu shows this answer, above the input that sent it.
   function seen(exchange) {
     return !!exchange?.input && watched;
   }
 
-  // An answer with the options it gave, on one line: what a reply to it answers.
+  // What a reply to this answers: its text and options on one line.
   function followed(exchange) {
     return exchange ? [exchange.reply, (exchange.options ?? []).join(" · ")].filter(part => part).join(" ") : "";
   }
 
-  // An exchange by its phase (Phase), as an Exchange draws it: the last one working, or blocked on an approval, while running, and blocked on a question while its options wait; a stopped one idle.
+  // As an Exchange draws it (Phase): blocked on an approval while running, on a question while its options wait.
   function describe(exchange) {
     const latest = exchange === exchanges[exchanges.length - 1];
     const phase = latest && running ? (approval ? "blocked" : "working")
@@ -214,7 +203,7 @@ Plugin {
       phase: phase,
       kind: kind,
       activity: phase === "working" ? activity : "",
-      // While it works, the answer it follows with the options it gave, so the question shows what it answers.
+      // So the question shows what it answers.
       context: phase === "working" ? followed(exchanges[exchanges.indexOf(exchange) - 1]) : "",
       options: kind === "question" ? choices : [],
       table: !!exchange.table,
@@ -222,7 +211,7 @@ Plugin {
     };
   }
 
-  // The last exchange, for the menu, when it shows it (Plugin.turn).
+  // For the menu, while it shows it (Plugin.turn).
   function report() {
     const last = exchanges[exchanges.length - 1];
     if (seen(last)) turn = describe(last);
@@ -232,7 +221,7 @@ Plugin {
   function send(prompt, image = root.image, after = "", input = false) {
     prompt = prompt.trim();
     if ((!prompt && !image) || busy || !settings.ask) return false;
-    // Asking again what failed or was stopped replaces that exchange, so the thread keeps one of each, and its `after`.
+    // Asking again what failed replaces that exchange, keeping its `after`.
     const last = exchanges[exchanges.length - 1];
     const retried = last && last.error && last.prompt === prompt && last.image === image;
     const kept = retried ? exchanges.slice(0, -1) : exchanges;
@@ -250,7 +239,6 @@ Plugin {
     return true;
   }
 
-  // The turn's end, as the agent reports it: the answer it streamed, with its options and table, else why not.
   function close(outcome) {
     if (resuming) return resumed(outcome);
     flush();
@@ -260,7 +248,7 @@ Plugin {
     finish({ reply: shaped.text, options: shaped.options, table: Markup.hasTable(text) });
   }
 
-  // The last exchange with `fields` changed, the list replaced so what draws it hears; that exchange as it is now.
+  // Replaced, not edited, so what draws it hears.
   function setLast(fields) {
     const last = Object.assign({}, exchanges[exchanges.length - 1], fields);
     exchanges = exchanges.slice(0, -1).concat([last]);
@@ -272,10 +260,6 @@ Plugin {
     setLast({ reply: exchanges[exchanges.length - 1].reply + streamed });
     streamed = "";
     report();
-  }
-
-  function fail(message) {
-    finish({ error: message });
   }
 
   function finish(answer) {
@@ -293,9 +277,8 @@ Plugin {
     }
   }
 
-  // An image as the agent takes it: base64, its type read from its first bytes.
   function encode(path, then) {
-    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : fail(words.noImage));
+    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : finish({ error: words.noImage }));
   }
 
   function mimeOf(data) {
@@ -309,7 +292,7 @@ Plugin {
     notifier.running = true;
   }
 
-  // Ctrl+V: the clipboard's image, attached to the next prompt; without one, the text paste it would have been.
+  // Without an image, the text paste it would have been.
   function pasteImage() {
     const path = Quickshell.env("XDG_RUNTIME_DIR") + "/" + name + "-" + Date.now();
     call(settings.pasteImage, [path], code => code === 0 ? root.image = path : root.pasteText());
@@ -324,7 +307,6 @@ Plugin {
     approval = "";
   }
 
-  // The last answer, to the clipboard.
   function copy() {
     const reply = exchanges[exchanges.length - 1]?.reply ?? "";
     if (!reply) return false;
@@ -332,12 +314,12 @@ Plugin {
     return true;
   }
 
-  // Cancels the turn and puts its prompt back; the agent stays for the next one (Acp.cancel).
+  // The agent stays for the next turn (Acp.cancel).
   function stop() {
     if (busy) agent.cancel();
   }
 
-  // A new conversation; the unsent prompt stays, but not a failed one put back for a retry, which goes with its conversation.
+  // The unsent prompt stays, but not a failed one put back for a retry.
   function reset() {
     stop();
     const last = exchanges[exchanges.length - 1];
@@ -358,13 +340,11 @@ Plugin {
     Panels.close();
   }
 
-  // A key picked from `?`'s list: the list closes and the key runs.
   function runListed(key) {
     helping = false;
     return act(key);
   }
 
-  // The prompt takes the keys (a click on it).
   function focusPrompt() {
     typing = true;
   }
@@ -373,12 +353,12 @@ Plugin {
     image = "";
   }
 
-  // What is typed, kept as it changes, so it outlasts a reload.
+  // Kept as it changes, so it outlasts a reload.
   function keepDraft(text) {
     draft = text;
   }
 
-  // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt. Waiting, `?` lists them (any key closing the list) and its letters do what their Ctrl chords do, but for `y`.
+  // True when the key was the panel's. Waiting, `?` lists them and letters do what their Ctrl chords do, but for `y`.
   function act(key) {
     if (helping) {
       helping = false;
@@ -388,33 +368,33 @@ Plugin {
       helping = true;
       return true;
     }
-    // Tab moves the keys between the prompt and the panel, as in a level; Shift+Tab back to the panel, and from the panel it is Qt's.
+    // Shift+Tab goes back to the panel; from the panel it is Qt's.
     if (key === "Tab" || (typing && key === "Backtab")) {
       typing = !typing;
       return true;
     }
-    // A waiting choice takes the digits while the prompt is empty, a digit picking and never typing.
+    // A digit picks a waiting choice while the prompt is empty, never typing.
     if (/^[1-9]$/.test(key) && !draft && !image && Number(key) <= choices.length) return pick(Number(key) - 1);
     if (key === "Escape") return stepBack();
     const entry = keys.find(entry => entry.run && (entry.key === key || typedAs(entry.key) === key));
     return !!entry && entry.run() !== false;
   }
 
-  // The key that runs one of its keys now: waiting, a chord's letter alone, but `C-y`'s, as a bare `y` copies: a key learned as harmless never approves.
+  // A bare `y` copies, so a key learned as harmless never approves.
   function typedAs(key) {
     return !typing && /^Ctrl\+[a-z]$/.test(key) && key !== "Ctrl+y" ? key.slice(5) : key;
   }
 
-  // With the prompt dim, Escape leaves, the conversation kept; typing, clearing first is the prompt's (Prompt.stepBack), so false leaves it to it.
+  // Typing, clearing first is the prompt's (Prompt.stepBack).
   function stepBack() {
     if (typing) return false;
     Panels.back();
     return true;
   }
 
-  // Its conversation and draft, kept over a reload or a restart (Kept): the agent loads the conversation again on its next turn.
+  // Kept over a reload or a restart; the agent loads the conversation again on its next turn.
   readonly property var kept: ({ exchanges: exchanges, session: session, draft: draft })
-  // Saved once taken, so a conversation being made never overwrites the one it is about to take, and once a turn settles, not with every piece of an answer streaming in.
+  // Saved once taken, so a conversation being made never overwrites the one it takes; and once a turn settles, not per streamed piece.
   property bool taken: false
   onKeptChanged: save()
   onRunningChanged: save()
@@ -439,7 +419,6 @@ Plugin {
     taken = true;
   }
 
-  // The menu left the input, or closed: the visit ends, and its answer with it.
   onVisitEnded: {
     visited = false;
     turn = null;

@@ -144,7 +144,6 @@ Singleton {
     return Object.keys(renamed).filter(path => at(json, path) !== undefined).map(path => path + " is now " + renamed[path]);
   }
 
-  // A value by its dotted path, undefined where a step is missing.
   function at(json, path) {
     return path.split(".").reduce((value, key) => value?.[key], json);
   }

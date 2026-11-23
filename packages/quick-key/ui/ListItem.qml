@@ -12,7 +12,6 @@ Rectangle {
   property bool current: false
   property real verticalPadding: Config.theme.itemPaddingY
 
-  // The pointer is on it.
   readonly property bool hovered: mouse.containsMouse
 
   signal activated

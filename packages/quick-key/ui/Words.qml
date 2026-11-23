@@ -38,12 +38,10 @@ Singleton {
     return "Nothing matches " + text;
   }
 
-  // What an agent waits to be allowed to do, asked.
   function allowQuestion(what) {
     return "Allow " + what + "?";
   }
 
-  // When a source last brought its data, beside its state.
   function updated(when) {
     return "updated " + when;
   }

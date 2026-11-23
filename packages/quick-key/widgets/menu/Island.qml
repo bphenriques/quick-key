@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import qs
 import qs.ui
 
-// The menu's input island (InputModel): the conversation's last turn (Exchange, drawn by its phase) over the line to send; Return sends it and keeps the focus for the next, Ctrl+Shift+Return sends it in the background. Filtering, the line is the filter.
+// The menu input island (InputModel): the last turn (Exchange) over the line to send; filtering, the line is the filter.
 GridLayout {
   id: root
 
@@ -97,7 +97,7 @@ GridLayout {
     onFilterChanged: set(filter ? "" : root.model.draftOf(owner))
     Component.onCompleted: set(filter ? "" : root.model.draftOf(owner))
     onTextChanged: filter ? root.menu.filter.search(text) : root.model.keepDraft(text)
-    // Tab moves on to the turn, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits.
+    // Tab moves on to the turn, else to the body as Shift+Tab does.
     onKeyPressed: event => {
       const send = MenuKeys.sends(event);
       const name = MenuKeys.name(event);

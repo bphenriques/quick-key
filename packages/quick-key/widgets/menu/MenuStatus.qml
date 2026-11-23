@@ -4,7 +4,7 @@ import qs.services
 import qs.ui
 import qs.builtins
 
-// A status by name (`status` in an entry), or an icon and label without one, drawn as a listed item: lit and bold while in use, dim and struck through once done. On a row its label stays and the status follows as a value; in a bar the status alone.
+// A status by name (`status` in an entry), or an icon and label without one, drawn as a listed item; on a row its label stays and the status follows as a value, in a bar the status alone.
 StatusLine {
   id: root
 

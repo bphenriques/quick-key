@@ -5,16 +5,15 @@ import QtQuick.Layouts
 import Quickshell
 import qs
 
-// One turn of a conversation, the question a bubble on the right and the answer on the left in Markdown, streaming in while it works, drawn by its `phase` and `kind` as Phase names them (working; done; blocked on a question, options a digit picks, or for permission; error; idle once stopped); with `lines` it is compact, `overflows` saying what it cannot hold.
+// One turn of a conversation: the question a bubble on the right, the answer on the left in Markdown; with `lines` it is compact, `overflows` saying what it cannot hold.
 ColumnLayout {
   id: root
 
   property string question
-  // The answer just before the question, dim over it while the question waits for its own: what is being answered.
+  // What is being answered, dim over the question while it waits for its own.
   property string context
-  // A picture sent with the question, as a file path.
   property string image
-  // The answer in Markdown, as ACP sends text; compact, shown plain.
+  // Markdown, as ACP sends text; plain when compact.
   property string text
   property string phase: "done"
   property string kind: ""
@@ -25,22 +24,21 @@ ColumnLayout {
   property bool picking: false
   property int lines: 0
   property bool copyable: false
-  // What you answered on the way (an approval), dim lines over the answer when not compact.
+  // What you answered on the way (an approval), dim over the answer.
   property var steps: []
-  // How wide a bubble may grow; set from what holds the conversation, never from the exchange's own width.
+  // Set from what holds the conversation, never from the exchange's own width.
   property real maximumWidth: Infinity
 
   readonly property bool compact: lines > 0
   readonly property bool fits: options.length <= 9 && choices.implicitWidth <= maximumWidth - 2 * Config.theme.itemPaddingX
   readonly property bool overflows: compact && (kind === "permission" || table || brief.width > 0 && brief.truncated || (options.length > 0 && !fits))
-  // What Return does next, for the prompt under the exchange.
+  // What Return does next, for the prompt under it.
   readonly property string next: Words.next(phase, kind, picking, options.length)
-  // The answer's selection to show again (Markdown.kept).
+  // The selection to show again (Markdown.kept).
   property alias kept: answer.kept
   readonly property string tone: phase === "error" ? "alert" : kind === "permission" ? "warning" : phase === "idle" ? "dim" : ""
 
   signal picked(int index)
-  // The answer's selection made or cleared (Markdown.selected).
   signal selected(var selection)
 
   spacing: Config.theme.spacing / 2
@@ -105,7 +103,6 @@ ColumnLayout {
       full: root.compact
       clip: true
 
-      // Working, until its answer starts streaming in.
       RowLayout {
         visible: root.phase === "working" && root.text === ""
         spacing: Config.theme.spacing
@@ -134,7 +131,7 @@ ColumnLayout {
           size: Metrics.line
         }
 
-        // Compact: cut at `lines`, which is how `overflows` knows.
+        // Cut at `lines`, which is how `overflows` knows.
         Label {
           id: brief
           Layout.fillWidth: true
@@ -157,7 +154,6 @@ ColumnLayout {
         }
       }
 
-      // Compact, the options on one line, as keys while a digit picks them.
       RowLayout {
         id: choices
         visible: root.compact && root.options.length > 0
@@ -189,7 +185,7 @@ ColumnLayout {
       }
     }
 
-    // Copies the whole answer; a selection copies its part. At its end, so it reads as the answer's and not its first line's.
+    // At its end, so it reads as the whole answer's; a selection copies its part.
     ListItem {
       Layout.alignment: Qt.AlignBottom
       visible: root.copyable && (root.phase === "done" || root.kind === "question")
@@ -218,7 +214,6 @@ ColumnLayout {
     }
   }
 
-  // Not compact, the options as rows, a digit (`picking`) or a click choosing one.
   Repeater {
     model: root.compact ? [] : root.options
 

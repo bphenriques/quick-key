@@ -12,7 +12,7 @@ Singleton {
   readonly property var ruleLine: /^\s{0,3}([-*_])(\s*\1){2,}\s*$/
   readonly property var quoteLine: /^\s{0,3}>/
 
-  // As compact lines show it, from the blocks html() renders, so the two never disagree on what a block is: marks gone, code as written, a table's rows as columns, a rule dropped.
+  // As compact lines show it, from the blocks html() renders, so the two agree on what a block is.
   function plain(markdown) {
     const lines = linesOf(markdown);
     return spans(lines).map(([start, end]) => plainBlock(lines.slice(start, end))).filter(text => text !== "").join("\n");
@@ -30,12 +30,11 @@ Singleton {
     return bare(lines.map(joined => joined.trim()).join(" "));
   }
 
-  // A line's inline marks dropped: a link or an image by its text, emphasis and code by theirs.
   function bare(text) {
     return text.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1");
   }
 
-  // As `Markdown` renders it: rich text of the kit's own making (AGENTS.md rule 9), the answer's text escaped and an image or a link by its text, so nothing is fetched and no HTML runs.
+  // Rich text of the kit's own making (rule 9): text escaped, an image or a link by its text, so nothing is fetched and no HTML runs.
   function html(markdown) {
     return blocks(linesOf(markdown));
   }
@@ -113,7 +112,6 @@ Singleton {
     return end;
   }
 
-  // One block, its lines as `spans` cut them.
   function block(lines, top) {
     const line = lines[0];
     const fence = line.match(fenceLine);

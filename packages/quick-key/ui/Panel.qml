@@ -7,7 +7,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs
 
-// A surface the keyboard opens (the menu, a plugin's panel) at the screen's edge (`menu.edge`, `menu.align`): an optional bar at the edge, the card past it and an optional input, past the card (`inputOver`, a level's island) or between it and the bar; one shown at a time, its owner on top of Panels; a click anywhere else dismisses it.
+// A surface the keyboard opens (the menu, a plugin panel) at the screen edge: an optional bar at the edge, the card past it, and an optional input past the card (`inputOver`) or between it and the bar; a click elsewhere dismisses it.
 Scope {
   id: root
 
@@ -23,7 +23,6 @@ Scope {
   property bool inputOver: false
   // The bar drawn as islands, one behind each item its content lists in `islands`, rather than as one surface.
   property bool islands: false
-  // Whether the input has the keys, else the body.
   property bool inputFocused: false
   property Component input
 
@@ -127,7 +126,7 @@ Scope {
         // Each surface's distance from the screen's edge, stacking away from it: the bar against it, then the card and the input in their order; `along` places a distance at either edge, the one place the top edge mirrors.
         QtObject {
           id: stack
-          // The margin set, but no more than a quarter of the screen, so a large one never pushes the menu off a small screen.
+          // No more than a quarter of the screen, so a large margin never pushes the menu off a small one.
           readonly property real margin: Math.min(Config.menu.margin, frame.width / 4, frame.height / 4)
           readonly property real gap: Config.theme.spacing / 2
           readonly property real past: bar.visible ? margin + bar.height + gap : margin

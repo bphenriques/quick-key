@@ -11,7 +11,6 @@ Item {
   id: root
 
   required property var selected
-  // Its month and year, over the grid.
   property string title
   // Every weekday's name as long as the narrowest column holds: three letters, fewer on a narrow level.
   readonly property int weekdayLetters: width / 7 >= 3.5 * Metrics.cell ? 3 : width / 7 >= 2.5 * Metrics.cell ? 2 : 1

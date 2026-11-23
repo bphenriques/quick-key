@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import qs.services
 import qs.ui
 
-// Wayland's idle inhibitor while KeepAwake is on, which the compositor holds for every idle daemon (hypridle, swayidle); the protocol inhibits through a surface: one pixel, transparent, taking no input, there only while on.
+// Wayland's idle inhibitor while KeepAwake is on; the protocol inhibits through a surface, here one transparent pixel taking no input.
 Scope {
   IdleInhibitor {
     enabled: KeepAwake.enabled

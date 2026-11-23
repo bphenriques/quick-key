@@ -16,7 +16,6 @@ Singleton {
     return internal.loaded[name] ?? null;
   }
 
-  // As the menu opens, so plugins read what has no events.
   function refresh() {
     for (const plugin of Object.values(internal.loaded)) plugin.refresh();
   }

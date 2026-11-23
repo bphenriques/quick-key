@@ -14,7 +14,6 @@ Item {
   readonly property bool centre: alignment === Qt.AlignHCenter
   // The least its items need, their text shortened, never their icons.
   readonly property real contentMinimum: row.Layout.minimumWidth
-  // What its items want, whole.
   readonly property real wanted: row.implicitWidth
   // What it draws, for an island behind it.
   readonly property Item content: row

@@ -36,7 +36,6 @@ QtObject {
     .concat(item?.actions?.length > 0 ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
     .concat(query ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
 
-  // A new search starts at its first row.
   function search(text) {
     internal.query = text;
     internal.current = "";
@@ -47,7 +46,6 @@ QtObject {
     search("");
   }
 
-  // The cursor on an item, by its id.
   function point(id) {
     internal.current = id;
   }
@@ -60,7 +58,6 @@ QtObject {
     internal.offset = next < first ? next : next >= first + size ? next - size + 1 : first;
   }
 
-  // Its own state, written only by its functions.
   readonly property QtObject internal: QtObject {
     property string query: ""
     property string current: ""

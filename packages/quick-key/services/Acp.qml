@@ -3,37 +3,33 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Io
 
-// An ACP client (agentclientprotocol.com, protocol v1) for one agent on its stdio, one turn at a time: it starts the agent, keeps it for the next turns until `idle` minutes pass, opens or loads the session, and streams the answer.
+// An ACP client (agentclientprotocol.com, protocol v1) for one agent on its stdio, one turn at a time, the agent kept until `idle` minutes pass.
 Item {
   id: root
 
-  // The agent's command line, as `sh -c` runs it; its name, in the errors.
+  // As `sh -c` runs it; `name` is what the errors call it.
   property var command: []
   property string name
-  // Where its sessions work, on the agent's machine.
   property string cwd
   property int idle: 10
-  // The conversation: "" until a turn opens one, which the next turns carry on.
+  // "" until a turn opens one.
   property string session: ""
 
-  // What it can do, once started: carry on an earlier conversation (`load`), list them (`list`).
   property bool canLoad: false
   property bool canList: false
 
-  // The answer as it streams in; a tool it started; it had to start a new conversation; it asks to be allowed `title` (answered by `answer`).
   signal text(string chunk)
   // A loaded conversation's history, as the agent replays it: `role` user or agent, a piece of its text.
   signal history(string role, string chunk)
   signal tool(string title)
   signal restarted
   signal permission(string title)
-  // The turn's end: `answered` (`stopped` when cancelled, `cut` when it ran out of tokens), else the `error` the user reads.
+  // The turn's end: `answered` (`stopped` when cancelled), else the `error` the user reads.
   signal ended(var outcome)
 
   readonly property int authRequired: -32000
   readonly property var stopped: ({ cancelled: "Stopped", max_turn_requests: "Stopped after too many steps", refusal: "Refused to answer" })
 
-  // Its own state: the process initialized and who waits for it, the session it has open, the work under way (a turn, or a load replaying) and the permission it waits on.
   QtObject {
     id: internal
 
@@ -180,7 +176,7 @@ Item {
       if (!live()) return;
       if (error) return fail(error.message);
       const reason = result.stopReason;
-      if (reason === "end_turn" || (reason === "max_tokens" && internal.spoke)) return internal.spoke ? end({ answered: true, cut: reason === "max_tokens" }) : fail(name + " answered with nothing");
+      if (reason === "end_turn" || (reason === "max_tokens" && internal.spoke)) return internal.spoke ? end({ answered: true }) : fail(name + " answered with nothing");
       end({ stopped: reason === "cancelled", error: stopped[reason] ?? "Stopped: " + reason });
     });
   }
@@ -265,7 +261,7 @@ Item {
       }
     }
 
-    // The turn ends first, so what then hears its reply never come (a list, a load's fallback) finds it over.
+    // The turn ends first, so a reply that never comes (a list, a load fallback) finds it over.
     onExited: {
       const why = internal.complaint || root.name + " ended before answering";
       const unanswered = Object.values(internal.pending);

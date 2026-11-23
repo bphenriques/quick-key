@@ -4,7 +4,7 @@ import qs
 import qs.services
 import qs.ui
 
-// An item of a bar (its keys are listed in the body while Ctrl is held): an entry as its status or else its icon (its icon, given both, the status lending it its tone, spinner and tip, and its value while it warns), a listed item (a tray app) as its image, or a status or plugin by name.
+// A bar item: an entry as its status or its icon (given both, the icon, the status lending its tone, spinner, tip and its value while it warns), a listed item (a tray app) as its image, or a status or plugin by name.
 ListItem {
   id: root
 

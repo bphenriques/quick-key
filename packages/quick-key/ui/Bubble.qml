@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 
-// A message in a conversation: yours (`mine`) a bubble on the right in the theme's bubble colour, the other's plain on the left, its text on the edge the keys start on. As wide as its content, up to `maximumWidth`.
+// A message in a conversation: yours (`mine`) a bubble on the right, the other plain on the left; as wide as its content, up to `maximumWidth`.
 Rectangle {
   id: root
 

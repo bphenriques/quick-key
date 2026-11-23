@@ -19,7 +19,6 @@ Flickable {
     field.paste();
   }
 
-  // Replaces the text, the cursor at its end.
   function set(text) {
     field.text = text;
     field.cursorPosition = field.length;
