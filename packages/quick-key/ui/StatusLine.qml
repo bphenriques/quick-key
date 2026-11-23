@@ -31,6 +31,8 @@ RowLayout {
   // A picture of the value beside it (0 to 1), the volume or brightness; below 0, none.
   property real meter: -1
   property string meterTone: "primary"
+  // A colour that is data (a task's list), as a dot after the detail; unset, none.
+  property string swatch: ""
   property bool struck: false
   // Its text bold, the one to find first (the clock).
   property bool strong: false
@@ -104,6 +106,13 @@ RowLayout {
     horizontalAlignment: Text.AlignRight
     tone: root.valueTone
     text: root.detail
+  }
+
+  Swatch {
+    visible: root.swatch !== ""
+    size: Metrics.cell
+    fill: root.swatch || "transparent"
+    tone: root.tone
   }
 
   // A neighbour, not part of the value: the full gap, half of it from the row.

@@ -2,7 +2,7 @@
 
 The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A level's `input` adds a task by its title, raw, to the first list (see [Input](menu.md#input)).
 
-A tick shows at once. An added task shows at once too, with a spinner until its command is done, so a command that reads a date out of the text (an agent) shows it is working. Each command runs after the ones before it. One that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens.
+A tick shows at once. An added task shows at once too, first however long the list, with a spinner until its command is done and the file places it, so a command that reads a date out of the text (an agent) shows it is working. Each command runs after the ones before it. One that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens.
 
 Its status counts the late tasks beside an alarm, in the warning tone, when there are any, else the open tasks due by today, up to `9+`. Its fields are `title` (the most urgent), `count` and `updated`.
 
@@ -19,9 +19,11 @@ menu.entries = [ { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; 
 ]; } ];
 ```
 
-`sort` orders them: `due` (undated last), `priority` (highest first, unset last), `title`, or `list` (by list, then due). `completed` says what the done ones show: `hidden` hides those done before the menu opened, still found by filtering (`/`); `shown` shows them; `only` shows only them. The plugin's `sort` and `completed` actions step through these until the shell restarts, the one in use beside them (`Sort by due date`, `Done hidden`) and as their icon (the glyphs `sorts` and `completed`, by value).
+`sort` orders them: `due` (undated last), `priority` (highest first, unset last), `title`, or `list` (by list, then due). Under each, those done before the menu opened come after the open ones. `completed` says what the done ones show: `hidden` hides those done before the menu opened, still found by filtering (`/`); `shown` shows them; `only` shows only them, each with when it was done in place of its due date. The plugin's `sort` and `completed` actions step through these, kept over a restart, the one in use beside them (`Sort by due date`, `Done hidden`) and as their icon (the glyphs `sorts` and `completed`, by value).
 
-A late task is in the warning tone with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it. With none, the level says so.
+A task's due date is on its right, after its priority as a glyph (the glyphs `priorities`: `high` for 1 to 4, `medium` for 5, `low` for 6 to 9, as iCalendar groups them), and its list's colour as a dot at the end. A task is late once its time has passed, or the day after its date when it has no time: in the warning tone, with an alarm before its date. A ticked task keeps its digit, dim and struck through, so the same key unticks it. With none, the level says so.
+
+`remind`, given a task's title and its time, runs once as each timed task falls due. One that falls due unseen, the machine asleep or the shell off, runs at the next minute; a new session skips those already past.
 
 The file is read on every change. Opening the menu syncs once it is `syncAfter` minutes old, and every tick syncs after it. Past `staleAfter` minutes its last sync shows in warning, and a Sync button in its level's bar shows it as the calendar's does ([Calendar](calendar.md)).
 

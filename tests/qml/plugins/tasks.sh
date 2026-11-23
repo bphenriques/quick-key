@@ -1,4 +1,4 @@
-# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks, `broken` one whose sync failed, `done` and `reopen` flip a task after a moment (task d fails), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
+# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks, `missed` one whose reminder fell due five minutes ago, `broken` one whose sync failed, `done` and `reopen` flip a task after a moment (task d fails), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
 file="$XDG_RUNTIME_DIR/tasks"
 case "$1" in
   write)
@@ -6,8 +6,8 @@ case "$1" in
       '{"id":"d","done":false,"title":"Undated","list":"home"}' \
       "{\"id\":\"c\",\"done\":false,\"title\":\"Later\",\"list\":\"work\",\"due\":\"$(date -d tomorrow +%Y-%m-%d)\"}" \
       "{\"id\":\"b\",\"done\":false,\"title\":\"Now\",\"list\":\"home\",\"priority\":1,\"due\":\"$(date +%Y-%m-%dT%H:%M)\"}" \
-      "{\"id\":\"a\",\"done\":false,\"title\":\"Late\",\"list\":\"work\",\"priority\":5,\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
-      "{\"id\":\"e\",\"done\":true,\"title\":\"Ticked\",\"list\":\"home\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
+      "{\"id\":\"a\",\"done\":false,\"title\":\"Late\",\"list\":\"work\",\"priority\":5,\"color\":\"#4285f4\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
+      "{\"id\":\"e\",\"done\":true,\"title\":\"Ticked\",\"list\":\"home\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\",\"completed\":\"$(date +%Y-%m-%d)T09:00\"}" \
       "{\"id\":\"f\",\"done\":false,\"title\":\"Today\",\"list\":\"home\",\"due\":\"$(date +%Y-%m-%d)\"}" > "$file.tmp"
     mv "$file.tmp" "$file"
     ;;
@@ -29,6 +29,10 @@ case "$1" in
     sed "s/\"id\":\"$2\",\"done\":$from/\"id\":\"$2\",\"done\":$to/" "$file" > "$file.tmp"
     mv "$file.tmp" "$file"
     ;;
+  missed)
+    echo "{\"updated\":\"$(date +%Y-%m-%dT%H:%M)\",\"tasks\":[{\"id\":\"m\",\"done\":false,\"title\":\"Missed\",\"due\":\"$(date -d '5 minutes ago' +%Y-%m-%dT%H:%M)\"}]}" > "$file.tmp"
+    mv "$file.tmp" "$file"
+    ;;
   broken)
     echo "{\"updated\":\"$(date +%Y-%m-%dT%H:%M)\",\"error\":\"personal: could not sync\",\"tasks\":[]}" > "$file.tmp"
     mv "$file.tmp" "$file"
@@ -36,4 +40,5 @@ case "$1" in
   sync) echo synced > "$XDG_RUNTIME_DIR/synced" ;;
   unsync) rm -f "$XDG_RUNTIME_DIR/synced" ;;
   remind) echo "$2 $3" > "$XDG_RUNTIME_DIR/reminded" ;;
+  unremind) rm -f "$XDG_RUNTIME_DIR/reminded" ;;
 esac

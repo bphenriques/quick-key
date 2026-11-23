@@ -99,6 +99,11 @@ Singleton {
     return Qt.formatDate(day, "yyyy-MM-dd");
   }
 
+  // A moment as the files key it, to the minute: 2026-11-12T14:00.
+  function minuteKey(moment) {
+    return Qt.formatDateTime(moment, "yyyy-MM-ddTHH:mm");
+  }
+
   // "2026-11-12" or "2026-11-12T14:00" as local time: Date would read a bare date as UTC.
   function parse(text) {
     const [date, time] = text.split("T");

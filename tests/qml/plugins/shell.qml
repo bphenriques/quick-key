@@ -110,23 +110,34 @@ ShellRoot {
         until: () => Number(Plugins.get("ticker")?.text) >= Number(root.ticked) + 2
       },
       {
-        name: "tasks list by due, undated last, done ones in place, a late one in warning with an alarm; the status counts the late ones when there are any, else the open ones due by today, and names the most urgent as a field",
+        name: "tasks list by due, undated last, done ones in place until the menu opens, a late one in warning with an alarm, a priority as its glyph and a list's colour as a swatch; the status counts the late ones when there are any, else the open ones due by today, and names the most urgent as a field",
         start: () => root.tasks("write"),
         until: () => {
           const tasks = Plugins.get("tasks");
-          const ticked = (tasks?.items ?? []).find(item => item.id === "e");
+          const item = id => (tasks?.items ?? []).find(item => item.id === id);
           return tasks.items.map(item => item.id).join() === "a,e,f,b,c,d" && tasks.text === "" && tasks.fields.title === "Late" && tasks.detail === "1"
-            && tasks.tone === "warning" && ticked.done && ticked.icon === Glyphs.checkboxChecked
-            && tasks.items.map(item => item.tone).join() === "warning,,,,," && tasks.items[0].glyphs[0] === Glyphs.late && tasks.items[1].glyphs.length === 0;
+            && tasks.tone === "warning" && item("e").done && item("e").icon === Glyphs.checkboxChecked
+            && ["a", "e", "f", "c", "d"].map(id => item(id).tone).join() === "warning,,,," && item("e").glyphs.length === 0
+            && JSON.stringify(item("a").glyphs) === JSON.stringify([Glyphs.priorities.medium, Glyphs.late]) && item("b").glyphs[0] === Glyphs.priorities.high
+            && item("a").swatch === "#4285f4" && item("d").swatch === "";
         }
       },
       {
-        name: "a task done as the menu opens is hidden for the visit, off the rows and still in the list",
-        start: () => Plugins.get("tasks").refresh(),
-        until: () => Plugins.get("tasks").items.find(item => item.id === "e").hidden && !Plugins.get("tasks").items.find(item => item.id === "a").hidden
+        name: "a timed task is late once its minute has passed, today too; one due today without a time only from tomorrow",
+        until: () => {
+          const tasks = Plugins.get("tasks");
+          const minuteAgo = Clock.minuteKey(new Date(Clock.date.getTime() - 60000));
+          return tasks.isLate({ due: minuteAgo }) && !tasks.isLate({ due: tasks.now }) && !tasks.isLate({ due: tasks.today }) && !tasks.isLate({ due: minuteAgo, done: true });
+        }
       },
       {
-        name: "the sort action steps through due, priority (none last), title and list, then due again, the one in use its value; completed through hidden, shown and only the done ones",
+        name: "a task done as the menu opens is hidden for the visit, off the rows and still in the list, after the open ones",
+        start: () => Plugins.get("tasks").refresh(),
+        until: () => Plugins.get("tasks").items.find(item => item.id === "e").hidden && !Plugins.get("tasks").items.find(item => item.id === "a").hidden
+          && Plugins.get("tasks").items.map(item => item.id).join() === "a,f,b,c,d,e"
+      },
+      {
+        name: "the sort action steps through due, priority (none last), title and list, then due again, the done ones last under each, the one in use its value; completed through hidden, shown and only the done ones, each with when it was done",
         until: () => {
           const tasks = Plugins.get("tasks");
           Kept.set("tasks.sort", "due");
@@ -139,12 +150,15 @@ ShellRoot {
             sorts.push(tasks.actions.sort.detail() + " " + ids());
           }
           const shows = [];
+          const details = [];
           for (let i = 0; i < 3; i++) {
             tasks.actions.completed.run();
             shows.push(tasks.completed + " " + shown());
+            details.push(tasks.items.find(item => item.id === "e").detail);
           }
-          return sorts.join() === "by priority b,a,e,f,c,d,by title a,c,b,e,f,d,by list e,f,b,d,a,c,by due date a,e,f,b,c,d"
-            && shows.join() === "shown a,e,f,b,c,d,only e,hidden a,f,b,c,d" && tasks.actions.completed.icon() === Glyphs.completed.hidden && tasks.actions.sort.icon() === Glyphs.sorts.due;
+          return sorts.join() === "by priority b,a,f,c,d,e,by title a,c,b,f,d,e,by list f,b,d,a,c,e,by due date a,f,b,c,d,e"
+            && shows.join() === "shown a,f,b,c,d,e,only e,hidden a,f,b,c,d" && details.join() === "yesterday," + Clock.time(new Date(2000, 0, 1, 9, 0)) + ",yesterday"
+            && tasks.actions.completed.icon() === Glyphs.completed.hidden && tasks.actions.sort.icon() === Glyphs.sorts.due;
         }
       },
       {
@@ -170,9 +184,9 @@ ShellRoot {
           && Object.keys(Plugins.get("tasks").pending).length === 0 && Plugins.get("tasks").error === "Could not tick off Undated"
       },
       {
-        name: "an added task shows at once, dim with a spinner, before its command has written the file, its after waiting for it",
+        name: "an added task shows at once, first, so however long the list, dim with a spinner, before its command has written the file, its after waiting for it",
         start: () => Plugins.get("tasks").submit("New", false, "echo added > \"$XDG_RUNTIME_DIR/added\""),
-        until: () => Plugins.get("tasks").items.some(item => item.label === "New" && item.enabled === false && item.busy)
+        until: () => Plugins.get("tasks").items[0].label === "New" && Plugins.get("tasks").items[0].enabled === false && Plugins.get("tasks").items[0].busy
           && !Array.from(Plugins.get("tasks").state.tasks).some(task => task.title === "New")
           && Plugins.get("added")?.text !== "added"
       },
@@ -199,6 +213,31 @@ ShellRoot {
           }
           return (Plugins.get("reminded")?.text ?? "").startsWith("Now ");
         }
+      },
+      {
+        name: "a first check, with none fired yet, skips what fell due before it and keeps it as fired",
+        start: () => {
+          Kept.set("tasks.reminded", undefined);
+          root.tasks("unremind");
+          root.tasks("missed");
+        },
+        until: () => suite.waited >= 1000 && !Plugins.get("reminded")?.text && Array.from(Kept.value("tasks.reminded") ?? []).some(key => key.startsWith("Missed "))
+      },
+      {
+        name: "a reminder that fell due unseen (a suspend, the shell off) fires as the next check comes, its time as the clock says it",
+        start: () => {
+          Kept.set("tasks.reminded", []);
+          Plugins.get("tasks").remind();
+        },
+        until: () => Plugins.get("reminded")?.text === "Missed " + Clock.time(Clock.parse(Plugins.get("tasks").state.tasks[0].due))
+      },
+      {
+        name: "and only once",
+        start: () => {
+          root.tasks("unremind");
+          Plugins.get("tasks").remind();
+        },
+        until: () => suite.waited >= 1000 && !Plugins.get("reminded")?.text
       },
       {
         name: "opening the menu leaves a fresh tasks file alone",

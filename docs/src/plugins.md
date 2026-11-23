@@ -48,11 +48,12 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
 - `phase` and `kind`: its work, as Rex's [Program Status Protocol](https://www.superlogical.com/rex/docs/build/program-status) names it. `idle`; `working`, a spinner; `blocked` on you, in warning, with `kind` `permission`, `question` or `auth`; `done`, lit, a result not seen yet; `error`, in alert. A word it does not know is `idle`. A `watch` that ends takes `working` and `blocked` with it and leaves `done` and `error` to be seen.
 - `enabled`: the ids of `items` that can be picked; unset, all.
-- `items`: items that change, when the settings list none, each `{ id, label, icon, glyphs, detail, active, enabled, done, hidden, busy, tone, verb, closes, actions }`:
+- `items`: items that change, when the settings list none, each `{ id, label, icon, glyphs, detail, swatch, active, enabled, done, hidden, busy, tone, verb, closes, actions }`:
   - `done` dims it, struck through; it can still be picked.
   - `hidden` leaves the rows; filtering (`/`) finds it.
   - `tone` (`warning`) marks one that needs attention, with `glyphs` before its detail so colour is not all that says so.
   - `busy` shows a spinner for its icon while it is being made.
+  - `swatch`, a colour that is data (`#ff8c00`, a task's list), is a dot at the end of its row.
   - `verb` names what choosing it does in the picker's legend (`tick`), and `closes` hides the menu first.
   - `actions`, `[{ key, desc, icon, closes }]`, are its own menu (`M-` and its digit, `M-RET` while filtering), each running `run` with the item's id and the action's key.
 - `empty`: why `items` is empty, shown in its place (`No devices paired`).

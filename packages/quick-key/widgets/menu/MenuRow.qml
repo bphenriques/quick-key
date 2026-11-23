@@ -36,6 +36,7 @@ ListItem {
     fallback: row.item.desc ?? ""
     fallbackDetail: row.item.detail ?? ""
     fallbackGlyphs: row.item.glyphs ?? []
+    swatch: row.item.swatch ?? ""
     icon: row.item.icon ?? ""
     active: row.item.active ?? false
     done: row.item.done ?? false

@@ -8,6 +8,8 @@ Plugin {
   id: root
 
   readonly property string today: Clock.dayKey(Clock.date)
+  // A timed task is late once its minute has passed.
+  readonly property string now: Clock.minuteKey(Clock.date)
   words: ({
     none: "No tasks",
     noneDone: "No completed tasks",
@@ -16,11 +18,14 @@ Plugin {
     tickFailed: what => "Could not tick off " + what,
     reopenFailed: what => "Could not reopen " + what
   })
-  // In the order chosen, never by whether done: a tick keeps its digit, so the same key unticks it. A tick shows before the file has it, and an added task last, so no digit moves until the file places it.
-  readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
-    .sort((a, b) => root.compare(a, b))
-    .concat(adding.map(title => ({ id: "", title, adding: true })))
-  // Kept over a reload once the level actions step them, until the shell restarts.
+  // In the order chosen, those done as the menu opened last: a tick in the visit keeps its digit, so the same key unticks it. A tick shows before the file has it, and an added task first, seen however long the list.
+  readonly property var tasks: {
+    // The state read before `adding`: its first read sets `adding` (onStateChanged), a loop were it read already.
+    const listed = Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task)
+      .sort((a, b) => root.compare(a, b));
+    return adding.map(title => ({ id: "", title, adding: true })).concat(listed);
+  }
+  // Kept once the level's actions step them, over a reload or a restart.
   readonly property string sort: keptSort.value ?? settings.sort
   readonly property string completed: keptCompleted.value ?? settings.completed
   // Ticks and adds not in the file yet, and their commands, run one at a time.
@@ -30,12 +35,12 @@ Plugin {
   // The last tick or add that failed, until the next one or opening: it shows above the file's own error.
   property string failure: ""
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
-  readonly property var late: due.filter(task => task.due.slice(0, 10) < today)
+  readonly property var late: due.filter(task => root.isLate(task))
   readonly property var updated: state.updated ? Clock.parse(state.updated) : null
   // Done as the menu opened: hidden for the visit, so a tick made in it stays to untick.
   property var settled: []
-  // By id and due, so each is reminded once.
-  property var reminded: ({})
+  // Reminders fired, by title and due (an id need not outlast a write), kept so a restart repeats none; unset before the first check.
+  readonly property var reminded: keptReminded.value
 
   text: ""
   empty: completed === "only" ? words.noneDone : words.none
@@ -54,13 +59,17 @@ Plugin {
   fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" })
   fieldTones: ({ updated: Clock.stale(updated, settings.staleAfter) ? "warning" : "" })
   items: tasks.map(task => {
-    const late = !task.done && !!task.due && task.due.slice(0, 10) < today;
+    const late = root.isLate(task);
+    const priority = root.priorityOf(task);
     return {
       id: task.id,
       label: task.title,
       icon: task.done ? Glyphs.checkboxChecked : Glyphs.checkbox,
-      glyphs: late ? [Glyphs.late] : [],
-      detail: task.due ? Clock.when(Clock.parse(task.due), task.due.includes("T")) : "",
+      glyphs: (priority ? [Glyphs.priorities[priority]] : []).concat(late ? [Glyphs.late] : []),
+      // Showing only the done ones, when each was done.
+      detail: root.completed === "only" && task.done && task.completed ? Clock.recent(Clock.parse(task.completed))
+        : task.due ? Clock.when(Clock.parse(task.due), task.due.includes("T")) : "",
+      swatch: task.color ?? "",
       done: !!task.done,
       hidden: root.completed === "hidden" ? !!task.done && root.settled.includes(task.id) : root.completed === "only" && !task.done && !root.settled.includes(task.id),
       busy: !!task.adding,
@@ -75,8 +84,20 @@ Plugin {
     return a < b ? -1 : a > b ? 1 : 0;
   }
 
-  // By the order chosen, then by due (undated last), then by title; priority 1 first, none last.
+  function isLate(task) {
+    return !task.done && !!task.due && (task.due.includes("T") ? task.due < now : task.due < today);
+  }
+
+  // As iCalendar ranks them: 1 to 4 high, 5 medium, 6 to 9 low; unset or 0, none.
+  function priorityOf(task) {
+    const rank = task.priority ?? 0;
+    return rank <= 0 ? "" : rank < 5 ? "high" : rank === 5 ? "medium" : "low";
+  }
+
+  // Those done as the menu opened after the rest, then by the order chosen, then by due (undated last), then by title; priority 1 first, none last.
   function compare(a, b) {
+    const done = settled.includes(a.id) - settled.includes(b.id);
+    if (done) return done;
     const due = order(a.due ?? "~", b.due ?? "~");
     const title = a.title.localeCompare(b.title);
     const rank = task => task.priority > 0 ? task.priority : 10;
@@ -120,6 +141,8 @@ Plugin {
   onStateChanged: {
     pending = kept((id, done) => Array.from(state.tasks ?? []).find(task => task.id === id)?.done !== done);
     adding = adding.filter(title => !Array.from(state.tasks ?? []).some(task => task.title === title));
+    // Once `tasks` has the change: a task the file adds already due reminds without waiting for the minute.
+    Qt.callLater(root.remind);
   }
 
   function kept(test) {
@@ -133,18 +156,19 @@ Plugin {
     if (!updated || Clock.stale(updated, settings.syncAfter)) exec(settings.sync);
   }
 
-  // Each timed task once, as its time comes, on the clock's own minute.
+  // Each open timed task once it falls due, however late the check comes (a suspend, the shell off); the first check fires only this minute's, not every late one.
   function remind() {
-    if (!settings.remind) return;
-    const now = Clock.date;
-    for (const task of tasks) {
-      if (task.done || !task.due || !task.due.includes("T")) continue;
-      const due = Clock.parse(task.due);
-      const key = task.id + " " + task.due;
-      if (due > now || now - due >= 60000 || reminded[key]) continue;
-      reminded[key] = true;
-      exec(settings.remind, task.title, task.due.slice(11));
+    if (!settings.remind || !state.tasks) return;
+    const key = task => task.title + " " + task.due;
+    const timed = tasks.filter(task => task.due?.includes("T"));
+    // Those the file no longer lists are forgotten.
+    const fired = Array.from(reminded ?? []).filter(fired => timed.some(task => key(task) === fired));
+    for (const task of timed) {
+      if (task.done || task.due > now || fired.includes(key(task))) continue;
+      fired.push(key(task));
+      if (reminded || task.due === now) exec(settings.remind, task.title, Clock.time(Clock.parse(task.due)));
     }
+    if (!reminded || fired.join("\n") !== Array.from(reminded).join("\n")) Kept.set(name + ".reminded", fired);
   }
 
   KeptValue {
@@ -155,6 +179,11 @@ Plugin {
   KeptValue {
     id: keptCompleted
     key: root.name + ".completed"
+  }
+
+  KeptValue {
+    id: keptReminded
+    key: root.name + ".reminded"
   }
 
   Connections {

@@ -74,6 +74,7 @@ Singleton {
       hidden: item.hidden ?? false,
       busy: item.busy ?? false,
       glyphs: Array.from(item.glyphs ?? []),
+      swatch: item.swatch ?? "",
       tone: item.tone ?? "",
       verb: item.verb ?? "",
       closes: item.closes ?? false,

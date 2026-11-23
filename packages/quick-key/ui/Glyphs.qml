@@ -53,6 +53,12 @@ Singleton {
     shown: "\u{F06D0}", // md-eye_outline
     only: "\u{F012D}" // md-check_all
   }, Config.glyphs.completed ?? {})
+  // A task's priority, as iCalendar groups its ranks.
+  readonly property var priorities: Object.assign({
+    high: "\u{F013F}", // md-chevron_double_up
+    medium: "\u{F01FC}", // md-equal
+    low: "\u{F013C}" // md-chevron_double_down
+  }, Config.glyphs.priorities ?? {})
   readonly property string submenu: Config.glyphs.submenu ?? "\u{F0142}" // md-chevron_right
   // What marks a prompt: an input with the keys, and what was asked in Ask.
   readonly property string prompt: Config.glyphs.prompt ?? "\u{F0142}" // md-chevron_right
