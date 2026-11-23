@@ -63,7 +63,8 @@ ListView {
     positionViewAtIndex(at, focused ? ListView.Contain : ListView.Beginning);
     showHeading(at, !focused);
     const now = focused ? at : Calendar.firstOn(rows, selectedKey);
-    const item = itemAtIndex(now);    if (now > at && !(item && fits(item.y, item.height))) positionViewAtIndex(now, ListView.Beginning);
+    const item = itemAtIndex(now);
+    if (now > at && !(item && fits(item.y, item.height))) positionViewAtIndex(now, ListView.Beginning);
   }
 
   // Room above a day's first row for its heading, the heading on top when `top`: ListView leaves either to its estimate of what is above.
