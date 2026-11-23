@@ -62,6 +62,13 @@ let
       type = lib.types.str;
       inherit description;
     };
+  optionalColor =
+    description:
+    lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      inherit description;
+    };
 in
 {
   imports = [
@@ -95,21 +102,9 @@ in
             primary = color "Colour of what is on or in use";
             alert = color "Colour of what needs attention";
             warning = color "Colour of what may soon need attention";
-            border = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "Colour of outlines and dividers; unset, the foreground at `theme.disabledOpacity`";
-            };
-            bubble = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "Colour of your messages in a conversation; unset, a faint foreground";
-            };
-            bubbleText = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "Colour of your messages' text; unset, the text colour";
-            };
+            border = optionalColor "Colour of outlines and dividers; unset, the foreground at `theme.disabledOpacity`";
+            bubble = optionalColor "Colour of your messages in a conversation; unset, a faint foreground";
+            bubbleText = optionalColor "Colour of your messages' text; unset, the text colour";
           };
         }
       );

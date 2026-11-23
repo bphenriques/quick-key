@@ -7,6 +7,20 @@ self:
 }:
 let
   cfg = config.programs.quick-key.calendarSync;
+  taskCommand =
+    verb: given: description:
+    lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = lib.escapeShellArgs [
+        (lib.getExe cfg.package)
+        verb
+        cfg.calendars
+        cfg.eventsFile
+      ];
+      defaultText = lib.literalMD "calendar-sync's `${verb}`, given ${given}";
+      inherit description;
+    };
 in
 {
   options.programs.quick-key.calendarSync = {
@@ -63,44 +77,11 @@ in
       description = "Command that syncs and returns once done, for a script that reads the files after";
     };
 
-    exec.done = lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = lib.escapeShellArgs [
-        (lib.getExe cfg.package)
-        "done"
-        cfg.calendars
-        cfg.eventsFile
-      ];
-      defaultText = lib.literalMD "calendar-sync's `done`, given a task's id";
-      description = "Command that ticks a task off, given its id, for the tasks plugin";
-    };
-
-    exec.reopen = lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = lib.escapeShellArgs [
-        (lib.getExe cfg.package)
-        "reopen"
-        cfg.calendars
-        cfg.eventsFile
-      ];
-      defaultText = lib.literalMD "calendar-sync's `reopen`, given a task's id";
-      description = "Command that unticks a task, given its id, for the tasks plugin";
-    };
-
-    exec.add = lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = lib.escapeShellArgs [
-        (lib.getExe cfg.package)
-        "add"
-        cfg.calendars
-        cfg.eventsFile
-      ];
-      defaultText = lib.literalMD "calendar-sync's `add`, given a task's title";
-      description = "Command that adds a task to the first list, given its title, for the tasks plugin";
-    };
+    exec.done = taskCommand "done" "a task's id" "Command that ticks a task off, given its id, for the tasks plugin";
+    exec.reopen = taskCommand "reopen" "a task's id" "Command that unticks a task, given its id, for the tasks plugin";
+    exec.add =
+      taskCommand "add" "a task's title"
+        "Command that adds a task to the first list, given its title, for the tasks plugin";
   };
 
   config = lib.mkIf (config.programs.quick-key.enable && cfg.enable) {

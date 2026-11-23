@@ -2,14 +2,14 @@ _: {
   projectRootFile = "flake.nix";
   programs = {
     # Formatters
-    nixfmt.enable = true; # Official Nix formatter.
+    nixfmt.enable = true;
     nixfmt.width = 120;
 
     # Checks
-    deadnix.enable = true; # Detect unused Nix code
+    deadnix.enable = true;
     deadnix.no-lambda-pattern-names = true; # Skip NixOS module args (e.g., { pkgs, lib, ... })
-    deadnix.priority = 1; # Run deadnix before statix
-    statix.enable = true; # Nix anti-pattern linter
+    deadnix.priority = 1;
+    statix.enable = true;
     statix.priority = 2;
 
     # Python (the stand-in ACP agent the tests run)
