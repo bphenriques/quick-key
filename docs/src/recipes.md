@@ -132,14 +132,63 @@ A click on it in the bar toggles it; for a key, make it an entry (`{ key = "v"; 
 ```nix
 plugins.weather = {
   type = "command";
-  read = ''curl -sf 'https://wttr.in/?format=%t' '';   # +18°C
+  # wttr.in's symbol for the sky, then the temperature: {"value": "m", "text": "+13°C"}
+  read = ''curl -sf 'https://wttr.in/Lisbon?format=%x+%t' | jq -Rc 'split(" ") | {value: .[0], text: .[1]}' '';
   every = 900;
-  glyph = "<glyph>";
+  glyph = "<cloud>";
+  show = { "o".glyph = "<sun>"; "m".glyph = "<sun behind cloud>"; "/".glyph = "<rain>"; "//".glyph = "<showers>"; "*".glyph = "<snow>"; };
 };
 menu.header.center = [ "weather" ];
 ```
 
-Read as the menu opens and every 15 minutes while it stays open; with no network it shows nothing until the next read. Put a place after the slash (`wttr.in/Lisbon`) to pin it.
+![The weather in the bar's centre, its glyph the sky's](images/weather.png)
+
+Read as the menu opens and every 15 minutes while it stays open. `show` picks the glyph by the sky, and its other [symbols](https://github.com/chubin/wttr.in/blob/master/internal/renderer/oneline/constants.go) take `glyph`; with no network, `glyph` shows alone until the next read. Leave the place out (`wttr.in/?format=...`) for wttr.in to guess it from your address.
+
+## Text of your own in the bar
+
+```nix
+plugins.uptime = {
+  type = "command";
+  read = ''awk '{ printf "up %dd %dh\n", $1 / 86400, $1 % 86400 / 3600 }' /proc/uptime'';
+  every = 60;
+  glyph = "<glyph>";
+};
+menu.header.center = [ "uptime" ];
+```
+
+![The uptime in the bar's centre](images/uptime.png)
+
+The last line a command prints is the text beside the glyph. For text a script writes, give `file` instead ([State a script writes](#state-a-script-writes)).
+
+## A focus timer
+
+```nix
+plugins.focus = {
+  type = "command";
+  file = "focus";
+  glyph = "<glyph>";
+  activate = ''for m in $(seq 25 -1 1); do echo "$m min" > "$XDG_RUNTIME_DIR/focus"; sleep 60; done; : > "$XDG_RUNTIME_DIR/focus"; notify-send "Focus is over"'';
+};
+menu.header.center = [ { key = "f"; desc = "Focus"; status = "focus"; } ];
+```
+
+![The timer counting down in the bar](images/focus.png)
+
+`C-f`, or a click, starts 25 minutes. The bar counts them down from the file, and shows the glyph alone once the loop empties it.
+
+## A bar on top, as islands
+
+```nix
+menu.edge = "top";
+menu.islands = true;
+menu.margin = 10;
+popups.position = "top";
+```
+
+![The menu at the top, its bar split into islands over the body](images/islands.png)
+
+The bar sits on top, each slot on an island of its own, and pop-ups show there too. It is still the menu: it shows on a key and hides on `ESC`, so it does not replace a bar that is always there. Keep waybar for that, with `theme.besideBars = true` so the menu keeps clear of it. A bar down a side of the screen, or one that sizes itself to what it shows, is not on offer: a level keeps a top or bottom edge and its width.
 
 ## In the bar
 
@@ -205,3 +254,19 @@ A tool that writes a theme file is a theme: matugen's template is the shipped th
 ```
 
 matugen writes it to `$XDG_CONFIG_HOME/quick-key/themes/matugen.json`, `theme.name = "matugen"` picks it, and its colours apply as the file changes, nothing reloading. With Nix, which owns that folder, matugen writes elsewhere and the theme links to it, so the build knows it: `xdg.configFile."quick-key/themes/matugen.json".source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.cacheHome}/matugen/quick-key.json";`. pywal works the same way, its template using `{background}`, `{foreground}` and `{color1}` to `{color8}`.
+
+## A look of your own
+
+```nix
+theme = {
+  name = "tokyo-night";
+  radius = 16;
+  itemRadius = 8;
+  surfaceOpacity = 0.85;
+  padding = 18;
+};
+```
+
+![The calendar in tokyo-night, rounder and more see-through](images/look.png)
+
+Each size and opacity is a setting, bounded by the check; the [reference](options.md) lists them.
