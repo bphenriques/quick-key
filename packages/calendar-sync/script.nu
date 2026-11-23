@@ -85,12 +85,17 @@ def khal-config [calendars: list, state: path]: nothing -> string {
   | str join "\n"
 }
 
+# The first and last day the events cover, which the file says so the shell can tell a day without events from one past them.
+def synced-range []: nothing -> record {
+  { from: ((date now) - 62day | format date "%F"), to: ((date now) + 365day | format date "%F") }
+}
+
 # Each occurrence once: khal lists an event per day it spans, and --once would drop a repeating event's later occurrences.
-def events [config: path]: nothing -> list {
-  let from = (date now) - 62day | format date "%F"
-  let to = (date now) + 366day | format date "%F"
+def events [config: path, synced: record]: nothing -> list {
+  # A day past the last, whether khal's end is a day it lists or not.
+  let end = ($synced.to | into datetime) + 1day | format date "%F"
   let fields = [uid title start-date start-time end-date end-time all-day location calendar-color]
-  ^khal -c $config list ...($fields | each {|f| [--json $f] } | flatten) $from $to
+  ^khal -c $config list ...($fields | each {|f| [--json $f] } | flatten) $synced.from $end
   | lines
   | each { from json }
   | flatten
@@ -184,7 +189,7 @@ def main [calendars_file: path, events_file: path] {
   mkdir $state
   ^chmod 700 $state
   let previous = if ($events_file | path exists) { try { open $events_file } catch { {} } } else { {} }
-  let kept = { updated: ($previous.updated? | default (date now | format date "%Y-%m-%dT%H:%M")), events: ($previous.events? | default []) }
+  let kept = { updated: ($previous.updated? | default (date now | format date "%Y-%m-%dT%H:%M")), synced: $previous.synced?, events: ($previous.events? | default []) }
 
   let calendars = try { read-calendars $calendars_file } catch {|e|
     write-events $events_file ($kept | insert error $e.msg)
@@ -214,7 +219,7 @@ def main [calendars_file: path, events_file: path] {
       if $run.exit_code != 0 { { name: $c.name, reason: (reason $run.stderr) } }
     } | compact
   }
-  let events = try { events $khal } catch { $kept.events }
+  let read = try { let synced = synced-range; { synced: $synced, events: (events $khal $synced) } } catch { $kept }
   let now = date now | format date "%Y-%m-%dT%H:%M"
 
   let lists = $calendars | where {|c| $c.tasks? == true }
@@ -228,12 +233,12 @@ def main [calendars_file: path, events_file: path] {
   }
 
   if ($failures | is-empty) {
-    write-events $events_file { updated: $now, events: $events }
+    write-events $events_file { updated: $now, synced: $read.synced, events: $read.events }
   } else {
     let error = failure $failures
     # Only a sync that fetched something makes the events newer.
     let updated = if ($failures | length) == ($calendars | length) { $kept.updated } else { $now }
-    write-events $events_file { updated: $updated, events: $events, error: $error }
+    write-events $events_file { updated: $updated, synced: $read.synced, events: $read.events, error: $error }
     exit 1
   }
 }

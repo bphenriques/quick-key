@@ -64,6 +64,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     quick-key-calendar-sync work.yaml events/events.json || efail "a sync from a calendar it reaches succeeds"
     [ "$(events)" = "[\"Lunch\",\"$(date -d tomorrow +%F)T13:00\",false,\"#3366ff\",\"Rua Augusta 120\"]" ] || efail "an event reads with its local time, its calendar's colour and where"
     jq -e '.updated and (has("error") | not) and (has("syncing") | not)' events/events.json > /dev/null || efail "a sync done says when, and no longer that it syncs"
+    jq -e --arg from "$(date -d '62 days ago' +%F)" --arg to "$(date -d '365 days' +%F)" '.synced == { from: $from, to: $to }' events/events.json > /dev/null || efail "a sync says the days it covers"
 
     printf -- '- name: work\n  url: http://127.0.0.1:1/secret-token/work.ics\n  color: "#3366ff"\n' > gone.yaml
     ! quick-key-calendar-sync gone.yaml events/events.json || efail "a sync whose server is gone fails"
