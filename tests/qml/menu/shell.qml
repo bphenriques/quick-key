@@ -488,8 +488,7 @@ ShellRoot {
             menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r" });
             // Under the panel, the menu keeps its level and the visit.
             const held = agent.shown && !menu.open && menu.inStack && menu.island.visit === token;
-            agent.typing = false;
-            agent.act("Escape");
+            Panels.back();
             root.visitStep = held && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.island.visit === token && agent.turn?.text === "two" ? 3 : -1;
             return false;
           }

@@ -30,19 +30,16 @@ Plugin {
     newChat: "new",
     terminal: "terminal" + Words.ellipsis
   })
-  // Each key once: `desc` for `?`, `what` and `shows` for the legend, `run` returning false to leave the key to the prompt.
+  // Each key once, `what` and `shows` for the legend; it runs only while it shows, `run` returning false to leave it to the prompt.
   readonly property var keys: [
-    { key: "Tab", desc: Words.helpTab },
-    { key: "Shift+Return", desc: "Break the line" },
-    { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
-    { key: "Ctrl+y", desc: "Allow what it asks", what: words.allow, shows: () => approval !== "", run: () => answerApproval(true) },
-    { key: "Ctrl+n", desc: "Deny what it asks, the turn going on", what: words.deny, shows: () => approval !== "", run: () => answerApproval(false) },
-    { key: "Ctrl+c", desc: "Stop the answer", what: words.stop, shows: () => busy, run: () => busy && stop() },
-    { key: "y", desc: "Copy the last answer", what: Words.copy, shows: () => !typing && !!exchanges[exchanges.length - 1]?.reply, run: () => !typing && copy() },
-    { key: "Ctrl+l", desc: "Start a new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
-    { key: "Ctrl+o", desc: "Move it to a terminal", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
-    { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => recalls, run: () => recall() },
-    { key: "Escape", desc: Words.helpEscape }
+    { key: "Ctrl+y", what: words.allow, shows: () => approval !== "", run: () => answerApproval(true) },
+    { key: "Ctrl+n", what: words.deny, shows: () => approval !== "", run: () => answerApproval(false) },
+    { key: "Ctrl+c", what: words.stop, shows: () => busy, run: () => stop() },
+    // Shift with C-c, as terminals copy.
+    { key: "Ctrl+C", what: Words.copy, shows: () => !busy && !!exchanges[exchanges.length - 1]?.reply, run: () => copy() },
+    { key: "Ctrl+l", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
+    { key: "Ctrl+o", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
+    { key: "Ctrl+r", what: Words.history, shows: () => recalls, run: () => recall() }
   ].filter(entry => entry.when !== false)
 
   // [{ prompt, reply, error, stopped, after, input, table, steps }], the last streaming while busy; `input` when a level input sent it.
@@ -50,14 +47,11 @@ Plugin {
   property alias session: agent.session
   property string draft: ""
   readonly property bool shown: Panels.top === root
-  property bool typing: true
   property bool unread: false
   // "working" on a turn (send), "resuming" a conversation it replays (resume), else "idle", as the agent's end sets it (close).
   property string stage: "idle"
   // This visit sent it a turn, so the next send continues that conversation.
   property bool visited: false
-  // `?` with the prompt dim: the panel keys until the next key.
-  property bool helping: false
   property string approval: ""
   property string activity: ""
   // A tool `toolMatch` matches ran this turn.
@@ -146,7 +140,6 @@ Plugin {
   function show() {
     Panels.open(root);
     unread = false;
-    typing = true;
   }
 
   // For what the answer over an input cannot fit (Plugin.expand).
@@ -154,8 +147,6 @@ Plugin {
     show();
     return true;
   }
-
-  onShownChanged: helping = false
 
   // Answered above the input while the menu shows it, else as a notification; one conversation per visit.
   function submit(text, background, after) {
@@ -267,10 +258,7 @@ Plugin {
   }
 
   function copy() {
-    const reply = exchanges[exchanges.length - 1]?.reply ?? "";
-    if (!reply) return false;
-    Quickshell.clipboardText = reply;
-    return true;
+    Quickshell.clipboardText = exchanges[exchanges.length - 1].reply;
   }
 
   // The agent stays for the next turn (Acp.cancel).
@@ -296,50 +284,17 @@ Plugin {
     Panels.close();
   }
 
-  function runListed(key) {
-    helping = false;
-    return act(key);
-  }
-
-  function focusPrompt() {
-    typing = true;
-  }
-
   // Kept as it changes, so it outlasts a reload.
   function keepDraft(text) {
     draft = text;
   }
 
-  // True when the key was the panel's. Waiting, `?` lists them and letters do what their Ctrl chords do, but for `y`.
+  // True when the key was the panel's; Escape and the rest are the prompt's, which has the keys throughout.
   function act(key) {
-    if (helping) {
-      helping = false;
-      return true;
-    }
-    if (!typing && key === "?") {
-      helping = true;
-      return true;
-    }
-    // Shift+Tab goes back to the panel; from the panel it is Qt's.
-    if (key === "Tab" || (typing && key === "Backtab")) {
-      typing = !typing;
-      return true;
-    }
-    if (key === "Escape") return stepBack();
-    const entry = keys.find(entry => entry.run && (entry.key === key || typedAs(entry.key) === key));
-    return !!entry && (!entry.shows || entry.shows()) && entry.run() !== false;
-  }
-
-  // A bare `y` copies, so a key learned as harmless never approves.
-  function typedAs(key) {
-    return !typing && /^Ctrl\+[a-z]$/.test(key) && key !== "Ctrl+y" ? key.slice(5) : key;
-  }
-
-  // Typing, clearing first is the prompt's (Prompt.stepBack).
-  function stepBack() {
-    if (typing) return false;
-    Panels.back();
-    return true;
+    // Tab would type a tab.
+    if (key === "Tab" || key === "Backtab") return true;
+    const entry = keys.find(entry => entry.key === key);
+    return !!entry && entry.shows() && entry.run() !== false;
   }
 
   // Kept over a reload or a restart; the agent loads the conversation again on its next turn.

@@ -22,8 +22,8 @@ Scope {
   property var selection: null
 
   signal paged(bool down)
-  // A prompt key clicked in the legend.
-  signal promptPicked(var key)
+  // Escape clicked in the legend, for the prompt.
+  signal escaped
 
   function handle(event) {
     if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
@@ -74,7 +74,7 @@ Scope {
     shown: panel.plugin.shown
     namespace: panel.plugin.name
     inputShown: true
-    inputFocused: panel.plugin.typing
+    inputFocused: true
     onKeyPressed: event => event.accepted = panel.handle(event)
     // Hidden, the conversation is kept.
     onDismissed: Panels.close()
@@ -85,16 +85,12 @@ Scope {
       // With `menu.islands`, the legend on an island of its own.
       readonly property var islands: [legend]
 
-      // Only what the state changes; fixed keys are listed on `?`.
+      // Only what the state changes.
       KeyLegend {
         id: legend
-        // Each key as it runs now (Ask.typedAs): waiting, a chord's letter alone.
-        keys: panel.plugin.keys.filter(entry => entry.what && entry.shows()).map(entry => ({ key: panel.plugin.typedAs(entry.key), what: entry.what, clickable: true }))
-          .concat(!panel.plugin.typing ? [{ key: "?", what: Words.help, clickable: true }] : [])
-          .concat(panel.plugin.typing && panel.plugin.draft ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
-        onPicked: key => {
-          if (!panel.plugin.act(key)) panel.promptPicked(key);
-        }
+        keys: panel.plugin.keys.filter(entry => entry.shows()).map(entry => ({ key: entry.key, what: entry.what, clickable: true }))
+          .concat(panel.plugin.draft ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
+        onPicked: key => panel.plugin.act(key) || panel.escaped()
       }
 
       Item {
@@ -108,7 +104,6 @@ Scope {
       // Built only where it shows, so a long conversation opens as fast as a short one; laid out from the newest up, so it rests at its end however tall the turns built meanwhile.
       ListView {
         id: thread
-        visible: !panel.plugin.helping
         verticalLayoutDirection: ListView.BottomToTop
         onWidthChanged: panel.threadWidth = width
         Component.onCompleted: panel.threadWidth = width
@@ -179,70 +174,47 @@ Scope {
           }
         }
       }
-
-      // In the conversation's place and height, so the panel holds still.
-      Item {
-        visible: panel.plugin.helping
-        Layout.fillWidth: true
-        Layout.preferredHeight: thread.Layout.preferredHeight
-
-        KeyList {
-          anchors.left: parent.left
-          anchors.right: parent.right
-          keys: panel.plugin.keys
-          onPicked: key => panel.plugin.runListed(key)
-        }
-      }
     }
 
-    input: ColumnLayout {
-      spacing: Config.theme.spacing
+    input: Prompt {
+      id: prompt
       // A prompt taller than a line takes its height from the conversation, so the panel holds still.
       onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
+      glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
+      // Until a turn says what Return does next, as the menu's input does.
+      placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
+      onBack: Panels.back()
+      onTextChanged: panel.plugin.keepDraft(text)
+      Component.onCompleted: set(panel.plugin.draft)
 
-      Prompt {
-        id: prompt
-        Layout.fillWidth: true
-        glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
-        // Until a turn says what Return does next, as the menu's input does.
-        placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
-        active: panel.plugin.typing
-        key: "Tab"
-        onTapped: panel.plugin.focusPrompt()
-        onBack: Panels.back()
-        onTextChanged: panel.plugin.keepDraft(text)
-        Component.onCompleted: set(panel.plugin.draft)
+      // Shift+Return breaks the line; the rest go to the panel.
+      onKeyPressed: event => {
+        const send = MenuKeys.sends(event);
+        if (send) prompt.send(send === "background");
+        else if (!panel.handle(event)) return;
+        event.accepted = true;
+      }
 
-        // Shift+Return breaks the line; the rest go to the panel.
-        onKeyPressed: event => {
-          const send = MenuKeys.sends(event);
-          if (send) prompt.send(send === "background");
-          else if (!panel.handle(event)) return;
-          event.accepted = true;
+      function send(background) {
+        if (!panel.plugin.send(text)) return;
+        clear();
+        if (background) Panels.close();
+      }
+
+      Connections {
+        target: panel
+
+        function onEscaped() {
+          prompt.stepBack();
         }
+      }
 
-        function send(background) {
-          if (!panel.plugin.send(text)) return;
-          clear();
-          if (background) Panels.close();
-        }
+      Connections {
+        target: panel.plugin
 
-        Connections {
-          target: panel
-
-          function onPromptPicked(key) {
-            if (key === "Escape") prompt.stepBack();
-            else if (key === "Ctrl+Shift+Return") prompt.send(true);
-          }
-        }
-
-        Connections {
-          target: panel.plugin
-
-          // A failed prompt put back, or dropped with its conversation.
-          function onDraftChanged() {
-            if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft);
-          }
+        // A failed prompt put back, or dropped with its conversation.
+        function onDraftChanged() {
+          if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft);
         }
       }
     }

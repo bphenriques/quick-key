@@ -11,10 +11,8 @@ ShellRoot {
   property bool submitted: false
   property bool retried: false
   property bool refused: false
-  // Whether Escape left the panel with the run still going.
+  // Whether stepping back left the panel with the run still going.
   property string leftRunning: ""
-  // Whether a bare y, waiting on an approval, left it alone.
-  property string bareY: ""
   // Whether, waiting on an approval, it said it was blocked on permission.
   property bool blocked: false
   property bool renewed: false
@@ -80,14 +78,13 @@ ShellRoot {
           && Markup.plain("Use **this**:\n\n```sh\nmake `x`\n```\n\n| A | B |\n|---|---|\n| [one](u) | 2 |\n\n---\n\n> quoted *word*") === "Use this:\nmake `x`\nA  B\none  2\nquoted word"
       },
       {
-        name: "waiting, a chord runs by its letter too and the legend says so, but C-y, as a bare y copies",
+        name: "a key runs only while it shows, C-C copying the last answer; Escape stays the prompt's and Tab types nothing",
         until: () => {
           const ask = Plugins.get("keyed");
           if (!ask) return false;
-          ask.typing = false;
           ask.exchanges = [{ prompt: "p", reply: "r", error: "", stopped: false }];
-          const named = ask.typedAs("Ctrl+l") === "l" && ask.typedAs("Ctrl+y") === "Ctrl+y" && ask.keys.some(entry => entry.key === "Ctrl+l");
-          return named && ask.act("l") && ask.exchanges.length === 0;
+          const prompts = !ask.act("Escape") && ask.act("Tab");
+          return prompts && !ask.act("Ctrl+y") && ask.act("Ctrl+C") && Quickshell.clipboardText === "r" && ask.act("Ctrl+l") && ask.exchanges.length === 0;
         }
       },
       {
@@ -106,15 +103,13 @@ ShellRoot {
         }
       },
       {
-        name: "the session it opens is kept, and an approval, which blocks it on permission, is answered by the user, never by a bare y, and stays as a step",
+        name: "the session it opens is kept, and an approval, which blocks it on permission, is answered by the user with C-y, and stays as a step",
         until: () => root.asked("approved", ask => {
           if (ask.approval === "rm") {
-            ask.typing = false;
             root.blocked = ask.phase === "blocked" && ask.kind === "permission" && ask.busy && ask.describe(ask.exchanges[0]).kind === "permission";
-            root.bareY = ask.act("y") || ask.approval !== "rm" ? "allowed" : "kept";
-            ask.answerApproval(true);
+            ask.act("Ctrl+y");
           }
-          return root.blocked && root.bareY === "kept" && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";
+          return root.blocked && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";
         })
       },
       {
@@ -149,23 +144,6 @@ ShellRoot {
         })
       },
       {
-        name: "typing, Escape leaves clearing and stepping back to the prompt; waiting, it hides, a letter acts and its key gives the prompt the keys again",
-        until: () => {
-          const ask = Plugins.get("idle");
-          if (!ask) return false;
-          ask.toggle();
-          const promptsOwn = ask.typing && !ask.act("Escape") && ask.shown;
-          ask.typing = false;
-          ask.exchanges = [{ prompt: "p", reply: "r", error: "", stopped: false }];
-          const letter = ask.act("l") && ask.exchanges.length === 0;
-          const typing = ask.act("Tab") && ask.typing && !ask.act("l");
-          const backtab = ask.act("Backtab") && !ask.typing && !ask.act("Backtab") && ask.act("Tab") && ask.typing;
-          ask.typing = false;
-          const hidden = ask.act("Escape") && !ask.shown;
-          return promptsOwn && letter && typing && backtab && hidden;
-        }
-      },
-      {
         name: "an input's text starts a new conversation answered in the background, and its after runs once answered",
         until: () => {
           const ask = Plugins.get("answered");
@@ -180,13 +158,13 @@ ShellRoot {
         }
       },
       {
-        name: "Escape leaves a run going and C-c stops it, which the agent hears; C-r lists nothing meanwhile",
+        name: "stepping back leaves a run going and C-c stops it, which the agent hears; C-r lists nothing meanwhile",
         until: () => root.asked("stopped", ask => {
           if (ask.busy && ask.activity === "thinking" && !root.leftRunning) {
             root.refused = ask.submit("more", true, "") === false && !ask.act("Ctrl+r") && !ask.recall();
             ask.show();
-            ask.typing = false;
-            root.leftRunning = ask.act("Escape") && !ask.shown && ask.busy ? "yes" : "no";
+            Panels.back();
+            root.leftRunning = !ask.shown && ask.busy ? "yes" : "no";
             ask.act("Ctrl+c");
           }
           return root.refused && root.leftRunning === "yes" && ask.exchanges[0].stopped && !ask.busy && Plugins.get("trapped")?.text === "stopped";
@@ -273,8 +251,8 @@ ShellRoot {
           Panels.open(root);
           ask.expand();
           const shown = ask.shown;
-          ask.typing = false;
-          const stepped = ask.act("Escape") && !ask.shown && Panels.top === root;
+          Panels.back();
+          const stepped = !ask.shown && Panels.top === root;
           ask.expand();
           Panels.close();
           return shown && stepped && !ask.shown && Panels.top === null;
