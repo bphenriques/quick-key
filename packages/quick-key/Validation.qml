@@ -124,7 +124,6 @@ Singleton {
   // What a text setting with a few meanings takes, by its path.
   readonly property var choices: ({
       "theme.appIcons": ["colour", "grey", "tint"],
-      "menu.inputSide": ["body", "bar"],
       "popups.position": ["right", "left", "top", "bottom"]
     })
 

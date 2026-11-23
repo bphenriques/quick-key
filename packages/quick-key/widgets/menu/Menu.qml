@@ -68,7 +68,7 @@ Scope {
     namespace: "menu"
     width: root.menu.width
     barShown: root.menu.barShown
-    inputOver: Config.menu.inputSide === "body"
+    inputOver: true
     onDismissed: root.menu.hide()
     // As Escape does, but never closing the top level.
     onSecondaryClicked: if (root.menu.level) root.menu.stepBack()

@@ -73,7 +73,8 @@ Singleton {
       "menu.align": "removed: the menu is always centred",
       "theme.titleScale": "removed: titles take the font's size",
       "theme.motion": "removed: pop-ups always fade",
-      "glyphs.link": "removed: an answer's links stay in its text"
+      "glyphs.link": "removed: an answer's links stay in its text",
+      "menu.inputSide": "removed: a level's input always sits past its body"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -305,8 +306,6 @@ Singleton {
         property var input: null
         // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.
         property bool islands: false
-        // Where a level's input sits: past its body ("body"), or between the body and the bar ("bar"), where a body of another height moves it less.
-        property string inputSide: "body"
       }
 
       property JsonObject clock: JsonObject {
