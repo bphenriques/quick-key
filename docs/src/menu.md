@@ -45,7 +45,7 @@ One of:
 
 The label is `desc`, and never changes. Every row of a level carries an icon: `icon`, or its `status`'s or `action`'s own.
 
-`status` shows live state on the right of the row, or beside the label for an action in its level (Brightness 55%). A status names its state in words only when it has no value to show (`off`, `muted`), and never for a state its icon or tone already shows. A level's state sits on the row that changes it: power in Power's icon.
+`status` shows live state on the right of the row, or beside the label for an action in its level (Brightness 55%). A status names its state in words only when it has no value to show, in lowercase but for a name (`off`, `muted`, `Wi-Fi off`), and never for a state its icon or tone already shows. A level's state sits on the row that changes it: power in Power's icon.
 
 `format` picks a status's fields (`"{song}"`), and what follows a `|` stays whole on the right (`"{title}|{when}"`). A built-in status has a format of its own (the volume's is `"{device}|{volume}"`), which an entry's replaces.
 

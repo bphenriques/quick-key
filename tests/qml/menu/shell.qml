@@ -409,6 +409,11 @@ ShellRoot {
         }
       },
       {
+        name: "a status says its state in lowercase but for a name",
+        until: () => Statuses.value(Statuses.builtin.music, Statuses.builtin.music.fields()).text === "no song playing"
+          && [Words.disconnected, Words.noInternet, Words.noDevice].every(word => word === word.toLowerCase())
+      },
+      {
         name: "a format fills its fields, and a field without a value leaves nothing",
         until: () => Statuses.formatted("{title} · {when}", { title: "Lunch", when: "13:00" }) === "Lunch · 13:00" && Statuses.formatted("{none} x", {}) === "x"
       },

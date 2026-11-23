@@ -61,15 +61,12 @@ Singleton {
   // Why an empty list says it is empty.
   readonly property string emptyTray: "No apps in the tray"
   readonly property string emptyNetworks: "No saved networks in range"
-  readonly property string emptyWifiOff: "Wi-Fi is off"
   readonly property string emptyNoAdapter: "No Bluetooth adapter"
   readonly property string emptyNoPaired: "No paired devices"
-  readonly property string emptyBluetoothOff: "Bluetooth is off"
+  readonly property string emptyBluetoothOff: "Bluetooth off"
   readonly property string emptyOutputs: "No outputs"
   readonly property string emptyInputs: "No inputs"
   readonly property string emptyStreams: "No app playing sound"
-  readonly property string noSong: "No song playing"
-  readonly property string noDevice: "No device connected"
   readonly property string noEvents: "No events"
   // A day past the range the events file was synced over.
   readonly property string notSynced: "Not synced"
@@ -87,14 +84,16 @@ Singleton {
     return count + " devices connected";
   }
 
-  // A value's words, on the right of a row.
+  // A value's words, on the right of a row: lowercase but for a name; "off" after what is off, unless the row names it.
   readonly property string off: "off"
   readonly property string paused: "paused"
   readonly property string wifiOff: "Wi-Fi off"
-  readonly property string disconnected: "Disconnected"
+  readonly property string disconnected: "disconnected"
   readonly property string ethernet: "Ethernet"
-  readonly property string noInternet: "No internet"
+  readonly property string noInternet: "no internet"
   readonly property string muted: "muted"
+  readonly property string noSong: "no song playing"
+  readonly property string noDevice: "no device connected"
 
   // What carries the sound when its own name says nothing.
   readonly property string speakers: "Speakers"

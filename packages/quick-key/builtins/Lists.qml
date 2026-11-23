@@ -23,7 +23,7 @@ Singleton {
     },
     wifi: {
       icon: Glyphs.wifi,
-      empty: () => Network.wifiEnabled ? Words.emptyNetworks : Words.emptyWifiOff,
+      empty: () => Network.wifiEnabled ? Words.emptyNetworks : Words.wifiOff,
       items: () => Network.known.map(network => ({
         id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, busy: network.stateChanging, select: () => root.toggle(network)
       }))
