@@ -122,6 +122,11 @@ Singleton {
     return format.replace(/\{(\w+)\}/g, (_, name) => fields[name] ?? "").trim();
   }
 
+  // A name's glyph, a built-in status's or else the plugin's of that name: what a bar's legend, a row and the pop-up all show for it.
+  function glyphOf(name) {
+    return builtin[name]?.glyph() ?? Plugins.get(name)?.glyph ?? "";
+  }
+
   // A status's value over its fields, { text, detail, glyphs }: an entry's format over the status's own, `|` before the detail; with neither, its value().
   function value(status, fields, format) {
     const shape = format || status.format;

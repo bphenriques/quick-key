@@ -209,8 +209,8 @@ Scope {
           spacing: Config.theme.padding
 
           CalendarMonth {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 2
+            // Two fifths of the level, but room for seven columns of three characters, the events beside it giving way first.
+            Layout.preferredWidth: Math.max(7 * 3.5 * Metrics.cell, parent.width * 2 / 5)
             Layout.alignment: Qt.AlignTop
             title: root.menu.calendar.title
             selected: root.menu.calendar.selected

@@ -13,6 +13,8 @@ Item {
   required property var selected
   // Its month and year, over the grid.
   property string title
+  // Every weekday's name as long as the narrowest column holds: three letters, fewer on a narrow level.
+  readonly property int weekdayLetters: width / 7 >= 3.5 * Metrics.cell ? 3 : width / 7 >= 2.5 * Metrics.cell ? 2 : 1
 
   signal stepped(int months)
   signal picked(var day)
@@ -66,8 +68,9 @@ Item {
         Layout.bottomMargin: Config.theme.itemPaddingY
         horizontalAlignment: Text.AlignHCenter
         tone: "dim"
-        // Some locales' short names are whole words (pt: segunda), too wide for a column.
-        text: Clock.weekdays[(root.firstDay + index) % 7].slice(0, 3)
+        // Some locales' short names are whole words (pt: segunda): three letters, fewer where the column is narrower.
+        Layout.minimumWidth: 0
+        text: Clock.weekdays[(root.firstDay + index) % 7].slice(0, root.weekdayLetters)
       }
     }
 

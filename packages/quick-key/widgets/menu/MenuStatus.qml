@@ -40,7 +40,7 @@ StatusLine {
   readonly property bool statusBusy: statusPhase === "working"
   readonly property bool blank: glyph === "" && text === "" && detail === ""
 
-  glyph: icon || (builtin ? builtin.glyph() : plugin?.glyph ?? "")
+  glyph: icon || Statuses.glyphOf(status)
   // In a bar an icon sits closer to its own text than to its neighbours.
   spacing: quiet ? Config.theme.spacing / 2 : Config.theme.spacing
   title: status && !quiet ? fallback : ""

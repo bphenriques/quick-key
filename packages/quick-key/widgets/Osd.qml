@@ -71,7 +71,7 @@ Scope {
       readonly property bool muted: status !== null && !!status.muted && status.muted()
       // Never a dim fallback: a status without a tone of its own reads normal.
       readonly property string tone: muted ? "dim" : status ? ((status.tone ? status.tone() : "") || "normal") : plugin ? (plugin.tone || (plugin.active ? "primary" : "normal")) : "normal"
-      readonly property string glyph: status ? status.glyph() : plugin ? plugin.glyph : ""
+      readonly property string glyph: Statuses.glyphOf(root.kind)
       readonly property string text: status ? (status.popup ? status.popup() : Statuses.value(status, fields).text) : plugin ? [plugin.text, plugin.detail].filter(part => part).join(" ") : ""
 
       // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.

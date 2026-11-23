@@ -174,7 +174,7 @@ Scope {
 
   // A bar item as a line of the legend: its key, its icon (its status's glyph when it shows a status) and its name.
   function hint(item, key) {
-    const glyph = Statuses.builtin[item.status]?.glyph() ?? Plugins.get(item.status)?.glyph ?? "";
+    const glyph = Statuses.glyphOf(item.status);
     return Object.assign({}, item, { key, status: "", format: "", paired: typeof key !== "string", icon: item.icon || (item.image ? "" : glyph) });
   }
 
