@@ -75,7 +75,7 @@ Scope {
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {
         item: window.metered ? bar : pill
-        radius: Config.theme.radius
+        radius: (window.metered ? bar : pill).radius
       }
 
       implicitWidth: metered ? bar.implicitWidth : pill.implicitWidth

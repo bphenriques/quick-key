@@ -25,8 +25,9 @@ function shortName(name) {
   const modifiers = chord.split("+");
   const shift = modifiers.includes("Shift");
   const letter = /^[A-Za-z]$/.test(base);
-  // In a chord a letter is its key, so lowercase unless Shift is held; alone, its case is already the key's.
-  const key = chord && letter ? (shift ? base.toUpperCase() : base.toLowerCase()) : symbols[base] ?? base;
+  // A letter's case is the key's, as the shell names keys (Ctrl+X is Ctrl with Shift held); a compositor's binding (Mod+N) is lower-case unless it names Shift.
+  const compositor = modifiers.includes("Mod") || modifiers.includes("Super");
+  const key = letter && shift ? base.toUpperCase() : letter && compositor ? base.toLowerCase() : symbols[base] ?? base;
   const prefix = (modifiers.includes("Ctrl") ? "C-" : "") + (modifiers.includes("Alt") ? "M-" : "")
     + (modifiers.includes("Mod") || modifiers.includes("Super") ? "s-" : "") + (shift && !letter ? "S-" : "");
   return { prefix: prefix, key: key };

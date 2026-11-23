@@ -15,6 +15,8 @@ Item {
   property real size: Config.theme.iconSize
   // An image as drawn ("colour"), in greys ("grey"), or as its shape in the tone's colour ("tint").
   property string recolour: "colour"
+  // Tinting flattens an image to its shape, so only a symbolic icon (one colour by design) is tinted; a full-colour one goes grey instead.
+  readonly property string drawn: recolour === "tint" && !source.includes("symbolic") ? "grey" : recolour
 
   visible: glyph !== "" || source !== ""
   implicitWidth: size
@@ -34,11 +36,11 @@ Item {
     id: image
     anchors.fill: parent
     // Tinted, it is only the shape the tone fills.
-    visible: root.source !== "" && root.recolour !== "tint"
+    visible: root.source !== "" && root.drawn !== "tint"
     source: root.source
-    layer.enabled: root.recolour !== "colour"
+    layer.enabled: root.drawn !== "colour"
     layer.effect: MultiEffect {
-      saturation: root.recolour === "grey" ? -1 : 0
+      saturation: root.drawn === "grey" ? -1 : 0
     }
     // An image has no colour to dim, so a dim one fades instead.
     opacity: root.tone === "dim" ? Config.theme.dimOpacity : 1
@@ -53,7 +55,7 @@ Item {
   // The tone's colour through the image's shape, so a white symbolic icon reads on a light theme.
   Rectangle {
     anchors.fill: parent
-    visible: root.source !== "" && root.recolour === "tint"
+    visible: root.source !== "" && root.drawn === "tint"
     color: glyphLabel.color
     layer.enabled: visible
     layer.effect: MultiEffect {

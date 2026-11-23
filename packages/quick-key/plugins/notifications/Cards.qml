@@ -27,6 +27,11 @@ Scope {
     return file ? "file://" + file.split("/").map(encodeURIComponent).join("/") : "";
   }
 
+  // Text as its words between spaces, lower-case, so a title names its app only as a whole word ("Go" is not in "Good").
+  function words(text) {
+    return " " + text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() + " ";
+  }
+
   // An icon sent by its name, from the theme, at a glyph's size; a rule's own first.
   function iconOf(entry) {
     if (entry.applied.icon) return Quickshell.iconPath(entry.applied.icon, true);
@@ -176,7 +181,7 @@ Scope {
                 readonly property string app: entry ? view.plugin.appOf(entry) : ""
                 title: entry?.summary || app
                 // The app where nothing else names it: one a rule names always shows; else not when the title says it or its icon from the theme shows it, so a picture (a song's cover) or no icon keeps it. Then when it came, once it has waited.
-                readonly property bool named: entry !== null && entry.applied.app === undefined && (title.toLowerCase().includes(app.toLowerCase()) || icon !== "")
+                readonly property bool named: entry !== null && entry.applied.app === undefined && (view.words(title).includes(view.words(app)) || icon !== "")
                 aside: !entry ? "" : [entry.repeats > 1 ? "×" + entry.repeats : "", named ? "" : app, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
                 body: entry?.body ?? ""
                 tone: entry && view.plugin.critical(entry) ? "alert" : ""

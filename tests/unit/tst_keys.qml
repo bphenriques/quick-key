@@ -10,6 +10,9 @@ TestCase {
     compare(Keys.label("Ctrl+x"), "C-x");
     compare(Keys.label("Ctrl+Shift+Return"), "C-S-RET");
     compare(Keys.label("Ctrl+Shift+x"), "C-X");
+    compare(Keys.label("Ctrl+X"), "C-X");
+    compare(Keys.label("Mod+N"), "s-n");
+    compare(Keys.label("Mod+Shift+n"), "s-N");
     compare(Keys.label(["Left", "Right"], true), "←→");
     compare(Keys.label(["Ctrl+a", "b"], true), "C-ab");
     compare(Keys.label("Mod+n"), "s-n");

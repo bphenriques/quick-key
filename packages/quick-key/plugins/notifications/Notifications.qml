@@ -281,7 +281,7 @@ Plugin {
     const app = appOf(entry);
     const title = entry.summary || app;
     const when = entry.arrived ? Clock.time(new Date(entry.arrived)) : "";
-    const detail = [app.toLowerCase() === title.toLowerCase() ? "" : app, when].filter(part => part).join(" · ");
+    const detail = [entry.repeats > 1 ? "×" + entry.repeats : "", app.toLowerCase() === title.toLowerCase() ? "" : app, when].filter(part => part).join(" · ");
     return {
       id: String(entry.came),
       label: title,
@@ -425,8 +425,8 @@ Plugin {
     const tag = tagOf(notification);
     // Its card, by tag, else one saying exactly what it says (no tag on either, no reply on it), which it renews and counts, as dunst stacks duplicates.
     const same = tag ? internal.list.find(each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag) : internal.list.find(each => each !== internal.replying && each.notification && !tagOf(each.notification) && each.appName === notification.appName && each.summary === notification.summary && each.body === notification.body) ?? null;
-    // A replacement by tag that a rule hides still takes its card, so the card goes with it.
-    if (applied.hide && !same) return;
+    // A replacement by tag that a rule hides still takes its card, so the card goes with it; a duplicate it hides leaves its twin be.
+    if (applied.hide && !(same && tag)) return;
     notification.tracked = true;
     const entry = same ?? entryOf.createObject(root, { came: ++internal.seq, arrived: notification.lastGeneration ? 0 : Date.now() });
     const old = entry.notification;
@@ -435,7 +435,10 @@ Plugin {
       if (entry.notification === notification) root.leave(entry);
     });
     if (old) {
-      if (!tag) entry.repeats++;
+      if (!tag) {
+        entry.repeats++;
+        entry.arrived = Date.now();
+      }
       return old.expire();
     }
     internal.list = internal.list.concat([entry]);
@@ -478,14 +481,17 @@ Plugin {
     if (!keep || entry.restored || entry.notification.transient) return entry.destroy();
     entry.saved = snapshot(entry);
     entry.notification = null;
-    const closed = internal.closed.concat([entry]);
+    // Its earlier self goes, by tag or by saying the same, so a chatty sender (a volume tool, a silent rule) never pushes the rest out.
+    const twin = each => each.appName === entry.appName && (tagOf(entry.data) ? tagOf(each.data) === tagOf(entry.data) : each.summary === entry.summary && each.body === entry.body);
+    internal.closed.filter(twin).forEach(each => each.destroy());
+    const closed = internal.closed.filter(each => !twin(each)).concat([entry]);
     if (closed.length > 20) closed.shift().destroy();
     internal.closed = closed;
   }
 
   // What a card shows, kept once its sender is done with it; a picture sent as data goes with its sender.
   function snapshot(entry) {
-    return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image: entry.image.startsWith("image://qsimage") ? "" : entry.image, urgency: entry.urgency, hints: ({ "image-path": entry.hints["image-path"], value: entry.hints.value }), desktopEntry: entry.desktopEntry, expireTimeout: -1 };
+    return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image: entry.image.startsWith("image://qsimage") ? "" : entry.image, urgency: entry.urgency, hints: ({ "image-path": entry.hints["image-path"], value: entry.hints.value, "x-dunst-stack-tag": tagOf(entry) }), desktopEntry: entry.desktopEntry, expireTimeout: -1 };
   }
 
   Component.onCompleted: refresh()

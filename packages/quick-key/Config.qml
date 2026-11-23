@@ -223,7 +223,7 @@ Singleton {
         property int itemRadius: 6
         // An icon's size, in pixels.
         property int iconSize: 24
-        // Apps' own icons (the tray's, a notification's): "colour" as drawn, "grey" like the glyphs beside them, or "tint", in the text's colour, which keeps a white symbolic icon legible on a light theme.
+        // Apps' own icons (the tray's, a notification's): "colour" as drawn, "grey" like the glyphs beside them, or "tint", a symbolic icon in the text's colour so a white one reads on a light theme, any other in greys.
         property string appIcons: "colour"
         // The menu, pop-ups and cards keep clear of space another bar reserves, instead of covering it.
         property bool besideBars: false
