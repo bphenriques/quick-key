@@ -13,8 +13,6 @@ PluginSettings {
   property int keep: 100
   // Closed notifications kept to bring back, over a restart too, 0 to 100.
   property int history: 20
-  // The side of a card its actions sit on: right or left.
-  property string actionSide: "right"
   // A card's width, in pixels, never past the screen; unset, it follows the font, 480 at 11 points.
   property int width: Math.round(480 * Config.theme.fontSize / 11)
   // Shows the plugin's `shortcut` dimly by the cards at rest, to teach it.
@@ -27,7 +25,6 @@ PluginSettings {
   property string owner: "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s org.freedesktop.Notifications"
 
   readonly property var corners: ["top-right", "top-left", "bottom-right", "bottom-left"]
-  readonly property var sides: ["right", "left"]
   readonly property var fields: ["app", "summary", "body", "category", "urgency", "desktopEntry"]
   readonly property var ruleKinds: Object.assign(Object.create(null), { match: "map", app: "string", hide: "boolean", timeout: "number", urgency: "string", ignorePause: "boolean", actions: "list", default: "string", run: "string", icon: "string", silent: "boolean" })
   readonly property var actionKinds: Object.assign(Object.create(null), { key: "string", desc: "string", cmd: "string", closes: "boolean", icon: "string" })
@@ -38,7 +35,6 @@ PluginSettings {
   function problems() {
     const found = [];
     if (!corners.includes(corner)) found.push("sets corner to '" + corner + "', none of " + corners.join(", "));
-    if (!sides.includes(actionSide)) found.push("sets actionSide to '" + actionSide + "', none of " + sides.join(", "));
     if (limit < 1 || limit > 9) found.push("sets limit to " + limit + ", not 1 to 9, as many as there are digits");
     if (idle < 0) found.push("sets idle below 0");
     if (width < 100 || width > 4000) found.push("sets width to " + width + ", not 100 to 4000");

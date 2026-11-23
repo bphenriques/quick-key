@@ -21,9 +21,8 @@ Surface {
   // From 0 to 1, with `meterText` beside it; below 0, none.
   property real meter: -1
   property string meterText: ""
-  // Each { desc, key, run }, with a `glyph` or an icon `source` before its label, in order, on the side `actionSide` names, from the glyph's column to the edge.
+  // Each { desc, key, run }, with a `glyph` or an icon `source` before its label, in order, on the right, from the glyph's column to the edge.
   property var actions: []
-  property string actionSide: "right"
   // In the actions' place while set (a reply's prompt, what was sent), so the card never grows; it has the keys.
   property Component footer: null
   // Alert for what must not be missed: its border, the glyph beside `aside` and the meter, so colour is not all that says so.
@@ -236,9 +235,7 @@ Surface {
           Layout.fillWidth: true
           spacing: root.actionGap * Metrics.cell
 
-          // Only on the open side: a hidden one takes no spacing, so the actions meet the edge.
           Item {
-            visible: root.actionSide !== "left"
             Layout.fillWidth: true
           }
 
@@ -296,11 +293,6 @@ Surface {
                 onClicked: if (action.entry.run) action.entry.run()
               }
             }
-          }
-
-          Item {
-            visible: root.actionSide === "left"
-            Layout.fillWidth: true
           }
         }
       }

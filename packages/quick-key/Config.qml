@@ -78,7 +78,8 @@ Singleton {
       "popups.position": "removed: the pop-up always sits at the right edge",
       "menu.margin": "removed: every surface sits theme.edgeMargin from the edge",
       "popups.margin": "removed: every surface sits theme.edgeMargin from the edge",
-      "plugins.notifications.margin": "removed: every surface sits theme.edgeMargin from the edge"
+      "plugins.notifications.margin": "removed: every surface sits theme.edgeMargin from the edge",
+      "plugins.notifications.actionSide": "removed: a card's actions sit on its right"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.

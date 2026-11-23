@@ -186,7 +186,6 @@ Scope {
                 meterText: meter >= 0 ? Math.round(meter * 100) + "%" : ""
                 actions: view.plugin.actionsOf(entry)
                 footer: entry !== null && entry === view.plugin.replying ? reply : null
-                actionSide: view.settings.actionSide
                 // Its place among all, while a digit reaches it.
                 readonly property int place: view.plugin.showable.indexOf(entry)
                 key: place >= 0 && place < 9 ? String(place + 1) : ""
