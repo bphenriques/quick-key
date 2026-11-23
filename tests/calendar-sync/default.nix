@@ -1,4 +1,4 @@
-# calendar-sync offline: the tasks file from a synced folder written as the iPhone writes, then a tick, an untick, a repeating task's and an added task there; then a whole sync of events from a calendar served on loopback, and one whose server is gone.
+# calendar-sync offline: the todoman fields it reads, the tasks file from a synced folder written as the iPhone writes, then a tick, an untick, a repeating task's and an added task there; then a whole sync of events from a calendar served on loopback, and one whose server is gone.
 { pkgs, self }:
 pkgs.runCommand "quick-key-calendar-sync"
   {
@@ -23,6 +23,10 @@ pkgs.runCommand "quick-key-calendar-sync"
     fail() { echo "not ok - $1"; cat state/tasks.json; exit 1; }
 
     sync tasks
+    # The porcelain fields the script reads, so a todoman that changes them fails here rather than writing a wrong tasks file.
+    todo list --status ANY | jq -e 'length == 3 and all(.[]; ([.id, .summary, .list, .completed] | map(type)) == ["number", "string", "string", "boolean"]
+      and has("due") and has("completed_at") and has("priority") and all(.due, .completed_at, .priority; type == "number" or type == "null"))' > /dev/null \
+      || fail "todoman's porcelain list gives id, summary, list, completed, due, completed_at and priority as the script reads them"
     jq -e 'has("updated") | not' state/tasks.json > /dev/null || fail "a tasks file never synced says no sync"
     [ "$(jq '.tasks | length' state/tasks.json)" = 2 ] || fail "a task done more than 14 days ago is left out"
     [ "$(task | jq -c '[.due, .done, .list, .priority, .color]')" = '["2026-10-06T09:00",false,"personal",1,"#ff8c00"]' ] || fail "a task reads with its local time, open, with its list, priority and calendar's colour"
