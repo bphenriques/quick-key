@@ -1,6 +1,6 @@
 # Introduction
 
-quick-key is a keyboard menu with live status for [Quickshell](https://quickshell.org): one key opens it, and every row shows the state of what it controls. A pop-up shows volume, brightness, keyboard layout and keep-awake changes.
+quick-key is a keyboard menu with live status for [Quickshell](https://quickshell.org): one key opens it, and every row shows the state of what it controls. A pop-up shows changes to the volume, the microphone, brightness, the keyboard layout and keep-awake.
 
 It is a menu first. It sits beside the bar or shell you have and replaces neither. Plugins add the rest, most of them a command and a few lines of config (see [Recipes](recipes.md)).
 

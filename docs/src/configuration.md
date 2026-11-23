@@ -36,7 +36,7 @@ With [stylix](https://github.com/nix-community/stylix), the module themes the sh
 
 ## Defaults
 
-Unset, the menu is a starter one (audio, network, Bluetooth, music), with the calendar on the clock, and the tray and the session in its bar. Volume, mute, Wi-Fi and Bluetooth power, and playback are built-in actions (see [Menu](menu.md)), no tool needed. The rest use standard tools from `PATH`, which the Nix module puts first on the shell's `PATH` so they resolve the same on every machine:
+Unset, the menu is a starter one (audio, network, Bluetooth, music), with the calendar on the clock, and the tray and the session in its bar. Volume, mute, Wi-Fi and Bluetooth power, and playback are built-in actions (see [Menu](menu.md)), no tool needed. The rest use standard tools from `PATH`, which the Nix module puts on the shell's `PATH` ahead of the session's, so they resolve the same on every machine:
 
 | Feature | Tool |
 |---|---|

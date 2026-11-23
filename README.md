@@ -5,7 +5,7 @@
 [![Status](https://img.shields.io/badge/status-unstable-orange)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-A keyboard-driven [Quickshell](https://quickshell.org) menu with live status, in the style of [`wlr-which-key`](https://github.com/MaxVerevkin/wlr-which-key), plus pop-ups for volume, brightness, keyboard layout and keep-awake. Works out of the box; configured from a home-manager module or a `config.json`.
+A keyboard-driven [Quickshell](https://quickshell.org) menu with live status, in the style of [`wlr-which-key`](https://github.com/MaxVerevkin/wlr-which-key), plus pop-ups for volume, the microphone, brightness, keyboard layout and keep-awake. Works out of the box; configured from a home-manager module or a `config.json`.
 
 It is a menu first: it sits beside the bar or shell you have and replaces neither. The rest is plugins, off until listed. Most are a command and a few lines of config ([recipes](https://bphenriques.github.io/quick-key/recipes.html)); the shipped ones (a panel to ask an agent, a notification server in place of dunst or mako, pills for recording and dictation, a niri minimap) show how far one can go.
 
@@ -37,7 +37,7 @@ Bind `"${config.programs.quick-key.exec.ipc} menu toggle"` to a compositor key t
 I built it for my own [desktop](https://github.com/bphenriques/dotfiles). It is open by design: if it interests you, let me know!
 
 > [!WARNING]
-> **Work in progress.** Linux and niri only for now, and the option surface still moves.
+> **Work in progress.** Linux only, and the option surface still moves. Built and tested on niri; on another Wayland compositor all but the keyboard layout and output details work (see [Compositor](https://bphenriques.github.io/quick-key/compositor.html)).
 
 ## Support
 

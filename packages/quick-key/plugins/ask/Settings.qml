@@ -1,7 +1,7 @@
 import qs
 import qs.ui
 
-// Ask's agent and commands, each command given its arguments as $1, $2... (docs/src/plugins.md#ask).
+// Ask's agent and commands, each command given its arguments as $1, $2... (docs/src/ask.md).
 PluginSettings {
   // Its glyph in a bar, so a turn waiting on you shows there too.
   glyph: Glyphs.conversation

@@ -1,7 +1,7 @@
 import QtQuick
 import qs
 
-// The notifications' settings (docs/src/plugins.md#notifications); `owner` the one tool it names, the standard busctl.
+// The notifications' settings (docs/src/notifications.md); `owner` the one tool it names, the standard busctl.
 PluginSettings {
   // The corner the cards stack in: top-right, top-left, bottom-right or bottom-left; by default, on the right, away from the menu's edge.
   property string corner: Config.atTop ? "bottom-right" : "top-right"

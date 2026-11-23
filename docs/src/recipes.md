@@ -2,7 +2,23 @@
 
 Short configs for the common shapes, each to adapt. They are written for `programs.quick-key.settings`; a plain `config.json` takes the same keys. `<glyph>` stands for a Nerd Font glyph.
 
-## Run a command
+## Extend the starter
+
+Each recipe adds to the starter menu. Setting `menu.entries` replaces the starter whole, so begin from its entries, read from the flake's source:
+
+```nix
+{ inputs, lib, ... }:
+{
+  programs.quick-key.settings.menu.entries =
+    (lib.importJSON "${inputs.quick-key}/packages/quick-key/menu.json").menu.entries;
+}
+```
+
+A recipe's entries then join them from any module, in the order `lib.mkOrder` gives. Without Nix, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json) to `config.json` and add each recipe's entries to its `menu.entries`.
+
+## The menu
+
+### Run a command
 
 ```nix
 menu.entries = [
@@ -12,7 +28,7 @@ menu.entries = [
 
 The menu closes as it runs; `keepOpen = true` keeps it open, for a command you repeat.
 
-## A level of commands
+### A level of commands
 
 ```nix
 { key = "s"; desc = "Screenshot"; icon = "<glyph>"; submenu = [
@@ -24,7 +40,7 @@ The menu closes as it runs; `keepOpen = true` keeps it open, for a command you r
 
 Two keys with a command each share a row.
 
-## Open an entry from a compositor key
+### Open an entry from a compositor key
 
 ```kdl
 // niri
@@ -33,7 +49,39 @@ Mod+P { spawn "qs" "-c" "quick-key" "ipc" "call" "menu" "toggleEntry" "d"; }
 
 `d` is the entry's key. With Nix, `"${config.programs.quick-key.exec.ipc} menu toggleEntry d"`.
 
-## A value beside a label
+### Keep a device on its digit
+
+```nix
+{ key = "a"; desc = "Audio output"; status = "sink"; list = "sinks";
+  pins = [
+    { match = "alsa_output.pci-*"; label = "Speakers"; }
+    { match = "bluez_output.*"; label = "Headphones"; }
+  ];
+  submenu = [ { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; } ];
+}
+```
+
+Pins take the digits from 1, dimmed while absent, so `a 2` is always the headphones.
+
+### Clipboard history
+
+```nix
+plugins.clipboard = {
+  type = "command";
+  read = ''cliphist list | head -n 50 | jq -Rsc '{items: (split("\n") | map(select(length > 0) | {id: ., label: (split("\t") | .[1:] | join(" "))}))}' '';
+  # The item comes last, as $1: a function puts it where the pipe needs it.
+  select = ''paste() { printf %s "$1" | cliphist decode | wl-copy; }; paste'';
+};
+menu.entries = [
+  { key = "v"; desc = "Clipboard"; icon = "<glyph>"; list = "clipboard"; }
+];
+```
+
+`/` filters the list as you type; `cliphist` and `wl-clipboard` go in `extraPackages`.
+
+## Status and toggles
+
+### A value beside a label
 
 ```nix
 plugins.load = {
@@ -48,7 +96,7 @@ menu.entries = [
 
 `detail` sits on the right of the label. A plain line (`0.42`) would take the label's place instead.
 
-## A toggle that lights
+### A toggle that lights
 
 ```nix
 plugins.nightLight = {
@@ -64,7 +112,7 @@ menu.entries = [
 
 A `read` source is read as the menu opens, so the command asks for another read once it is done. A tool with events needs none: give it as `watch`.
 
-## Pick one of a few
+### Pick one of a few
 
 ```nix
 plugins.displays = {
@@ -84,7 +132,7 @@ menu.entries = [
 
 The items take the digits; the one the source names is lit, and is what the entry shows.
 
-## Items that come and go
+### Items that come and go
 
 ```nix
 plugins.containers = {
@@ -99,7 +147,7 @@ menu.entries = [
 
 The state line carries the items when the settings list none.
 
-## State a script writes
+### State a script writes
 
 ```nix
 plugins.backup = {
@@ -112,7 +160,7 @@ plugins.backup = {
 
 The script writes `running` to the file as it starts, then empties it, or writes `failed`; the shell reads it on every change, with nothing running in between. `phase` is how every surface draws work: `working` spins, `error` alerts ([The state line](plugins.md#the-state-line)).
 
-## A VPN
+### A VPN
 
 ```nix
 plugins.vpn = {
@@ -127,7 +175,7 @@ menu.header.right = [ "vpn" ];
 
 A click on it in the bar toggles it; for a key, make it an entry (`{ key = "v"; desc = "VPN"; status = "vpn"; activeWhen = "vpn"; cmd = "..."; }`). A NetworkManager or WireGuard connection is the same shape: `read` from `nmcli -g GENERAL.STATE connection show wg0`, toggle with `nmcli connection up` and `down`.
 
-## The weather
+### The weather
 
 ```nix
 plugins.weather = {
@@ -145,23 +193,22 @@ menu.header.center = [ "weather" ];
 
 Read as the menu opens and every 15 minutes while it stays open. `show` picks the glyph by the sky, and its other [symbols](https://github.com/chubin/wttr.in/blob/master/internal/renderer/oneline/constants.go) take `glyph`; with no network, `glyph` shows alone until the next read. Leave the place out (`wttr.in/?format=...`) for wttr.in to guess it from your address.
 
-## Text of your own in the bar
+### An external monitor's brightness
 
 ```nix
-plugins.uptime = {
+plugins.monitor = {
   type = "command";
-  read = ''awk '{ printf "up %dd %dh\n", $1 / 86400, $1 % 86400 / 3600 }' /proc/uptime'';
-  every = 60;
-  glyph = "<glyph>";
+  read = ''ddcutil getvcp 10 --brief | awk '{ printf "{\"text\": \"%s%%\"}\n", $4 }' '';
 };
-menu.header.center = [ "uptime" ];
+menu.entries = [
+  { key = [ "Down" "Up" ]; desc = "Monitor brightness"; icon = "<glyph>"; status = "monitor"; keepOpen = true;
+    cmd = [ "ddcutil setvcp 10 - 10" "ddcutil setvcp 10 + 10" ]; }
+];
 ```
 
-![The uptime in the bar's centre](images/uptime.png)
+DDC is slow, a second or so a step, and the level is read again as the menu opens.
 
-The last line a command prints is the text beside the glyph. For text a script writes, give `file` instead ([State a script writes](#state-a-script-writes)).
-
-## A focus timer
+### A focus timer
 
 ```nix
 plugins.focus = {
@@ -177,7 +224,34 @@ menu.header.center = [ { key = "f"; desc = "Focus"; status = "focus"; } ];
 
 `C-f`, or a click, starts 25 minutes. The bar counts them down from the file, and shows the glyph alone once the loop empties it.
 
-## A bar on top, as islands
+## The bar
+
+### In the bar
+
+```nix
+plugins.dunst = { };
+menu.header.right = [ "dunst" "battery" ];
+```
+
+A plugin in a bar shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same. For a key, make it an entry: `{ key = "d"; desc = "Do not disturb"; status = "dunst"; cmd = "dunstctl set-paused toggle"; }` runs on `C-d`.
+
+### Text of your own in the bar
+
+```nix
+plugins.uptime = {
+  type = "command";
+  read = ''awk '{ printf "up %dd %dh\n", $1 / 86400, $1 % 86400 / 3600 }' /proc/uptime'';
+  every = 60;
+  glyph = "<glyph>";
+};
+menu.header.center = [ "uptime" ];
+```
+
+![The uptime in the bar's centre](images/uptime.png)
+
+The last line a command prints is the text beside the glyph. For text a script writes, give `file` instead ([State a script writes](#state-a-script-writes)).
+
+### A bar on top, as islands
 
 ```nix
 menu.edge = "top";
@@ -190,61 +264,9 @@ popups.position = "top";
 
 The bar sits on top, each slot on an island of its own, and pop-ups show there too. It is still the menu: it shows on a key and hides on `ESC`, so it does not replace a bar that is always there. Keep waybar for that, with `theme.besideBars = true` so the menu keeps clear of it. A bar down a side of the screen, or one that sizes itself to what it shows, is not on offer: a level keeps a top or bottom edge and its width.
 
-## In the bar
+## The look
 
-```nix
-plugins.dunst = { };
-menu.header.right = [ "dunst" "battery" ];
-```
-
-A plugin in a bar shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same. For a key, make it an entry: `{ key = "d"; desc = "Do not disturb"; status = "dunst"; cmd = "dunstctl set-paused toggle"; }` runs on `C-d`.
-
-## Keep a device on its digit
-
-```nix
-{ key = "a"; desc = "Audio output"; status = "sink"; list = "sinks";
-  pins = [
-    { match = "alsa_output.pci-*"; label = "Speakers"; }
-    { match = "bluez_output.*"; label = "Headphones"; }
-  ];
-  submenu = [ { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; } ];
-}
-```
-
-Pins take the digits from 1, dimmed while absent, so `a 2` is always the headphones.
-
-## Clipboard history
-
-```nix
-plugins.clipboard = {
-  type = "command";
-  read = ''cliphist list | head -n 50 | jq -Rsc '{items: (split("\n") | map(select(length > 0) | {id: ., label: (split("\t") | .[1:] | join(" "))}))}' '';
-  # The item comes last, as $1: a function puts it where the pipe needs it.
-  select = ''paste() { printf %s "$1" | cliphist decode | wl-copy; }; paste'';
-};
-menu.entries = [
-  { key = "v"; desc = "Clipboard"; icon = "<glyph>"; list = "clipboard"; }
-];
-```
-
-`/` filters the list as you type; `cliphist` and `wl-clipboard` go in `extraPackages`.
-
-## An external monitor's brightness
-
-```nix
-plugins.monitor = {
-  type = "command";
-  read = ''ddcutil getvcp 10 --brief | awk '{ printf "{\"text\": \"%s%%\"}\n", $4 }' '';
-};
-menu.entries = [
-  { key = [ "Down" "Up" ]; desc = "Monitor brightness"; icon = "<glyph>"; status = "monitor"; keepOpen = true;
-    cmd = [ "ddcutil setvcp 10 - 10" "ddcutil setvcp 10 + 10" ]; }
-];
-```
-
-DDC is slow, a second or so a step, and the level is read again as the menu opens.
-
-## Colours from the wallpaper
+### Colours from the wallpaper
 
 A tool that writes a theme file is a theme: matugen's template is the shipped theme's keys filled from its palette.
 
@@ -255,7 +277,7 @@ A tool that writes a theme file is a theme: matugen's template is the shipped th
 
 matugen writes it to `$XDG_CONFIG_HOME/quick-key/themes/matugen.json`, `theme.name = "matugen"` picks it, and its colours apply as the file changes, nothing reloading. With Nix, which owns that folder, matugen writes elsewhere and the theme links to it, so the build knows it: `xdg.configFile."quick-key/themes/matugen.json".source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.cacheHome}/matugen/quick-key.json";`. pywal works the same way, its template using `{background}`, `{foreground}` and `{color1}` to `{color8}`.
 
-## A look of your own
+### A look of your own
 
 ```nix
 theme = {

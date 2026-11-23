@@ -1,6 +1,8 @@
 # Menu
 
-The menu is a list of levels. Each is its body past an optional bar at the screen's edge. A body holds one thing: entries, each a key and a label that does something or opens a level, or a level's content, its list or its view (the calendar). A content level's own entries and its legend sit on its bar's left, so a list that grows moves neither. When they do not all fit, every action shows only its key and glyph, its label as its tip, so none is cut short. The bar also holds what you glance at.
+The menu is a list of levels. Each is a body, with an optional bar between it and the screen's edge.
+
+A body holds one thing. It is either entries, each a key and a label that does something or opens a level, or a level's content: a list, or a view such as the calendar. A content level's own entries and its legend sit on its bar's left, so a list that grows never moves them. When they do not all fit, each shows only its key and glyph, its label as its tip. The bar also holds what you glance at.
 
 ```nix
 {
@@ -47,7 +49,7 @@ The label is `desc`, and never changes. Every row of a level carries an icon (`i
 
 A level is as wide as its entry's `width`, else `menu.width`, and lays its actions out in its entry's `columns`, else `menu.columns` (`columns = 1` for a level of three, so none sits alone). Neither is measured from what it shows, so it holds still. Entries flow across, so order decides neighbours. At the top the columns are equal, so values line up; in a level the last hugs its rows against the right edge. It is never wider than the screen, whatever it asks; short of room, text shortens, short values last and icons never. Make the menu wider before adding columns or truncating.
 
-The menu sits at the bottom of the screen, centred, its bar against the edge, `menu.margin` from it (else `theme.edgeMargin`, which every surface takes unless it sets its own). `menu.edge = "top"` mirrors it, the bar on top and everything stacking downward, and `menu.align` places it `left`, `center` or `right`; a plugin's panel follows. A level's input sits past its body, or, with `menu.inputSide = "bar"`, between the body and the bar, where a body of another height moves it less. Nothing else moves: the bar never sits apart from the body, and every level keeps one edge. The notifications' cards default to the corner away from it.
+The menu sits at one edge of the screen, its bar against it; by default the bottom, centred. Everything stacks away from that edge: the bar, the body, then the level's input. The input can sit between the body and the bar instead, where a body of another height moves it less. A plugin's panel follows the menu, and the notifications' cards default to the corner away from it. Nothing else moves: the bar never sits apart from the body, and every level keeps one edge.
 
 ## Bars
 
@@ -76,7 +78,7 @@ The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level l
 
 `format` wraps the text that starts a conversation (`{text}`). `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
 
-Given to [Ask](plugins.md#ask), the input's island is the working area and the body the committed one. The turn shows over the body: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works and, while you answer a question, the answer it follows. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
+Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows over the body: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works and, while you answer a question, the answer it follows. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
 
 An answer the island cannot hold (past three lines, a table, options that do not fit, an approval) opens the whole conversation in Ask, and `ESC` there comes back. `TAB` to the turn and `RET`, or a click, opens it too, and `y` copies its answer. A digit picks an option while the input is empty; once you type, digits type too. A failure shows in alert, what you sent faded and given back for `RET` to retry. `C-S-RET` leaves the answer to a notification.
 
@@ -120,4 +122,10 @@ Each field takes one of its column's names, or a plugin's. A plugin's status giv
 
 A digit on `streams` picks the app `streamVolume` and `streamMute` change, the first until you pick; the starter gives them Left and Right. The wheel over a device or an app changes its own volume. Power profiles (power saver, balanced, performance where the machine has it) are offered only where their daemon, power-profiles-daemon or tuned-ppd, is on the system bus, which `daemons.list` reads as the menu opens. Without it the action dims, the list says so and the status shows nothing. Music reads song and artist out of the XML some radio streams (Bauer Media) send as their title, since MPRIS leaves no glue to do it in.
 
-A level lists up to nine items on fixed digits. `/` filters its list in place, as in a pager or a browser, unless the level binds `/` itself. While the list holds more than the rows show, the legend says how many (`/ 1-9 of 14`). `pick` filters on any other key, its row saying the same. The filter takes the level's island and keeps the items whose label holds every word typed, hidden ones too, in the rows' place, as many at a time as the level showed (nine on a level of their own), so nothing moves. Digits pick from the rows shown, following them, and never type. `↑↓` move the cursor, `RET` runs its item as its digit would, and `M-RET` opens its own menu; the filter's range sits on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, or a level of its own with it. A level's other pickers take any free key (`.` or a letter), their labels ending in `...`. An empty list says why: off, or nothing found.
+A level lists up to nine items on fixed digits. While the list holds more than the rows show, the legend says how many (`/ 1-9 of 14`). An empty list says why: off, or nothing found.
+
+`/` filters the list in place, as in a pager or a browser, unless the level binds `/` itself; `pick` filters on any other key. The filter takes the level's input and keeps the items whose label holds every word typed, hidden ones too. They show in the rows' place, as many as the level showed, so nothing moves.
+
+While filtering, digits pick from the rows shown and never type. `↑↓` move the cursor, `RET` runs its item as its digit would, and `M-RET` opens its own menu. The filter's range sits on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, and with it a level opened only to filter.
+
+A level's other pickers take any free key (`.` or a letter), their labels ending in `...`.
