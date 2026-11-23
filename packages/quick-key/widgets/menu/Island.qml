@@ -139,7 +139,7 @@ GridLayout {
       target: root.model.plugin
 
       function onTurnChanged() {
-        if (root.model.plugin.turn?.phase === "error" && prompt.text === "") prompt.set(root.model.lastSent);
+        if (root.model.plugin?.turn?.phase === "error" && prompt.text === "") prompt.set(root.model.lastSent);
       }
     }
   }
