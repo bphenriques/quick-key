@@ -201,7 +201,8 @@ Singleton {
       }
       // The module copies a user's plugins beside the config it checks, so one not found is one the shell will not find either.
       if (!settings) {
-        found.push(at + " names type '" + (plugin.type ?? name) + "', which is neither shipped nor in " + Config.configDir + "/plugins");
+        found.push(at + " names type '" + (plugin.type ?? name) + "', which is neither shipped nor in " + Config.configDir + "/plugins"
+          + (plugin.type == null ? "; for a command plugin, set type = \"command\"" : ""));
         continue;
       }
       // Kinds read from defaults, then problems() from an object made with the values given: one written after being read would loop this binding.

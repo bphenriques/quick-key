@@ -36,6 +36,7 @@ ShellRoot {
     ["a pair of keys holding no name", { menu: { header: { right: [{ key: ["a", 5], desc: "X", status: "battery" }] } } }, "sets key to no key names"],
     ["a field of another kind", { menu: { entries: [{ key: "a", desc: "A", cmd: "true", icon: "x", keepOpen: "yes" }] } }, "sets keepOpen to a string, not a boolean"],
     ["a plugin type that is no name", { plugins: { x: { type: 5 } } }, "x.type takes a plugin's name or path"],
+    ["a plugin without a type, its name no shipped one", { plugins: { vpn: { read: "x" } } }, "names type 'vpn', which is neither shipped nor in " + Config.configDir + "/plugins; for a command plugin, set type = \"command\""],
     ["a plugin type that does not exist", { plugins: { x: { type: "niriMinmap" } } }, "names type 'niriMinmap', which is neither shipped"],
     ["a key no keyboard sends", { menu: { entries: [{ key: "Esc", desc: "X", cmd: "true", icon: "x" }] } }, "keys no keyboard sends"],
     ["Ctrl with a symbol", { menu: { entries: [{ key: "Ctrl+.", desc: "X", cmd: "true", icon: "x" }] } }, "keys no keyboard sends"],
