@@ -1,7 +1,10 @@
 import qs
+import qs.ui
 
 // Ask's agent and commands, each command given its arguments as $1, $2... (docs/src/plugins.md#ask).
 PluginSettings {
+  // Its glyph in a bar, so a turn waiting on you shows there too.
+  glyph: Glyphs.conversation
   // Required: the agent, a command speaking ACP on its stdio, kept running between turns.
   property string ask
   // Where its sessions work, on the agent's machine; unset, $HOME.

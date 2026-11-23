@@ -12,7 +12,7 @@ Singleton {
   readonly property string thinking: "Thinking"
   readonly property string replyPrompt: "Reply" + ellipsis
   readonly property string pickPrompt: "A digit picks, or reply" + ellipsis
-  readonly property string approvePrompt: MenuKeys.label("Ctrl+y") + " allows, " + MenuKeys.label("Ctrl+c") + " stops" + ellipsis
+  readonly property string approvePrompt: MenuKeys.label("Ctrl+y") + " allows, " + MenuKeys.label("Ctrl+n") + " denies, " + MenuKeys.label("Ctrl+c") + " stops" + ellipsis
   readonly property string syncing: "syncing" + ellipsis
   // An agent that could not carry on the conversation, starting a new one.
   readonly property string restarted: "Started a new conversation"

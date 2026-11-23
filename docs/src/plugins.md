@@ -102,8 +102,8 @@ Keys:
 
 - `RET` sends. `C-S-RET` sends and hides the panel, the answer arriving as a notification. `S-RET` breaks the line, and `C-v` attaches the clipboard's image.
 - `ESC` clears the prompt, then steps back: to the menu that opened the panel, else hiding it, as a click beside it does. The conversation is kept.
-- `C-c` stops the run, refusing what it waits to be allowed. Leaving never stops it.
-- `C-y` allows an approval once, which stays in the conversation as a dim line. `C-l` starts a new conversation, `C-o` moves it to a terminal, and `C-r` lists past conversations.
+- `C-c` stops the run, refusing what it waits to be allowed, and keeps what it had answered so far. Leaving never stops it.
+- `C-y` allows an approval once and `C-n` denies it, the run going on; either stays in the conversation as a dim line. `C-l` starts a new conversation, `C-o` moves it to a terminal, and `C-r` lists past conversations.
 - `TAB` moves the keys between the prompt and the panel. With the prompt dim, plain `l`, `o` and `r` do the same, `y` copies the last answer, and `?` lists every key. Allowing takes `C-y` only, so `y` never approves.
 
 Past conversations are the agent's own (ACP's `session/list`, in `cwd`), in its order, each with its last activity, filtered in the menu as a shell's reverse search is. `RET` resumes one, its history replayed (`session/load`), and its own menu (`M-RET`) has `o`, which opens it in a terminal. An agent that cannot load them dims them, and one that cannot list them says so. An input that gives Ask its text takes `C-r` too.

@@ -21,6 +21,7 @@ Plugin {
     openTerminal: "Terminal" + Words.ellipsis,
     approval: (allowed, what) => (allowed ? "Allowed: " : "Denied: ") + what,
     allow: "allow",
+    deny: "deny",
     stop: "stop",
     newChat: "new",
     terminal: "terminal" + Words.ellipsis
@@ -31,6 +32,7 @@ Plugin {
     { key: "Shift+Return", desc: "Break the line" },
     { key: "Ctrl+Shift+Return", desc: Words.helpBackground },
     { key: "Ctrl+y", desc: "Allow what it asks", what: words.allow, shows: () => approval !== "", run: () => answerApproval(true) },
+    { key: "Ctrl+n", desc: "Deny what it asks, the turn going on", what: words.deny, shows: () => approval !== "", run: () => answerApproval(false) },
     { key: "Ctrl+c", desc: "Stop the answer", what: words.stop, shows: () => busy, run: () => busy && stop() },
     { key: "y", desc: "Copy the last answer", what: Words.copy, shows: () => !typing && !!exchanges[exchanges.length - 1]?.reply, run: () => !typing && copy() },
     { key: "Ctrl+l", desc: "Start a new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
@@ -200,7 +202,8 @@ Plugin {
     return {
       question: exchange.prompt,
       image: exchange.image,
-      text: kind === "permission" ? Words.allowQuestion(approval) : exchange.error || exchange.reply,
+      // A stopped answer keeps what came, the stop on a line after it.
+      text: kind === "permission" ? Words.allowQuestion(approval) : exchange.stopped && exchange.reply ? exchange.reply + "\n\n" + exchange.error : exchange.error || exchange.reply,
       phase: phase,
       kind: kind,
       activity: phase === "working" ? activity : "",
@@ -243,7 +246,8 @@ Plugin {
   function close(outcome) {
     if (resuming) return resumed(outcome);
     flush();
-    if (!outcome.answered) return finish({ error: outcome.error ?? "Stopped", stopped: !!outcome.stopped });
+    // Stopped, what streamed stays: people stop because they have read enough.
+    if (!outcome.answered) return finish({ reply: outcome.stopped ? exchanges[exchanges.length - 1].reply : "", error: outcome.error ?? "Stopped", stopped: !!outcome.stopped });
     const text = exchanges[exchanges.length - 1].reply;
     const shaped = Markup.options(text);
     finish({ reply: shaped.text, options: shaped.options, table: Markup.hasTable(text) });
@@ -264,15 +268,15 @@ Plugin {
   }
 
   function finish(answer) {
-    const last = setLast({ reply: answer.reply ?? "", error: answer.reply ? "" : answer.error ?? words.noAnswer, stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
+    const last = setLast({ reply: answer.reply ?? "", error: answer.error ?? (answer.reply ? "" : words.noAnswer), stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
     running = false;
     approval = "";
     if (seen(last)) report();
     else notify(last.error || [last.reply].concat(last.options).join(" · "));
-    if (last.reply) exec(last.after);
+    if (last.reply && !last.stopped) exec(last.after);
     if (touched) exec(settings.toolRun);
     if (!shown && !seen(last)) unread = true;
-    if (last.error && !seen(last) && draft === "" && !image) {
+    if (last.error && !last.stopped && !seen(last) && draft === "" && !image) {
       draft = last.prompt;
       image = last.image;
     }
