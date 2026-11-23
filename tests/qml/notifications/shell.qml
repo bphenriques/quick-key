@@ -507,10 +507,10 @@ ShellRoot {
         until: () => root.plugin.picked === root.plugin.showable[0] && root.plugin.shown[0] === root.plugin.showable[0]
       },
       {
-        name: "? lists the keys, and any key closes the list",
+        name: "? lists the keys the bar does not show, and any key closes the list",
         start: () => root.plugin.key("?"),
         until: () => {
-          const listed = root.plugin.mode === "help" && root.plugin.keys.some(hint => hint.key === "Ctrl+r");
+          const listed = root.plugin.mode === "help" && root.plugin.keys.some(hint => hint.key === "Ctrl+r" && hint.desc) && !root.plugin.keys.some(hint => hint.key === "Ctrl+p" && hint.desc);
           if (listed) root.plugin.key("a");
           return listed && root.plugin.mode === "cards";
         }

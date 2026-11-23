@@ -46,7 +46,8 @@ Plugin {
     { key: "Ctrl+Shift+Return", desc: words.helpLeave, reply: true },
     { key: "Ctrl+X", desc: words.helpClear, run: () => clear() },
     { key: "Ctrl+r", desc: words.helpRestore, run: () => restore() },
-    { key: "Ctrl+p", desc: words.helpPause, run: () => togglePause() },
+    // No desc: on the bar, so `?` leaves it out.
+    { key: "Ctrl+p", run: () => togglePause() },
     { key: "Escape", desc: words.helpEscape, run: () => release() }
   ].filter(entry => !entry.reply || shown.some(card => card.hasInlineReply))
   // The card the keys act on while summoned, and the one replied to, its prompt in its actions' place.
@@ -77,7 +78,6 @@ Plugin {
       helpReply: "Reply",
       helpClear: "Clear all",
       helpRestore: "Bring back the last closed",
-      helpPause: "Pause or resume",
       dismiss: "Dismiss",
       helpEscape: "Let go"
     })

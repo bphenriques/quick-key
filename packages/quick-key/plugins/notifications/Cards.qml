@@ -247,7 +247,7 @@ Scope {
         anchors.right: parent.right
         anchors.leftMargin: Config.theme.padding - Metrics.itemPaddingX
         anchors.rightMargin: Config.theme.padding
-        keys: view.plugin.keys
+        keys: view.plugin.keys.filter(entry => entry.desc)
       }
 
       RowLayout {
