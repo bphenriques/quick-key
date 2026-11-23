@@ -105,9 +105,7 @@ Singleton {
     return "Keep awake " + (keep ? "on" : "off");
   }
 
-  // What a key does, in a legend: a lowercase word or two.
-  readonly property string appMenu: "app menu"
-  readonly property string choose: "choose"
+  // What a key does, in a legend: a lowercase word or two, or a phrase `?` says too.
   readonly property string clear: "clear"
   readonly property string copy: "copy"
   readonly property string details: "details"
@@ -119,18 +117,19 @@ Singleton {
   readonly property string month: "month"
   readonly property string move: "move"
   readonly property string pick: "pick"
+  readonly property string sendLeave: "send and leave"
   readonly property string today: "today"
   readonly property string year: "year"
 
   // What a key does, listed on `?`.
   readonly property string helpBarKeys: "Hold: the bar's keys"
   readonly property string helpCompositor: "Hold: compositor shortcuts"
-  readonly property string helpItemMenu: "Open an item's own menu"
+  readonly property string helpItemMenu: "Open an item's menu"
   readonly property string helpFilter: "Filter the list"
   readonly property string helpDay: "Move a day"
   readonly property string helpWeek: "Move a week"
   readonly property string helpTab: "Go to the input and back"
-  readonly property string helpBackground: "Send in the background"
+  readonly property string helpSendLeave: "Send and leave"
   readonly property string helpRecall: "Resume an earlier conversation"
   readonly property string helpEscape: "Clear, else back"
 }

@@ -68,7 +68,7 @@ Scope {
     holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
     rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
     slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
-    island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpBackground }] : [],
+    island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
     island.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
     [{ key: "Escape", desc: Words.helpEscape }]
   )

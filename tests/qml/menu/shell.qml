@@ -377,7 +377,7 @@ ShellRoot {
           menu.filterKey("Alt+1");
           const own = menu.level.kind === "actions" && menu.items[0].key === "d" && menu.barSlots.left[0].desc === "A";
           menu.handleName("d");
-          return legend === "1 choose, ↑ move, RET open, M-RET menu" && counted === "1 of 1" && own && menu.level.picking && menu.filtering && Plugins.get("picked")?.text === "a d";
+          return legend === "1 pick, ↑ move, RET open, M-RET menu" && counted === "1 of 1" && own && menu.level.picking && menu.filtering && Plugins.get("picked")?.text === "a d";
         }
       },
       {
