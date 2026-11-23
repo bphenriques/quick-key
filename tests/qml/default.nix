@@ -42,6 +42,7 @@ pkgs.lib.genAttrs' [
   "menu"
   "calendar"
   "ask"
+  "markup"
   "check"
   "load"
   "notifications"
