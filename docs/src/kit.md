@@ -51,7 +51,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Fade` | fades a surface in and out over `theme.animationDuration`; `loaded` holds a `LazyLoader` until it has faded out; the menu appears and closes at once, since its background blur cannot fade with it and a fade-out would hold the keyboard |
 | `MenuKeys` | key names as entries declare them (`Ctrl+Left`), their hints, the gutter a key column takes (`gutter`, a character past a letter), and keys for an app's own menu, keeping letters from the labels its app supplies |
 | `Glyphs` | the icon set, Material Design from Nerd Fonts, each an escape (`"\u{F05A9}"`) named after its entry; `glyphs` in the config overrides any by that name (`wifi`, `audioDevices`, `batteryLevels`) |
-| `Clock` | a date or a time said in `clock.locale`: `time`, `day`, `when`, `recent`, a day's `heading` and a month's `monthHeading` in sentence case, `stale` past `minutes`, the `parse`d and `format`ted forms |
+| `Clock` | a date or a time said in `clock.locale`: `time`, `day`, `when`, `recent`, a day's `heading` and a month's `monthHeading` in sentence case, `stale` past `minutes`, a day `moved` by years, months and days, the files' `dayKey` and `minuteKey` and their `parse`; pure, in `clock.js`, from a given now |
 
 `alert` is only for what needs attention: critical battery, recording, a failed sync or reply; a state you chose (keep awake, do-not-disturb) is `primary`. Tone goes to what reports, never to a label beside it. Outlines stay calm in `border`; tint is for state. Wrapped prose is spaced at `theme.lineHeight`; rows keep their own padding.
 
