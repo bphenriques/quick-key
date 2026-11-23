@@ -358,7 +358,8 @@ Singleton {
     const status = Statuses.builtin[entry.status];
     const named = status && typeof entry.format === "string" ? (entry.format.match(/\{\w+\}/g) ?? []).filter(name => !status.names.includes(name.slice(1, -1))) : [];
     if (named.length) found.push("formats " + named.join(", ") + ", which " + entry.status + " has not (" + (status.names.map(name => "{" + name + "}").join(", ") || "none") + ")");
-    if (typeof entry.desc !== "string" || !inBar && !keys.length) found.push(inBar ? "needs a desc" : "needs a key and a desc");
+    if (typeof entry.desc !== "string") found.push("needs a desc");
+    if (!inBar && !keys.length) found.push("needs a key");
     if (does > 1 || does === 0 && !(inBar && entry.status != null))
       found.push("needs one of cmd, action, or submenu and/or list or view" + (inBar ? ", or only a status" : ""));
     if (inBar && entry.list == null && entry.status == null && entry.icon == null && entry.action == null) found.push("shows nothing: needs a status, an icon or an action");

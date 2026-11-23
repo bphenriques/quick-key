@@ -124,6 +124,11 @@ ShellRoot {
         until: () => root.names({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }, [])
       },
       {
+        name: "an entry with a desc but no key is said to need only a key",
+        timeout: 0,
+        until: () => Validation.check(root.menu([{ desc: "Lock", icon: "x", cmd: "true" }])).join() === "menu: 'Lock' in the top level needs a key"
+      },
+      {
         name: "a key renamed is named with what to write instead, and one not set is not",
         until: () => Validation.renames({ clock: { fmt: "x" } }, { "clock.fmt": "clock.format", "audio.top": "audio.max" }).join() === "clock.fmt is now clock.format"
       }
