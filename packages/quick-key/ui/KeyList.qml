@@ -14,9 +14,8 @@ GridLayout {
 
   signal picked(var key)
 
-  flow: GridLayout.LeftToRight
   columns: Config.menu.columns
-  columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
+  columnSpacing: Metrics.columnGap
   rowSpacing: 0
 
   Repeater {

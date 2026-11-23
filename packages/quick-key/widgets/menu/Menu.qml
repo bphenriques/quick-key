@@ -115,9 +115,8 @@ Scope {
         id: hints
         Layout.fillWidth: true
         visible: root.hinting
-        flow: GridLayout.LeftToRight
         columns: root.menu.columns
-        columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
+        columnSpacing: Metrics.columnGap
         rowSpacing: 0
 
         Repeater {
@@ -196,9 +195,8 @@ Scope {
         id: actionsGrid
         Layout.fillWidth: true
         visible: !root.hinting && root.menu.bodyActions.length > 0
-        flow: GridLayout.LeftToRight
         columns: root.menu.columns
-        columnSpacing: Math.max(Config.theme.padding, Metrics.cell)
+        columnSpacing: Metrics.columnGap
         rowSpacing: 0
 
         Repeater {
