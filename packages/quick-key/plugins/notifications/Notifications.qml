@@ -142,6 +142,8 @@ Plugin {
   // However the keys go (ESC, the menu opening over the cards), the reply, the scroll and the pick go with them; back from the menu, the pick lands on a card that shows, once what shows has followed.
   onSummonedChanged: {
     if (summoned) {
+      // At once where what shows is known already, and again once it has followed.
+      if (!shown.includes(internal.picked)) internal.picked = newest();
       Qt.callLater(() => {
         if (summoned && !shown.includes(internal.picked)) internal.picked = newest();
       });
@@ -195,10 +197,14 @@ Plugin {
     endReply();
     const all = internal.list;
     internal.list = [];
+    // The closed history built aside and set once: set per card, all that reads it would follow each.
+    internal.building = internal.closed;
     for (const entry of all) {
       if (entry.notification) entry.notification.dismiss();
       else leave(entry);
     }
+    internal.closed = internal.building;
+    internal.building = null;
   }
 
   // The pointer is on a card: every one holds still, so the one under it stays there.
@@ -499,10 +505,12 @@ Plugin {
     entry.notification = null;
     // Its earlier self goes, by tag or by saying the same, so a chatty sender (a volume tool, a silent rule) never pushes the rest out.
     const twin = each => each.appName === entry.appName && (tagOf(entry.data) ? tagOf(each.data) === tagOf(entry.data) : each.summary === entry.summary && each.body === entry.body);
-    internal.closed.filter(twin).forEach(each => each.destroy());
-    const closed = internal.closed.filter(each => !twin(each)).concat([entry]);
+    const history = internal.building ?? internal.closed;
+    history.filter(twin).forEach(each => each.destroy());
+    const closed = history.filter(each => !twin(each)).concat([entry]);
     if (closed.length > 20) closed.shift().destroy();
-    internal.closed = closed;
+    if (internal.building) internal.building = closed;
+    else internal.closed = closed;
   }
 
   // What a card shows, kept once its sender is done with it; a picture sent as data goes with its sender.
@@ -583,6 +591,8 @@ Plugin {
     property var list: []
     // The last closed, to bring back.
     property var closed: []
+    // While clearing, the closed history being built.
+    property var building: null
     property bool hovered: false
     property var picked: null
     property var replying: null
