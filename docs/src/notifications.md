@@ -34,7 +34,7 @@ plugins.notifications = {
 
 ## Rules
 
-Rules apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field: `app`, `summary`, `body`, `category`, `urgency` or `desktopEntry`. Anchor one with `^…$`. They are JavaScript's, with no inline flags: `[Ss]lack` matches either case. A rule with no `match` applies to all, so `{ run = "env | grep ^NOTIFICATION_ >> /tmp/notifications"; }` logs what each tool sends. A rule can set:
+Rules apply in order, later ones winning. A rule applies when each regular expression in its `match` is found in its field: `app`, `summary`, `body`, `category`, `urgency` or `desktopEntry`. Anchor one with `^…$`. They are JavaScript's, with no inline flags: `[Ss]lack` matches either case. A rule with no `match` applies to all, so `{ run = "env | grep ^NOTIFICATION_ >> $XDG_RUNTIME_DIR/notifications"; }` logs what each tool sends. A rule can set:
 
 - `app`: the app its card names, shown even where its icon would name it; `""` for none, as for `notify-send`'s own name (`match.app = "^notify-send$"`). Its commands still get the sender's as `NOTIFICATION_APP`.
 - `icon`: the card's icon, by its name in the icon theme, in place of its sender's.
