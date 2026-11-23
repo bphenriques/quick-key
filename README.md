@@ -32,7 +32,7 @@ Example:
 }
 ```
 
-Bind `"${config.programs.quick-key.exec.ipc} menu toggle"` to a compositor key to open it. Without Nix, it is a plain Quickshell config with an optional `config.json`. More in the [docs](https://bphenriques.github.io/quick-key).
+Bind a compositor key to open it; in niri, `Mod+Space { spawn-sh "${config.programs.quick-key.exec.ipc} menu toggle"; }`. Without Nix, it is a plain Quickshell config with an optional `config.json`. More in the [docs](https://bphenriques.github.io/quick-key).
 
 I built it for my own [desktop](https://github.com/bphenriques/dotfiles). It is open by design: if it interests you, let me know!
 

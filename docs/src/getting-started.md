@@ -48,7 +48,7 @@ spawn-at-startup "qs" "-c" "quick-key"
 
 ## Bind a key
 
-One key opens the menu. With Nix, bind `"${config.programs.quick-key.exec.ipc} menu toggle"`; without, `qs -c quick-key ipc call menu toggle`:
+One key opens the menu:
 
 ```kdl
 // niri
@@ -56,6 +56,8 @@ binds {
     Mod+Space { spawn "qs" "-c" "quick-key" "ipc" "call" "menu" "toggle"; }
 }
 ```
+
+With Nix, the same through `exec.ipc`, a command line that needs a shell: `Mod+Space { spawn-sh "${config.programs.quick-key.exec.ipc} menu toggle"; }`.
 
 ## First run
 

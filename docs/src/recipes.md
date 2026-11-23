@@ -49,7 +49,7 @@ The menu closes as it runs; `keepOpen = true` keeps it open, for a command you r
 Mod+P { spawn "qs" "-c" "quick-key" "ipc" "call" "menu" "toggleEntry" "d"; }
 ```
 
-`d` is the entry's key. With Nix, `"${config.programs.quick-key.exec.ipc} menu toggleEntry d"`.
+`d` is the entry's key. With Nix, `Mod+P { spawn-sh "${config.programs.quick-key.exec.ipc} menu toggleEntry d"; }`.
 
 ### Keep a device on its digit
 
