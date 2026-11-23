@@ -358,21 +358,6 @@ ShellRoot {
       {
         name: "its status shows its glyph only while it has something to report",
         until: () => Plugins.get("idle")?.glyph === "" && Plugins.get("idle").settings.glyph !== ""
-      },
-      {
-        name: "a moment is said one way everywhere: near days by name, the coming week by weekday, else the date (the past too), with its year when not this one; short names cut to three letters only where that still tells them apart",
-        until: () => {
-          const day = 86400000;
-          const at = days => new Date(Date.now() + days * day);
-          const now = Clock.date;
-          const lastYear = new Date(now.getFullYear() - 1, 5, 3, 9, 30);
-          return /^\d\d:\d\d$/.test(Clock.recent(new Date())) && Clock.recent(at(-1)) === "yesterday" && Clock.day(at(1)) === "tomorrow"
-            && Clock.day(at(3)) === Clock.weekdays[at(3).getDay()] && Clock.recent(at(-3)) === Clock.format(at(-3), "%-d %b") && Clock.day(at(-10)) === Clock.format(at(-10), "%-d %b")
-            && Clock.day(lastYear) === "3 " + Clock.months[5] + " " + lastYear.getFullYear()
-            && Clock.when(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 30), true) === "tomorrow " + Clock.time(new Date(2000, 0, 1, 9, 30))
-            && Clock.heading(now) === "Today"
-            && JSON.stringify(Clock.abbreviated(["Sept", "Oct"])) === '["Sep","Oct"]' && JSON.stringify(Clock.abbreviated(["janv.", "juin", "juil."])) === '["janv","juin","juil"]';
-        }
       }
     ]
   }

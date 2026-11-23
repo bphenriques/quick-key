@@ -101,7 +101,7 @@ for file in $(grep -rlE 'case "|\b(list|status|state|modelData)\)? ?[!=]== "' --
 done
 
 # Qt 6.12's JavaScript: an optional call (`f?.()`) crashes the QML compiler at load, arrays have no flatMap, and Object no fromEntries.
-for file in $(grep -rlE '\?\.\(|\.flatMap\(|Object\.fromEntries\(' --include='*.qml' .); do
+for file in $(grep -rlE '\?\.\(|\.flatMap\(|Object\.fromEntries\(' --include='*.qml' --include='*.js' .); do
   fail "$file: an optional call, flatMap or Object.fromEntries, which Qt's JavaScript cannot run"
 done
 

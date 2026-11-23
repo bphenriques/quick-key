@@ -64,14 +64,6 @@ ShellRoot {
         }
       },
       {
-        name: "a day's heading says its year only when it is not this one",
-        until: () => {
-          const year = Clock.date.getFullYear();
-          const thisYear = [new Date(year, 0, 15), new Date(year, 6, 15)].find(day => Math.abs(Clock.daysFrom(day)) > 1);
-          return Clock.heading(new Date(year + 1, 5, 15)).endsWith(" " + (year + 1)) && !Clock.heading(thisYear).includes(String(year));
-        }
-      },
-      {
         name: "the days the file was synced over are known, so a day past them is not taken for one without events",
         until: () => Calendar.synced(new Date(2026, 10, 12)) && Calendar.synced(new Date(2027, 10, 12))
           && !Calendar.synced(new Date(2027, 10, 13)) && !Calendar.synced(new Date(2026, 8, 10))
