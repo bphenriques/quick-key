@@ -123,8 +123,7 @@ Singleton {
 
   // What a text setting with a few meanings takes, by its path.
   readonly property var choices: ({
-      "theme.appIcons": ["colour", "grey", "tint"],
-      "popups.position": ["right", "left", "top", "bottom"]
+      "theme.appIcons": ["colour", "grey", "tint"]
     })
 
   function choiceProblems(json) {

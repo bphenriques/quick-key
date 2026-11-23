@@ -74,7 +74,8 @@ Singleton {
       "theme.titleScale": "removed: titles take the font's size",
       "theme.motion": "removed: pop-ups always fade",
       "glyphs.link": "removed: an answer's links stay in its text",
-      "menu.inputSide": "removed: a level's input always sits past its body"
+      "menu.inputSide": "removed: a level's input always sits past its body",
+      "popups.position": "removed: the pop-up always sits at the right edge"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -333,8 +334,6 @@ Singleton {
         property int timeout: 1500
         // The statuses and plugins whose changes pop up, by name; battery's as it is plugged in or out, bluetooth's as it turns on or off or a device connects or leaves.
         property var show: ["sink", "source", "brightness", "keyboardLayout", "keepAwake"]
-        // The screen edge a pop-up sits at, centred along it: right, left, top or bottom; at the top or bottom a level reads across.
-        property string position: "right"
         // Its distance from the screen's edge, in pixels.
         property int margin: adapter.theme.edgeMargin
       }

@@ -8,7 +8,7 @@ import qs.builtins
 import qs.services
 import qs.ui
 
-// A slim bar at the edge popups.position names, on a change to any listed status or plugin, so it never reads as a notification.
+// A slim bar at the screen's right edge, on a change to any listed status or plugin, so it never reads as a notification.
 Scope {
   id: root
 
@@ -70,19 +70,11 @@ Scope {
       // Never a dim fallback: a status without a tone of its own reads normal.
       readonly property string tone: status.muted ? "dim" : status.tone || (status.active ? "primary" : "normal")
 
-      // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
-      readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
-      readonly property real margin: Math.min(Config.popups.margin, screen.width / 4, screen.height / 4)
       // A level no longer than half its screen.
-      readonly property real length: Math.min(Config.theme.osdLength, (across ? screen.width : screen.height) / 2 || Config.theme.osdLength)
-      anchors.right: Config.popups.position === "right"
-      anchors.left: Config.popups.position === "left"
-      anchors.top: Config.popups.position === "top"
-      anchors.bottom: Config.popups.position === "bottom"
-      margins.right: margin
-      margins.left: margin
-      margins.top: margin
-      margins.bottom: margin
+      readonly property real length: Math.min(Config.theme.osdLength, screen.height / 2 || Config.theme.osdLength)
+      // At the right edge, centred along it.
+      anchors.right: true
+      margins.right: Math.min(Config.popups.margin, screen.width / 4, screen.height / 4)
       WlrLayershell.namespace: "quick-key-osd"
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {
@@ -95,15 +87,15 @@ Scope {
       implicitWidth: shape.implicitWidth
       implicitHeight: shape.implicitHeight
 
-      // A level: a bar, the level above the icon, or after it when it reads across.
+      // A level: a bar, the level above the icon.
       Surface {
         id: bar
         opacity: fade.value
         width: implicitWidth
         height: implicitHeight
         visible: window.metered
-        implicitWidth: (window.across ? levelColumn.implicitWidth : Config.theme.osdIconSize) + 2 * Config.theme.padding
-        implicitHeight: (window.across ? Config.theme.osdIconSize : levelColumn.implicitHeight) + 2 * Config.theme.padding
+        implicitWidth: Config.theme.osdIconSize + 2 * Config.theme.padding
+        implicitHeight: levelColumn.implicitHeight + 2 * Config.theme.padding
 
         // The wheel runs the pair action the status names; a pill adjusts nothing.
         WheelSteps {
@@ -119,16 +111,12 @@ Scope {
           id: levelColumn
           anchors.centerIn: parent
           spacing: Config.theme.padding
-          columns: window.across ? 2 : 1
-          // Across, the icon first, as on a row.
-          layoutDirection: window.across ? Qt.RightToLeft : Qt.LeftToRight
+          columns: 1
           horizontalItemAlignment: Grid.AlignHCenter
-          verticalItemAlignment: Grid.AlignVCenter
 
           Meter {
-            orientation: window.across ? Qt.Horizontal : Qt.Vertical
-            width: window.across ? window.length : implicitWidth
-            height: window.across ? implicitHeight : window.length
+            orientation: Qt.Vertical
+            height: window.length
             tone: window.status.muted ? "dim" : "primary"
             value: window.metered ? window.status.meter : 0
           }
