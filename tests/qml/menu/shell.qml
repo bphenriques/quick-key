@@ -121,6 +121,14 @@ ShellRoot {
         }
       },
       {
+        name: "the filter finds an item whose label the source gave as a number",
+        until: () => {
+          probe.items = Lists.items("numbered");
+          probe.search("7");
+          return probe.found.length === 1 && probe.item.id === 7;
+        }
+      },
+      {
         name: "an app's stream lists as a device does: its name, its volume and meter, the wheel over it a step, its mute said beside it; with none playing, nothing to pick or change",
         until: () => {
           const node = { id: 7, properties: { "application.name": "Player" }, audio: { volume: 0.4, muted: false } };

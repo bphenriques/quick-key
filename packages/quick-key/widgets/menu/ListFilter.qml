@@ -15,7 +15,7 @@ QtObject {
   // The rows it shows at a time: the level's own at rest, so its body keeps its height.
   property int size: 9
   // Folded once per change of the list, not per key.
-  readonly property var labels: items.map(item => fold(item.desc ?? ""))
+  readonly property var labels: items.map(item => fold(String(item.desc ?? "")))
   readonly property var words: fold(query).split(/\s+/).filter(word => word !== "")
   readonly property var found: words.length === 0 ? items.filter(item => !item.hidden) : items.filter((item, i) => root.words.every(word => root.labels[i].includes(word)))
   // The cursor's item, else the first row shown, so the cursor never leaves the rows.

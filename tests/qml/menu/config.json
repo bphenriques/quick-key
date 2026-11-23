@@ -45,6 +45,10 @@
     },
     "keyed": {
       "type": "command"
+    },
+    "numbered": {
+      "type": "command",
+      "read": "echo '{\"items\": [{\"id\": 7, \"label\": 7}, {\"id\": \"t\", \"label\": \"Tea\"}]}'"
     }
   },
   "menu": {
