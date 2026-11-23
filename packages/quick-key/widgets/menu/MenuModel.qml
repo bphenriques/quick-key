@@ -19,8 +19,6 @@ Scope {
   // "Ctrl" or "Super" held a second (so a chord does not flash them), or "Help" after `?`.
   readonly property string held: internal.held
   readonly property bool inputFocused: internal.focus === "input"
-  // Tab moved the keys to the answer, where Return opens the plugin panel.
-  readonly property bool answerFocused: internal.focus === "answer"
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
@@ -256,7 +254,7 @@ Scope {
     base = stack.length;
   }
 
-  // "body", "input" (the level input) or "answer" (the turn over it).
+  // "body" or "input" (the level input).
   function focusOn(where) {
     internal.focus = where;
   }
@@ -413,7 +411,6 @@ Scope {
     // Any key closes the help, which only lists keys.
     if (held === "Help") internal.held = "";
     else if (name === "?") internal.held = "Help";
-    else if (answerFocused && island.answerKey(name)) return true;
     else if (name === "Escape") stepBack();
     else if (viewModel && viewModel.handleKey(name)) return true;
     else if (island.input && name === "Tab") internal.focus = "input";

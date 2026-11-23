@@ -14,7 +14,7 @@ ColumnLayout {
   readonly property InputModel model: menu.island
   spacing: Config.theme.spacing / 2
 
-  // Lit while Tab has it; a click, or Return then, opens the plugin's panel on the whole conversation.
+  // A click opens the plugin's panel on the whole conversation.
   ListItem {
     id: last
     // The tallest turn of the visit, which the island keeps so it grows and never shrinks within it.
@@ -23,7 +23,7 @@ ColumnLayout {
     readonly property bool expands: visible && exchange.overflows && root.model.turn !== root.model.expandedTurn && root.model.turn?.phase !== "working"
     visible: root.model.turn !== null && !root.menu.filtering
     Layout.fillWidth: true
-    // The height held sits beyond it, outside what Tab lights, so the turn stays next to the prompt.
+    // The height held sits beyond it, outside what a hover lights, so the turn stays next to the prompt.
     Layout.topMargin: Math.max(0, last.tallest - exchange.implicitHeight)
     // Outset by its padding, so the turn lines up with the prompt.
     Layout.leftMargin: -Metrics.itemPaddingX
@@ -31,7 +31,6 @@ ColumnLayout {
     onVisibleChanged: if (!visible) last.tallest = 0
     onExpandsChanged: if (expands) settle.restart()
     verticalPadding: Metrics.itemPaddingY / 2
-    current: root.menu.answerFocused
     onActivated: root.model.expand()
 
     // Decided once the turn is laid out, so a line cut only for a moment opens nothing, and outside the binding that noticed it.
@@ -75,12 +74,11 @@ ColumnLayout {
     glyph: filter ? Glyphs.search : Glyphs.prompt
     detail: filter ? root.menu.filter.count : ""
     placeholder: filter ? Words.filterPrompt : root.model.turn ? exchange.next : root.model.input?.desc ?? ""
-    // The turn's own keys while Tab has it; focused, Escape while it clears, else its plugin's past conversations while it can list them.
-    keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }]
-      : filter || !root.menu.inputFocused ? []
+    // Focused, Escape while it clears, else its plugin's past conversations while it can list them.
+    keys: filter || !root.menu.inputFocused ? []
       : text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }]
       : root.model.plugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
-    onPicked: key => key === "Ctrl+r" ? root.model.recall() : key === "Escape" ? stepBack() : root.model.answerKey(key)
+    onPicked: key => key === "Ctrl+r" ? root.model.recall() : stepBack()
     maxLines: 1
     onTapped: root.menu.focusOn("input")
     onBack: root.menu.stepBack()
@@ -92,15 +90,13 @@ ColumnLayout {
     onTextChanged: filter ? root.menu.filter.search(text) : root.model.keepDraft(text)
     sends: !filter
     onSent: background => send(background)
-    // Tab moves on to the turn, else to the body as Shift+Tab does.
+    // Tab and Shift+Tab give the keys back to the body.
     onKeyPressed: event => {
       const name = MenuKeys.name(event);
       if (prompt.filter) {
         if (!root.menu.filterKey(name)) return;
       } else if (name === "Ctrl+r") {
         if (!root.model.recall()) return;
-      } else if (name === "Tab" && last.visible) {
-        root.menu.focusOn("answer");
       } else if (name === "Tab" || name === "Backtab") root.menu.focusOn("body");
       else return;
       event.accepted = true;

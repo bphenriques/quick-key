@@ -34,7 +34,6 @@ ShellRoot {
     ["while the help shows, a row's letter only closes it", keyedLevel, () => menu.hold("Help"), "f", "help closed"],
     ["while the help shows, ? closes it too", keyedLevel, () => menu.hold("Help"), "?", "help closed"],
     ["Escape goes back a level", keyedLevel, null, "Escape", "back"],
-    ["with the answer focused, Tab goes to the body, not the input", keyedLevel, () => menu.focusOn("answer"), "Tab", "body"],
     ["a view takes its keys before the level's rows", calendarLevel, null, "Right", "view"],
     ["Tab moves to the input", keyedLevel, null, "Tab", "input"],
     ["Tab with no input does nothing", bareLevel, null, "Tab", "nothing"],
@@ -64,7 +63,6 @@ ShellRoot {
     if (menu.filtering !== was.filtering) return "filter";
     if (menu.stack.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
-    if (was.answer && !menu.answerFocused) return "body";
     return handled ? "taken" : "nothing";
   }
 
@@ -75,7 +73,7 @@ ShellRoot {
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, answer: menu.answerFocused };
+    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length };
     const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name), was);
     menu.hide();
     return did;
@@ -492,8 +490,7 @@ ShellRoot {
           case 2:
             if (agent.turn?.text !== "two") return false;
             const token = menu.island.visit;
-            menu.focusOn("answer");
-            menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r" });
+            menu.island.expand();
             // Under the panel, the menu keeps its level and the visit.
             const held = agent.shown && !menu.open && menu.inStack && menu.island.visit === token;
             Panels.back();

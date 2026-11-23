@@ -119,7 +119,6 @@ Singleton {
   readonly property string menu: "menu"
   readonly property string month: "month"
   readonly property string move: "move"
-  readonly property string open: "open"
   readonly property string pick: "pick"
   readonly property string today: "today"
   readonly property string week: "week"

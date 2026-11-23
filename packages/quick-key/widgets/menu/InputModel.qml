@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 import qs
 import qs.services
 
@@ -15,7 +14,6 @@ QtObject {
   readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.level?.entry?.list ?? "") : null
   readonly property bool busy: plugin?.busy ?? false
   readonly property var turn: plugin?.turn ?? null
-  onTurnChanged: if (!turn && menu.answerFocused) menu.focusOn("body")
   // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
 
@@ -71,16 +69,6 @@ QtObject {
     if (turn === expandedTurn || turn?.phase === "working") return;
     expandedTurn = turn;
     expand();
-  }
-
-  // Keys while the answer has them: Return opens the plugin's panel, y copies the answer, Tab gives them to the body, Shift+Tab back to the input.
-  function answerKey(name) {
-    if (name === "Return") expand();
-    else if (name === "y") Quickshell.clipboardText = turn?.text ?? "";
-    else if (name === "Tab") menu.focusOn("body");
-    else if (name === "Backtab") menu.focusOn("input");
-    else return false;
-    return true;
   }
 
   function draftOf(key) {
