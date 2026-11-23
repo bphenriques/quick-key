@@ -38,7 +38,7 @@ The shell only reads `calendar.file`, watching it for changes; until it exists, 
 
 - Times are local, without an offset. An all-day event's `end` is its last day.
 - A repeating event is one entry per occurrence.
-- `synced` is the first and last day the events cover: a day past them says `Not synced`, not `No events`.
+- `synced` is the first and last day the events cover: a day past them says `Not synced`, not `No events`. Without it, events show only within a year of today.
 - `uid` tells apart two events alike in title, time and colour, so the keys reach each.
 - `uid`, `location`, `synced`, `error` and `syncing: true` are optional.
 

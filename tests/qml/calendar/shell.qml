@@ -14,6 +14,15 @@ ShellRoot {
     return events.times(row.event, row.day).join("|");
   }
 
+  // Replaces the events file, whole, as a sync does.
+  function write(json) {
+    Quickshell.execDetached(["sh", "-c", 'printf "%s" "$2" > "$1.tmp" && mv "$1.tmp" "$1"', "sh", Config.calendar.file, JSON.stringify(json)]);
+  }
+
+  function rows(title) {
+    return Calendar.timeline.filter(row => row.event.title === title);
+  }
+
   Suite {
     id: suite
     cases: [
@@ -167,13 +176,30 @@ ShellRoot {
         }
       },
       {
+        name: "an event spanning centuries takes a row only on the days synced, and one of a few days one on each",
+        // From here on, as they replace the events.
+        start: () => write({ synced: { from: "2026-11-01", to: "2026-11-30" }, events: [
+          { title: "Ages", start: "1500-01-01", end: "2500-01-01", allDay: true },
+          { title: "Night shift", start: "2026-11-12T22:00", end: "2026-11-14T01:00" }
+        ] }),
+        until: () => rows("Ages").length === 30 && rows("Night shift").map(row => row.key).join() === "2026-11-12,2026-11-13,2026-11-14"
+      },
+      {
+        name: "a file naming no synced days takes them a year either side of today",
+        start: () => {
+          const today = Clock.date;
+          const after = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+          write({ events: [{ title: "Ages", start: "1500-01-01", end: "2500-01-01", allDay: true }, { title: "Trip", start: Clock.dayKey(today), end: Clock.dayKey(after), allDay: true }] });
+        },
+        until: () => rows("Ages").length > 700 && rows("Ages").length <= 733 && rows("Trip").length === 3
+      },
+      {
         name: "an event reminded before a restart is not reminded again",
-        // Last, as it replaces the events: one five minutes on.
+        // One five minutes on.
         start: () => {
           const start = Clock.minuteKey(new Date(Date.now() + 300000));
           Kept.set("calendar.reminded", [start + " soon"]);
-          Quickshell.execDetached(["sh", "-c", 'printf "%s" "$2" > "$1.tmp" && mv "$1.tmp" "$1"', "sh", Config.calendar.file,
-            JSON.stringify({ events: [{ uid: "soon", title: "Soon", start, end: start, color: "#4285f4" }] })]);
+          write({ events: [{ uid: "soon", title: "Soon", start, end: start, color: "#4285f4" }] });
         },
         until: () => {
           if (!Calendar.timeline.some(row => row.event.title === "Soon")) return false;

@@ -75,11 +75,16 @@ Singleton {
         // Two alike in title, time and colour differ by uid, which the file may leave out.
         return { id: event.uid ? event.start + " " + event.uid : [event.start, event.color, title].join(" "), title, start, end, allDay: !!event.allDay, color: event.color ?? "", location: root.line(event.location) };
       }).sort((a, b) => a.start - b.start);
-      // Each event under every day it overlaps; one without length (start equals end) under the day it starts on.
+      synced = json.synced?.from && json.synced?.to ? { from: json.synced.from, to: json.synced.to } : null;
+      // Each event under every day it overlaps within the synced days, else a year either side of today, so one spanning centuries is no row a day; one without length (start equals end) under the day it starts on.
+      const today = Clock.date;
+      const from = synced ? Clock.parse(synced.from) : new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+      const to = synced ? Clock.parse(synced.to) : new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
       const byDay = {};
       for (const event of events) {
-        const last = event.end > event.start ? new Date(event.end - 1) : event.start;
-        for (let day = new Date(event.start.getFullYear(), event.start.getMonth(), event.start.getDate()); day <= last;
+        const last = new Date(Math.min(event.end > event.start ? event.end - 1 : event.start, to));
+        const first = event.start > from ? event.start : from;
+        for (let day = new Date(first.getFullYear(), first.getMonth(), first.getDate()); day <= last;
              day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)) {
           const key = Clock.dayKey(day);
           if (!byDay[key]) byDay[key] = [];
@@ -97,7 +102,6 @@ Singleton {
       updated = json.updated ? Clock.parse(json.updated) : null;
       syncing = !!json.syncing;
       error = json.error ?? "";
-      synced = json.synced?.from && json.synced?.to ? { from: json.synced.from, to: json.synced.to } : null;
       loaded = true;
     }
 
