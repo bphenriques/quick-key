@@ -97,12 +97,10 @@ Scope {
       readonly property real pills: view.right && view.top && CornerPills.order.length > 0 ? Config.theme.edgeMargin + CornerPills.height + Config.theme.spacing : 0
       margins.top: view.top ? Math.max(view.margin, pills) : view.margin
       margins.bottom: view.top ? view.margin : Math.max(view.margin, pills)
-      // Larger by the room a slide needs on its corner's side, the margin smaller by as much.
-      readonly property real room: Math.min(fade.distance, view.margin)
-      margins.right: view.margin - (view.right ? room : 0)
-      margins.left: view.margin - (view.right ? 0 : room)
+      margins.right: view.margin
+      margins.left: view.margin
       // No wider than its screen within the margins, whatever width is set.
-      implicitWidth: Math.min(view.settings.width, (view.screen?.width ?? view.settings.width) - 2 * view.margin) + room
+      implicitWidth: Math.min(view.settings.width, (view.screen?.width ?? view.settings.width) - 2 * view.margin)
       implicitHeight: stack.implicitHeight
       WlrLayershell.namespace: "quick-key-notifications"
       WlrLayershell.keyboardFocus: view.plugin.summoned ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -126,11 +124,11 @@ Scope {
         id: blurs
         model: view.settings.limit
 
-        // Each card by the stack and the deck it sits in, which move it (the pills' row above, a slide).
+        // Each card by the stack and the deck it sits in, which move it (the pills' row above).
         PlacedRegion {
           required property int index
           over: cards.count > index ? cards.itemAt(index) : null
-          at: Qt.point(stack.x + deck.x + (over?.x ?? 0), stack.y + deck.y + (over?.y ?? 0))
+          at: Qt.point(deck.x + (over?.x ?? 0), stack.y + deck.y + (over?.y ?? 0))
         }
       }
 
@@ -141,9 +139,7 @@ Scope {
 
         Column {
           id: stack
-          // Sliding, in from the side of its corner within the room left for it, moved itself so the cards' blur moves with them.
-          x: view.right ? (1 - fade.value) * window.room : fade.value * window.room
-          width: parent.width - window.room
+          width: parent.width
           spacing: Config.theme.spacing
           opacity: fade.value
 

@@ -70,7 +70,8 @@ Singleton {
       "theme.monochromeTray": "theme.appIcons, true as \"grey\"",
       "menu.edge": "removed: the menu always sits at the bottom",
       "menu.align": "removed: the menu is always centred",
-      "theme.titleScale": "removed: titles take the font's size"
+      "theme.titleScale": "removed: titles take the font's size",
+      "theme.motion": "removed: pop-ups always fade"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -237,8 +238,6 @@ Singleton {
         property real disabledOpacity: 0.5
         // Milliseconds a fade or colour change takes; 0 for none.
         property int animationDuration: 100
-        // How a pop-up, a corner pill and the cards come and go: "fade", or "slide", fading as they move in from their edge; the menu always appears at once.
-        property string motion: "fade"
         // The one font, by family: monospace, since sizes are counted in its characters.
         property string monospaceFont: "monospace"
         // The font's size, in points.

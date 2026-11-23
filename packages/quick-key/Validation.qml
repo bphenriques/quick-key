@@ -128,8 +128,7 @@ Singleton {
   readonly property var choices: ({
       "theme.appIcons": ["colour", "grey", "tint"],
       "menu.inputSide": ["body", "bar"],
-      "popups.position": ["right", "left", "top", "bottom"],
-      "theme.motion": ["fade", "slide"]
+      "popups.position": ["right", "left", "top", "bottom"]
     })
 
   function choiceProblems(json) {

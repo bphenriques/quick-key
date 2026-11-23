@@ -73,21 +73,16 @@ Scope {
       // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
       readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
       readonly property real margin: Math.min(Config.popups.margin, screen.width / 4, screen.height / 4)
-      // Sliding, in from the edge it sits at.
-      readonly property real room: Math.min(fade.distance, margin)
-      readonly property real left: (1 - fade.value) * room
-      readonly property point slide: Qt.point(Config.popups.position === "right" ? left : Config.popups.position === "left" ? -left : 0, Config.popups.position === "bottom" ? left : Config.popups.position === "top" ? -left : 0)
       // A level no longer than half its screen.
       readonly property real length: Math.min(Config.theme.osdLength, (across ? screen.width : screen.height) / 2 || Config.theme.osdLength)
       anchors.right: Config.popups.position === "right"
       anchors.left: Config.popups.position === "left"
       anchors.top: Config.popups.position === "top"
       anchors.bottom: Config.popups.position === "bottom"
-      // Larger by the room a slide needs on its edge's side, the margin smaller by as much.
-      margins.right: margin - (Config.popups.position === "right" ? room : 0)
-      margins.left: margin - (Config.popups.position === "left" ? room : 0)
-      margins.top: margin - (Config.popups.position === "top" ? room : 0)
-      margins.bottom: margin - (Config.popups.position === "bottom" ? room : 0)
+      margins.right: margin
+      margins.left: margin
+      margins.top: margin
+      margins.bottom: margin
       WlrLayershell.namespace: "quick-key-osd"
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {
@@ -95,18 +90,15 @@ Scope {
         radius: window.shape.radius
       }
 
-      // What shows, a level or a pill, placed within the window past the room left for a slide, and moved itself while sliding so its blur moves with it.
+      // What shows, a level or a pill.
       readonly property Item shape: metered ? bar : pill
-      readonly property point at: Qt.point((Config.popups.position === "left" ? room : 0) + slide.x, (Config.popups.position === "top" ? room : 0) + slide.y)
-      implicitWidth: shape.implicitWidth + (across ? 0 : room)
-      implicitHeight: shape.implicitHeight + (across ? room : 0)
+      implicitWidth: shape.implicitWidth
+      implicitHeight: shape.implicitHeight
 
       // A level: a bar, the level above the icon, or after it when it reads across.
       Surface {
         id: bar
         opacity: fade.value
-        x: window.at.x
-        y: window.at.y
         width: implicitWidth
         height: implicitHeight
         visible: window.metered
@@ -153,8 +145,6 @@ Scope {
       Pill {
         id: pill
         opacity: fade.value
-        x: window.at.x
-        y: window.at.y
         width: implicitWidth
         height: implicitHeight
         visible: !window.metered

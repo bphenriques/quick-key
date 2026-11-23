@@ -49,9 +49,7 @@ Scope {
         anchors.right: true
         readonly property real margin: Math.min(Config.theme.edgeMargin, modelData.width / 4, modelData.height / 4)
         margins.top: margin + CornerPills.offset(root)
-        // Larger by the room a slide needs on the right, the margin smaller by as much.
-        readonly property real room: Math.min(fade.distance, margin)
-        margins.right: margin - room
+        margins.right: margin
         onImplicitHeightChanged: root.height = implicitHeight + Config.theme.spacing
         Component.onCompleted: root.height = implicitHeight + Config.theme.spacing
         WlrLayershell.namespace: "quick-key-" + root.namespace
@@ -61,15 +59,13 @@ Scope {
           radius: pill.radius
         }
 
-        implicitWidth: pill.implicitWidth + room
+        implicitWidth: pill.implicitWidth
         implicitHeight: pill.implicitHeight
 
         Pill {
           id: pill
           tone: root.tone
           opacity: fade.value
-          // Sliding, in from the right, within the room left for it, moved itself so its blur moves with it.
-          x: (1 - fade.value) * window.room
           width: implicitWidth
           height: parent.height
 
