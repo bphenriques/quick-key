@@ -60,10 +60,10 @@ Singleton {
     return Math.round((midnight(moment) - midnight(date)) / 86400000);
   }
 
-  // A day as you would say it: yesterday, today or tomorrow, its weekday within a week either side, else its date (3 Nov), with its year when not this one.
+  // A day as you would say it: yesterday, today or tomorrow, its weekday within the coming week, else its date (3 Nov), with its year when not this one; a past weekday would read as the next one.
   function day(moment) {
     const days = daysFrom(moment);
-    return nearDays[days] ?? (Math.abs(days) < 7 ? weekdays[moment.getDay()] : format(moment, moment.getFullYear() === date.getFullYear() ? "%-d %b" : "%-d %b %Y"));
+    return nearDays[days] ?? (days > 0 && days < 7 ? weekdays[moment.getDay()] : format(moment, moment.getFullYear() === date.getFullYear() ? "%-d %b" : "%-d %b %Y"));
   }
 
   // A moment as you would say it: today its time, else its day, with its time when `timed` (tomorrow 09:30).

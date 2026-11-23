@@ -60,7 +60,7 @@ menu.header.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "c
 menu.header.right = [ "battery" { desc = "Tray"; list = "tray"; limit = 5; } ];
 ```
 
-Dates and times are said one way everywhere, in `clock.locale`: a time as the locale writes it (14:30, 2:30 PM), a day as yesterday, today or tomorrow, its weekday within a week either side, else its date (3 Nov), with its year when not this one. Short names are cut to three letters where that still tells them apart (Sep, not Sept).
+Dates and times are said one way everywhere, in `clock.locale`: a time as the locale writes it (14:30, 2:30 PM), a day as yesterday, today or tomorrow, its weekday within the coming week, else its date (3 Nov), with its year when not this one. Short names are cut to three letters where that still tells them apart (Sep, not Sept).
 
 ## Input
 
