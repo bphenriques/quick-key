@@ -212,7 +212,8 @@ ShellRoot {
             root.dueMinute = minute;
             root.tasks("write");
           }
-          return (Plugins.get("reminded")?.text ?? "").startsWith("Now ");
+          // Its own write landed too, so none of it runs on into the next case's file.
+          return tasks.tasks.some(task => task.id === "b" && task.due === minute) && (Plugins.get("reminded")?.text ?? "").startsWith("Now ");
         }
       },
       {

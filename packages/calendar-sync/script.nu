@@ -289,7 +289,8 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: strin
   let todos = todos $state
   let task = $todos | where key == $id | first
   if $how == "done" {
-    ^todo --config $config done $task.id | ignore
+    let run = ^todo --config $config done $task.id | complete
+    if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   } else {
     # A repeating task's tick moved its rule to the next one todoman made: unticking takes it back, that one gone.
     let next = $todos | where {|t| $t.recurring and not $t.completed and $t.list == $task.list and $t.summary == $task.summary and ($t.due | default 0) >= ($task.due | default 0) } | sort-by {|t| $t.due | default 0 } | get --optional 0
@@ -315,6 +316,7 @@ def "main add" [calendars_file: path, events_file: path, title: string] {
 # What add runs under the lock; todoman's default list is the first.
 def "main create" [calendars_file: path, events_file: path, title: string] {
   let state = $events_file | path dirname
-  ^todo --config (todoman-config $state) new -- $title | ignore
+  let run = ^todo --config (todoman-config $state) new -- $title | complete
+  if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   write-tasks (task-lists $calendars_file) $state
 }
