@@ -24,6 +24,7 @@
             "desc": "Apps...",
             "icon": "󰀻",
             "list": "streams",
+            "width": 720,
             "submenu": [
               {
                 "key": [
