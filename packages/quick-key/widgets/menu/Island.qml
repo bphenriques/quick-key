@@ -78,11 +78,11 @@ ColumnLayout {
     glyph: filter ? Glyphs.search : Glyphs.prompt
     detail: filter ? root.menu.filter.count : ""
     placeholder: filter ? Words.filterPrompt : root.model.turn ? exchange.next : root.model.input?.desc ?? ""
-    // The turn's own keys while Tab has it; focused, Escape while it clears, else, before a conversation starts, its plugin's past ones.
+    // The turn's own keys while Tab has it; focused, Escape while it clears, else its plugin's past conversations while it can list them.
     keys: root.menu.answerFocused ? [{ key: "Return", what: Words.open, clickable: true }, { key: "y", what: Words.copy, clickable: true }]
       : filter || !root.menu.inputFocused ? []
       : text !== "" ? [{ key: "Escape", what: Words.clear, clickable: true }]
-      : !root.model.turn && root.model.plugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
+      : root.model.plugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
     onPicked: key => key === "Ctrl+r" ? root.model.recall() : key === "Escape" ? stepBack() : root.model.answerKey(key)
     maxLines: 1
     onTapped: root.menu.focusOn("input")

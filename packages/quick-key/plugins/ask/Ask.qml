@@ -43,7 +43,7 @@ Plugin {
     { key: "y", desc: "Copy the last answer", what: Words.copy, shows: () => !typing && !!exchanges[exchanges.length - 1]?.reply, run: () => !typing && copy() },
     { key: "Ctrl+l", desc: "Start a new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
     { key: "Ctrl+o", desc: "Move it to a terminal", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
-    { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => exchanges.length === 0 && recalls, run: () => recall() },
+    { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => recalls, run: () => recall() },
     { key: "Ctrl+v", desc: "Attach the clipboard's image", run: () => pasteImage() },
     { key: "1-9", desc: "Pick an option" },
     { key: "Escape", desc: Words.helpEscape }
@@ -96,7 +96,7 @@ Plugin {
   error: failure
   views: ["AskPanel.qml"]
   // Assumed until the agent has said, at its start, that it keeps no list.
-  recalls: settings.ask !== "" && (left.length > 0 || !agent.started || agent.canList)
+  recalls: settings.ask !== "" && !busy && (left.length > 0 || !agent.started || agent.canList)
   // A left one by its place among them (":0"), as no session id starts so.
   items: left.map((conversation, index) => ({
     id: ":" + index,
@@ -118,7 +118,7 @@ Plugin {
   empty: listing ? words.listing : words.none
 
   function recall() {
-    if (!settings.ask) return false;
+    if (!recalls) return false;
     listing = true;
     failure = "";
     agent.list((sessions, why) => {
@@ -423,7 +423,7 @@ Plugin {
     if (/^[1-9]$/.test(key) && !draft && !image && Number(key) <= choices.length) return pick(Number(key) - 1);
     if (key === "Escape") return stepBack();
     const entry = keys.find(entry => entry.run && (entry.key === key || typedAs(entry.key) === key));
-    return !!entry && entry.run() !== false;
+    return !!entry && (!entry.shows || entry.shows()) && entry.run() !== false;
   }
 
   // A bare `y` copies, so a key learned as harmless never approves.

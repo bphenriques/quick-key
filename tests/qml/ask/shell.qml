@@ -216,10 +216,10 @@ ShellRoot {
         }
       },
       {
-        name: "Escape leaves a run going and C-c stops it, which the agent hears",
+        name: "Escape leaves a run going and C-c stops it, which the agent hears; C-r lists nothing meanwhile",
         until: () => root.asked("stopped", ask => {
           if (ask.busy && ask.activity === "thinking" && !root.leftRunning) {
-            root.refused = ask.submit("more", true, "") === false;
+            root.refused = ask.submit("more", true, "") === false && !ask.act("Ctrl+r") && !ask.recall();
             ask.show();
             ask.typing = false;
             root.leftRunning = ask.act("Escape") && !ask.shown && ask.busy ? "yes" : "no";
