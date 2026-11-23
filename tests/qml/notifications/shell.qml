@@ -1081,7 +1081,7 @@ ShellRoot {
           const extra = root.plugin.settings.problems();
           root.plugin.settings.timeout = ({ low: 1, normal: 30 });
           if (named.join() !== "actions[0] shows {nope}, which no group of its match names" || extra.join() !== "sets timeout.critical, none of low, normal") return false;
-          if (!Validation.pluginProblems({ notifications: { corners: ["x"] } }).includes("plugins.notifications.corners is not a setting")) return false;
+          if (!Validation.pluginProblems({ notifications: { choices: ["x"] } }).includes("plugins.notifications.choices is not a setting")) return false;
           if (JSON.stringify(Config.over({ low: 3, normal: 8 }, { normal: 5 })) !== '{"low":3,"normal":5}' || Config.over([1], [2])[0] !== 2) return false;
           return root.plugin.settings.problems().length === 0 && problems.length === 11 && root.plugin.settings.groupNames("(a)(?:b)(?<c>[(]d)\\(").join() === ",c" && problems.some(problem => problem.startsWith("matches body with '('")) && problems.includes("sets urgency to 'loud', none of low, normal, critical");
         }

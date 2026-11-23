@@ -44,8 +44,8 @@ Plugin {
   text: ""
   empty: completed === "only" ? words.noneDone : words.none
   actions: ({
-    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.words.sortedBy[root.sort], available: () => true, run: () => Kept.set(root.name + ".sort", root.after(root.settings.sorts, root.sort)) },
-    completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => Kept.set(root.name + ".completed", root.after(root.settings.shows, root.completed)) }
+    sort: { icon: () => Glyphs.sorts[root.sort] ?? "", detail: () => root.words.sortedBy[root.sort], available: () => true, run: () => Kept.set(root.name + ".sort", root.after(root.settings.choices.sort, root.sort)) },
+    completed: { icon: () => Glyphs.completed[root.completed] ?? "", detail: () => root.completed, available: () => true, run: () => Kept.set(root.name + ".completed", root.after(root.settings.choices.completed, root.completed)) }
   })
   // At most two characters, so the row holds still.
   detail: {

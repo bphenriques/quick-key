@@ -4,15 +4,15 @@ import "stack.js" as Stack
 
 // The notifications' settings (docs/src/notifications.md); `owner` the one tool it names, the standard busctl.
 PluginSettings {
-  // The corner the cards stack in: top-right, top-left, bottom-right or bottom-left; top-right by default.
+  // The corner the cards stack in.
   property string corner: "top-right"
-  // Cards shown at once, 1 to 9; the rest wait, counted.
+  // Cards shown at once, one per digit; the rest wait, counted.
   property int limit: 3
   // Seconds a card shows when its sender sets no time, by urgency; one set alone leaves the other at its default; a critical card stays until dismissed.
   property var timeout: ({ low: 3, normal: 8 })
   // Notifications kept at most, shown or waiting, `limit` to 500; past it the oldest close, critical ones last.
   property int keep: 100
-  // Closed notifications kept to bring back, over a restart too, 0 to 100.
+  // Closed notifications kept to bring back, over a restart too.
   property int history: 20
   // A card's width, in pixels, never past the screen; unset, it follows the font, 480 at 11 points.
   property int width: Math.round(480 * Config.theme.fontSize / 11)
@@ -25,7 +25,8 @@ PluginSettings {
   // Prints the process id holding the notifications' name on the session bus, last on its line, so another daemon there shows as the plugin's error.
   property string owner: "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s org.freedesktop.Notifications"
 
-  readonly property var corners: ["top-right", "top-left", "bottom-right", "bottom-left"]
+  readonly property var ranges: ({ limit: [1, 9], idle: [0], width: [100, 4000], history: [0, 100] })
+  readonly property var choices: ({ corner: ["top-right", "top-left", "bottom-right", "bottom-left"] })
   readonly property var fields: ["app", "summary", "body", "category", "urgency", "desktopEntry"]
   readonly property var ruleKinds: Object.assign(Object.create(null), { match: "map", app: "string", hide: "boolean", timeout: "number", urgency: "string", ignorePause: "boolean", actions: "list", default: "string", run: "string", icon: "string", silent: "boolean" })
   readonly property var actionKinds: Object.assign(Object.create(null), { key: "string", desc: "string", cmd: "string", closes: "boolean", icon: "string" })
@@ -35,12 +36,7 @@ PluginSettings {
 
   function problems() {
     const found = [];
-    if (!corners.includes(corner)) found.push("sets corner to '" + corner + "', none of " + corners.join(", "));
-    if (limit < 1 || limit > 9) found.push("sets limit to " + limit + ", not 1 to 9, as many as there are digits");
-    if (idle < 0) found.push("sets idle below 0");
-    if (width < 100 || width > 4000) found.push("sets width to " + width + ", not 100 to 4000");
     if (keep < limit || keep > 500) found.push("sets keep to " + keep + ", not limit to 500");
-    if (history < 0 || history > 100) found.push("sets history to " + history + ", not 0 to 100");
     found.push(...Object.keys(timeout ?? {}).filter(urgency => !["low", "normal"].includes(urgency)).map(urgency => "sets timeout." + urgency + ", none of low, normal"));
     for (const urgency of ["low", "normal"]) {
       if (typeof timeout?.[urgency] !== "number" || timeout[urgency] < 0) found.push("sets timeout." + urgency + " to no number of seconds");

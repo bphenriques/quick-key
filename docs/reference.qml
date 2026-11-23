@@ -119,13 +119,9 @@ ShellRoot {
     return { real: "number", string: "string", bool: "boolean" }[declared.type] ?? (value == null ? "any" : Config.kind(value));
   }
 
-  // What a setting takes beyond its kind, as Validation checks it.
-  function allowed(value, path) {
-    if (path in Validation.choices) return Validation.choices[path].map(choice => code(JSON.stringify(choice))).join(", ");
-    if (path.startsWith("theme.") && Object.keys(Config.colors).includes(path.slice(6))) return "`#rgb`, `#rrggbb` or `#aarrggbb`";
-    if (typeof value !== "number") return "";
-    const [least, most] = Validation.range(path);
-    return most === undefined || most === Infinity ? least + " or more" : least + " to " + most;
+  // What a setting or a field takes beyond its kind, by the rule Validation checks.
+  function allowed(rule) {
+    return rule.choices ? rule.choices.map(choice => code(JSON.stringify(choice))).join(", ") : rule.range ? Validation.bounds(rule.range) : "";
   }
 
   // Rows in a row that differ only by their key share one.
@@ -159,7 +155,8 @@ ShellRoot {
       }
       const rows = leaves(Config[group], kinds, group + ".").sort(byLine).map(({ path, value }) => {
         const parent = path.replace(/\.[^.]*$/, "");
-        return [code(path), type(value, declared[path], path), shown(value, declared[path]), allowed(value, path), prose(declared[path].comment || declared[parent]?.comment || "")];
+        const colour = path.startsWith("theme.") && path.slice(6) in Config.colors;
+        return [code(path), type(value, declared[path], path), shown(value, declared[path]), colour ? Validation.colourForms.replace(/#\w+/g, code) : allowed(Validation.rule(path, Config.kind(value))), prose(declared[path].comment || declared[parent]?.comment || "")];
       });
       text += table(["Setting", "Type", "Default", "Allowed", "Description"], merged(rows)) + "\n";
       if (group === "theme") text += presets();
@@ -206,11 +203,11 @@ ShellRoot {
     const rows = Object.keys(Validation.fields).map(field => {
       const rule = Validation.fields[field];
       const named = rule.names && tables.find(([, , table]) => Object.keys(table.builtin).join() === Object.keys(rule.names).join());
-      const takes = [].concat(rule.kind).join(" or ") + (named ? ": a [" + named[0] + "](#" + named[1] + ") or a plugin" : "");
+      const takes = [].concat(rule.whole ? "integer" : rule.kind).join(" or ") + (named ? ": a [" + named[0] + "](#" + named[1] + ") or a plugin" : "");
       const where = [rule.level ? "a level (`submenu`, `list` or `view`)" : "", rule.bar ? "a bar" : "", rule.needs ? "with " + rule.needs.map(code).join(" or ") : "", rule.excludes ? "without " + rule.excludes.map(code).join(" or ") : ""].filter(part => part).join(", ");
-      return [code(field), takes, where || "any", prose(declared["fields." + field].comment)];
+      return [code(field), takes, allowed(rule), where || "any", prose(declared["fields." + field].comment)];
     });
-    return "## Menu entries\n\nWhat an entry in `menu.entries`, a `submenu` or a bar takes, and the built-in names it can use ([Menu](menu.md)).\n\n### Fields\n\n" + table(["Field", "Takes", "On", "Description"], rows) + "\n"
+    return "## Menu entries\n\nWhat an entry in `menu.entries`, a `submenu` or a bar takes, and the built-in names it can use ([Menu](menu.md)).\n\n### Fields\n\n" + table(["Field", "Takes", "Allowed", "On", "Description"], rows) + "\n"
       + names("Statuses", "Status", Statuses.builtin, "builtins/Statuses.qml", [["Fields", status => status.names.map(name => code("{" + name + "}")).join(", ")], ["Format", status => code(status.format ?? "")]])
       + names("Actions", "Action", Actions.builtin, "builtins/Actions.qml", [["Keys", action => action.pair ? "a pair" : ""], ["Lit by", action => code(action.state ?? "")]])
       + names("Lists", "List", Lists.builtin, "builtins/Lists.qml", [])
@@ -226,9 +223,10 @@ ShellRoot {
       .filter(key => object === base || !(key in base.settings) || JSON.stringify(object.settings[key]) !== JSON.stringify(base.settings[key]));
     const rows = keys.sort((a, b) => declared[a].line - declared[b].line).map(key => {
       const at = Object.assign({}, common[key], declared[key], { type: declared[key].type || common[key]?.type, comment: declared[key].comment || common[key]?.comment || "" });
-      return [code(key), type(object.settings[key], at, ""), shown(object.settings[key], at), prose(at.comment)];
+      const rule = { range: object.settings.ranges?.[key], choices: object.settings.choices?.[key] };
+      return [code(key), type(object.settings[key], at, ""), shown(object.settings[key], at), allowed(rule), prose(at.comment)];
     });
-    return rows.length ? table(["Setting", "Type", "Default", "Description"], merged(rows)) + "\n" : "";
+    return rows.length ? table(["Setting", "Type", "Default", "Allowed", "Description"], merged(rows)) + "\n" : "";
   }
 
   function pluginsReference() {

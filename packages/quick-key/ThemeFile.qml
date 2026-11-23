@@ -28,7 +28,7 @@ FileView {
     const colours = {};
     for (const [name, value] of Object.entries(read && typeof read === "object" ? read : {})) {
       if (typeof value === "string" && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) colours[name] = value;
-      else console.warn("theme", root.path + ":", name, "is no colour (#rrggbb, or #aarrggbb):", JSON.stringify(value));
+      else console.warn("theme", root.path + ":", name, "is no colour (#rgb, #rrggbb or #aarrggbb):", JSON.stringify(value));
     }
     palette = colours;
   }

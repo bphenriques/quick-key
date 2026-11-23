@@ -14,18 +14,12 @@ PluginSettings {
   property int syncAfter: 5
   // Minutes after which the last sync shows in warning.
   property int staleAfter: 120
-  // The order to start in: due, priority, title or list; the `sort` action steps through them.
+  // The order to start in; the `sort` action steps through them.
   property string sort: "due"
-  // What the done ones show at the start: hidden, shown or only; the `completed` action steps through them.
+  // What the done ones show at the start; the `completed` action steps through them.
   property string completed: "hidden"
   // Given a title and a time, as a timed task falls due; unset, no reminders.
   property string remind
   // What sort and completed take, in the order the actions step through them.
-  readonly property var sorts: ["due", "priority", "title", "list"]
-  readonly property var shows: ["hidden", "shown", "only"]
-
-  function problems() {
-    return [["sort", sort, sorts], ["completed", completed, shows]].filter(([, value, values]) => !values.includes(value))
-      .map(([name, value, values]) => "sets " + name + " to '" + value + "', none of " + values.join(", "));
-  }
+  readonly property var choices: ({ sort: ["due", "priority", "title", "list"], completed: ["hidden", "shown", "only"] })
 }

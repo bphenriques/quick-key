@@ -241,7 +241,7 @@ Singleton {
       property JsonObject theme: JsonObject {
         // A theme by file name: yours in $XDG_CONFIG_HOME/quick-key/themes/, else a preset in themes/.
         property string name
-        // Colours (#rrggbb) over the theme's own.
+        // Colours over the theme's own.
         property string background
         property string foreground
         property string primary
@@ -252,13 +252,13 @@ Singleton {
         // Your messages in a conversation, and their text; unset, the foreground at 0.15, and the foreground.
         property string bubble
         property string bubbleText
-        // A panel's background opacity, 0 to 1.
+        // A panel's background opacity.
         property real surfaceOpacity: 0.92
-        // A highlight's opacity (the row under the pointer, a meter's track), 0 to 1.
+        // A highlight's opacity (the row under the pointer, a meter's track).
         property real highlightOpacity: 0.25
-        // Secondary text's opacity (values, legends, dim glyphs), 0 to 1: 0.8 keeps it near WCAG AA's 4.5:1 on a dark theme.
+        // Secondary text's opacity (values, legends, dim glyphs): 0.8 keeps it near WCAG AA's 4.5:1 on a dark theme.
         property real dimOpacity: 0.8
-        // The opacity a row that cannot run now fades to, 0 to 1.
+        // The opacity a row that cannot run now fades to.
         property real disabledOpacity: 0.5
         // Milliseconds a fade or colour change takes; 0 for none.
         property int animationDuration: 100

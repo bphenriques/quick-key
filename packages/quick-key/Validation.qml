@@ -50,7 +50,7 @@ Singleton {
     if (moved.length) return moved;
     const kinds = Config.undeclared(json);
     if (kinds.length) return kinds;
-    const values = numberProblems(json).concat(colourProblems(json.theme ?? {}), choiceProblems(json), operatorProblems(json));
+    const values = settingProblems(json).concat(colourProblems(json.theme ?? {}), operatorProblems(json));
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = Object.assign({}, json.menu?.header);
@@ -86,47 +86,48 @@ Singleton {
       "clock.firstDayOfWeek": [-1, 6]
     })
 
-  // A number's [least, most] by its path, most undefined or Infinity for none.
-  function range(path) {
-    return ranges[path] ?? [0, path.endsWith("Opacity") ? 1 : Infinity];
-  }
-
   // Numbers that are counts or point sizes, which a fraction would be cut from.
   readonly property var wholes: ["theme.fontSize", "menu.columns"]
-
-  function numberProblems(json) {
-    const found = [];
-    for (const [group, kinds] of Object.entries(Config.declaredKinds)) {
-      if (typeof kinds !== "object") continue;
-      for (const [name, kind] of Object.entries(kinds)) {
-        const value = json[group]?.[name];
-        if (kind !== "number" || typeof value !== "number") continue;
-        const [least, most] = range(group + "." + name);
-        if (wholes.includes(group + "." + name) && !Number.isInteger(value)) found.push(group + "." + name + " is " + value + ", not a whole number");
-        const bounds = most === undefined || most === Infinity ? least + " or more" : least + " to " + most;
-        if (value < least || value > (most ?? Infinity)) found.push(group + "." + name + " is " + value + ", not " + bounds);
-      }
-    }
-    const [low, critical] = [json.battery?.low ?? Config.battery.low, json.battery?.critical ?? Config.battery.critical];
-    if (critical >= low) found.push("battery.critical is " + critical + ", not below battery.low (" + low + ")");
-    return found;
-  }
 
   // What a text setting with a few meanings takes, by its path.
   readonly property var choices: ({
       "theme.appIcons": ["colour", "grey", "tint"]
     })
 
-  function choiceProblems(json) {
-    return Object.keys(choices).filter(path => at(json, path) !== undefined && !choices[path].includes(at(json, path)))
-      .map(path => path + " is '" + at(json, path) + "', not one of " + choices[path].join(", "));
+  // What the setting at path takes beyond its kind, as valueProblems reads a rule.
+  function rule(path, kind) {
+    return kind === "number" ? { range: ranges[path] ?? [0, path.endsWith("Opacity") ? 1 : Infinity], whole: wholes.includes(path) } : { choices: choices[path] };
   }
 
-  // A colour as Qt reads it: #rgb, #rrggbb, or #aarrggbb with its alpha first; any other text would draw black. Its names are Config.colors'.
+  // A [least, most] in words, most undefined or Infinity for none, as the check and the reference say it.
+  function bounds([least, most]) {
+    return most === undefined || most === Infinity ? least + " or more" : least + " to " + most;
+  }
+
+  // What is wrong with a value by its rule ({ range, whole, choices }: a setting's, a plugin's or a field's), each after `subject`.
+  function valueProblems(subject, value, rule) {
+    const said = subject + (typeof value === "string" ? "'" + value + "'" : value) + ", not ";
+    return [rule.whole && !Number.isInteger(value) ? "a whole number" : "", rule.range && (value < rule.range[0] || value > (rule.range[1] ?? Infinity)) ? bounds(rule.range) : "",
+      rule.choices && !rule.choices.includes(value) ? "one of " + rule.choices.join(", ") : ""].filter(why => why).map(why => said + why);
+  }
+
+  function settingProblems(json) {
+    const found = [];
+    for (const [group, kinds] of Object.entries(Config.declaredKinds))
+      if (typeof kinds === "object") for (const [name, kind] of Object.entries(kinds))
+        if (Config.kind(json[group]?.[name]) === kind) found.push(...valueProblems(group + "." + name + " is ", json[group][name], rule(group + "." + name, kind)));
+    const [low, critical] = [json.battery?.low ?? Config.battery.low, json.battery?.critical ?? Config.battery.critical];
+    if (critical >= low) found.push("battery.critical is " + critical + ", not below battery.low (" + low + ")");
+    return found;
+  }
+
+  readonly property string colourForms: "#rgb, #rrggbb or #aarrggbb"
+
+  // A colour as Qt reads it, its alpha first; any other text would draw black. Its names are Config.colors'.
   function colourProblems(theme) {
     const colour = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
     return Object.keys(Config.colors).filter(name => typeof theme[name] === "string" && theme[name] !== "" && !colour.test(theme[name]))
-      .map(name => "theme." + name + ": '" + theme[name] + "' is no colour (#rrggbb, or #aarrggbb)");
+      .map(name => "theme." + name + ": '" + theme[name] + "' is no colour (" + colourForms + ")");
   }
 
   // A command takes its arguments after its text ("$1" "$2"), so one ending in a control operator would run the first as a program; an escaped \; is none.
@@ -220,6 +221,8 @@ Singleton {
       defaults.destroy();
       // Its own checks on what it declares, so every problem shows at once, not one build at a time.
       const object = settings.createObject(null, given.values);
+      for (const [key, range] of Object.entries(object.ranges ?? {})) found.push(...valueProblems(at + "." + key + " is ", object[key], { range }));
+      for (const [key, choices] of Object.entries(object.choices ?? {})) found.push(...valueProblems(at + "." + key + " is ", object[key], { choices }));
       found.push(...object.problems().map(problem => at + " " + problem));
       object.destroy();
     }
@@ -280,7 +283,7 @@ Singleton {
     return found;
   }
 
-  // Each field an entry takes, its comment what it does (the docs' reference), and what it asks: `kind`, the kinds of value it takes; `level`, a level's (submenu, list or view); `needs`, one of these set; `bar`, only in a bar; `names`, a table it names one of, else a plugin; `excludes`, fields it cannot sit beside; `invalid`, what is wrong with its value, else "".
+  // Each field an entry takes, its comment what it does (the docs' reference), and what it asks: `kind`, the kinds of value it takes; `level`, a level's (submenu, list or view); `needs`, one of these set; `bar`, only in a bar; `names`, a table it names one of, else a plugin; `excludes`, fields it cannot sit beside; `range`, `whole` and `choices`, as a setting's rule; `invalid`, what else is wrong with its value, else "".
   readonly property var fields: Object.assign(Object.create(null), {
       // Its key, or a pair of keys sharing a row (["Down", "Up"]); a bar entry needs none.
       key: { kind: ["string", "list"] },
@@ -293,7 +296,7 @@ Singleton {
       // Its glyph; an action brings its own.
       icon: { kind: "string" },
       // Its level's width in pixels, over menu.width.
-      width: { kind: "number", invalid: width => width >= 1 ? "" : "sets width to " + width + ", no size in pixels" },
+      width: { kind: "number", range: [1] },
       // Its level's entries.
       submenu: { kind: "list" },
       // Keeps the menu open once its cmd runs.
@@ -301,14 +304,14 @@ Singleton {
       // Lights it while the state it names is on.
       activeWhen: { kind: "string", names: States.builtin },
       // The columns its level lays its actions out in, over menu.columns.
-      columns: { kind: "number", level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 && columns <= 9 ? "" : "sets columns, which only a level of 1 to 9 columns takes" },
+      columns: { kind: "number", level: true, range: ranges["menu.columns"], whole: true },
       // Its level lists these items on digits.
       list: { kind: "string", names: Lists.builtin },
       // Items kept on their digits, in order, dim while absent: each { match, label, icon }, a glob on the item's id, what it is called, and an optional glyph.
       pins: { kind: "list", needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits"
         : Array.from(pins).every(pin => Config.kind(pin) === "map" && typeof pin.match === "string" && typeof pin.label === "string") ? "" : "takes each pin as { match, label }, two strings" },
       // Its level shows this view in place of a menu.
-      view: { kind: "string", excludes: ["list"], invalid: view => view in Views.builtin ? "" : "shows view '" + view + "', which is not built in" },
+      view: { kind: "string", excludes: ["list"], choices: Object.keys(Views.builtin) },
       // Live state on the right of its row.
       status: { kind: "string", names: Statuses.builtin },
       // Its status's fields to show ("{song}"), what follows a | kept whole on the right.
@@ -318,7 +321,7 @@ Singleton {
       // Its compositor key (Mod+N), only a label: shown while Super is held.
       shortcut: { kind: "string", bar: true },
       // The most items of its list a bar shows; past it, +N.
-      limit: { kind: "number", bar: true, needs: ["list"], invalid: limit => limit >= 1 && limit <= 9 ? "" : "limits its list to " + limit + ", not 1 to 9 digits" },
+      limit: { kind: "number", bar: true, needs: ["list"], range: [1, 9] },
       // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, format, after }.
       input: { kind: "map", level: true }
     })
@@ -342,6 +345,7 @@ Singleton {
       }
       if (rule.names && !(value in rule.names) && !plugins.includes(value)) found.push("names " + field + " '" + value + "', neither built in nor a plugin");
       for (const other of rule.excludes ?? []) if (entry[other] != null) found.push("cannot combine " + field + " with " + other);
+      found.push(...valueProblems("sets " + field + " to ", value, rule));
       if (rule.invalid && rule.invalid(value)) found.push(rule.invalid(value));
     }
     return found;
