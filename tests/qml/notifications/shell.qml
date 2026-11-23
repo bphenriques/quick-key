@@ -128,7 +128,8 @@ ShellRoot {
     cases: [
       {
         name: "the plugin loads as the config does",
-        until: () => root.plugin !== null
+        // Past its own check of the bus at start, which would answer over the next case's.
+        until: () => root.plugin !== null && root.mark("loaded") >= 200
       },
       {
         name: "another process holding the bus shows as its error",
