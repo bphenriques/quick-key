@@ -300,8 +300,9 @@ Singleton {
       columns: { kind: "number", level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 && columns <= 9 ? "" : "sets columns, which only a level of 1 to 9 columns takes" },
       // Its level lists these items on digits.
       list: { kind: "string", names: Lists.builtin },
-      // The ids of items kept on their digits, in order, dim while absent.
-      pins: { kind: "list", needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits" : "" },
+      // Items kept on their digits, in order, dim while absent: each { match, label, icon }, a glob on the item's id, what it is called, and an optional glyph.
+      pins: { kind: "list", needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits"
+        : Array.from(pins).every(pin => Config.kind(pin) === "map" && typeof pin.match === "string" && typeof pin.label === "string") ? "" : "takes each pin as { match, label }, two strings" },
       // Its level shows this view in place of a menu.
       view: { kind: "string", excludes: ["list"], invalid: view => view in Views.builtin ? "" : "shows view '" + view + "', which is not built in" },
       // Live state on the right of its row.

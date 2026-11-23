@@ -64,6 +64,8 @@ ShellRoot {
     ["a field no entry takes", menu([{ key: "x", desc: "X", cmd: "true", command: "true" }]), "sets command, which no entry takes"],
     ["a reserved key", menu([{ key: "Escape", desc: "X", cmd: "true" }]), "keys reserved for the menu in the top level: Escape"],
     ["a key bound twice", menu([{ key: "x", desc: "X", cmd: "true" }, { key: "x", desc: "Y", cmd: "true" }]), "keys bound twice in the top level: x"],
+    ["a pin that is an id", menu([{ key: "a", desc: "A", list: "sinks", pins: ["bluez_output.*"] }]), "takes each pin as { match, label }"],
+    ["a pin without its label", menu([{ key: "a", desc: "A", list: "sinks", pins: [{ match: "bluez_output.*" }] }]), "takes each pin as { match, label }"],
     ["a digit beside a list", menu([{ key: "x", desc: "X", list: "tray", submenu: [{ key: "1", desc: "One", icon: "i", cmd: "true" }] }]), "binds a digit"],
     ["a wrong entry in a level below", menu([{ key: "x", desc: "X", submenu: [{ key: "y", desc: "Y", cmd: "true" }] }]), "'X' in the top level holds an action without an icon"],
     ["an input on an entry without a level", menu([{ key: "x", desc: "X", cmd: "true", input: { desc: "Add", cmd: "true" } }]), "can only set input on a level with submenu, list or view"],
