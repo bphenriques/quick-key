@@ -1,6 +1,6 @@
 # Menu
 
-The menu is a list of levels. Each is its body over an optional bar at the screen's edge. A body holds one thing: entries, each a key and a label that does something or opens a level, or a level's content, its list or its view (the calendar). A content level's own entries and its legend sit on its bar's left, so a list that grows moves neither. When they do not all fit, every action shows only its key and glyph, its label as its tip, so none is cut short. The bar also holds what you glance at.
+The menu is a list of levels. Each is its body past an optional bar at the screen's edge. A body holds one thing: entries, each a key and a label that does something or opens a level, or a level's content, its list or its view (the calendar). A content level's own entries and its legend sit on its bar's left, so a list that grows moves neither. When they do not all fit, every action shows only its key and glyph, its label as its tip, so none is cut short. The bar also holds what you glance at.
 
 ```nix
 {
@@ -51,7 +51,7 @@ The menu sits at the bottom of the screen, centred, its bar against the edge. `m
 
 ## Bars
 
-`menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules. An entry's `header` is its level's, with the same slots, and a level with nothing for its bar is its body alone. A bar holds content (a song, its modes), never a title. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`).
+`menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules. An entry's `header` is its level's, with the same slots, and a level with nothing for its bar is its body alone. A bar holds content (a song, its modes), never a title. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). A crowded bar shortens its text, then shows actions by their glyphs alone; it never widens the menu, so one that still cannot fit runs past it, and the log says how wide it needs the menu.
 
 In a bar, an entry shows its status, else its icon, and may do nothing but show its status. With both, it shows its icon in the tone of what its `format` shows, a spinner while the status is busy, and its value on hover, beside it too while that tone warns. So a Sync button stays out of the way until its sync is under way or stale ([Calendar](calendar.md)). An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all on a level of their own. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`). Crowded, text shortens; icons and short values stay whole.
 
