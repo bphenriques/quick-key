@@ -69,7 +69,7 @@ The shell logs the same as it starts, and every warning after: `journalctl --use
 
 ## First change
 
-Add a row of your own. The starter menu is a valid `config.json` ([`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json)): copy it, then append an entry:
+Add a row of your own. Start from the starter's entries in `~/.config/quick-key/config.json` ([Extend the starter](recipes.md#extend-the-starter)), then append one to `menu.entries`:
 
 ```json
 { "key": "l", "desc": "Lock", "icon": "󰌾", "cmd": "loginctl lock-session" }

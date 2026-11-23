@@ -4,7 +4,7 @@
 
 A notification server in the shell's look, in place of dunst or mako. Quickshell speaks the protocol; the plugin decides what shows, for how long, and where. Only one daemon can hold the bus, so turn off `services.dunst` or `services.mako` (the module requires it) and remove their packages: D-Bus starts any daemon whose service file it finds, which can take the bus before the shell does. Another daemon holding it shows as the plugin's error.
 
-The plugin's status is a bell with the count, struck and lit while paused, and a click on it summons the cards. Put it in a slot of the bar, such as `menu.header.right`: `{ key = "n"; desc = "Notifications"; status = "notifications"; }`. Setting a slot replaces the starter's entries there, so keep them from `menu.json`'s `right`; with Nix, `(lib.importJSON "${inputs.quick-key}/packages/quick-key/menu.json").menu.header.right` is that list.
+The plugin's status is a bell with the count, struck and lit while paused, and a click on it summons the cards. Put it in a slot of the bar, such as `menu.header.right`: `{ key = "n"; desc = "Notifications"; status = "notifications"; }`, beside the starter's ([Extend the starter](recipes.md#extend-the-starter)).
 
 Cards stack in a corner of the focused screen, newest by the corner, critical ones first. A card shows:
 

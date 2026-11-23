@@ -54,4 +54,4 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 
 `battery.warn` runs once as the charge falls to `battery.low`, and once more at `battery.critical`, never for the charge the shell starts with.
 
-Setting `menu.entries` replaces the starter menu whole. To start from it, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json): it is a valid `config.json`. Do-not-disturb (the `notifications` plugin's pause, the `dunst` plugin, or your own) and display layouts are plugins you list ([Plugins](plugins.md)).
+Setting `menu.entries` replaces the starter menu ([Extend the starter](recipes.md#extend-the-starter)). Do-not-disturb (the `notifications` plugin's pause, the `dunst` plugin, or your own) and display layouts are plugins you list ([Plugins](plugins.md)).
