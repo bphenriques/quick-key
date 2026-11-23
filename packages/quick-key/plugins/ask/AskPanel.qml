@@ -38,88 +38,28 @@ Scope {
     else if (panel.selection && panel.selection.turn === turn) panel.selection = null;
   }
 
-  // Each once, without a sentence's closing punctuation.
-  function links(text) {
-    const found = (text.match(/https?:\/\/[^\s<>"'()\[\]]+/g) ?? []).map(url => url.replace(/[.,;:!?]+$/, ""));
-    return [...new Set(found)];
-  }
-
-  // Its host, then the last part of its path: recipes.example.com › bacalhau-com-natas.
-  function linkLabel(url) {
-    const [, host, path] = url.match(/^https?:\/\/([^\/?#]+)([^?#]*)/) ?? [null, url, ""];
-    const last = path.split("/").filter(part => part !== "").pop();
-    if (!last) return host;
-    let page = last;
-    try {
-      page = decodeURIComponent(last);
-    } catch (error) {}
-    return host + " › " + page.replace(/\.html?$/, "");
-  }
-
-  // Design rule 2's one exception; the panel hides so the browser shows.
-  component LinkRow: ListItem {
-    id: link
-    property string url
-    Layout.fillWidth: true
-    onActivated: {
-      Qt.openUrlExternally(link.url);
-      Panels.close();
-    }
-
-    Icon {
-      tone: "primary"
-      glyph: Glyphs.link
-      size: Metrics.line
-    }
-
-    Label {
-      Layout.fillWidth: true
-      tone: "primary"
-      elide: Text.ElideMiddle
-      text: panel.linkLabel(link.url)
-    }
-  }
-
-  component Turn: ColumnLayout {
+  component Turn: Exchange {
     id: turn
     required property int index
     // Its exchange's place in the conversation: the list runs from the newest up.
     readonly property int at: panel.plugin.exchanges.length - 1 - index
-    readonly property var exchange: panel.plugin.exchanges[at] ?? ({})
-    readonly property var drawn: panel.plugin.describe(exchange)
-    readonly property var links: panel.links(exchange.reply ?? "")
-    Layout.fillWidth: true
-    spacing: Config.theme.spacing / 2
-
-    Exchange {
-      Layout.fillWidth: true
-      maximumWidth: panel.threadWidth * 0.85
-      question: turn.drawn.question ?? ""
-      image: turn.drawn.image ?? ""
-      // A line that is only a link shows once, as its row below.
-      text: (turn.drawn.text ?? "").split("\n").filter(line => !/^\s*https?:\/\/\S+\s*$/.test(line)).join("\n").trim()
-      phase: turn.drawn.phase ?? "done"
-      kind: turn.drawn.kind ?? ""
-      // The wait too, once noticeable.
-      activity: [turn.drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
-      options: turn.drawn.options ?? []
-      table: !!turn.drawn.table
-      steps: turn.drawn.steps ?? []
-      picking: !panel.plugin.draft
-      copyable: true
-      kept: panel.selection && panel.selection.turn === turn.at ? panel.selection : null
-      onPicked: index => panel.plugin.pick(index)
-      onSelected: selection => panel.keep(turn.at, selection)
-    }
-
-    Repeater {
-      model: turn.links.length
-
-      LinkRow {
-        required property int index
-        url: turn.links[index] ?? ""
-      }
-    }
+    readonly property var drawn: panel.plugin.describe(panel.plugin.exchanges[at] ?? ({}))
+    maximumWidth: panel.threadWidth * 0.85
+    question: drawn.question ?? ""
+    image: drawn.image ?? ""
+    text: drawn.text ?? ""
+    phase: drawn.phase ?? "done"
+    kind: drawn.kind ?? ""
+    // The wait too, once noticeable.
+    activity: [drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
+    options: drawn.options ?? []
+    table: !!drawn.table
+    steps: drawn.steps ?? []
+    picking: !panel.plugin.draft
+    copyable: true
+    kept: panel.selection && panel.selection.turn === turn.at ? panel.selection : null
+    onPicked: index => panel.plugin.pick(index)
+    onSelected: selection => panel.keep(turn.at, selection)
   }
 
   Connections {

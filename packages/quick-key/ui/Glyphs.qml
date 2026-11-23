@@ -63,7 +63,6 @@ Singleton {
   readonly property string prompt: Config.glyphs.prompt ?? "\u{F0142}" // md-chevron_right
   // A past conversation, as Ask lists them.
   readonly property string conversation: Config.glyphs.conversation ?? "\u{F0EDE}" // md-chat_outline
-  readonly property string link: Config.glyphs.link ?? "\u{F0337}" // md-link
   readonly property string copy: Config.glyphs.copy ?? "\u{F0C5}" // fa-copy
   readonly property string failed: Config.glyphs.failed ?? "\u{F05D6}" // md-alert_circle_outline
   // A power profile by its name.

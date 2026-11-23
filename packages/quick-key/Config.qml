@@ -71,7 +71,8 @@ Singleton {
       "menu.edge": "removed: the menu always sits at the bottom",
       "menu.align": "removed: the menu is always centred",
       "theme.titleScale": "removed: titles take the font's size",
-      "theme.motion": "removed: pop-ups always fade"
+      "theme.motion": "removed: pop-ups always fade",
+      "glyphs.link": "removed: an answer's links stay in its text"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
