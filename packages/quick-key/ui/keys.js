@@ -2,6 +2,15 @@
 
 // Key names and labels, pure, so a unit test reads them without a shell (tests/unit); MenuKeys hands them on.
 
+// Each key named past its character, as MenuKeys names its event, label shows it and Validation binds it: the pages move a list or an answer, Space only a compositor's (Mod+Space).
+var named = Object.assign(Object.create(null), {
+  Up: { code: Qt.Key_Up, label: "↑" }, Down: { code: Qt.Key_Down, label: "↓" }, Left: { code: Qt.Key_Left, label: "←" }, Right: { code: Qt.Key_Right, label: "→" },
+  Page_Up: { code: Qt.Key_PageUp, label: "PgUp", bindable: false }, Page_Down: { code: Qt.Key_PageDown, label: "PgDn", bindable: false },
+  space: { code: Qt.Key_Space, label: "SPC" }, Tab: { code: Qt.Key_Tab, label: "TAB" }, Backtab: { code: Qt.Key_Backtab, label: "S-TAB" },
+  Return: { code: Qt.Key_Return, label: "RET" }, Escape: { code: Qt.Key_Escape, label: "ESC" }, BackSpace: { code: Qt.Key_Backspace, label: "DEL" },
+  Space: { label: "SPC", bindable: false }
+});
+
 function names(key) {
   return typeof key === "string" ? [key] : Array.from(key);
 }
@@ -18,14 +27,13 @@ function label(key, paired = false) {
 }
 
 function shortName(name) {
-  const symbols = { Up: "↑", Down: "↓", Left: "←", Right: "→", space: "SPC", Space: "SPC", Tab: "TAB", Backtab: "S-TAB", Return: "RET", BackSpace: "DEL", Escape: "ESC", Page_Up: "PgUp", Page_Down: "PgDn" };
   const [, chord, base] = name.match(/^((?:(?:Ctrl|Alt|Mod|Super|Shift)\+)*)(.*)$/);
   const modifiers = chord.split("+");
   const shift = modifiers.includes("Shift");
   const letter = /^[A-Za-z]$/.test(base);
   // A letter's case is the key's, as the shell names keys (Ctrl+X is Ctrl with Shift held); a compositor's binding (Mod+N) is lower-case unless it names Shift.
   const compositor = modifiers.includes("Mod") || modifiers.includes("Super");
-  const key = letter && shift ? base.toUpperCase() : letter && compositor ? base.toLowerCase() : symbols[base] ?? base;
+  const key = letter && shift ? base.toUpperCase() : letter && compositor ? base.toLowerCase() : named[base]?.label ?? base;
   const prefix = (modifiers.includes("Ctrl") ? "C-" : "") + (modifiers.includes("Alt") ? "M-" : "")
     + (modifiers.includes("Mod") || modifiers.includes("Super") ? "s-" : "") + (shift && !letter ? "S-" : "");
   return { prefix: prefix, key: key };

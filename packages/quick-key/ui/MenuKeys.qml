@@ -23,24 +23,13 @@ Singleton {
   }
 
   function keyName(event) {
-    switch (event.key) {
-    case Qt.Key_Up: return "Up";
-    case Qt.Key_Down: return "Down";
-    case Qt.Key_Left: return "Left";
-    case Qt.Key_Right: return "Right";
-    case Qt.Key_PageUp: return "Page_Up";
-    case Qt.Key_PageDown: return "Page_Down";
-    case Qt.Key_Space: return "space";
     // Shift+Tab arrives as Backtab from a keyboard, or as Tab with Shift from some virtual ones.
-    case Qt.Key_Tab: return event.modifiers & Qt.ShiftModifier ? "Backtab" : "Tab";
-    case Qt.Key_Backtab: return "Backtab";
-    case Qt.Key_Return:
-    case Qt.Key_Enter: return "Return";
-    case Qt.Key_Escape: return "Escape";
-    case Qt.Key_Backspace: return "BackSpace";
+    if (event.key === Qt.Key_Tab && event.modifiers & Qt.ShiftModifier) return "Backtab";
+    if (event.key === Qt.Key_Enter) return "Return";
     // Named with Ctrl too, so a surface whose prompt has the keys lists them on C-?.
-    case Qt.Key_Question: return "?";
-    }
+    if (event.key === Qt.Key_Question) return "?";
+    const named = Object.keys(Keys.named).find(name => Keys.named[name].code === event.key);
+    if (named) return named;
     if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) return String.fromCharCode(event.key);
     if (event.key >= Qt.Key_A && event.key <= Qt.Key_Z) {
       const letter = String.fromCharCode(event.key);
@@ -51,6 +40,7 @@ Singleton {
   }
 
   // Pure, so tests/unit reads them without a shell.
+  readonly property var named: Keys.named
   readonly property var names: Keys.names
   readonly property var matches: Keys.matches
   readonly property var label: Keys.label

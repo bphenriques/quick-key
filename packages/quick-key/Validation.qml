@@ -250,7 +250,8 @@ Singleton {
     };
     wrong(keys.filter((key, index) => keys.indexOf(key) !== index), "keys bound twice");
     // As MenuKeys names a key event: a named key, a letter or a digit, after Ctrl+ or Alt+; one symbol, after Alt+ at most, as Ctrl gives a symbol no name.
-    const sendable = key => /^((Ctrl|Alt)\+)*(Up|Down|Left|Right|space|Tab|Backtab|Return|Escape|BackSpace|[A-Za-z0-9])$/.test(key) || /^(Alt\+)?[^\sA-Za-z0-9]$/.test(key);
+    const named = Object.keys(MenuKeys.named).filter(name => MenuKeys.named[name].bindable !== false);
+    const sendable = key => new RegExp("^((Ctrl|Alt)\\+)*(" + named.join("|") + "|[A-Za-z0-9])$").test(key) || /^(Alt\+)?[^\sA-Za-z0-9]$/.test(key);
     wrong(keys.filter(key => !sendable(key)), "keys no keyboard sends (an arrow, space, Return, BackSpace, a letter or a digit, after Ctrl+ or Alt+, or one symbol)");
     wrong(keys.filter(key => /^((Ctrl|Alt)\+)+[0-9]$/.test(key)), "keys that reach a listed item's own menu or the bar's list");
     wrong(keys.filter(key => reservedKeys.includes(key)), "keys reserved for the menu");

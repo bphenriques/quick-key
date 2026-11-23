@@ -18,6 +18,12 @@ TestCase {
     compare(Keys.label("Mod+n"), "s-n");
   }
 
+  function test_named() {
+    for (const name of Object.keys(Keys.named)) verify(Keys.named[name].label && Keys.label(name) === Keys.named[name].label, name);
+    compare(Keys.label("Ctrl+Page_Down"), "C-PgDn");
+    compare(Keys.named.Up.code, Qt.Key_Up);
+  }
+
   function test_assign() {
     compare(Keys.assign(["Open", "Off", "Other"], ["x"]), ["o", "f", "t"]);
     compare(Keys.assign(["Xylophone"], ["x"]), ["y"]);
