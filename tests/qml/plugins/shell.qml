@@ -93,6 +93,11 @@ ShellRoot {
         until: () => suite.waited >= 1500 && Plugins.get("ran")?.text !== "ran"
       },
       {
+        name: "an empty command fails, never running its first argument, whoever runs it (brightness.set unset)",
+        start: () => Quickshell.execDetached(Commands.line("", Quickshell.env("XDG_RUNTIME_DIR") + "/ran.sh")),
+        until: () => suite.waited >= 1500 && Plugins.get("ran")?.text !== "ran"
+      },
+      {
         name: "a plugin in the user's folder loads",
         until: () => Plugins.get("custom")?.text === "from the user's folder"
       },

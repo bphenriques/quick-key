@@ -8,9 +8,10 @@ import Quickshell.Io
 Singleton {
   id: root
 
-  // A trailing newline (a multi-line Nix string) would leave the arguments a command of their own.
+  // A trailing newline (a multi-line Nix string) would leave the arguments a command of their own, and no text would run the first: that fails, as `false`.
   function line(shell, ...args) {
-    return ["sh", "-c", shell.replace(/\s+$/, "") + args.map((_, i) => ' "$' + (i + 1) + '"').join(""), "sh", ...args];
+    const script = (shell ?? "").replace(/\s+$/, "");
+    return script ? ["sh", "-c", script + args.map((_, i) => ' "$' + (i + 1) + '"').join(""), "sh", ...args] : ["false"];
   }
 
   function run(shell, ...args) {
@@ -21,7 +22,7 @@ Singleton {
   function runThen(shell, after, ...args) {
     if (!after) return run(shell, ...args);
     const [sh, c, script, ...rest] = line(shell, ...args);
-    if (shell) Quickshell.execDetached([sh, c, "{ " + script + "\n} && { set --\n" + after + "\n}", ...rest]);
+    if (script) Quickshell.execDetached([sh, c, "{ " + script + "\n} && { set --\n" + after + "\n}", ...rest]);
   }
 
   // Runs it with these variables beside the environment (a notification's NOTIFICATION_*), so what they hold is never read as a command.
