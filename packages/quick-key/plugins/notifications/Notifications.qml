@@ -20,10 +20,13 @@ Plugin {
   readonly property bool summoned: Panels.top === root
   // Summoned or under the pointer, nothing moves and no time runs: those there keep their order, newcomers going after them.
   readonly property bool still: summoned || internal.hovered
+  // Critical first, then newest.
+  readonly property var atRest: internal.list.slice().sort((a, b) => critical(b) - critical(a) || b.came - a.came)
+  // Held still, the order they had then, so a replacement turning one critical moves no digit; newcomers after them.
   readonly property var ordered: {
-    const atRest = internal.list.slice().sort((a, b) => critical(b) - critical(a) || b.came - a.came);
-    if (!still) return atRest;
-    return atRest.filter(entry => entry.came <= internal.heldAt).concat(internal.list.filter(entry => entry.came > internal.heldAt).sort((a, b) => a.came - b.came));
+    if (!internal.holding) return atRest;
+    const held = new Set(internal.held);
+    return internal.held.filter(entry => internal.list.includes(entry)).concat(internal.list.filter(entry => !held.has(entry)).sort((a, b) => a.came - b.came));
   }
   // Summoned, the held ones show too.
   readonly property var showable: summoned ? ordered : ordered.filter(entry => critical(entry) || !internal.fullscreen && (!paused || !!entry.applied.ignorePause))
@@ -92,7 +95,7 @@ Plugin {
 
   // Its sender's, unless a rule sets another.
   function urgencyOf(entry) {
-    return entry.applied.urgency ?? settings.urgencies[entry.urgency];
+    return entry.applied.urgency ?? settings.urgencies[entry.urgency] ?? "normal";
   }
 
   function togglePause() {
@@ -114,10 +117,12 @@ Plugin {
     if (summoned) Panels.back();
   }
 
-  // However the keys go (ESC, the menu opening over the cards), the reply, the scroll and the pick go with them; back from the menu, the pick lands on a card that shows.
+  // However the keys go (ESC, the menu opening over the cards), the reply, the scroll and the pick go with them; back from the menu, the pick lands on a card that shows, once what shows has followed.
   onSummonedChanged: {
     if (summoned) {
-      if (!shown.includes(internal.picked)) internal.picked = newest();
+      Qt.callLater(() => {
+        if (summoned && !shown.includes(internal.picked)) internal.picked = newest();
+      });
       return;
     }
     internal.mode = "cards";
@@ -126,7 +131,10 @@ Plugin {
     internal.offset = 0;
   }
 
-  onStillChanged: if (still) internal.heldAt = internal.seq
+  onStillChanged: {
+    if (still) internal.held = atRest;
+    internal.holding = still;
+  }
 
   // The newest card on screen, which a binding acts on and summoning picks.
   function newest() {
@@ -160,9 +168,15 @@ Plugin {
     else leave(entry);
   }
 
+  // Emptied at once, then each closed: one by one, every card would sort the rest again.
   function clear() {
     endReply();
-    for (const entry of internal.list.slice()) dismiss(entry);
+    const all = internal.list;
+    internal.list = [];
+    for (const entry of all) {
+      if (entry.notification) entry.notification.dismiss();
+      else leave(entry);
+    }
   }
 
   // The pointer is on a card: every one holds still, so the one under it stays there.
@@ -216,6 +230,11 @@ Plugin {
   function sendReply(text, close) {
     const entry = internal.replying;
     if (!entry || text.trim() === "") return;
+    // A replacement took its reply away just now, before the card heard: as if it closed.
+    if (!entry.hasInlineReply) {
+      entry.draft = text;
+      return interrupt();
+    }
     entry.draft = "";
     // No longer the reply target, so if the reply closes it, it is kept to bring back.
     endReply();
@@ -332,18 +351,19 @@ Plugin {
 
   // Its icon as sent: a file or a name, from its image-path hint (notify-send -i), else its app icon (niri's screenshot).
   function iconOf(entry) {
-    return String(entry.hints["image-path"] ?? "") || entry.appIcon || "";
+    return String(entry.hints["image-path"] ?? entry.hints["image_path"] ?? "") || entry.appIcon || "";
   }
 
   // Its icon as a path when it is a file, else "".
   function fileOf(entry) {
     const icon = iconOf(entry);
     if (icon.startsWith("/")) return icon;
-    if (!icon.startsWith("file://")) return "";
+    const path = icon.replace(/^file:\/\/(localhost)?(?=\/)/, "");
+    if (path === icon) return "";
     try {
-      return decodeURIComponent(icon.slice(7));
+      return decodeURIComponent(path);
     } catch (error) {
-      return icon.slice(7);
+      return path;
     }
   }
 
@@ -356,24 +376,27 @@ Plugin {
 
   // Milliseconds it shows: a rule's, else 0 for a critical one, else its sender's, which Quickshell passes as the protocol does, in milliseconds; else its urgency's.
   function timeoutOf(entry) {
-    if (entry.applied.timeout !== undefined) return entry.applied.timeout * 1000;
+    // Within what a timer holds, and a millisecond at least, as a fraction of one would round to 0, never.
+    if (entry.applied.timeout !== undefined) return entry.applied.timeout > 0 ? Math.min(2147483647, Math.max(1, Math.round(entry.applied.timeout * 1000))) : 0;
     if (critical(entry)) return 0;
     if (entry.expireTimeout >= 0) return entry.expireTimeout;
     return 1000 * (urgencyOf(entry) === "low" ? settings.timeout.low : settings.timeout.normal);
   }
 
-  // Volume and brightness tools replace their last one by a tag.
+  // Volume and brightness tools replace their last one by a tag; one that is no text (a bare true) names nothing.
   function tagOf(notification) {
-    return String(notification.hints["x-dunst-stack-tag"] ?? notification.hints["x-canonical-private-synchronous"] ?? "");
+    const tag = notification.hints["x-dunst-stack-tag"] ?? notification.hints["x-canonical-private-synchronous"];
+    return typeof tag === "string" ? tag : "";
   }
 
   // A hidden one is left untracked, so Quickshell drops it; one by the tag of a card from its app takes that card, as a replacement by id does; `run` runs for a new one only, not one kept over a reload.
   function arrive(notification) {
     const applied = ruled(notification);
-    if (applied.hide) return;
-    notification.tracked = true;
     const tag = tagOf(notification);
     const same = tag ? internal.list.find(each => each.notification?.appName === notification.appName && tagOf(each.notification) === tag) : null;
+    // A replacement by tag that a rule hides still takes its card, so the card goes with it.
+    if (applied.hide && !same) return;
+    notification.tracked = true;
     const entry = same ?? entryOf.createObject(root, { came: ++internal.seq, arrived: notification.lastGeneration ? 0 : Date.now() });
     const old = entry.notification;
     entry.notification = notification;
@@ -385,9 +408,9 @@ Plugin {
     apply(entry, applied);
     if (summoned && !internal.picked) pick(entry);
     if (applied.run && !notification.lastGeneration) runFor(entry, applied.run);
-    // At most `keep`, the oldest closing first, never one that must not be missed or that you reply to.
+    // At most `keep`, the oldest closing first and critical ones last; never the one that just came, the one you reply to, or, held still, one on screen.
     const over = internal.list.length - settings.keep;
-    if (over > 0) internal.list.filter(each => !critical(each) && each !== internal.replying).sort((a, b) => a.came - b.came).slice(0, over).forEach(each => root.expire(each));
+    if (over > 0) internal.list.filter(each => each !== entry && each !== internal.replying && !(still && shown.includes(each))).sort((a, b) => critical(a) - critical(b) || a.came - b.came).slice(0, over).forEach(each => root.expire(each));
   }
 
   // Its rules and time, as it comes and as its sender replaces it, by id or tag: one that now hides goes, not to bring back; one that now takes no reply ends yours.
@@ -510,9 +533,11 @@ Plugin {
     property var replying: null
     property string mode: "cards"
     property bool copied: false
-    // Arrivals counted; the count when the cards last held still.
+    // Arrivals counted.
     property int seq: 0
-    property int heldAt: 0
+    // Held still, and the order then.
+    property bool holding: false
+    property var held: []
     property int offset: 0
     property string error: ""
   }

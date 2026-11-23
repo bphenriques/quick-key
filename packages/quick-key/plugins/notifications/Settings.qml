@@ -9,7 +9,7 @@ PluginSettings {
   property int limit: 3
   // Seconds a card shows when its sender sets no time, by urgency; one set alone leaves the other at its default; a critical card stays until dismissed.
   property var timeout: ({ low: 3, normal: 8 })
-  // Notifications kept at most, shown or waiting, no fewer than `limit`; past it the oldest close, never a critical one.
+  // Notifications kept at most, shown or waiting, no fewer than `limit`; past it the oldest close, critical ones last.
   property int keep: 100
   // The side of a card its actions sit on: right or left.
   property string actionSide: "right"
