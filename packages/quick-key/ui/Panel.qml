@@ -196,8 +196,8 @@ Scope {
 
         Surface {
           id: cardSurface
-          // Along the edge as `menu.align` says; the bar and the input follow it.
-          x: Config.menu.align === "left" ? stack.margin : Config.menu.align === "right" ? parent.width - width - stack.margin : (parent.width - width) / 2
+          // Centred; the bar and the input follow it.
+          x: (parent.width - width) / 2
           y: frame.height - stack.card - height
           // No wider than the screen leaves within its margins, whatever width a level asks for.
           width: Math.min(root.width, parent.width - 2 * stack.margin)
