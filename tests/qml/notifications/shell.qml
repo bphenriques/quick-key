@@ -315,9 +315,13 @@ ShellRoot {
         until: () => !root.plugin.summoned && !root.find("Third")
       },
       {
-        name: "a sender offering a reply gets it first among the card's actions, on TAB",
+        name: "with no card shown taking a reply, ? lists none of the reply's keys",
+        until: () => !root.plugin.shown.some(card => card.hasInlineReply) && !root.plugin.keys.some(hint => hint.key === "Tab" || hint.key === "Ctrl+Shift+Return")
+      },
+      {
+        name: "a sender offering a reply gets it first among the card's actions, on TAB, which ? lists",
         start: () => root.chatSend("Ana"),
-        until: () => root.find("Ana")?.hasInlineReply && root.plugin.actionsOf(root.find("Ana"))[0]?.key === "Tab"
+        until: () => root.find("Ana")?.hasInlineReply && root.plugin.actionsOf(root.find("Ana"))[0]?.key === "Tab" && root.plugin.keys.some(hint => hint.key === "Tab")
       },
       {
         name: "TAB opens the prompt in the card, and a reply sent reaches its sender, which closes it as an action does, and the keys go back",

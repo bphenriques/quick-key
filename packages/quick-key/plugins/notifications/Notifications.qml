@@ -42,13 +42,13 @@ Plugin {
     { key: ["Up", "Down"], desc: words.helpMove },
     { key: "Return", desc: words.helpOpen, run: () => !!internal.picked && (open(internal.picked), release(), true) },
     { key: "x", desc: words.helpDismiss, run: () => !!internal.picked && (dismiss(internal.picked), true) },
-    { key: "Tab", desc: words.helpReply },
-    { key: "Ctrl+Shift+Return", desc: words.helpLeave },
+    { key: "Tab", desc: words.helpReply, reply: true },
+    { key: "Ctrl+Shift+Return", desc: words.helpLeave, reply: true },
     { key: "Ctrl+X", desc: words.helpClear, run: () => clear() },
     { key: "Ctrl+r", desc: words.helpRestore, run: () => restore() },
     { key: "Ctrl+p", desc: words.helpPause, run: () => togglePause() },
     { key: "Escape", desc: words.helpEscape, run: () => release() }
-  ]
+  ].filter(entry => !entry.reply || shown.some(card => card.hasInlineReply))
   // The card the keys act on while summoned, and the one replied to, its prompt in its actions' place.
   readonly property var picked: internal.picked
   readonly property var replying: internal.replying

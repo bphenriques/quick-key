@@ -424,9 +424,23 @@ ShellRoot {
           menu.handleKey({ key: Qt.Key_Question, modifiers: Qt.ShiftModifier, text: "?" });
         },
         until: () => {
-          if (menu.hints.length === 0 || MenuKeys.label(menu.hints[0].key) !== "C-") return false;
+          if (MenuKeys.label(menu.hints[menu.hints.length - 1]?.key ?? "") !== "ESC") return false;
           menu.handleKey({ key: Qt.Key_X, modifiers: Qt.NoModifier, text: "x" });
           return menu.held === "";
+        }
+      },
+      {
+        name: "? lists only keys that act: a hold while it lists something, M-1 while an item has its own menu",
+        until: () => {
+          menu.hide();
+          menu.push({ kind: "entry", entry: { list: "acting" } });
+          if (menu.rows.length !== 1) return false;
+          const listed = level => {
+            menu.stack = level ? [level] : [];
+            return menu.help.map(key => key.key).join();
+          };
+          return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && listed({ kind: "entry", entry: { list: "acting" } }) === "Alt+1,/,Escape"
+            && listed({ kind: "entry", entry: { list: "devices" } }) === "/,Escape";
         }
       },
       {

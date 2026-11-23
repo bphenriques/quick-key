@@ -31,7 +31,7 @@ Letters are actions and digits are list items.
 - `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`, as niri writes bindings) where its bar does not take it. A modifier never runs the plain key, Shift only picks the capital letter, and Super stays the compositor's.
 - Hints show keys Emacs-style: `C-` Ctrl, `M-` Alt, `s-` Super, Shift as the capital letter, symbols for the arrows, `DEL` for Backspace and `ESC` for Escape (`C-←→`, `s-k`).
 - Holding `Super` for a second lists each bar entry's `shortcut`, the compositor key bound to it.
-- `?` lists the keys no row shows: the holds, `M-1` for an item's own menu, `ESC` and, on a level with an input, `TAB` and `C-S-RET`. Any key closes it.
+- `?` lists the keys no row shows, where they act: each hold while it lists something, `M-1` while an item has its own menu, `ESC` and, on a level with an input, `TAB` and `C-S-RET`. Any key closes it.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
 - `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A key that closes the menu ends the path. A digit is the same item only while pinned. `menu keys` prints every path as Markdown.
 

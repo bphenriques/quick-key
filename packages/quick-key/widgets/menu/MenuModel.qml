@@ -56,12 +56,16 @@ Scope {
   readonly property var barSlots: level === null ? slotsOf(topBar) : kinds[level.kind].bar(level)
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
   readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > 0
-  // Keys no row shows, listed on `?`.
-  readonly property var help: [
-    { key: "Ctrl+", desc: Words.helpBarKeys },
-    { key: "Super+", desc: Words.helpCompositor },
-    { key: "Alt+1", desc: Words.helpItemMenu }
-  ].concat(
+  // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
+  readonly property var holds: ({
+      Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
+      Super: barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item)))
+    })
+  // Keys no row shows, listed on `?` where they act.
+  readonly property var help: [].concat(
+    holds.Ctrl.length ? [{ key: "Ctrl+", desc: Words.helpBarKeys }] : [],
+    holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
+    rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
     slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
     island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpBackground }] : [],
     island.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
@@ -69,8 +73,7 @@ Scope {
   )
   readonly property bool slashFilters: !!level?.entry?.list && !find(items, "/")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
-  readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name)))
-    : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
+  readonly property var hints: held === "Help" ? help : holds[held] ?? []
   // Only keys the state changes; fixed ones are listed on `?`.
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])

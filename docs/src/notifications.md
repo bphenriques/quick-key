@@ -63,7 +63,7 @@ binds {
 
 With Nix, the same through `exec.ipc`: `Mod+N { spawn-sh "${config.programs.quick-key.exec.ipc} notifications action summon"; }`.
 
-The plugin's `shortcut` only labels that key. Their keys show where they act, and nothing moves. Summoned, waiting cards show too, `limit` at a time, the arrows scrolling past them. The bar under the cards holds the keys the state changes and counts the cards not shown (`+2`). `?` lists the rest.
+The plugin's `shortcut` only labels that key. Their keys show where they act, and nothing moves. Summoned, waiting cards show too, `limit` at a time, the arrows scrolling past them. The bar under the cards holds the keys the state changes and counts the cards not shown (`+2`). `?` lists the rest, a reply's keys only while a card shown takes one.
 
 - A digit picks a card by its place among all, so it holds still, scrolling it into view. `↑↓` move the pick, scrolling past the last one.
 - The picked card's letters run its actions. The keys stay, so one summon can clear several.
