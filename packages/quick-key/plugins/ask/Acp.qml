@@ -67,6 +67,8 @@ Item {
   function load(id) {
     if (!internal.done) return;
     session = id;
+    // Loaded even when open here already, as one just cleared still is, so its history replays.
+    internal.opened = "";
     const live = begin();
     settled(() => {
       internal.replaying = true;

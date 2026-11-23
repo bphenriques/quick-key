@@ -389,6 +389,14 @@ ShellRoot {
         }
       },
       {
+        name: "a conversation cleared, then resumed, is loaded again, its history replayed",
+        start: () => {
+          Plugins.get("recaller").reset();
+          Plugins.get("recaller").select("old");
+        },
+        until: () => Plugins.get("recaller").stage === "idle" && Plugins.get("recaller").exchanges[0]?.reply === "from before"
+      },
+      {
         name: "an agent that ends before listing says why, and the list is empty",
         until: () => {
           const ask = Plugins.get("unlisted");
