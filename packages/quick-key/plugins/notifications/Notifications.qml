@@ -48,7 +48,7 @@ Plugin {
     { key: "Ctrl+Shift+x", desc: words.helpClear },
     { key: "Ctrl+r", desc: words.helpRestore },
     { key: "Ctrl+p", desc: words.helpPause },
-    { key: "Escape", desc: Words.helpEscape }
+    { key: "Escape", desc: words.helpEscape }
   ]
   // The card the keys act on while summoned, and the one replied to, its prompt in its actions' place.
   readonly property var picked: internal.picked
@@ -79,7 +79,8 @@ Plugin {
       helpClear: "Clear all",
       helpRestore: "Bring back the last closed",
       helpPause: "Pause or resume",
-      dismiss: "Dismiss"
+      dismiss: "Dismiss",
+      helpEscape: "Let go"
     })
   // As a list, for an entry with `list` set to its name: the cards, then the last closed, newest first; choosing one opens it, or brings a closed one back.
   items: atRest.map(entry => itemOf(entry, false)).concat(internal.closed.slice().reverse().map(entry => itemOf(entry, true)))
@@ -284,7 +285,8 @@ Plugin {
     return {
       id: String(entry.came),
       label: title,
-      icon: Glyphs.notifications,
+      // Critical by its glyph too, not by colour alone.
+      icon: critical(entry) ? Glyphs.urgent : Glyphs.notifications,
       detail: detail,
       tone: critical(entry) ? "alert" : "",
       done: closed,

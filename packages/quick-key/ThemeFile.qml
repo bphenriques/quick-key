@@ -22,7 +22,8 @@ FileView {
     try {
       read = JSON.parse(root.text());
     } catch (error) {
-      console.warn("theme", root.path, "is no JSON:", error);
+      // Caught mid-write, most likely: the last good colours stay until the file reads whole.
+      return console.warn("theme", root.path, "is no JSON:", error);
     }
     const colours = {};
     for (const [name, value] of Object.entries(read && typeof read === "object" ? read : {})) {

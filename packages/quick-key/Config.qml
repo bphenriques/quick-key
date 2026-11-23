@@ -147,6 +147,11 @@ Singleton {
   }
 
   readonly property bool themeMissing: userTheme.missing && shippedTheme.missing
+
+  // A theme file missing as the shell started has no change to watch: read again as the menu opens.
+  function refresh() {
+    if (userTheme.missing) userTheme.reload();
+  }
   onThemeMissingChanged: if (themeMissing) console.warn("theme", adapter.theme.name, "not found in", configDir + "/themes or the presets");
 
   // A reload rather than a re-read, so removed settings fall back to their defaults.

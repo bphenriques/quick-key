@@ -84,7 +84,7 @@ PluginSettings {
       const unknown = String(action.desc ?? "").match(/\{\w+\}/g)?.map(name => name.slice(1, -1)).filter(name => !named.includes(name)) ?? [];
       if (unknown.length) found.push(at + "shows " + unknown.map(name => "{" + name + "}").join(", ") + ", which no group of its match names");
     });
-    for (const [field, pattern] of Object.entries(rule.match ?? {})) {
+    for (const [field, pattern] of Object.entries(Config.kind(rule.match) === "map" ? rule.match : {})) {
       if (!fields.includes(field)) found.push("matches " + field + ", none of " + fields.join(", "));
       else if (typeof pattern !== "string") found.push("matches " + field + " with no string");
       else {

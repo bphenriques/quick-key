@@ -31,16 +31,14 @@ Item {
   }
 
   IconImage {
+    id: image
     anchors.fill: parent
-    visible: root.source !== ""
+    // Tinted, it is only the shape the tone fills.
+    visible: root.source !== "" && root.recolour !== "tint"
     source: root.source
     layer.enabled: root.recolour !== "colour"
     layer.effect: MultiEffect {
       saturation: root.recolour === "grey" ? -1 : 0
-      // Brightened to white first, so the colour is the tone's whatever the icon's own.
-      brightness: root.recolour === "tint" ? 1 : 0
-      colorization: root.recolour === "tint" ? 1 : 0
-      colorizationColor: glyphLabel.color
     }
     // An image has no colour to dim, so a dim one fades instead.
     opacity: root.tone === "dim" ? Config.theme.dimOpacity : 1
@@ -49,6 +47,21 @@ Item {
       NumberAnimation {
         duration: Config.theme.animationDuration
       }
+    }
+  }
+
+  // The tone's colour through the image's shape, so a white symbolic icon reads on a light theme.
+  Rectangle {
+    anchors.fill: parent
+    visible: root.source !== "" && root.recolour === "tint"
+    color: glyphLabel.color
+    layer.enabled: visible
+    layer.effect: MultiEffect {
+      maskEnabled: true
+      maskSource: image
+      // Its opaque pixels, edges softened: at 0, transparent ones would pass too.
+      maskThresholdMin: 0.5
+      maskSpreadAtMin: 1
     }
   }
 }

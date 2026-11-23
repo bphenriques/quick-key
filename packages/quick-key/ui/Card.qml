@@ -135,9 +135,10 @@ Surface {
             glyph: Glyphs.urgent
           }
 
-          // A third of the width at most, so a long app name never takes the title's room.
+          // A third of the width at most, so a long app name never takes the title's room; filling up to that, as a label that does not fill keeps a stale width.
           Label {
-            Layout.maximumWidth: root.width / 3
+            Layout.fillWidth: true
+            Layout.maximumWidth: Math.min(implicitWidth, root.width / 3)
             elide: Text.ElideRight
             tone: "dim"
             text: root.aside
