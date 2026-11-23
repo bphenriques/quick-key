@@ -2,6 +2,7 @@ import QtQuick
 import qs
 import qs.services
 import qs.ui
+import "tasks.js" as Lib
 
 // Tasks from a file (docs/src/tasks.md).
 Plugin {
@@ -20,7 +21,7 @@ Plugin {
     reopenFailed: what => "Could not reopen " + what
   })
   // In the order chosen, those done as the menu opened last: a tick in the visit keeps its digit, so the same key unticks it. A tick shows before the file has it.
-  readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task).sort((a, b) => root.compare(a, b))
+  readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task).sort((a, b) => Lib.compare(a, b, root.sort, root.settled))
   // A task being added shows in the input, as a turn does, so no row moves under the keys until it is listed.
   turn: adding.length > 0 ? { question: adding.join(" · "), text: "", phase: "working", activity: words.adding } : null
   // Kept once the level's actions step them, over a reload or a restart.
@@ -33,7 +34,7 @@ Plugin {
   // The last tick or add that failed, until the next one or opening: it shows above the file's own error.
   property string failure: ""
   readonly property var due: tasks.filter(task => !task.done && task.due && task.due.slice(0, 10) <= today)
-  readonly property var late: due.filter(task => root.isLate(task))
+  readonly property var late: due.filter(task => Lib.isLate(task, root.now, root.today))
   readonly property var updated: state.updated ? Clock.parse(state.updated) : null
   // Done as the menu opened: hidden for the visit, so a tick made in it stays to untick.
   property var settled: []
@@ -55,11 +56,11 @@ Plugin {
   glyphs: late.length > 0 ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
   // The most urgent, whatever the order chosen: late first, then by due.
-  fields: ({ title: (late.length > 0 ? late : due).slice().sort((a, b) => root.order(a.due, b.due))[0]?.title ?? "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" })
+  fields: ({ title: (late.length > 0 ? late : due).slice().sort((a, b) => Lib.order(a.due, b.due))[0]?.title ?? "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" })
   fieldTones: ({ updated: Clock.stale(updated, settings.staleAfter) ? "warning" : "" })
   items: tasks.map(task => {
-    const late = root.isLate(task);
-    const priority = root.priorityOf(task);
+    const late = Lib.isLate(task, root.now, root.today);
+    const priority = Lib.priorityOf(task);
     return {
       id: task.id,
       label: task.title,
@@ -75,34 +76,6 @@ Plugin {
       verb: task.done ? "untick" : "tick"
     };
   })
-
-  // Dates by code point: a locale may sort the undated mark (~) before digits.
-  function order(a, b) {
-    return a < b ? -1 : a > b ? 1 : 0;
-  }
-
-  function isLate(task) {
-    return !task.done && !!task.due && (task.due.includes("T") ? task.due < now : task.due < today);
-  }
-
-  // As iCalendar ranks them: 1 to 4 high, 5 medium, 6 to 9 low; unset or 0, none.
-  function priorityOf(task) {
-    const rank = task.priority ?? 0;
-    return rank <= 0 ? "" : rank < 5 ? "high" : rank === 5 ? "medium" : "low";
-  }
-
-  // Those done as the menu opened after the rest, then by the order chosen, then by due (undated last), then by title; priority 1 first, none last.
-  function compare(a, b) {
-    const done = settled.includes(a.id) - settled.includes(b.id);
-    if (done) return done;
-    const due = order(a.due ?? "~", b.due ?? "~");
-    const title = a.title.localeCompare(b.title);
-    const rank = task => task.priority > 0 ? task.priority : 10;
-    if (sort === "title") return title || due;
-    if (sort === "priority") return rank(a) - rank(b) || due || title;
-    if (sort === "list") return order(a.list ?? "", b.list ?? "") || due || title;
-    return due || title;
-  }
 
   function after(cycle, current) {
     return cycle[(cycle.indexOf(current) + 1) % cycle.length];
@@ -153,19 +126,11 @@ Plugin {
     if (!updated || Clock.stale(updated, settings.syncAfter)) exec(settings.sync);
   }
 
-  // Each open timed task once it falls due, however late the check comes (a suspend, the shell off); the first check fires only this minute's, not every late one.
   function remind() {
     if (!settings.remind || !state.tasks) return;
-    const key = task => task.title + " " + task.due;
-    const timed = tasks.filter(task => task.due?.includes("T"));
-    // Those the file no longer lists are forgotten.
-    const fired = Array.from(reminded ?? []).filter(fired => timed.some(task => key(task) === fired));
-    for (const task of timed) {
-      if (task.done || task.due > now || fired.includes(key(task))) continue;
-      fired.push(key(task));
-      if (reminded || task.due === now) exec(settings.remind, task.title, Clock.time(Clock.parse(task.due)));
-    }
-    if (!reminded || fired.join("\n") !== Array.from(reminded).join("\n")) Kept.set(name + ".reminded", fired);
+    const found = Lib.due(tasks, reminded, now);
+    for (const task of found.remind) exec(settings.remind, task.title, Clock.time(Clock.parse(task.due)));
+    if (!reminded || found.fired.join("\n") !== Array.from(reminded).join("\n")) Kept.set(name + ".reminded", found.fired);
   }
 
   KeptValue {

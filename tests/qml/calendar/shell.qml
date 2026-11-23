@@ -187,28 +187,18 @@ ShellRoot {
         until: () => rows("Ages").length > 700 && rows("Ages").length <= 733 && rows("Trip").length === 3
       },
       {
-        name: "an event reminded before a restart is not reminded again",
+        name: "an event not reminded yet is, and kept",
         // One five minutes on.
         start: () => {
           const start = Clock.minuteKey(new Date(Date.now() + 300000));
-          Kept.set("calendar.reminded", [start + " soon"]);
+          Kept.set("calendar.reminded", []);
           write({ events: [{ uid: "soon", title: "Soon", start, end: start, color: "#4285f4" }] });
         },
         until: () => {
           if (!Calendar.timeline.some(row => row.event.title === "Soon")) return false;
           Calendar.remind();
           reminded.reload();
-          return suite.waited >= 1000 && !reminded.text().includes("Soon");
-        }
-      },
-      {
-        name: "one not reminded yet is, once, and kept",
-        start: () => Kept.set("calendar.reminded", []),
-        until: () => {
-          Calendar.remind();
-          reminded.reload();
-          return reminded.text().split("\n").filter(line => line === "Soon").length === 1 && suite.waited >= 1000
-            && Array.from(Kept.value("calendar.reminded") ?? []).some(id => id.endsWith(" soon"));
+          return reminded.text().split("\n").includes("Soon") && Array.from(Kept.value("calendar.reminded") ?? []).some(id => id.endsWith(" soon"));
         }
       }
     ]

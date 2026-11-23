@@ -42,5 +42,4 @@ case "$1" in
   sync) echo synced > "$XDG_RUNTIME_DIR/synced" ;;
   unsync) rm -f "$XDG_RUNTIME_DIR/synced" ;;
   remind) echo "$2 $3" > "$XDG_RUNTIME_DIR/reminded" ;;
-  unremind) rm -f "$XDG_RUNTIME_DIR/reminded" ;;
 esac

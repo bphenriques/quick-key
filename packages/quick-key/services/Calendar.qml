@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs
+import "calendar.js" as Lib
 
 // Events from Config.calendar.file (docs/src/calendar.md), read again whenever the file is replaced.
 Singleton {
@@ -117,20 +118,13 @@ Singleton {
     }
   }
 
-  // Each timed event once, Config.calendar.remindBefore minutes ahead, on the clock's own minute; kept by id, so a restart repeats none.
+  // On the clock's own minute; kept by id, so a restart repeats none.
   function remind() {
     if (!Config.calendar.remind || !store.loaded) return;
-    const now = Clock.date;
-    const until = new Date(now.getTime() + Config.calendar.remindBefore * 60000);
     const kept = Array.from(Kept.value("calendar.reminded") ?? []);
-    const reminded = kept.filter(id => store.events.some(event => event.id === id && event.start > now));
-    for (const event of store.events) {
-      if (event.allDay || event.start <= now || event.start > until || reminded.includes(event.id)) continue;
-      reminded.push(event.id);
-      const when = Clock.time(event.start) + (event.location ? " · " + event.location : "");
-      Commands.run(Config.calendar.remind, event.title, when);
-    }
-    if (reminded.join("\n") !== kept.join("\n")) Kept.set("calendar.reminded", reminded);
+    const found = Lib.due(store.events, kept, Clock.date, Config.calendar.remindBefore);
+    for (const event of found.remind) Commands.run(Config.calendar.remind, event.title, Clock.time(event.start) + (event.location ? " · " + event.location : ""));
+    if (found.fired.join("\n") !== kept.join("\n")) Kept.set("calendar.reminded", found.fired);
   }
 
   Connections {

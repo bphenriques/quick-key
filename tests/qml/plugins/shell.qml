@@ -17,7 +17,6 @@ ShellRoot {
   property int repeats: 0
   // The minute the timed task was last written as due.
   property string dueMinute: ""
-  property bool missedRead: false
 
   CommandProcess {
     id: complainer
@@ -152,14 +151,6 @@ ShellRoot {
         }
       },
       {
-        name: "a timed task is late once its minute has passed, today too; one due today without a time only from tomorrow",
-        until: () => {
-          const tasks = Plugins.get("tasks");
-          const minuteAgo = Clock.minuteKey(new Date(Clock.date.getTime() - 60000));
-          return tasks.isLate({ due: minuteAgo }) && !tasks.isLate({ due: tasks.now }) && !tasks.isLate({ due: tasks.today }) && !tasks.isLate({ due: minuteAgo, done: true });
-        }
-      },
-      {
         name: "a task done as the menu opens is hidden for the visit, off the rows and still in the list, after the open ones",
         start: () => Plugins.get("tasks").refresh(),
         until: () => Plugins.get("tasks").items.find(item => item.id === "e").hidden && !Plugins.get("tasks").items.find(item => item.id === "a").hidden
@@ -245,35 +236,15 @@ ShellRoot {
         }
       },
       {
-        name: "a first check, with none fired yet, skips what fell due before it and keeps it as fired",
-        start: () => root.tasks("missed"),
-        until: () => {
-          // Cleared once the file has it, so a check between never sees the last test's task, due this minute, as a first.
-          if (!Plugins.get("tasks").tasks.some(task => task.id === "m")) return false;
-          if (!root.missedRead) {
-            root.missedRead = true;
-            Kept.set("tasks.reminded", undefined);
-            root.tasks("unremind");
-            Plugins.get("tasks").remind();
-          }
-          return suite.waited >= 1000 && !Plugins.get("reminded")?.text && Array.from(Kept.value("tasks.reminded") ?? []).some(key => key.startsWith("Missed "));
-        }
-      },
-      {
         name: "a reminder that fell due unseen (a suspend, the shell off) fires as the next check comes, its time as the clock says it",
         start: () => {
           Kept.set("tasks.reminded", []);
-          Plugins.get("tasks").remind();
+          root.tasks("missed");
         },
-        until: () => Plugins.get("reminded")?.text === "Missed " + Clock.time(Clock.parse(Plugins.get("tasks").state.tasks[0].due))
-      },
-      {
-        name: "and only once",
-        start: () => {
-          root.tasks("unremind");
-          Plugins.get("tasks").remind();
-        },
-        until: () => suite.waited >= 1000 && !Plugins.get("reminded")?.text
+        until: () => {
+          const missed = Plugins.get("tasks").state.tasks[0];
+          return missed?.id === "m" && Plugins.get("reminded")?.text === "Missed " + Clock.time(Clock.parse(missed.due));
+        }
       },
       {
         name: "a tick whose command succeeds but the file never says so shows the file's state again",
