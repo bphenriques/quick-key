@@ -111,6 +111,23 @@ Scope {
         }
       }
 
+      // Each card blurred behind on its own, as the menu is, the gaps between them left clear.
+      BackgroundEffect.blurRegion: Region {
+        regions: Array.from({ length: blurs.count }, (_, i) => blurs.objectAt(i))
+      }
+
+      Instantiator {
+        id: blurs
+        model: view.settings.limit
+
+        Region {
+          required property int index
+          readonly property var card: cards.count > index ? cards.itemAt(index) : null
+          item: card?.visible ? card : null
+          radius: Config.theme.radius
+        }
+      }
+
       FocusScope {
         anchors.fill: parent
         focus: true
@@ -139,6 +156,7 @@ Scope {
             spacing: Config.theme.spacing
 
             Repeater {
+              id: cards
               // As many as can show, past the cards hidden: a count that changed would make every card again.
               model: view.settings.limit
 
