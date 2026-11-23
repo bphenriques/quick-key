@@ -71,6 +71,8 @@ Singleton {
       "theme.fontSize": [4, 48],
       "theme.lineHeight": [0.1, 4],
       "theme.iconSize": [4, 256],
+      "menu.margin": [0, 1000],
+      "popups.margin": [0, 1000],
       "theme.padding": [0, 100],
       "theme.spacing": [0, 100],
       "theme.itemPaddingX": [0, 100],
@@ -108,7 +110,8 @@ Singleton {
       "theme.appIcons": ["colour", "grey", "tint"],
       "menu.edge": ["bottom", "top"],
       "menu.align": ["left", "center", "right"],
-      "menu.inputSide": ["body", "bar"]
+      "menu.inputSide": ["body", "bar"],
+      "popups.position": ["right", "left", "top", "bottom"]
     })
 
   function choiceProblems(json) {

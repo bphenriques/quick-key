@@ -223,8 +223,8 @@ Singleton {
         property int radius: 10
         // Corner radius of rows, highlights and tips, in pixels.
         property int itemRadius: 6
-        // An icon's size, in pixels.
-        property int iconSize: 24
+        // An icon's size, in pixels; unset, it follows the font, 24 at 11 points.
+        property int iconSize: Math.round(24 * fontSize / 11)
         // Apps' own icons (the tray's, a notification's): "colour" as drawn, "grey" like the glyphs beside them, or "tint", a symbolic icon in the text's colour so a white one reads on a light theme, any other in greys.
         property string appIcons: "colour"
         // The menu, pop-ups and cards keep clear of space another bar reserves, instead of covering it.
@@ -240,7 +240,7 @@ Singleton {
         property int itemPaddingY: 5
         // The gap between a list's rows, in pixels.
         property int listSpacing: 0
-        // The distance from the screen's edge to the menu, pop-ups and cards, in pixels.
+        // The distance from the screen's edge to the menu, pop-ups and cards, in pixels, unless each sets its own `margin`.
         property int edgeMargin: 35
         // The pop-up's level bar length and icon size, in pixels.
         property int osdLength: 160
@@ -259,8 +259,10 @@ Singleton {
           property var center: null
           property var right: null
         }
-        // A level's width in pixels, unless its entry sets `width`.
-        property int width: 960
+        // A level's width in pixels, unless its entry sets `width`; unset, it follows the font, 960 at 11 points, never past the screen.
+        property int width: Math.round(960 * adapter.theme.fontSize / 11)
+        // Its distance from the screen's edge, in pixels, and its panels'.
+        property int margin: adapter.theme.edgeMargin
         // The columns a level lays its actions out in, unless its entry sets `columns`.
         property int columns: 2
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
@@ -298,6 +300,10 @@ Singleton {
         property int timeout: 1500
         // The statuses and plugins whose changes pop up, by name; battery's as it is plugged in or out.
         property var show: ["sink", "source", "brightness", "keyboardLayout", "keepAwake"]
+        // The screen edge a pop-up sits at, centred along it: right, left, top or bottom; at the top or bottom a level reads across. The corner pills stay top right.
+        property string position: "right"
+        // Its distance from the screen's edge, in pixels, and the corner pills'.
+        property int margin: adapter.theme.edgeMargin
       }
 
       property JsonObject audio: JsonObject {

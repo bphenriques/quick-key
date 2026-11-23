@@ -10,11 +10,12 @@ Scope {
   id: root
 
   property bool shown: false
-  readonly property int slot: Math.max(0, CornerPills.order.indexOf(root))
   property string tone: ""
   property string namespace
   default property Component content
   readonly property bool hovered: internal.hovered
+  // As tall as it draws, for CornerPills to stack the rest under it.
+  property real height: 0
 
   signal clicked
 
@@ -44,8 +45,10 @@ Scope {
 
         anchors.top: true
         anchors.right: true
-        margins.top: Config.theme.edgeMargin + root.slot * (implicitHeight + Config.theme.spacing)
-        margins.right: Config.theme.edgeMargin
+        margins.top: Config.popups.margin + CornerPills.offset(root)
+        margins.right: Config.popups.margin
+        onImplicitHeightChanged: root.height = implicitHeight
+        Component.onCompleted: root.height = implicitHeight
         WlrLayershell.namespace: "quick-key-" + root.namespace
         // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
         BackgroundEffect.blurRegion: Region {

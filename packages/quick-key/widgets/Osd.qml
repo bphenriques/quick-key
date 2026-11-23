@@ -69,8 +69,18 @@ Scope {
       readonly property string glyph: status ? status.glyph() : plugin ? plugin.glyph : ""
       readonly property string text: status ? (status.popup ? status.popup() : Statuses.value(status, fields).text) : plugin ? [plugin.text, plugin.detail].filter(part => part).join(" ") : ""
 
-      anchors.right: true
-      margins.right: Config.theme.edgeMargin
+      // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
+      readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
+      // A level no longer than half its screen.
+      readonly property real length: Math.min(Config.theme.osdLength, (across ? screen.width : screen.height) / 2 || Config.theme.osdLength)
+      anchors.right: Config.popups.position === "right"
+      anchors.left: Config.popups.position === "left"
+      anchors.top: Config.popups.position === "top"
+      anchors.bottom: Config.popups.position === "bottom"
+      margins.right: Config.popups.margin
+      margins.left: Config.popups.margin
+      margins.top: Config.popups.margin
+      margins.bottom: Config.popups.margin
       WlrLayershell.namespace: "quick-key-osd"
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {
@@ -81,14 +91,14 @@ Scope {
       implicitWidth: metered ? bar.implicitWidth : pill.implicitWidth
       implicitHeight: metered ? bar.implicitHeight : pill.implicitHeight
 
-      // A level: a vertical bar, the level above the icon.
+      // A level: a bar, the level above the icon, or after it when it reads across.
       Surface {
         id: bar
         opacity: fade.value
         anchors.fill: parent
         visible: window.metered
-        implicitWidth: Config.theme.osdIconSize + 2 * Config.theme.padding
-        implicitHeight: levelColumn.implicitHeight + 2 * Config.theme.padding
+        implicitWidth: (window.across ? levelColumn.implicitWidth : Config.theme.osdIconSize) + 2 * Config.theme.padding
+        implicitHeight: (window.across ? Config.theme.osdIconSize : levelColumn.implicitHeight) + 2 * Config.theme.padding
 
         // The wheel runs the pair action the status names; a pill adjusts nothing.
         WheelSteps {
@@ -100,21 +110,25 @@ Scope {
           }
         }
 
-        Column {
+        Grid {
           id: levelColumn
           anchors.centerIn: parent
           spacing: Config.theme.padding
+          columns: window.across ? 2 : 1
+          // Across, the icon first, as on a row.
+          layoutDirection: window.across ? Qt.RightToLeft : Qt.LeftToRight
+          horizontalItemAlignment: Grid.AlignHCenter
+          verticalItemAlignment: Grid.AlignVCenter
 
           Meter {
-            anchors.horizontalCenter: parent.horizontalCenter
-            orientation: Qt.Vertical
-            height: Config.theme.osdLength
+            orientation: window.across ? Qt.Horizontal : Qt.Vertical
+            width: window.across ? window.length : implicitWidth
+            height: window.across ? implicitHeight : window.length
             tone: window.muted ? "dim" : "primary"
             value: window.metered ? window.status.meter() : 0
           }
 
           Icon {
-            anchors.horizontalCenter: parent.horizontalCenter
             size: Config.theme.osdIconSize
             tone: window.tone
             glyph: window.glyph

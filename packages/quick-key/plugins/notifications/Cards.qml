@@ -92,12 +92,13 @@ Scope {
       anchors.bottom: !view.top
       anchors.right: view.right
       anchors.left: !view.right
-      // In the top right, under the corner pills (recording) as they stack.
-      margins.top: Config.theme.edgeMargin + (view.right ? CornerPills.order.length * (Metrics.line + 3 * Config.theme.spacing) : 0)
-      margins.bottom: Config.theme.edgeMargin
-      margins.right: Config.theme.edgeMargin
-      margins.left: Config.theme.edgeMargin
-      implicitWidth: view.settings.width
+      // In the top right, under the corner pills (recording) as they stack, a gap more past them.
+      margins.top: view.settings.margin + (view.right && CornerPills.order.length > 0 ? CornerPills.height + Config.theme.spacing : 0)
+      margins.bottom: view.settings.margin
+      margins.right: view.settings.margin
+      margins.left: view.settings.margin
+      // No wider than its screen within the margins, whatever width is set.
+      implicitWidth: Math.min(view.settings.width, (view.screen?.width ?? view.settings.width) - 2 * view.settings.margin)
       implicitHeight: stack.implicitHeight
       WlrLayershell.namespace: "quick-key-notifications"
       WlrLayershell.keyboardFocus: view.plugin.summoned ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

@@ -108,8 +108,8 @@ Scope {
           anchors.right: parent.right
           anchors.bottom: Config.atTop ? undefined : bar.visible ? bar.top : parent.bottom
           anchors.top: !Config.atTop ? undefined : bar.visible ? bar.bottom : parent.top
-          anchors.bottomMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
-          anchors.topMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
+          anchors.bottomMargin: bar.visible ? Config.theme.spacing / 2 : Config.menu.margin
+          anchors.topMargin: bar.visible ? Config.theme.spacing / 2 : Config.menu.margin
         }
 
         // Over the card, so a tip on its items shows over it.
@@ -120,8 +120,8 @@ Scope {
           anchors.horizontalCenter: card.horizontalCenter
           anchors.bottom: Config.atTop ? undefined : parent.bottom
           anchors.top: Config.atTop ? parent.top : undefined
-          anchors.bottomMargin: Config.theme.edgeMargin
-          anchors.topMargin: Config.theme.edgeMargin
+          anchors.bottomMargin: Config.menu.margin
+          anchors.topMargin: Config.menu.margin
           width: card.width
           height: barRow.implicitHeight + Config.theme.padding / 2
 
@@ -149,13 +149,13 @@ Scope {
         Surface {
           id: card
           // Along the edge as `menu.align` says; the bar and the input follow it.
-          x: Config.menu.align === "left" ? Config.theme.edgeMargin : Config.menu.align === "right" ? parent.width - width - Config.theme.edgeMargin : (parent.width - width) / 2
+          x: Config.menu.align === "left" ? Config.menu.margin : Config.menu.align === "right" ? parent.width - width - Config.menu.margin : (parent.width - width) / 2
           anchors.bottom: Config.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
           anchors.top: !Config.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.bottom : base.top
           anchors.bottomMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
           anchors.topMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
           // No wider than the screen leaves within its margins, whatever width a level asks for.
-          width: Math.min(root.width, parent.width - 2 * Config.theme.edgeMargin)
+          width: Math.min(root.width, parent.width - 2 * Config.menu.margin)
           height: body.implicitHeight + 2 * Config.theme.padding
 
           MouseArea {

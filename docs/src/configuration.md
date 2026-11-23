@@ -12,6 +12,8 @@ Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you 
 
 What you choose while logged in is kept over a reload or a restart: keep awake, unsent drafts, a list's order, an open conversation.
 
+The defaults are a suggested setup, not a ceiling. Sizes given in pixels that you leave unset follow `theme.fontSize` (`theme.iconSize`, `menu.width`), so a larger font keeps the proportions; what you set wins. The check bounds each value, and the layout keeps every surface within its screen, so no setting breaks the menu or its keys.
+
 ## Checking
 
 `qs -p <the shell's folder>/check.qml` checks `config.json` and shows nothing. It prints what is wrong (a setting that does not exist, a value of another kind, a menu entry or plugin that cannot work) and exits 1. The shell logs the same as it starts. With Nix, the module runs it as the configuration builds, so a wrong setting fails the build, not the session; the shell's folder is the package's `share/quick-key`. Without a display, as in CI or over SSH, run it with `QT_QPA_PLATFORM=offscreen`.
@@ -46,7 +48,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
 | The `notifications` plugin, to see it holds the bus | `busctl` |
 
-`popups.show` lists what pops up as it changes, so another on-screen display can take any of it over. Listed, `battery` pops up as it is plugged in or out, not at every percent. A plugin pops up as a pill with its glyph and text on every change of its text, so list only plugins that change rarely (not a recording's timer).
+`popups.show` lists what pops up as it changes, so another on-screen display can take any of it over. Listed, `battery` pops up as it is plugged in or out, not at every percent. A plugin pops up as a pill with its glyph and text on every change of its text, so list only plugins that change rarely (not a recording's timer). `popups.position` puts it at the right, left, top or bottom of the screen, a level reading across at the top or bottom.
 
 `battery.warn` runs once as the charge falls to `battery.low`, and once more at `battery.critical`, never for the charge the shell starts with.
 

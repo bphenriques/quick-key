@@ -13,8 +13,10 @@ PluginSettings {
   property int keep: 100
   // The side of a card its actions sit on: right or left.
   property string actionSide: "right"
-  // A card's width, in pixels.
+  // A card's width, in pixels, never past the screen.
   property int width: 480
+  // The cards' distance from the screen's edge, in pixels.
+  property int margin: Config.theme.edgeMargin
   // Shows the plugin's `shortcut` dimly by the cards at rest, to teach it.
   property bool hint: true
   // Seconds without input after which no card's time runs, so none goes while you are away; 0 lets time run.
@@ -39,6 +41,7 @@ PluginSettings {
     if (!sides.includes(actionSide)) found.push("sets actionSide to '" + actionSide + "', none of " + sides.join(", "));
     if (limit < 1 || limit > 9) found.push("sets limit to " + limit + ", not 1 to 9, as many as there are digits");
     if (idle < 0) found.push("sets idle below 0");
+    if (margin < 0) found.push("sets margin below 0");
     if (keep < limit) found.push("sets keep to " + keep + ", below limit");
     found.push(...Object.keys(timeout ?? {}).filter(urgency => !["low", "normal"].includes(urgency)).map(urgency => "sets timeout." + urgency + ", none of low, normal"));
     for (const urgency of ["low", "normal"]) {
