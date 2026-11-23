@@ -148,7 +148,7 @@ ShellRoot {
           const sorts = [];
           for (let i = 0; i < 4; i++) {
             tasks.actions.sort.run();
-            sorts.push(tasks.actions.sort.detail() + " " + ids());
+            sorts.push(tasks.actions.sort.detail() + " " + ids() + " " + tasks.fields.title);
           }
           const shows = [];
           const details = [];
@@ -157,7 +157,7 @@ ShellRoot {
             shows.push(tasks.completed + " " + shown());
             details.push(tasks.items.find(item => item.id === "e").detail);
           }
-          return sorts.join() === "by priority b,a,f,c,d,e,by title a,c,b,f,d,e,by list f,b,d,a,c,e,by due date a,f,b,c,d,e"
+          return sorts.join() === "by priority b,a,f,c,d,e Late,by title a,c,b,f,d,e Late,by list f,b,d,a,c,e Late,by due date a,f,b,c,d,e Late"
             && shows.join() === "shown a,f,b,c,d,e,only e,hidden a,f,b,c,d" && details.join() === "yesterday," + Clock.time(new Date(2000, 0, 1, 9, 0)) + ",yesterday"
             && tasks.actions.completed.icon() === Glyphs.completed.hidden && tasks.actions.sort.icon() === Glyphs.sorts.due;
         }
@@ -245,6 +245,15 @@ ShellRoot {
           Plugins.get("tasks").remind();
         },
         until: () => suite.waited >= 1000 && !Plugins.get("reminded")?.text
+      },
+      {
+        name: "a tick whose command succeeds but the file never says so shows the file's state again",
+        start: () => {
+          root.tasks("stick");
+          Plugins.get("tasks").select("m");
+        },
+        until: () => suite.waited >= 5000 && !Plugins.get("tasks").items.find(item => item.id === "m").done && Object.keys(Plugins.get("tasks").pending).length === 0,
+        timeout: 8000
       },
       {
         name: "opening the menu leaves a fresh tasks file alone",

@@ -2,9 +2,9 @@
 
 The `tasks` plugin lists tasks on digits, and a digit ticks one off or unticks it. A level's `input` adds a task by its title, raw, to the first list (see [Input](menu.md#input)).
 
-A tick shows at once. An added task shows at once in the input, with a spinner until its command is done and the file lists it, no row moving under the keys meanwhile, so a command that reads a date out of the text (an agent) shows it is working. Each command runs after the ones before it. One that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens.
+A tick shows at once. An added task shows at once in the input, with a spinner until its command is done and the file lists it, no row moving under the keys meanwhile, so a command that reads a date out of the text (an agent) shows it is working. Each command runs after the ones before it. One that fails shows the file's state again and says so in the level, as a failed sync does, until the menu next opens; a tick the file still does not have five seconds after its command shows the file's state again too.
 
-Its status counts the late tasks beside an alarm, in the warning tone, when there are any, else the open tasks due by today, up to `9+`. Its fields are `title` (the most urgent), `count` and `updated`.
+Its status counts the late tasks beside an alarm, in the warning tone, when there are any, else the open tasks due by today, up to `9+`. Its fields are `title` (the most urgent: late first, then by due, whatever the sort), `count` and `updated`.
 
 ```nix
 plugins.tasks = {
@@ -33,16 +33,16 @@ One line, so the plugin reads it as its state:
 
 ```json
 {"updated": "2026-11-17T14:30", "error": "personal: could not sync", "tasks": [
-  {"id": "8", "title": "Pay the electricity", "due": "2026-11-20T18:00", "done": false, "list": "personal", "priority": 1, "color": "#ff8c00"},
-  {"id": "3", "title": "Call the plumber", "due": "2026-11-18", "done": true, "completed": "2026-11-17T09:12", "list": "personal", "color": "#ff8c00"}]}
+  {"id": "personal/electricity.ics", "title": "Pay the electricity", "due": "2026-11-20T18:00", "done": false, "list": "personal", "priority": 1, "color": "#ff8c00"},
+  {"id": "personal/plumber.ics", "title": "Call the plumber", "due": "2026-11-18", "done": true, "completed": "2026-11-17T09:12", "list": "personal", "color": "#ff8c00"}]}
 ```
 
 - `updated` is when the lists last synced, left out until one has; `error` is why the last sync failed. A tick or an add writes neither anew, so a file that cannot sync shows its age.
 - Times are local, without an offset; a due date without a time is due that day.
-- `id` is what `done` and `reopen` are given. It need not outlast the next write.
+- `id` is what `done` and `reopen` are given. It stays the same across writes, so a tick queued behind another finds its task.
 - `priority` runs from 1, the highest, to 9; unset or 0, none.
 - It holds the open tasks, and those done in the last 14 days, so a mistaken tick can be undone and `completed` has some to show.
 
 ## calendarSync
 
-A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick or an added task reaches its server; the others are only read, and new tasks go to the first. `exec.done`, `exec.reopen` and `exec.add` are the tasks plugin's commands. calendarSync writes its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks and ids. A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.
+A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick or an added task reaches its server; the others are only read, and new tasks go to the first. `exec.done`, `exec.reopen` and `exec.add` are the tasks plugin's commands. calendarSync writes its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks; a task's `id` is its file, by list. Unticking a repeating task takes back the next one its tick made, its rule with it. A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.

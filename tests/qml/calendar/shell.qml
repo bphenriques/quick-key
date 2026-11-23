@@ -1,5 +1,7 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
+import qs
 import qs.services
 import qs.widgets.menu
 import qs.widgets.menu.calendar
@@ -13,6 +15,7 @@ ShellRoot {
   }
 
   Suite {
+    id: suite
     cases: [
       {
         name: "a month or year away keeps the day, or the month's last when it has fewer",
@@ -25,7 +28,7 @@ ShellRoot {
       {
         name: "an event shows on every day it overlaps, all-day ones first",
         until: () => Calendar.timeline.map(row => row.key.slice(8) + " " + row.event.title).join() ===
-          "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call,26 Standup"
+          "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call,26 Standup,26 Standup"
       },
       {
         name: "a day gives its events and their colours, each once, for the month's dots",
@@ -123,7 +126,7 @@ ShellRoot {
         name: "the last day scrolls to the top as any other, under its heading",
         start: () => events.selected = new Date(2026, 10, 26),
         until: () => {
-          const item = events.itemAtIndex(events.rows.length - 1);
+          const item = events.itemAtIndex(events.rows.findIndex(row => row.key === "2026-11-26"));
           return !!item && Math.abs(item.y - events.contentY - events.headingHeight) < 1;
         }
       },
@@ -153,8 +156,51 @@ ShellRoot {
         name: "closing the details shows the rows again",
         start: () => events.details = false,
         until: () => !events.detailRow && events.interactive && events.itemAtIndex(1)?.visible
+      },
+      {
+        name: "two events alike on one day are told apart by uid, so Down steps from one to the other",
+        until: () => {
+          const pair = Calendar.timeline.filter(row => row.event.title === "Standup");
+          menu.calendar.focus(pair[0]);
+          menu.calendar.handleKey("Down");
+          return pair.length === 2 && pair[0].id !== pair[1].id && menu.calendar.focused === pair[1].id;
+        }
+      },
+      {
+        name: "an event reminded before a restart is not reminded again",
+        // Last, as it replaces the events: one five minutes on.
+        start: () => {
+          const start = Clock.minuteKey(new Date(Date.now() + 300000));
+          Kept.set("calendar.reminded", [start + " soon"]);
+          Quickshell.execDetached(["sh", "-c", 'printf "%s" "$2" > "$1.tmp" && mv "$1.tmp" "$1"', "sh", Config.calendar.file,
+            JSON.stringify({ events: [{ uid: "soon", title: "Soon", start, end: start, color: "#4285f4" }] })]);
+        },
+        until: () => {
+          if (!Calendar.timeline.some(row => row.event.title === "Soon")) return false;
+          Calendar.remind();
+          reminded.reload();
+          return suite.waited >= 1000 && !reminded.text().includes("Soon");
+        }
+      },
+      {
+        name: "one not reminded yet is, once, and kept",
+        start: () => Kept.set("calendar.reminded", []),
+        until: () => {
+          Calendar.remind();
+          reminded.reload();
+          return reminded.text().split("\n").filter(line => line === "Soon").length === 1 && suite.waited >= 1000
+            && Array.from(Kept.value("calendar.reminded") ?? []).some(id => id.endsWith(" soon"));
+        }
       }
     ]
+  }
+
+  // What calendar.remind ran, a line each.
+  FileView {
+    id: reminded
+    path: Quickshell.env("XDG_RUNTIME_DIR") + "/reminded"
+    blockLoading: true
+    printErrors: false
   }
 
   // Short enough that the last day is out of view from the first.

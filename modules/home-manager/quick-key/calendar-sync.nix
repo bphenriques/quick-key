@@ -101,6 +101,9 @@ in
           # At login the network may not be up yet: retry, and never hang the next tick on a stalled connection.
           Restart = "on-failure";
           RestartSec = "1min";
+          # A calendar that stays broken retries ever less often, up to the half hour the timer syncs at.
+          RestartSteps = 4;
+          RestartMaxDelaySec = "30min";
           TimeoutStartSec = "5min";
           ExecStart = lib.escapeShellArgs [
             (lib.getExe cfg.package)

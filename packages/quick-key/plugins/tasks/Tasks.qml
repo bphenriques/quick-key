@@ -36,7 +36,7 @@ Plugin {
   readonly property var updated: state.updated ? Clock.parse(state.updated) : null
   // Done as the menu opened: hidden for the visit, so a tick made in it stays to untick.
   property var settled: []
-  // Reminders fired, by title and due (an id need not outlast a write), kept so a restart repeats none; unset before the first check.
+  // Reminders fired, by title and due, kept so a restart repeats none; unset before the first check.
   readonly property var reminded: keptReminded.value
 
   text: ""
@@ -53,7 +53,8 @@ Plugin {
   tone: late.length > 0 ? "warning" : ""
   glyphs: late.length > 0 ? [Glyphs.late] : []
   error: [failure, state.error ?? ""].filter(line => line).join("\n")
-  fields: ({ title: due.length > 0 ? due[0].title : "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" })
+  // The most urgent, whatever the order chosen: late first, then by due.
+  fields: ({ title: (late.length > 0 ? late : due).slice().sort((a, b) => root.order(a.due, b.due))[0]?.title ?? "", count: detail, updated: updated ? Words.updated(Clock.when(updated, true)) : "" })
   fieldTones: ({ updated: Clock.stale(updated, settings.staleAfter) ? "warning" : "" })
   items: tasks.map(task => {
     const late = root.isLate(task);
@@ -189,6 +190,13 @@ Plugin {
     }
   }
 
+  // A tick whose command is done but the file never says so is dropped, the file's state shown again.
+  Timer {
+    id: settle
+    interval: 5000
+    onTriggered: root.pending = root.kept(id => root.queue.some(job => job.arg === id) || toggler.running && toggler.job.arg === id)
+  }
+
   // Each tick and add written in turn; the sync after the last takes them to the server.
   CommandProcess {
     id: toggler
@@ -197,7 +205,10 @@ Plugin {
     onExited: code => {
       // An add is over as its command is, whatever title the file gave it (a command may read a date out of it).
       if (job.verb === "add") root.adding = root.adding.filter(title => title !== job.arg);
-      if (code === 0) root.exec(job.after);
+      if (code === 0) {
+        root.exec(job.after);
+        settle.restart();
+      }
       if (code !== 0 && job.verb === "add") {
         root.failure = root.words.addFailed(job.arg);
       } else if (code !== 0) {

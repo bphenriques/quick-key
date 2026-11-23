@@ -1,4 +1,4 @@
-# calendar-sync offline: the tasks file from a synced folder written as the iPhone writes, then a tick, an untick and an added task there; then a whole sync of events from a calendar served on loopback, and one whose server is gone.
+# calendar-sync offline: the tasks file from a synced folder written as the iPhone writes, then a tick, an untick, a repeating task's and an added task there; then a whole sync of events from a calendar served on loopback, and one whose server is gone.
 { pkgs, self }:
 pkgs.runCommand "quick-key-calendar-sync"
   {
@@ -21,7 +21,7 @@ pkgs.runCommand "quick-key-calendar-sync"
 
     sync tasks
     jq -e 'has("updated") | not' state/tasks.json > /dev/null || fail "a tasks file never synced says no sync"
-    [ "$(jq '.tasks | length' state/tasks.json)" = 1 ] || fail "a task done more than 14 days ago is left out"
+    [ "$(jq '.tasks | length' state/tasks.json)" = 2 ] || fail "a task done more than 14 days ago is left out"
     [ "$(task | jq -c '[.due, .done, .list, .priority, .color]')" = '["2026-10-06T09:00",false,"personal",1,"#ff8c00"]' ] || fail "a task reads with its local time, open, with its list, priority and calendar's colour"
 
     id=$(task | jq -r .id)
@@ -31,12 +31,24 @@ pkgs.runCommand "quick-key-calendar-sync"
     grep -q '^STATUS:COMPLETED' state/vdirs/personal/bills.ics || fail "done marks the file completed"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "done keeps the reminder"
 
-    id=$(task | jq -r .id)
+    [ "$(task | jq -r .id)" = "$id" ] || fail "a task's id outlasts a tick"
     quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json "$id"
     [ "$(task | jq .done)" = false ] || fail "reopen unticks it in the tasks file"
     grep -q '^STATUS:NEEDS-ACTION' state/vdirs/personal/bills.ics || fail "reopen marks the file as needing action"
     ! grep -qE '^(COMPLETED|PERCENT-COMPLETE)' state/vdirs/personal/bills.ics || fail "reopen drops the record of completion"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "reopen keeps the reminder"
+    # todoman numbers a task anew once its file changes outside it, as reopen's does: a tick queued from before still finds it.
+    quick-key-calendar-sync done ${./calendars.yaml} state/events.json "$id"
+    [ "$(task | jq .done)" = true ] || fail "a tick after an untick finds the task by the id it had"
+    quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json "$id"
+
+    water() { jq -c '[.tasks[] | select(.title == "Water the plants")] | sort_by(.due) | map([.due, .done])' state/tasks.json; }
+    quick-key-calendar-sync done ${./calendars.yaml} state/events.json personal/water.ics
+    [ "$(water)" = '[["2026-11-20",true],["2026-11-27",false]]' ] || fail "ticking a repeating task makes the next"
+    quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json personal/water.ics
+    [ "$(water)" = '[["2026-11-20",false]]' ] || fail "unticking a repeating task takes the next back"
+    grep -q '^RRULE:FREQ=WEEKLY' state/vdirs/personal/water.ics || fail "unticking a repeating task gives it its rule again"
+    [ "$(ls state/vdirs/personal | wc -l)" = 3 ] || fail "unticking a repeating task removes the next one's file"
 
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"
@@ -63,6 +75,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     printf -- '- name: work\n  url: http://127.0.0.1:8765/work.ics\n  color: "#3366ff"\n' > work.yaml
     quick-key-calendar-sync work.yaml events/events.json || efail "a sync from a calendar it reaches succeeds"
     [ "$(events)" = "[\"Lunch\",\"$(date -d tomorrow +%F)T13:00\",false,\"#3366ff\",\"Rua Augusta 120\"]" ] || efail "an event reads with its local time, its calendar's colour and where"
+    jq -e '.events[0].uid | length > 0' events/events.json > /dev/null || efail "an event has a uid, which tells apart two alike"
     jq -e '.updated and (has("error") | not) and (has("syncing") | not)' events/events.json > /dev/null || efail "a sync done says when, and no longer that it syncs"
     jq -e --arg from "$(date -d '62 days ago' +%F)" --arg to "$(date -d '365 days' +%F)" '.synced == { from: $from, to: $to }' events/events.json > /dev/null || efail "a sync says the days it covers"
 

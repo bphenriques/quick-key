@@ -1,4 +1,4 @@
-# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks, `missed` one whose reminder fell due five minutes ago, `broken` one whose sync failed, `done` and `reopen` flip a task after a moment (task d fails), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
+# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks, `missed` one whose reminder fell due five minutes ago, `broken` one whose sync failed, `done` and `reopen` flip a task after a moment (task d fails, and once `stick` has run the next leaves the file as it was), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
 file="$XDG_RUNTIME_DIR/tasks"
 case "$1" in
   write)
@@ -22,9 +22,11 @@ case "$1" in
     sed "s/\"tasks\":\[/\"tasks\":[{\"id\":\"n\",\"done\":false,\"title\":\"$2\"},/" "$file" > "$file.tmp"
     mv "$file.tmp" "$file"
     ;;
+  stick) touch "$XDG_RUNTIME_DIR/stuck" ;;
   done | reopen)
     sleep 0.5
     [ "$2" = d ] && exit 1
+    rm "$XDG_RUNTIME_DIR/stuck" 2>/dev/null && exit 0
     [ "$1" = done ] && from=false to=true || from=true to=false
     sed "s/\"id\":\"$2\",\"done\":$from/\"id\":\"$2\",\"done\":$to/" "$file" > "$file.tmp"
     mv "$file.tmp" "$file"

@@ -127,6 +127,10 @@ assert lib.assertMsg (
     programs.quick-key.settings.calendar.file = "/elsewhere/events.json";
   }).programs.quick-key.settings.calendar.file == "/elsewhere/events.json"
 ) "a calendar file set by hand wins over calendar-sync's";
+assert lib.assertMsg (
+  (evalHome { programs.quick-key.calendarSync.enable = true; })
+  .systemd.user.services.quick-key-calendar-sync.Service.RestartMaxDelaySec == "30min"
+) "a sync that keeps failing retries ever less often, not every minute";
 pkgs.runCommand "quick-key-module-eval"
   {
     nativeBuildInputs = [ pkgs.jq ];

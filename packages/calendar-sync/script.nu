@@ -103,6 +103,7 @@ def events [config: path, synced: record]: nothing -> list {
   | each {|e|
     let all_day = $e.all-day == "True"
     let event = {
+      uid: $e.uid
       title: $e.title
       start: (if $all_day { $e.start-date } else { $"($e.start-date)T($e.start-time)" })
       end: (if $all_day { $e.end-date } else { $"($e.end-date)T($e.end-time)" })
@@ -142,15 +143,23 @@ def local-time [seconds: int]: nothing -> string {
   if ($time | str ends-with "T00:00") { $time | str substring 0..9 } else { $time }
 }
 
+# Every task todoman lists, each with its file, by list and name (`key`): todoman's own id changes as the file does, its name never.
+def todos [state: path]: nothing -> list {
+  let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY | from json
+  # Listing refreshed todoman's cache, which alone pairs its ids with files.
+  let files = open ($state | path join todoman.db) | query db "SELECT id, file_path FROM todos"
+  let lists = $state | path expand | path join tasks
+  $tasks | each {|t| let file = $files | where id == $t.id | first | get file_path; $t | insert file $file | insert key ($file | path relative-to $lists) }
+}
+
 # Open tasks, and those done in the last 14 days, so a tick stays to be undone and the done ones can be shown.
 def write-tasks [calendars: list, state: path, --synced, --error: string] {
   let since = (date now) - 14day | format date "%Y-%m-%d"
   let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
-  let tasks = ^todo --config (todoman-config $state) --porcelain list --status ANY
-  | from json
+  let tasks = todos $state
   | where {|t| not $t.completed or ($t.completed_at != null and (local-time $t.completed_at) >= $since) }
   | each {|t| {
-    id: ($t.id | into string)
+    id: $t.key
     title: $t.summary
     due: (if $t.due == null { null } else { local-time $t.due })
     done: $t.completed
@@ -265,29 +274,35 @@ def "main tasks" [calendars_file: path, events_file: path, --synced, --error: st
 }
 
 # Ticks a task off by its id in the tasks file, and writes that file again; the next sync takes it to its server.
-def "main done" [calendars_file: path, events_file: path, id: int] {
+def "main done" [calendars_file: path, events_file: path, id: string] {
   locked $events_file tick done $calendars_file $events_file $id
 }
 
-def "main reopen" [calendars_file: path, events_file: path, id: int] {
+def "main reopen" [calendars_file: path, events_file: path, id: string] {
   locked $events_file tick reopen $calendars_file $events_file $id
 }
 
-# What done and reopen run under the lock. todoman has no command to reopen: its status goes back to needing action, the record of its completion dropped.
-def "main tick" [how: string, calendars_file: path, events_file: path, id: int] {
+# What done and reopen run under the lock, finding the task as it is now. todoman has no command to reopen: its status goes back to needing action, the record of its completion dropped.
+def "main tick" [how: string, calendars_file: path, events_file: path, id: string] {
   let state = $events_file | path dirname
   let config = todoman-config $state
+  let todos = todos $state
+  let task = $todos | where key == $id | first
   if $how == "done" {
-    ^todo --config $config done $id | ignore
+    ^todo --config $config done $task.id | ignore
   } else {
-    let file = ^todo --config $config path $id | str trim
-    open --raw $file
+    # A repeating task's tick moved its rule to the next one todoman made: unticking takes it back, that one gone.
+    let next = $todos | where {|t| $t.recurring and not $t.completed and $t.list == $task.list and $t.summary == $task.summary and ($t.due | default 0) >= ($task.due | default 0) } | sort-by {|t| $t.due | default 0 } | get --optional 0
+    let rule = if $next == null { [] } else { open --raw $next.file | split row "BEGIN:VTODO" | last | split row "\n" | where {|line| $line =~ '^RRULE[:;]' } }
+    open --raw $task.file
     | split row "\n"
     | where {|line| not ($line =~ '^(COMPLETED|PERCENT-COMPLETE)[:;]') }
-    | each {|line| $line | str replace --regex '^STATUS:COMPLETED(\r?)$' 'STATUS:NEEDS-ACTION$1' }
+    | each {|line| if $line =~ '^END:VTODO' { $rule | append $line } else { [($line | str replace --regex '^STATUS:COMPLETED(\r?)$' 'STATUS:NEEDS-ACTION$1')] } }
+    | flatten
     | str join "\n"
-    | save -f $"($file).tmp"
-    mv -f $"($file).tmp" $file
+    | save -f $"($task.file).tmp"
+    mv -f $"($task.file).tmp" $task.file
+    if $next != null { rm $next.file }
   }
   write-tasks (task-lists $calendars_file) $state
 }

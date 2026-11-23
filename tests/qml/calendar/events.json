@@ -5,6 +5,7 @@
     { "title": "Holiday", "start": "2026-11-12", "end": "2026-11-12", "allDay": true, "color": "#33b679" },
     { "title": "Trip", "start": "2026-11-20", "end": "2026-11-21", "allDay": true, "color": "#33b679" },
     { "title": "Call", "start": "2026-11-25T09:00", "end": "2026-11-25T09:00", "color": "#4285f4" },
-    { "title": "Standup", "start": "2026-11-26T09:00", "end": "2026-11-26T09:15", "color": "#4285f4" }
+    { "uid": "standup-team", "title": "Standup", "start": "2026-11-26T09:00", "end": "2026-11-26T09:15", "color": "#4285f4" },
+    { "uid": "standup-project", "title": "Standup", "start": "2026-11-26T09:00", "end": "2026-11-26T09:15", "color": "#4285f4" }
   ]
 }

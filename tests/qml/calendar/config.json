@@ -1,6 +1,6 @@
 {
   "calendar": {
-    "remind": ""
+    "remind": "printf '%s\\n' >> \"$XDG_RUNTIME_DIR/reminded\""
   },
   "clock": {
     "locale": "en_GB"

@@ -39,10 +39,11 @@ The shell only reads `calendar.file`, watching it for changes. `calendarSync` wr
 - Times are local, without an offset. An all-day event's `end` is its last day.
 - A repeating event is one entry per occurrence.
 - `synced` is the first and last day the events cover: a day past them says `Not synced`, not `No events`.
-- `location`, `synced`, `error` and `syncing: true` are optional.
+- `uid` tells apart two events alike in title, time and colour, so the keys reach each.
+- `uid`, `location`, `synced`, `error` and `syncing: true` are optional.
 
-`calendar.remind` reminds of each timed event, `calendar.remindBefore` minutes before it starts.
+`calendar.remind` reminds of each timed event once, `calendar.remindBefore` minutes before it starts, a restart of the shell repeating none.
 
 ## calendarSync
 
-`calendarSync.enable` syncs 62 days back and a year ahead, from the calendars listed in `calendarSync.calendars`, and writes that range as `synced`.
+`calendarSync.enable` syncs 62 days back and a year ahead, from the calendars listed in `calendarSync.calendars`, and writes that range as `synced`. A sync that fails retries a minute later, then ever less often, up to every half hour.

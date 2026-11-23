@@ -64,8 +64,6 @@ Singleton {
     property var events: []
     property var days: ({})
     property var timeline: []
-    // By id, so each is reminded once.
-    property var reminded: ({})
 
     function read(json) {
       events = Array.from(json.events ?? []).map(event => {
@@ -74,7 +72,8 @@ Singleton {
         // An all-day event's end is its last day; it runs to the start of the next.
         if (event.allDay) end.setDate(end.getDate() + 1);
         const title = root.line(event.title);
-        return { id: [event.start, event.color, title].join(" "), title, start, end, allDay: !!event.allDay, color: event.color ?? "", location: root.line(event.location) };
+        // Two alike in title, time and colour differ by uid, which the file may leave out.
+        return { id: event.uid ? event.start + " " + event.uid : [event.start, event.color, title].join(" "), title, start, end, allDay: !!event.allDay, color: event.color ?? "", location: root.line(event.location) };
       }).sort((a, b) => a.start - b.start);
       // Each event under every day it overlaps; one without length (start equals end) under the day it starts on.
       const byDay = {};
@@ -114,17 +113,20 @@ Singleton {
     }
   }
 
-  // Each timed event once, Config.calendar.remindBefore minutes ahead, on the clock's own minute.
+  // Each timed event once, Config.calendar.remindBefore minutes ahead, on the clock's own minute; kept by id, so a restart repeats none.
   function remind() {
-    if (!Config.calendar.remind) return;
+    if (!Config.calendar.remind || !store.loaded) return;
     const now = Clock.date;
     const until = new Date(now.getTime() + Config.calendar.remindBefore * 60000);
+    const kept = Array.from(Kept.value("calendar.reminded") ?? []);
+    const reminded = kept.filter(id => store.events.some(event => event.id === id && event.start > now));
     for (const event of store.events) {
-      if (event.allDay || event.start <= now || event.start > until || store.reminded[event.id]) continue;
-      store.reminded[event.id] = true;
+      if (event.allDay || event.start <= now || event.start > until || reminded.includes(event.id)) continue;
+      reminded.push(event.id);
       const when = Clock.time(event.start) + (event.location ? " · " + event.location : "");
       Commands.run(Config.calendar.remind, event.title, when);
     }
+    if (reminded.join("\n") !== kept.join("\n")) Kept.set("calendar.reminded", reminded);
   }
 
   Connections {
