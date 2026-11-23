@@ -4,17 +4,22 @@ Short configs for the common shapes, each to adapt. They are written for `progra
 
 ## Extend the starter
 
-Each recipe adds to the starter menu. Setting `menu.entries` replaces the starter whole, so begin from its entries, read from the flake's source:
+Each recipe adds to the starter menu. Setting `menu.entries` replaces the starter's entries whole, as setting a bar slot replaces its items, so begin from the starter's, read from the flake's source:
 
 ```nix
 { inputs, lib, ... }:
+let
+  starter = (lib.importJSON "${inputs.quick-key}/packages/quick-key/menu.json").menu;
+in
 {
-  programs.quick-key.settings.menu.entries =
-    (lib.importJSON "${inputs.quick-key}/packages/quick-key/menu.json").menu.entries;
+  programs.quick-key.settings.menu = {
+    entries = starter.entries;
+    header.right = starter.header.right;
+  };
 }
 ```
 
-A recipe's entries then join them from any module, in the order `lib.mkOrder` gives. Without Nix, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json) to `config.json` and add each recipe's entries to its `menu.entries`.
+A recipe's entries and bar items then join them from any module, in the order `lib.mkOrder` gives. Without Nix, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json) to `~/.config/quick-key/config.json` and add each recipe's entries to its `menu.entries`, its bar items to `menu.header`.
 
 ## The menu
 
@@ -227,7 +232,7 @@ menu.header.center = [ { key = "f"; desc = "Focus"; status = "focus"; } ];
 
 ```nix
 plugins.dunst = { };
-menu.header.right = [ "dunst" "battery" ];
+menu.header.right = [ "dunst" ];
 ```
 
 A plugin in a bar shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same. For a key, make it an entry: `{ key = "d"; desc = "Do not disturb"; status = "dunst"; cmd = "dunstctl set-paused toggle"; }` runs on `C-d`.
