@@ -63,21 +63,12 @@ ShellRoot {
   Suite {
     cases: [
       {
-        name: "a picture sent without a command to encode it fails the turn rather than waiting on it",
-        until: () => {
-          const ask = Plugins.get("blind");
-          if (!ask) return false;
-          if (!ask.exchanges.length) ask.send("p", "/nonexistent.png");
-          return !ask.busy && ask.exchanges[0].error === ask.words.noImage;
-        }
-      },
-      {
         name: "without a terminal to open, C-o keeps the conversation and is not offered",
         until: () => {
           const ask = Plugins.get("sealed");
           if (!ask) return false;
           if (!ask.exchanges.length) {
-            ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
+            ask.exchanges = [{ prompt: "p", reply: "r", error: "", stopped: false }];
             ask.act("Ctrl+o");
           }
           return ask.exchanges.length === 1 && !ask.canMove;
@@ -94,7 +85,7 @@ ShellRoot {
           const ask = Plugins.get("keyed");
           if (!ask) return false;
           ask.typing = false;
-          ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
+          ask.exchanges = [{ prompt: "p", reply: "r", error: "", stopped: false }];
           const named = ask.typedAs("Ctrl+l") === "l" && ask.typedAs("Ctrl+y") === "Ctrl+y" && ask.keys.some(entry => entry.key === "Ctrl+l");
           return named && ask.act("l") && ask.exchanges.length === 0;
         }
@@ -158,21 +149,6 @@ ShellRoot {
         })
       },
       {
-        name: "an image goes only to an agent that takes them: one that said it does not fails the turn saying so, and C-v then refuses with that word",
-        until: () => {
-          const ask = Plugins.get("imageless");
-          const pictured = Plugins.get("pictured");
-          if (!ask || !pictured) return false;
-          const file = Quickshell.env("XDG_CONFIG_HOME") + "/quick-key/config.json";
-          if (!ask.exchanges.length) {
-            ask.send("p", file);
-            pictured.send("p", file);
-          }
-          if (ask.busy || pictured.busy || ask.exchanges[0].error !== ask.words.noImages) return false;
-          return pictured.exchanges[0].reply === "p" && ask.act("Ctrl+v") && ask.imageRefused && ask.image === file;
-        }
-      },
-      {
         name: "typing, Escape leaves clearing and stepping back to the prompt; waiting, it hides, a letter acts and its key gives the prompt the keys again",
         until: () => {
           const ask = Plugins.get("idle");
@@ -180,7 +156,7 @@ ShellRoot {
           ask.toggle();
           const promptsOwn = ask.typing && !ask.act("Escape") && ask.shown;
           ask.typing = false;
-          ask.exchanges = [{ prompt: "p", image: "", reply: "r", error: "", stopped: false }];
+          ask.exchanges = [{ prompt: "p", reply: "r", error: "", stopped: false }];
           const letter = ask.act("l") && ask.exchanges.length === 0;
           const typing = ask.act("Tab") && ask.typing && !ask.act("l");
           const backtab = ask.act("Backtab") && !ask.typing && !ask.act("Backtab") && ask.act("Tab") && ask.typing;
@@ -196,7 +172,7 @@ ShellRoot {
           if (!ask) return false;
           if (!root.submitted) {
             ask.session = "old";
-            ask.exchanges = [{ prompt: "old", image: "", reply: "r", error: "", stopped: false }];
+            ask.exchanges = [{ prompt: "old", reply: "r", error: "", stopped: false }];
             ask.submit("new", true, "echo done > \"$XDG_RUNTIME_DIR/followed\"");
             root.submitted = true;
           }
@@ -223,7 +199,7 @@ ShellRoot {
           const kept = Plugins.get("kept");
           if (!cleared || !kept) return false;
           for (const [ask, draft] of [[cleared, "failed"], [kept, "typed"]]) {
-            ask.exchanges = [{ prompt: "failed", image: "", reply: "", error: "No answer", stopped: false }];
+            ask.exchanges = [{ prompt: "failed", reply: "", error: "No answer", stopped: false }];
             ask.draft = draft;
             ask.submit("new", true, "");
           }
@@ -310,7 +286,7 @@ ShellRoot {
           const ask = Plugins.get("retried");
           if (!ask) return false;
           if (!root.retried) {
-            ask.exchanges = [{ prompt: "again", image: "", reply: "", error: "No answer", stopped: false, after: "echo done > \"$XDG_RUNTIME_DIR/refollowed\"" }];
+            ask.exchanges = [{ prompt: "again", reply: "", error: "No answer", stopped: false, after: "echo done > \"$XDG_RUNTIME_DIR/refollowed\"" }];
             root.retried = ask.send("again", "");
           }
           return ask.exchanges.length === 1 && ask.exchanges[0].reply === "again" && Plugins.get("refollowed")?.text === "done";

@@ -15,10 +15,6 @@ Flickable {
     field.clear();
   }
 
-  function paste() {
-    field.paste();
-  }
-
   function set(text) {
     field.text = text;
     field.cursorPosition = field.length;

@@ -99,12 +99,6 @@
       "ask": "true",
       "notify": ""
     },
-    "blind": {
-      "type": "ask",
-      "ask": "true",
-      "notify": "",
-      "encodeImage": ""
-    },
     "sealed": {
       "type": "ask",
       "ask": "true",
@@ -155,17 +149,6 @@
     "s10log": {
       "type": "command",
       "file": "s10-log"
-    },
-    "imageless": {
-      "type": "ask",
-      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s11",
-      "notify": "",
-      "pasteImage": "true"
-    },
-    "pictured": {
-      "type": "ask",
-      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" s12 pictures",
-      "notify": ""
     }
   }
 }

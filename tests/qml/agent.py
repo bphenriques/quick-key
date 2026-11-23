@@ -12,7 +12,6 @@ from acp.schema import (
     LoadSessionResponse,
     NewSessionResponse,
     PermissionOption,
-    PromptCapabilities,
     PromptResponse,
     ResumeSessionResponse,
     SessionCapabilities,
@@ -48,10 +47,9 @@ class Agent:
         trace("initialize")
         return InitializeResponse(
             protocol_version=acp.PROTOCOL_VERSION,
-            # `resume` resumes but cannot load; `pictures` takes images.
+            # `resume` resumes but cannot load.
             agent_capabilities=AgentCapabilities(
                 load_session=BEHAVIOUR != "resume",
-                prompt_capabilities=PromptCapabilities(image=BEHAVIOUR == "pictures"),
                 session_capabilities=SessionCapabilities(
                     list=SessionListCapabilities(),
                     resume=SessionResumeCapabilities()

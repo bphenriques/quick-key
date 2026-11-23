@@ -46,7 +46,6 @@ Scope {
     readonly property var drawn: panel.plugin.describe(panel.plugin.exchanges[at] ?? ({}))
     maximumWidth: panel.threadWidth * 0.85
     question: drawn.question ?? ""
-    image: drawn.image ?? ""
     text: drawn.text ?? ""
     phase: drawn.phase ?? "done"
     kind: drawn.kind ?? ""
@@ -92,7 +91,7 @@ Scope {
         // Each key as it runs now (Ask.typedAs): waiting, a chord's letter alone.
         keys: panel.plugin.keys.filter(entry => entry.what && entry.shows()).map(entry => ({ key: panel.plugin.typedAs(entry.key), what: entry.what, clickable: true }))
           .concat(!panel.plugin.typing ? [{ key: "?", what: Words.help, clickable: true }] : [])
-          .concat(panel.plugin.typing && (panel.plugin.draft || panel.plugin.image) ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
+          .concat(panel.plugin.typing && panel.plugin.draft ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
         onPicked: key => {
           if (!panel.plugin.act(key)) panel.promptPicked(key);
         }
@@ -201,12 +200,6 @@ Scope {
       // A prompt taller than a line takes its height from the conversation, so the panel holds still.
       onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
 
-      // Escape clears it with the text.
-      Thumbnail {
-        Layout.leftMargin: Metrics.line + Config.theme.spacing
-        path: panel.plugin.image
-      }
-
       Prompt {
         id: prompt
         Layout.fillWidth: true
@@ -217,9 +210,6 @@ Scope {
         key: "Tab"
         onTapped: panel.plugin.focusPrompt()
         onBack: Panels.back()
-        empty: text === "" && !panel.plugin.image
-        detail: panel.plugin.imageRefused ? panel.plugin.words.noImages : ""
-        onCleared: panel.plugin.clearImage()
         onTextChanged: panel.plugin.keepDraft(text)
         Component.onCompleted: set(panel.plugin.draft)
 
@@ -252,10 +242,6 @@ Scope {
           // A failed prompt put back, or dropped with its conversation.
           function onDraftChanged() {
             if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft);
-          }
-
-          function onPasteText() {
-            prompt.paste();
           }
         }
       }

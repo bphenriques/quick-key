@@ -18,33 +18,22 @@ RowLayout {
   property var keys: []
   // A value on its right, dim (a filter's 1-9 of 14).
   property string detail: ""
-  // Nothing to clear; an owner with more to clear than the text (a pasted image) says when.
-  property bool empty: text === ""
   // The key and glyph column, as wide as the key's name (TAB) so the text holds still as it takes the keys, or an owner's column (a card's icon); the glyph on its left edge, where keys start.
   property real slot: Math.max(Metrics.line, keyHint.implicitWidth)
 
   signal keyPressed(var event)
   signal tapped
-  signal cleared
   signal back
   signal picked(var key)
 
   // Escape's own steps: clear, then the owner's.
   function stepBack() {
-    if (empty) {
-      back();
-      return;
-    }
-    area.clear();
-    cleared();
+    if (text === "") back();
+    else area.clear();
   }
 
   function clear() {
     area.clear();
-  }
-
-  function paste() {
-    area.paste();
   }
 
   function set(text) {

@@ -18,11 +18,9 @@ Plugin {
     listing: "Listing conversations" + Words.ellipsis,
     none: "No conversations yet",
     noAnswer: "No answer",
-    noImage: "Could not read the image",
     openTerminal: "Terminal" + Words.ellipsis,
     approval: (allowed, what) => (allowed ? "Allowed: " : "Denied: ") + what,
     notOnce: what => "Cancelled, not offered once: " + what,
-    noImages: title + " takes no images",
     allow: "allow",
     deny: "deny",
     allowQuestion: what => "Allow " + what + "?",
@@ -44,18 +42,13 @@ Plugin {
     { key: "Ctrl+l", desc: "Start a new conversation", what: words.newChat, shows: () => exchanges.length > 0, run: () => reset() },
     { key: "Ctrl+o", desc: "Move it to a terminal", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
     { key: "Ctrl+r", desc: Words.helpRecall, what: Words.history, shows: () => recalls, run: () => recall() },
-    { key: "Ctrl+v", desc: "Attach the clipboard's image", run: () => pasteImage() },
     { key: "Escape", desc: Words.helpEscape }
   ].filter(entry => entry.when !== false)
 
-  // [{ prompt, image, reply, error, stopped, after, input, table, steps }], the last streaming while busy; `input` when a level input sent it.
+  // [{ prompt, reply, error, stopped, after, input, table, steps }], the last streaming while busy; `input` when a level input sent it.
   property var exchanges: []
   property alias session: agent.session
   property string draft: ""
-  // A file under $XDG_RUNTIME_DIR, attached to the next prompt.
-  property string image: ""
-  // C-v, refused, says so until the prompt changes.
-  property bool imageRefused: false
   readonly property bool shown: Panels.top === root
   property bool typing: true
   property bool unread: false
@@ -82,9 +75,6 @@ Plugin {
   property int now: 0
   readonly property int waited: Math.max(0, now - sentAt)
   readonly property bool canMove: !busy && exchanges.length > 0 && settings.open !== ""
-
-  // Ctrl+V found no image, so it pastes text as usual.
-  signal pasteText
 
   phase: stage !== "idle" ? (approval ? "blocked" : "working") : unread ? (exchanges[exchanges.length - 1]?.error ? "error" : "done") : "idle"
   kind: approval ? "permission" : ""
@@ -139,7 +129,7 @@ Plugin {
     failure = outcome.error ?? "";
     if (!outcome.loaded) session = "";
     exchanges = !outcome.loaded ? [] : recalled.map(entry => {
-      return { prompt: entry.prompt.trim(), image: "", reply: entry.reply, error: "", stopped: false, after: "", input: false, table: Markup.hasTable(entry.reply) };
+      return { prompt: entry.prompt.trim(), reply: entry.reply, error: "", stopped: false, after: "", input: false, table: Markup.hasTable(entry.reply) };
     });
     recalled = [];
   }
@@ -171,7 +161,7 @@ Plugin {
   function submit(text, background, after) {
     if (busy || !settings.ask) return false;
     if (!visited) reset();
-    if (!send(text, "", after, true)) return false;
+    if (!send(text, after, true)) return false;
     visited = watched;
     return true;
   }
@@ -189,7 +179,6 @@ Plugin {
     const kind = phase === "blocked" ? "permission" : "";
     return {
       question: exchange.prompt,
-      image: exchange.image,
       // A stopped answer keeps what came, the stop on a line after it.
       text: kind === "permission" ? words.allowQuestion(approval) : exchange.stopped && exchange.reply ? exchange.reply + "\n\n" + exchange.error : exchange.error || exchange.reply,
       phase: phase,
@@ -207,15 +196,14 @@ Plugin {
   }
 
   // `after` runs once the turn is answered.
-  function send(prompt, image = root.image, after = "", input = false) {
+  function send(prompt, after = "", input = false) {
     prompt = prompt.trim();
-    if ((!prompt && !image) || busy || !settings.ask) return false;
+    if (!prompt || busy || !settings.ask) return false;
     // Asking again what failed replaces that exchange, keeping its `after`.
     const last = exchanges[exchanges.length - 1];
-    const retried = last && last.error && last.prompt === prompt && last.image === image;
+    const retried = last && last.error && last.prompt === prompt;
     const kept = retried ? exchanges.slice(0, -1) : exchanges;
-    exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || watched }]);
-    if (image === root.image) root.image = "";
+    exchanges = kept.concat([{ prompt: prompt, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || watched }]);
     stage = "working";
     approval = "";
     activity = "";
@@ -223,8 +211,7 @@ Plugin {
     streamed = "";
     sentAt = now = Math.floor(Date.now() / 1000);
     report();
-    if (image) encode(image, data => agent.turn([{ type: "text", text: prompt }, { type: "image", data: data, mimeType: mimeOf(data) }].filter(block => block.type !== "text" || block.text)));
-    else agent.turn([{ type: "text", text: prompt }]);
+    agent.turn([{ type: "text", text: prompt }]);
     return true;
   }
 
@@ -260,18 +247,7 @@ Plugin {
     if (last.reply && !last.stopped) exec(last.after);
     if (touched) exec(settings.toolRun);
     if (!shown && !seen(last)) unread = true;
-    if (last.error && !last.stopped && !seen(last) && draft === "" && !image) {
-      draft = last.prompt;
-      image = last.image;
-    }
-  }
-
-  function encode(path, then) {
-    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : close({ error: words.noImage }));
-  }
-
-  function mimeOf(data) {
-    return data.startsWith("/9j/") ? "image/jpeg" : data.startsWith("R0lGOD") ? "image/gif" : data.startsWith("UklGR") ? "image/webp" : "image/png";
+    if (last.error && !last.stopped && !seen(last) && draft === "") draft = last.prompt;
   }
 
   function notify(text) {
@@ -279,15 +255,6 @@ Plugin {
     notifier.running = false;
     notifier.command = commandLine(settings.notify, title, text.split("\n")[0]);
     notifier.running = true;
-  }
-
-  // Without an image, the text paste it would have been; an agent that said it takes none is not sent one.
-  function pasteImage() {
-    imageRefused = agent.started && !agent.canImage;
-    if (imageRefused) return true;
-    const path = Quickshell.env("XDG_RUNTIME_DIR") + "/" + name + "-" + Date.now();
-    call(settings.pasteImage, [path], code => code === 0 ? root.image = path : root.pasteText());
-    return true;
   }
 
   // Allow or deny once; an agent offering neither for the answer is told it was cancelled. The next request it holds shows next.
@@ -315,10 +282,7 @@ Plugin {
   function reset() {
     stop();
     const last = exchanges[exchanges.length - 1];
-    if (last?.error && draft === last.prompt && image === last.image) {
-      draft = "";
-      image = "";
-    }
+    if (last?.error && draft === last.prompt) draft = "";
     exchanges = [];
     session = "";
     unread = false;
@@ -341,14 +305,9 @@ Plugin {
     typing = true;
   }
 
-  function clearImage() {
-    image = "";
-  }
-
   // Kept as it changes, so it outlasts a reload.
   function keepDraft(text) {
     draft = text;
-    imageRefused = false;
   }
 
   // True when the key was the panel's. Waiting, `?` lists them and letters do what their Ctrl chords do, but for `y`.

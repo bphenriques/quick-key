@@ -25,7 +25,7 @@ Other ACP agents (Claude through `claude-agent-acp`, Codex through `codex-acp`, 
 
 Keys:
 
-- `RET` sends. `C-S-RET` sends and hides the panel, the answer arriving as a notification. `S-RET` breaks the line, and `C-v` attaches the clipboard's image, unless the agent has said it takes none.
+- `RET` sends. `C-S-RET` sends and hides the panel, the answer arriving as a notification. `S-RET` breaks the line.
 - `ESC` clears the prompt, then steps back: to the menu that opened the panel, else hiding it, as a click beside it does. The conversation is kept.
 - `C-c` stops the run, cancelling what it waits to be allowed, and keeps what it had answered so far. Leaving never stops it.
 - `C-y` allows an approval once and `C-n` denies it, the run going on. Neither answers for good: an agent offering only that hears the request cancelled. Each stays in the conversation as a dim line. `C-l` starts a new conversation, `C-o` moves it to a terminal, and `C-r`, between turns, lists past conversations.

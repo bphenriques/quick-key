@@ -18,7 +18,6 @@ Item {
   property bool canLoad: false
   property bool canResume: false
   property bool canList: false
-  property bool canImage: false
   // Initialized: until then, what it can do (canList) is not yet known.
   readonly property bool started: internal.ready
 
@@ -56,11 +55,10 @@ Item {
     property var pending: ({})
   }
 
-  // A turn: `blocks` are ACP content blocks (text, image).
+  // A turn: `blocks` are ACP content blocks.
   function turn(blocks) {
     const live = begin();
-    const images = blocks.some(block => block.type === "image");
-    settled(() => connect(() => live() && (images && !canImage ? fail(name + " takes no images") : open(live, () => ask(live, blocks))), why => live() && fail(why)));
+    settled(() => connect(() => live() && open(live, () => ask(live, blocks)), why => live() && fail(why)));
   }
 
   // An earlier conversation, between turns: its history replayed through `history`, then `ended` with `loaded`.
@@ -167,7 +165,6 @@ Item {
         internal.ready = true;
         canLoad = !!result.agentCapabilities?.loadSession;
         canResume = !!result.agentCapabilities?.sessionCapabilities?.resume;
-        canImage = !!result.agentCapabilities?.promptCapabilities?.image;
         canList = !!result.agentCapabilities?.sessionCapabilities?.list;
       }
       for (const waiter of queued) problem ? waiter.failed(problem) : waiter.then();

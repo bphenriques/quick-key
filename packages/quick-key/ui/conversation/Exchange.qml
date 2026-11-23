@@ -11,7 +11,6 @@ ColumnLayout {
   id: root
 
   property string question
-  property string image
   // Markdown, as ACP sends text; plain when compact.
   property string text
   property string phase: "done"
@@ -43,10 +42,6 @@ ColumnLayout {
     // Its text is back in the prompt, to send again.
     faded: root.phase === "error"
     maximumWidth: root.maximumWidth
-
-    Thumbnail {
-      path: root.image
-    }
 
     Label {
       id: asked
