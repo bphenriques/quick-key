@@ -111,7 +111,11 @@ Scope {
         Region {
           required property int index
           readonly property Item island: islandsDrawn.count > index ? islandsDrawn.itemAt(index) : null
-          item: island?.visible ? island : null
+          // Its island's place in the window, by the bar it sits on, so it follows the bar too.
+          x: island?.visible ? bar.x + island.x : 0
+          y: island?.visible ? bar.y + island.y : 0
+          width: island?.visible ? island.width : 0
+          height: island?.visible ? island.height : 0
           radius: Config.theme.radius
         }
       }

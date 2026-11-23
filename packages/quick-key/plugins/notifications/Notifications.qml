@@ -217,7 +217,7 @@ Plugin {
     const actions = Array.from(entry.actions).filter(action => action.identifier !== "default");
     const keys = MenuKeys.assign(actions.map(action => action.text), ["x"].concat(ruled.map(action => action.key)), "abcdefghijklmnopqrstuvwxyz");
     // A sender that says its actions are icons (action-icons) names one by each's identifier.
-    const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], source: entry.hints["action-icons"] ? Quickshell.iconPath(action.identifier, true) : "", run: () => action.invoke() }));
+    const own = actions.map((action, i) => ({ desc: action.text, key: keys[i], source: entry.hints["action-icons"] ? Quickshell.iconPath(action.identifier + "-symbolic", true) || Quickshell.iconPath(action.identifier, true) : "", run: () => action.invoke() }));
     const reply = entry.hasInlineReply ? [{ desc: Words.replyPrompt, key: "Tab", run: () => root.reply(entry) }] : [];
     return reply.concat(ruled, own);
   }
@@ -291,7 +291,7 @@ Plugin {
   // A card as a list's item, by when it came: its title, its app and time aside, struck once closed.
   function itemOf(entry, closed) {
     const app = appOf(entry);
-    const title = entry.summary || app;
+    const title = entry.summary || app || entry.appName;
     const when = entry.arrived ? Clock.time(new Date(entry.arrived)) : "";
     const detail = asideOf(entry, title, false, when);
     return {
@@ -310,7 +310,7 @@ Plugin {
   function select(id) {
     const live = internal.list.find(entry => String(entry.came) === id);
     if (live) return open(live);
-    restore(internal.closed.find(entry => String(entry.came) === id));
+    restore(internal.closed.find(entry => String(entry.came) === id) ?? null);
   }
 
   function run(id, key) {
@@ -447,10 +447,13 @@ Plugin {
       if (entry.notification === notification) root.leave(entry);
     });
     if (old) {
+      // A repeat is a new arrival: it comes to the front unless the cards hold still, and its rule's run runs again.
       if (!tag) {
         entry.repeats++;
         entry.arrived = Date.now();
+        if (!still) entry.came = ++internal.seq;
         if (entry.timer.running) entry.timer.restart();
+        if (applied.run && !notification.lastGeneration) runFor(entry, applied.run);
       }
       return old.expire();
     }

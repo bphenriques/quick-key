@@ -9,7 +9,7 @@ PluginSettings {
   property int limit: 3
   // Seconds a card shows when its sender sets no time, by urgency; one set alone leaves the other at its default; a critical card stays until dismissed.
   property var timeout: ({ low: 3, normal: 8 })
-  // Notifications kept at most, shown or waiting, no fewer than `limit`; past it the oldest close, critical ones last.
+  // Notifications kept at most, shown or waiting, `limit` to 500; past it the oldest close, critical ones last.
   property int keep: 100
   // The side of a card its actions sit on: right or left.
   property string actionSide: "right"
@@ -43,7 +43,7 @@ PluginSettings {
     if (idle < 0) found.push("sets idle below 0");
     if (margin < 0 || margin > 1000) found.push("sets margin to " + margin + ", not 0 to 1000");
     if (width < 100 || width > 4000) found.push("sets width to " + width + ", not 100 to 4000");
-    if (keep < limit) found.push("sets keep to " + keep + ", below limit");
+    if (keep < limit || keep > 500) found.push("sets keep to " + keep + ", not limit to 500");
     found.push(...Object.keys(timeout ?? {}).filter(urgency => !["low", "normal"].includes(urgency)).map(urgency => "sets timeout." + urgency + ", none of low, normal"));
     for (const urgency of ["low", "normal"]) {
       if (typeof timeout?.[urgency] !== "number" || timeout[urgency] < 0) found.push("sets timeout." + urgency + " to no number of seconds");

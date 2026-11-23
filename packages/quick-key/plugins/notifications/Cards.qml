@@ -128,7 +128,11 @@ Scope {
         Region {
           required property int index
           readonly property var card: cards.count > index ? cards.itemAt(index) : null
-          item: card?.visible ? card : null
+          // Its card's place in the window, by the stack and the deck it sits in: given by item, it would follow the card alone, not what moves it (the pills' row above).
+          x: card?.visible ? stack.x + deck.x + card.x : 0
+          y: card?.visible ? stack.y + deck.y + card.y : 0
+          width: card?.visible ? card.width : 0
+          height: card?.visible ? card.height : 0
           radius: Config.theme.radius
         }
       }
@@ -180,7 +184,7 @@ Scope {
                 icon: entry ? view.iconOf(entry) : ""
                 image: entry ? view.pictureOf(entry) : ""
                 readonly property string app: entry ? view.plugin.appOf(entry) : ""
-                title: entry?.summary || app
+                title: entry?.summary || app || (entry?.appName ?? "")
                 // Its count, its app where nothing else names it (its icon from the theme may), and when it came once it has waited.
                 aside: !entry ? "" : view.plugin.asideOf(entry, title, icon !== "", view.plugin.ageOf(entry))
                 body: entry?.body ?? ""

@@ -138,6 +138,7 @@ Surface {
 
           // A third of the width at most, so a long app name never takes the title's room; preferred as its text, rounded up, so a new name never keeps a stale width.
           Label {
+            visible: text !== ""
             Layout.preferredWidth: Math.min(Math.ceil(implicitWidth), root.width / 3)
             elide: Text.ElideRight
             tone: "dim"
@@ -261,6 +262,8 @@ Surface {
                 Icon {
                   id: actionIcon
                   anchors.verticalCenter: parent.verticalCenter
+                  // Beside its label, in its colour: a theme's icon drawn for another background would vanish.
+                  recolour: "tint"
                   visible: glyph !== "" || source !== ""
                   size: Metrics.line
                   tone: hover.containsMouse ? "primary" : "normal"

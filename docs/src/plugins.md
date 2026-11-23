@@ -123,7 +123,7 @@ Cards stack in a corner of the focused screen, newest by the corner, critical on
 - progress (`value`) as a meter, and a picture (album art, a screenshot) on its right;
 - its sender's actions below.
 
-The same notification again, with no tag (same app, summary and body), renews its card rather than adding one, counted on its right (`×2`), as dunst stacks duplicates.
+The same notification again, with no tag (same app, summary and body), renews its card rather than adding one, counted on its right (`×2`): it comes to the front, its time and its rule's `run` starting again, as dunst stacks duplicates.
 
 A click opens a card: its app comes to the front (the one window whose app id is its desktop entry or name, when only one is open), and its default action runs, else it is dismissed. `✕` or a right click dismisses it.
 
