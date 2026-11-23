@@ -165,7 +165,7 @@ ShellRoot {
       if (group === "theme") text += presets();
     }
     const renamed = Object.keys(Config.renamed).map(path => [code(path), Config.renamed[path]]);
-    if (renamed.length) text += "### Renamed\n\nA config still setting an old key fails its check, saying what to write instead.\n\n" + table(["Old key", "Write instead"], renamed) + "\n";
+    if (renamed.length) text += "### Renamed and removed\n\nA config still setting an old key fails its check, saying what to write instead, or that it is gone.\n\n" + table(["Old key", "Instead"], renamed) + "\n";
     return text;
   }
 
