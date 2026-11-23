@@ -140,13 +140,14 @@ ShellRoot {
         }
       },
       {
-        name: "Return on a focused event shows it whole, Escape hides it, then leaves the event",
+        name: "Return on a focused event shows it whole, its legend then naming Return no more; Escape hides it, then leaves the event",
         until: () => {
+          const returns = () => menu.viewModels.calendar.legend.some(key => key.key === "Return");
           menu.viewModels.calendar.select(new Date(2026, 10, 12));
           menu.viewModels.calendar.handleKey("Return");
-          const focused = menu.viewModels.calendar.focused !== "" && !menu.viewModels.calendar.details;
+          const focused = menu.viewModels.calendar.focused !== "" && !menu.viewModels.calendar.details && returns();
           menu.viewModels.calendar.handleKey("Return");
-          const shown = menu.viewModels.calendar.details;
+          const shown = menu.viewModels.calendar.details && !returns();
           return focused && shown && menu.viewModels.calendar.stepBack() && !menu.viewModels.calendar.details && menu.viewModels.calendar.focused !== ""
             && menu.viewModels.calendar.stepBack() && menu.viewModels.calendar.focused === "" && !menu.viewModels.calendar.stepBack();
         }
