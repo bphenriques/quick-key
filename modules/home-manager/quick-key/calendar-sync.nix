@@ -17,6 +17,8 @@ let
         verb
         cfg.calendars
         cfg.eventsFile
+        # What the shell appends ("$1" "$2") is never a flag: a task titled -x.
+        "--"
       ];
       defaultText = lib.literalMD "calendar-sync's `${verb}`, given ${given}";
       inherit description;

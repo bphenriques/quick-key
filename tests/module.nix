@@ -132,6 +132,16 @@ assert lib.assertMsg (
   (evalHome { programs.quick-key.calendarSync.enable = true; })
   .systemd.user.services.quick-key-calendar-sync.Service.RestartMaxDelaySec == "30min"
 ) "a sync that keeps failing retries ever less often, not every minute";
+assert lib.assertMsg (
+  let
+    inherit ((evalHome { programs.quick-key.calendarSync.enable = true; }).programs.quick-key.calendarSync) exec;
+  in
+  lib.all (verb: lib.hasSuffix " --" exec.${verb}) [
+    "done"
+    "reopen"
+    "add"
+  ]
+) "a task's command ends its flags, so a title like one (-x) is still a title";
 pkgs.runCommand "quick-key-module-eval"
   {
     nativeBuildInputs = [ pkgs.jq ];
