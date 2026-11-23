@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 
@@ -164,12 +165,21 @@ Singleton {
   }
 
   readonly property bool themeMissing: userTheme.missing && shippedTheme.missing
+  // What a theme name neither yours nor shipped logs, naming the presets once they are listed.
+  readonly property string themeWarning: !themeMissing || presets.status !== FolderListModel.Ready ? ""
+    : "theme " + adapter.theme.name + " not found in " + configDir + "/themes, nor a preset: " + Array.from({ length: presets.count }, (_, i) => presets.get(i, "fileBaseName")).join(", ")
+
+  FolderListModel {
+    id: presets
+    folder: "file://" + Quickshell.shellPath("themes")
+    nameFilters: ["*.json"]
+  }
 
   // A theme file missing as the shell started has no change to watch: read again as the menu opens.
   function refresh() {
     if (userTheme.missing) userTheme.reload();
   }
-  onThemeMissingChanged: if (themeMissing) console.warn("theme", adapter.theme.name, "not found in", configDir + "/themes or the presets");
+  onThemeWarningChanged: if (themeWarning) console.warn(themeWarning);
 
   // Why the last save is not running, which the top level shows; a reload starts it empty.
   property string broken: ""

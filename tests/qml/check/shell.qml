@@ -126,6 +126,10 @@ ShellRoot {
         until: () => root.names({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }, [])
       },
       {
+        name: "a theme name that is neither yours nor shipped (config.json's Nord) names the presets",
+        until: () => Config.themeWarning.includes("theme Nord not found") && Config.themeWarning.includes("nor a preset: catppuccin-latte, catppuccin-mocha")
+      },
+      {
         name: "an entry with a desc but no key is said to need only a key",
         timeout: 0,
         until: () => Validation.check(root.menu([{ desc: "Lock", icon: "x", cmd: "true" }])).join() === "menu: 'Lock' in the top level needs a key"
@@ -142,7 +146,7 @@ ShellRoot {
       // A reload would start the suite over, from the file as saved, and never reach its end.
       {
         name: "a save that changes nothing reloads nothing",
-        start: () => root.save("{}\n"),
+        start: () => root.save("{ \"theme\": { \"name\": \"Nord\" } }\n"),
         until: () => Date.now() - root.saved > 1000
       },
       {
