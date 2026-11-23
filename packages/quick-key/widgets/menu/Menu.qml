@@ -133,18 +133,11 @@ Scope {
         }
       }
 
-      Label {
-        visible: !root.hinting && !root.menu.filtering && root.menu.emptyText !== ""
-        Layout.leftMargin: Metrics.itemPaddingX
-        tone: "dim"
-        text: root.menu.emptyText
-      }
-
       // Filtering, as tall as its rows were, so nothing moves as the filter narrows.
       ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: root.menu.filtering ? root.menu.filterSlots * filledRow.implicitHeight : -1
-        visible: !root.hinting && (root.menu.rows.length > 0 || root.menu.filtering)
+        visible: !root.hinting && (root.menu.rows.length > 0 || root.menu.filtering || root.menu.emptyText !== "")
         spacing: 0
 
         // A filled row's height, for the rows held while filtering.
@@ -156,9 +149,9 @@ Scope {
         }
 
         Label {
-          visible: root.menu.filtering && root.menu.emptyText !== ""
+          visible: root.menu.emptyText !== ""
           Layout.leftMargin: Metrics.itemPaddingX
-          Layout.topMargin: Metrics.itemPaddingY
+          Layout.topMargin: root.menu.filtering ? Metrics.itemPaddingY : 0
           tone: "dim"
           text: root.menu.emptyText
         }
