@@ -56,7 +56,7 @@ RowLayout {
     Layout.fillWidth: true
     // Rounded up: a layout rounds sizes down, and a fraction short would elide the label.
     Layout.maximumWidth: root.packed || root.text !== "" ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
-    Layout.minimumWidth: Math.min(implicitWidth, 6 * Metrics.cell)
+    Layout.minimumWidth: Math.min(implicitWidth, 2 * Metrics.cell)
     elide: Text.ElideRight
     tone: root.tone
     text: root.title
@@ -68,8 +68,8 @@ RowLayout {
     // Packed, as wide as itself at most, still shortening when squeezed.
     Layout.fillWidth: true
     Layout.maximumWidth: root.packed ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
-    // Squeezed, text ends in an ellipsis, but a short value (80%, EN) stays whole.
-    Layout.minimumWidth: Math.min(implicitWidth, 6 * Metrics.cell)
+    // Squeezed, text ends in an ellipsis: what a row is short of comes from each part by how much it can give, so a short value (80%, EN) gives least.
+    Layout.minimumWidth: Math.min(implicitWidth, 2 * Metrics.cell)
     horizontalAlignment: root.titled && !root.packed ? Text.AlignRight : Text.AlignLeft
     elide: Text.ElideRight
     font.strikeout: root.struck
@@ -92,7 +92,8 @@ RowLayout {
   Label {
     id: detailLabel
     visible: root.detail !== ""
-    Layout.minimumWidth: implicitWidth
+    Layout.minimumWidth: Math.min(implicitWidth, 4 * Metrics.cell)
+    elide: Text.ElideRight
     horizontalAlignment: Text.AlignRight
     tone: root.valueTone
     text: root.detail

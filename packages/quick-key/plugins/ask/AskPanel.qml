@@ -179,8 +179,7 @@ Scope {
         id: thread
         visible: !panel.plugin.helping
         // At the top edge the prompt is above, so the newest sits at the top and older turns run down.
-        readonly property bool atTop: Config.menu.edge === "top"
-        verticalLayoutDirection: atTop ? ListView.TopToBottom : ListView.BottomToTop
+        verticalLayoutDirection: Config.atTop ? ListView.TopToBottom : ListView.BottomToTop
         onWidthChanged: panel.threadWidth = width
         Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
@@ -189,7 +188,7 @@ Scope {
         Layout.rightMargin: Config.theme.itemPaddingX
         clip: true
         // What scrolled away above fades out, so a cut bubble shows no edge; only while something is cut.
-        layer.enabled: atTop ? !atYEnd : !atYBeginning
+        layer.enabled: Config.atTop ? !atYEnd : !atYBeginning
         layer.effect: MultiEffect {
           maskEnabled: true
           maskSource: fadeMask
@@ -241,7 +240,7 @@ Scope {
         width: thread.width
         height: thread.height
         // Clear at the far end from the prompt.
-        rotation: thread.atTop ? 180 : 0
+        rotation: Config.atTop ? 180 : 0
         gradient: Gradient {
           GradientStop {
             position: 0

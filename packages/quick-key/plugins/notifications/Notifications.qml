@@ -103,6 +103,13 @@ Plugin {
     return entry.applied.app ?? entry.appName;
   }
 
+  // The app a card or an item names, "" where nothing needs it: a name a rule sets always shows; else not when the title says it as a whole word ("Go" is not in "Good") or its icon shows it, so a song's cover keeps it.
+  function appShown(entry, title, iconShown) {
+    const app = appOf(entry);
+    const words = text => " " + text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() + " ";
+    return entry.applied.app === undefined && (iconShown || words(title).includes(words(app))) ? "" : app;
+  }
+
   // Its sender's, unless a rule sets another.
   function urgencyOf(entry) {
     return entry.applied.urgency ?? settings.urgencies[entry.urgency] ?? "normal";
@@ -281,7 +288,7 @@ Plugin {
     const app = appOf(entry);
     const title = entry.summary || app;
     const when = entry.arrived ? Clock.time(new Date(entry.arrived)) : "";
-    const detail = [entry.repeats > 1 ? "×" + entry.repeats : "", app.toLowerCase() === title.toLowerCase() ? "" : app, when].filter(part => part).join(" · ");
+    const detail = [entry.repeats > 1 ? "×" + entry.repeats : "", appShown(entry, title, false), when].filter(part => part).join(" · ");
     return {
       id: String(entry.came),
       label: title,

@@ -158,6 +158,8 @@ Singleton {
   }
 
   readonly property bool themeMissing: userTheme.missing && shippedTheme.missing
+  // The menu at the top edge, where everything that stacks from it is mirrored.
+  readonly property bool atTop: adapter.menu.edge === "top"
 
   // A theme file missing as the shell started has no change to watch: read again as the menu opens.
   function refresh() {

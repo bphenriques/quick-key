@@ -20,8 +20,6 @@ Scope {
   property Component body
   property bool inputShown: false
   property bool inputOver: false
-  // At the top edge everything stacks downward, mirrored.
-  readonly property bool atTop: Config.menu.edge === "top"
   // Whether the input has the keys, else the body.
   property bool inputFocused: false
   property Component input
@@ -108,8 +106,8 @@ Scope {
           id: base
           anchors.left: parent.left
           anchors.right: parent.right
-          anchors.bottom: root.atTop ? undefined : bar.visible ? bar.top : parent.bottom
-          anchors.top: !root.atTop ? undefined : bar.visible ? bar.bottom : parent.top
+          anchors.bottom: Config.atTop ? undefined : bar.visible ? bar.top : parent.bottom
+          anchors.top: !Config.atTop ? undefined : bar.visible ? bar.bottom : parent.top
           anchors.bottomMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
           anchors.topMargin: bar.visible ? Config.theme.spacing / 2 : Config.theme.edgeMargin
         }
@@ -120,8 +118,8 @@ Scope {
           visible: root.barShown
           z: 1
           anchors.horizontalCenter: card.horizontalCenter
-          anchors.bottom: root.atTop ? undefined : parent.bottom
-          anchors.top: root.atTop ? parent.top : undefined
+          anchors.bottom: Config.atTop ? undefined : parent.bottom
+          anchors.top: Config.atTop ? parent.top : undefined
           anchors.bottomMargin: Config.theme.edgeMargin
           anchors.topMargin: Config.theme.edgeMargin
           width: card.width
@@ -152,8 +150,8 @@ Scope {
           id: card
           // Along the edge as `menu.align` says; the bar and the input follow it.
           x: Config.menu.align === "left" ? Config.theme.edgeMargin : Config.menu.align === "right" ? parent.width - width - Config.theme.edgeMargin : (parent.width - width) / 2
-          anchors.bottom: root.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
-          anchors.top: !root.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.bottom : base.top
+          anchors.bottom: Config.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
+          anchors.top: !Config.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.bottom : base.top
           anchors.bottomMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
           anchors.topMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
           // No wider than the screen leaves within its margins, whatever width a level asks for.
@@ -181,8 +179,8 @@ Scope {
           id: inputSurface
           visible: root.inputShown
           anchors.horizontalCenter: card.horizontalCenter
-          anchors.bottom: root.atTop ? undefined : root.inputOver ? card.top : base.bottom
-          anchors.top: !root.atTop ? undefined : root.inputOver ? card.bottom : base.top
+          anchors.bottom: Config.atTop ? undefined : root.inputOver ? card.top : base.bottom
+          anchors.top: !Config.atTop ? undefined : root.inputOver ? card.bottom : base.top
           anchors.bottomMargin: root.inputOver ? Config.theme.spacing / 2 : 0
           anchors.topMargin: root.inputOver ? Config.theme.spacing / 2 : 0
           width: card.width

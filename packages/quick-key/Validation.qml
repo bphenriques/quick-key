@@ -66,13 +66,21 @@ Singleton {
       levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
   }
 
-  // What a number takes beyond being one: 0 or more, an opacity at most 1, and these their own [least, most].
+  // What a number takes beyond being one: 0 or more, an opacity at most 1, and these their own [least, most]: sizes past which no screen lays the shell out, so a typo fails here rather than on screen.
   readonly property var ranges: ({
-      "theme.fontSize": [1],
-      "theme.lineHeight": [0.1],
-      "theme.iconSize": [1],
+      "theme.fontSize": [4, 48],
+      "theme.lineHeight": [0.1, 4],
+      "theme.iconSize": [4, 256],
+      "theme.padding": [0, 100],
+      "theme.spacing": [0, 100],
+      "theme.itemPaddingX": [0, 100],
+      "theme.itemPaddingY": [0, 100],
+      "theme.listSpacing": [0, 100],
+      "theme.borderWidth": [0, 20],
+      "theme.edgeMargin": [0, 1000],
+      "theme.osdIconSize": [4, 256],
       "menu.width": [1],
-      "menu.columns": [1],
+      "menu.columns": [1, 9],
       "audio.step": [1],
       "audio.max": [1],
       "brightness.step": [1],
@@ -248,7 +256,7 @@ Singleton {
       submenu: {},
       keepOpen: { needs: ["cmd", "action"] },
       activeWhen: { names: States.builtin },
-      columns: { level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 ? "" : "sets columns, which only a level of 1 or more columns takes" },
+      columns: { level: true, invalid: columns => Number.isInteger(columns) && columns >= 1 && columns <= 9 ? "" : "sets columns, which only a level of 1 to 9 columns takes" },
       list: { names: Lists.builtin },
       pins: { needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits" : "" },
       view: { excludes: ["list"], invalid: view => view in Views.builtin ? "" : "shows view '" + view + "', which is not built in" },

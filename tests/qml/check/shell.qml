@@ -11,6 +11,9 @@ ShellRoot {
   }
 
   readonly property var wrong: [
+    ["a font past any screen", { theme: { fontSize: 500 } }, "theme.fontSize is 500, not 4 to 48"],
+    ["padding past any screen", { theme: { padding: 5000 } }, "theme.padding is 5000, not 0 to 100"],
+    ["a level of 40 columns", { menu: { entries: [{ key: "a", desc: "A", submenu: [], columns: 40 }] } }, "1 to 9 columns"],
     ["a rule's app that is no name", { plugins: { notifications: { rules: [{ app: false }] } } }, "rules[0] app takes a string"],
     ["a group named as a given value in another case", { plugins: { notifications: { rules: [{ match: { summary: "(?<App>.*)" } }] } } }, "a group named App, which its commands already get"],
     ["an app icon mode that is none", { theme: { appIcons: "gray" } }, "theme.appIcons is 'gray', not one of colour, grey, tint"],
@@ -25,7 +28,7 @@ ShellRoot {
     ["Ctrl with a symbol", { menu: { entries: [{ key: "Ctrl+.", desc: "X", cmd: "true", icon: "x" }] } }, "keys no keyboard sends"],
     ["a colour that is no colour", { theme: { alert: "rgba(255,0,0,0.5)" } }, "theme.alert: 'rgba(255,0,0,0.5)' is no colour"],
     ["an opacity past 1", { theme: { surfaceOpacity: 2 } }, "theme.surfaceOpacity is 2, not 0 to 1"],
-    ["no columns", { menu: { columns: 0 } }, "menu.columns is 0, not 1 or more"],
+    ["no columns", { menu: { columns: 0 } }, "menu.columns is 0, not 1 to 9"],
     ["battery thresholds the wrong way round", { battery: { low: 5, critical: 50 } }, "battery.critical is 50, not below battery.low"],
     ["a bar slot that is no list", { menu: { header: { left: "battery" } } }, "bar sets left to no list"],
     ["a level's bar slot misspelt", { menu: { entries: [{ key: "a", desc: "A", submenu: [], header: { rigth: [] } }] } }, "bar sets rigth, none of left, center, right"],

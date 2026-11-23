@@ -4,7 +4,7 @@ import qs
 // The notifications' settings (docs/src/plugins.md#notifications); `owner` the one tool it names, the standard busctl.
 PluginSettings {
   // The corner the cards stack in: top-right, top-left, bottom-right or bottom-left; by default, on the right, away from the menu's edge.
-  property string corner: Config.menu.edge === "top" ? "bottom-right" : "top-right"
+  property string corner: Config.atTop ? "bottom-right" : "top-right"
   // Cards shown at once, 1 to 9; the rest wait, counted.
   property int limit: 3
   // Seconds a card shows when its sender sets no time, by urgency; one set alone leaves the other at its default; a critical card stays until dismissed.

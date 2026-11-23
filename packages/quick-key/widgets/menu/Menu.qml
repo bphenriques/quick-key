@@ -120,7 +120,7 @@ Scope {
 
       // Fewer keys than rows leave the body's far side empty rather than shrink it, the keys next to the bar: above them, or below at the top edge.
       Item {
-        visible: Config.menu.edge !== "top" && root.hinting && body.restHeight > hints.implicitHeight + body.spacing
+        visible: !Config.atTop && root.hinting && body.restHeight > hints.implicitHeight + body.spacing
         Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
       }
 
@@ -150,7 +150,7 @@ Scope {
 
       // The same room below the keys at the top edge, as the bar is above them.
       Item {
-        visible: Config.menu.edge === "top" && root.hinting && body.restHeight > hints.implicitHeight + body.spacing
+        visible: Config.atTop && root.hinting && body.restHeight > hints.implicitHeight + body.spacing
         Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
       }
 

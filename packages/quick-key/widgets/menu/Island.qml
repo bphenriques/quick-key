@@ -11,8 +11,7 @@ GridLayout {
 
   required property MenuModel menu
   readonly property InputModel model: menu.island
-  // The prompt sits nearest the screen's edge, the turn beyond it: at the top edge, the order flips.
-  readonly property bool atTop: Config.menu.edge === "top"
+  // The prompt sits nearest the screen's edge, the turn beyond it: at the top edge (Config.atTop), the order flips.
 
   columns: 1
   rowSpacing: Config.theme.spacing / 2
@@ -26,10 +25,10 @@ GridLayout {
     readonly property bool expands: visible && exchange.overflows && root.model.turn !== root.model.expandedTurn && root.model.turn?.phase !== "working"
     visible: root.model.turn !== null && !root.menu.filtering
     Layout.fillWidth: true
-    Layout.row: root.atTop ? 1 : 0
+    Layout.row: Config.atTop ? 1 : 0
     // The height held sits beyond it, outside what Tab lights, so the turn stays next to the prompt.
-    Layout.topMargin: root.atTop ? 0 : Math.max(0, last.tallest - exchange.implicitHeight)
-    Layout.bottomMargin: root.atTop ? Math.max(0, last.tallest - exchange.implicitHeight) : 0
+    Layout.topMargin: Config.atTop ? 0 : Math.max(0, last.tallest - exchange.implicitHeight)
+    Layout.bottomMargin: Config.atTop ? Math.max(0, last.tallest - exchange.implicitHeight) : 0
     // Outset by its padding, so the turn lines up with the prompt.
     Layout.leftMargin: -Config.theme.itemPaddingX
     Layout.rightMargin: -Config.theme.itemPaddingX
@@ -74,7 +73,7 @@ GridLayout {
   Prompt {
     id: prompt
     Layout.fillWidth: true
-    Layout.row: root.atTop ? 0 : 1
+    Layout.row: Config.atTop ? 0 : 1
     // Filtering, it is the filter: its glyph, its range on the right.
     readonly property bool filter: root.menu.filtering
     active: root.menu.inputFocused || filter
