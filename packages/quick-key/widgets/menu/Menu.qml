@@ -255,8 +255,10 @@ Scope {
             item: root.menu.bodyActions[index] ?? ({})
             hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
             menu: root.menu
-            Layout.fillWidth: !hugs
+            // Hugging, it fills no further than itself; not filling at all would fix it at its full width, past the card.
+            Layout.fillWidth: true
             Layout.preferredWidth: hugs ? -1 : 1
+            Layout.maximumWidth: hugs ? implicitWidth : Number.POSITIVE_INFINITY
             chars: index % actionsGrid.columns === 0 && root.menu.rows.length ? Math.max(root.menu.columnChars(index, actionsGrid.columns), root.menu.keyChars(root.menu.rows)) : root.menu.columnChars(index, actionsGrid.columns)
           }
         }

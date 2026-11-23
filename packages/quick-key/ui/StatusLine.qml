@@ -52,9 +52,11 @@ RowLayout {
   Label {
     id: titleLabel
     visible: root.titled && root.labelShown
-    Layout.minimumWidth: implicitWidth
-    // Without a value beside it, it pushes the detail to the right.
-    Layout.fillWidth: !root.packed && root.text === ""
+    // Filling but no wider than itself, unless no value is beside it, when it pushes the detail to the right: a layout fixes an item that does not fill at its full width, so squeezed it would leave the card.
+    Layout.fillWidth: true
+    Layout.maximumWidth: root.packed || root.text !== "" ? implicitWidth : Number.POSITIVE_INFINITY
+    Layout.minimumWidth: Math.min(implicitWidth, 6 * Metrics.cell)
+    elide: Text.ElideRight
     tone: root.tone
     text: root.title
   }
@@ -62,7 +64,9 @@ RowLayout {
   Label {
     id: textLabel
     visible: root.text !== "" && (root.titled || root.labelShown)
-    Layout.fillWidth: !root.packed
+    // Packed, as wide as itself at most, still shortening when squeezed.
+    Layout.fillWidth: true
+    Layout.maximumWidth: root.packed ? implicitWidth : Number.POSITIVE_INFINITY
     // Squeezed, text ends in an ellipsis, but a short value (80%, EN) stays whole.
     Layout.minimumWidth: Math.min(implicitWidth, 6 * Metrics.cell)
     horizontalAlignment: root.titled && !root.packed ? Text.AlignRight : Text.AlignLeft
