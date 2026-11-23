@@ -17,6 +17,7 @@ ShellRoot {
   property int repeats: 0
   // The minute the timed task was last written as due.
   property string dueMinute: ""
+  property bool missedRead: false
 
   CommandProcess {
     id: complainer
@@ -216,12 +217,18 @@ ShellRoot {
       },
       {
         name: "a first check, with none fired yet, skips what fell due before it and keeps it as fired",
-        start: () => {
-          Kept.set("tasks.reminded", undefined);
-          root.tasks("unremind");
-          root.tasks("missed");
-        },
-        until: () => suite.waited >= 1000 && !Plugins.get("reminded")?.text && Array.from(Kept.value("tasks.reminded") ?? []).some(key => key.startsWith("Missed "))
+        start: () => root.tasks("missed"),
+        until: () => {
+          // Cleared once the file has it, so a check between never sees the last test's task, due this minute, as a first.
+          if (!Plugins.get("tasks").tasks.some(task => task.id === "m")) return false;
+          if (!root.missedRead) {
+            root.missedRead = true;
+            Kept.set("tasks.reminded", undefined);
+            root.tasks("unremind");
+            Plugins.get("tasks").remind();
+          }
+          return suite.waited >= 1000 && !Plugins.get("reminded")?.text && Array.from(Kept.value("tasks.reminded") ?? []).some(key => key.startsWith("Missed "));
+        }
       },
       {
         name: "a reminder that fell due unseen (a suspend, the shell off) fires as the next check comes, its time as the clock says it",
