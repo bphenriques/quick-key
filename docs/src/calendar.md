@@ -4,7 +4,7 @@
 
 ## Keys
 
-- Arrows move the selected day by a day or a week.
+- Arrows move the selected day by a day or a week. The grid shows them, so `?` lists them rather than the bar.
 - `Ctrl+←→` moves a month, `Ctrl+↑↓` a year, `t` goes back to today.
 - `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns. On an event, `Return` shows it whole in the events' place, its title and place unshortened and its end to the minute, until `ESC`.
 

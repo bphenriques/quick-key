@@ -444,6 +444,17 @@ ShellRoot {
         }
       },
       {
+        name: "on a calendar level, ? lists the arrows its legend leaves to the grid",
+        until: () => {
+          menu.hide();
+          menu.push(root.calendarLevel);
+          const labels = keys => keys.map(key => MenuKeys.label(key.key, true));
+          const listed = labels(menu.help).join().startsWith("←→,↑↓,") && !labels(menu.legend).includes("←→");
+          menu.hide();
+          return listed;
+        }
+      },
+      {
         name: "an input's key gives it the keys, its text reaches its command, and its after runs, given nothing, once the command succeeds",
         start: () => {
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"", after: "echo \"done $#\" > \"$XDG_RUNTIME_DIR/followed\"" } } });

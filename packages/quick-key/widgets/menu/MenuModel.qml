@@ -63,6 +63,7 @@ Scope {
     })
   // Keys no row shows, listed on `?` where they act.
   readonly property var help: [].concat(
+    viewModel?.help ?? [],
     holds.Ctrl.length ? [{ key: "Ctrl+", desc: Words.helpBarKeys }] : [],
     holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
     rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
