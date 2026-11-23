@@ -88,6 +88,11 @@ ShellRoot {
         until: () => suite.waited >= 1500 && Plugins.get("bare").failure !== "" && Plugins.get("ran")?.text !== "ran"
       },
       {
+        name: "a command ending in a newline, as a multi-line Nix string does, takes its arguments as arguments, never running the first",
+        start: () => Commands.run("true\n", Quickshell.env("XDG_RUNTIME_DIR") + "/ran.sh"),
+        until: () => suite.waited >= 1500 && Plugins.get("ran")?.text !== "ran"
+      },
+      {
         name: "a plugin in the user's folder loads",
         until: () => Plugins.get("custom")?.text === "from the user's folder"
       },

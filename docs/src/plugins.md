@@ -85,7 +85,7 @@ A plugin that needs behaviour (a timer, a surface, a protocol) is a folder, foun
 What it gets:
 
 - `name`, `settings` (its part of the config), and `state` (the state line, with `show` and `items` applied).
-- `exec(setting, ...args)` runs a command setting, its arguments as `$1`, `$2`. `call(setting, args, then)` runs one and always answers `then(code, output)` once done (127 when unset), so a second call never drops one still running; one that exits non-zero is logged with its last line on stderr. `commandLine(setting, ...args)` builds one for a `Process`.
+- `exec(setting, ...args)` runs a command setting, its arguments as `$1`, `$2` after its text, which the check fails when it ends in `;`, `&` or `|`. `call(setting, args, then)` runs one and always answers `then(code, output)` once done (127 when unset), so a second call never drops one still running; one that exits non-zero is logged with its last line on stderr. `commandLine(setting, ...args)` builds one for a `Process`.
 - The theme (`Config.theme`), the [kit](kit.md), and the services: `Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Compositor`, `Niri` for niri's own events, and:
   - `Picker`: `pick(list)` shows a list by name, filtered, on a menu level of its own over the plugin's panel, which Escape shows again.
   - `Panels`, the stack of surfaces: `open(owner)` shows a plugin's panel on top, `back()` closes it to show what it covered, and `close()` hides them all.

@@ -8,8 +8,9 @@ import Quickshell.Io
 Singleton {
   id: root
 
+  // A trailing newline (a multi-line Nix string) would leave the arguments a command of their own.
   function line(shell, ...args) {
-    return ["sh", "-c", shell + args.map((_, i) => ' "$' + (i + 1) + '"').join(""), "sh", ...args];
+    return ["sh", "-c", shell.replace(/\s+$/, "") + args.map((_, i) => ' "$' + (i + 1) + '"').join(""), "sh", ...args];
   }
 
   function run(shell, ...args) {

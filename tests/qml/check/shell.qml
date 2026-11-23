@@ -101,7 +101,10 @@ ShellRoot {
     ["a music title pattern that is not one", { music: { titleMatch: "([(" } }, "music.titleMatch: '([(' is no regular expression"],
     ["a look that is not one", { plugins: { x: { type: "command", show: { "true": "x" } } } }, "plugins.x.show.true takes a map"],
     ["an item without a string id", { plugins: { x: { type: "command", items: [{ id: 1 }] } } }, "plugins.x.items[0] takes a map with a string id"],
-    ["a tasks sort it does not have", { plugins: { t: { type: "tasks", sort: "date" } } }, "plugins.t sets sort to 'date', none of due, priority, title, list"]
+    ["a tasks sort it does not have", { plugins: { t: { type: "tasks", sort: "date" } } }, "plugins.t sets sort to 'date', none of due, priority, title, list"],
+    ["a command ending in ;, which would run its first argument", { calendar: { remind: "notify-send x ;\n" } }, "calendar.remind ends in ';'"],
+    ["a plugin's command ending in &&", { plugins: { t: { type: "tasks", done: "todo done &&" } } }, "plugins.t.done ends in '&&'"],
+    ["an input's command ending in a pipe", menu([{ key: "x", desc: "X", icon: "x", list: "tray", input: { desc: "Add", cmd: "add |" } }]), "input.cmd ends in '|'"]
   ]
 
   Suite {
@@ -124,6 +127,11 @@ ShellRoot {
         name: "a plugin's own settings have nothing wrong",
         timeout: 0,
         until: () => root.names({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }, [])
+      },
+      {
+        name: "a command ending in an escaped semicolon has nothing wrong",
+        timeout: 0,
+        until: () => root.names({ calendar: { remind: "find . -exec echo {} \\;" } }, [])
       },
       {
         name: "a theme name that is neither yours nor shipped (config.json's Nord) names the presets",

@@ -50,7 +50,7 @@ Singleton {
     if (moved.length) return moved;
     const kinds = Config.undeclared(json);
     if (kinds.length) return kinds;
-    const values = numberProblems(json).concat(colourProblems(json.theme ?? {}), choiceProblems(json));
+    const values = numberProblems(json).concat(colourProblems(json.theme ?? {}), choiceProblems(json), operatorProblems(json));
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = Object.assign({}, json.menu?.header);
@@ -127,6 +127,22 @@ Singleton {
     const colour = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
     return Object.keys(Config.colors).filter(name => typeof theme[name] === "string" && theme[name] !== "" && !colour.test(theme[name]))
       .map(name => "theme." + name + ": '" + theme[name] + "' is no colour (#rrggbb, or #aarrggbb)");
+  }
+
+  // A command takes its arguments after its text ("$1" "$2"), so one ending in a control operator would run the first as a program; an escaped \; is none.
+  function endsInOperator(path, text) {
+    const end = typeof text === "string" ? text.match(/[^\\\s]\s*([;&|]+)\s*$/) : null;
+    return end ? [path + " ends in '" + end[1] + "', so an argument given it would run as a command"] : [];
+  }
+
+  // Every text setting, the plugins' too, as any may be a command.
+  function operatorProblems(json) {
+    const found = [];
+    for (const [group, kinds] of Object.entries(Config.declaredKinds))
+      if (typeof kinds === "object") for (const name of Object.keys(kinds)) found.push(...endsInOperator(group + "." + name, json[group]?.[name]));
+    for (const [name, plugin] of Object.entries(json.plugins ?? {}))
+      if (Config.kind(plugin) === "map") for (const key of Object.keys(plugin)) found.push(...endsInOperator("plugins." + name + "." + key, plugin[key]));
+    return found;
   }
 
   // Each old key, by its path, that json still sets.
@@ -260,6 +276,7 @@ Singleton {
     if (input.plugin != null && !plugins.includes(input.plugin)) found.push("gives its input's text to plugin '" + input.plugin + "', which is not one");
     if (input.cmd == null && input.plugin == null && !plugins.includes(entry.list)) found.push("gives its input's text to nothing: needs input.cmd, input.plugin, or a list that is a plugin");
     if (input.format != null && !String(input.format).includes("{text}")) found.push("sets input.format without {text}, where the text goes");
+    found.push(...endsInOperator("input.cmd", input.cmd));
     return found;
   }
 
