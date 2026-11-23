@@ -72,7 +72,7 @@ List one by name to use it: `plugins.niriMinimap = { };`.
 - **`niriMinimap`:** a minimap of niri's workspaces as you move between them.
 - **`tasks`:** tasks to tick off, from a tasks file (see [Tasks](tasks.md)).
 - **`ask`:** a panel for quick turns with an agent (see [Ask](ask.md)).
-- **`notifications`:** a notification server in the shell's look (see [Notifications](notifications.md)).
+- **`notifications`** (experimental): a notification server in the shell's look, keyboard first (see [Notifications](notifications.md)).
 
 ## Writing one in QML
 
