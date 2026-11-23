@@ -23,7 +23,7 @@ A body holds one thing. It is either entries, each a key and a label that does s
 Letters are actions and digits are list items.
 
 - A letter runs its entry or opens its level.
-- `ESC` is the one way back, as in a launcher. It clears what you typed, then closes the filter or a focused event, then returns where you came from (the level above, or the panel or input that opened it), and at the root closes the menu. It never moves the keys, stops or answers anything. `DEL` only deletes. A level opened on its own, by a shortcut or a key path, is a root.
+- `ESC` is the one way back, as in a launcher. It clears what you typed, then leaves an input for its level's body, closes the filter or a focused event, then returns where you came from (the level above, or the panel or input that opened it), and at the root closes the menu. It never stops or answers anything. `DEL` only deletes. A level opened on its own, by a shortcut or a key path, is a root.
 - Digits pick from a level's list; `Alt+digit` opens an item's own menu (a tray app's).
 - `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second lists the bar's keys in place of the body, as icons alone cannot say what they run.
 - Two keys with a command or action each (`[ "Down" "Up" ]`) share a row, named for what it changes (`Volume`, `Track`). The first steps down or back: `↓↑` is less then more, and `←→` and `↑↓` are back then forward, up going back in time as on a scrolled page. Held, a key repeats on its level, never into the level it opens.
@@ -74,7 +74,7 @@ Dates and times are said one way everywhere, in `clock.locale`: a time as the lo
 
 An entry's `input` floats a line of text over its level's body, a bar entry's too. `menu.input` does over the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask"; plugin = "assistant"; }`).
 
-An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then steps back. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right.
+An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then gives the keys back to the body, as `TAB` does. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right.
 
 The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
 

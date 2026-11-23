@@ -335,9 +335,10 @@ Scope {
     filterSlots = 9;
   }
 
-  // Escape once the input is cleared.
+  // Escape once the input is cleared: an input gives the keys back to its body first, as a card's reply does.
   function stepBack() {
     if (filtering && !level.picking) return stopFilter();
+    if (inputFocused) return focusOn("body");
     if (viewModel && viewModel.stepBack()) return;
     if (stack.length <= base) Panels.back();
     else back();

@@ -34,6 +34,7 @@ ShellRoot {
     ["while the help shows, a row's letter only closes it", keyedLevel, () => menu.hold("Help"), "f", "help closed"],
     ["while the help shows, ? closes it too", keyedLevel, () => menu.hold("Help"), "?", "help closed"],
     ["Escape goes back a level", keyedLevel, null, "Escape", "back"],
+    ["Escape on an empty input gives the keys to the body, staying on the level", keyedLevel, () => menu.focusOn("input"), "Escape", "body"],
     ["a view takes its keys before the level's rows", calendarLevel, null, "Right", "view"],
     ["Tab moves to the input", keyedLevel, null, "Tab", "input"],
     ["Tab with no input does nothing", bareLevel, null, "Tab", "nothing"],
@@ -63,6 +64,7 @@ ShellRoot {
     if (menu.filtering !== was.filtering) return "filter";
     if (menu.stack.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
+    if (was.input) return "body";
     return handled ? "taken" : "nothing";
   }
 
@@ -73,7 +75,7 @@ ShellRoot {
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length };
+    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused };
     const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name), was);
     menu.hide();
     return did;
