@@ -85,6 +85,11 @@ Singleton {
   // md-battery_charging_outline, md-battery_charging_10 to _100
   readonly property var batteryChargingLevels: Config.glyphs.batteryChargingLevels ?? ["\u{F089F}", "\u{F089C}", "\u{F0086}", "\u{F0087}", "\u{F0088}", "\u{F089D}", "\u{F0089}", "\u{F089E}", "\u{F008A}", "\u{F008B}", "\u{F0085}"]
 
+  // md-wifi_strength_outline, md-wifi_strength_1 to _4
+  readonly property var wifiLevels: Config.glyphs.wifiLevels ?? ["\u{F092F}", "\u{F091F}", "\u{F0922}", "\u{F0925}", "\u{F0928}"]
+  // md-wifi_strength_alert_outline, md-wifi_strength_1_alert to _4_alert
+  readonly property var wifiLimitedLevels: Config.glyphs.wifiLimitedLevels ?? ["\u{F092B}", "\u{F0920}", "\u{F0923}", "\u{F0926}", "\u{F0929}"]
+
   // A device type: headphones, headset, internal, external or microphone.
   function audioDevice(type) {
     return audioDevices[type] ?? audioDevices.external;
@@ -96,6 +101,10 @@ Singleton {
 
   function battery(percentage, pluggedIn) {
     return level(pluggedIn ? batteryChargingLevels : batteryLevels, percentage);
+  }
+
+  function wifiSignal(percentage, limited) {
+    return level(limited ? wifiLimitedLevels : wifiLevels, percentage);
   }
 
   // A list of glyphs over 0 to 100, an even share each, so a theme may give as many as its font has.

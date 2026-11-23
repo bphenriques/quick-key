@@ -307,7 +307,7 @@ Singleton {
       property JsonObject popups: JsonObject {
         // Milliseconds a pop-up stays.
         property int timeout: 1500
-        // The statuses and plugins whose changes pop up, by name; battery's as it is plugged in or out.
+        // The statuses and plugins whose changes pop up, by name; battery's as it is plugged in or out, bluetooth's as it turns on or off or a device connects or leaves.
         property var show: ["sink", "source", "brightness", "keyboardLayout", "keepAwake"]
         // The screen edge a pop-up sits at, centred along it: right, left, top or bottom; at the top or bottom a level reads across.
         property string position: "right"
@@ -357,7 +357,7 @@ Singleton {
       }
 
       property JsonObject music: JsonObject {
-        // The MPRIS identity of the player the music status follows; unset, the one playing, else any.
+        // The MPRIS identity of the player the music status follows; unset, the one playing, else the last that played, else any.
         property string player
       }
 

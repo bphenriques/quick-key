@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import qs
 
-// The player Config.music.player names over MPRIS, else the one playing, else any. Playback position is left out: MPRIS only updates it when polled.
+// The player Config.music.player names over MPRIS, else the one playing, else the last that played, else any. Playback position is left out: MPRIS only updates it when polled.
 Singleton {
   readonly property bool present: internal.player !== null
   readonly property bool playing: internal.player?.isPlaying ?? false
@@ -40,9 +40,13 @@ Singleton {
     id: internal
 
     readonly property var players: Mpris.players.values
+    readonly property var playing: players.find(player => player.isPlaying) ?? null
+    // The player that played last, so a pause then play resumes it rather than another.
+    property var last: null
+    onPlayingChanged: if (playing) last = playing
     readonly property var player: Config.music.player
       ? players.find(player => player.identity === Config.music.player) ?? null
-      : players.find(player => player.isPlaying) ?? players[0] ?? null
+      : playing ?? (players.includes(last) ? last : players[0] ?? null)
     // A stopped player keeps its last track.
     readonly property var track: player?.playbackState === MprisPlaybackState.Stopped ? null : player
     readonly property string title: track?.trackTitle ?? ""

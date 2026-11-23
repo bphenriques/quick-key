@@ -16,7 +16,7 @@ Singleton {
     sourceMute: { icon: () => Glyphs.microphoneOff, state: "sourceMuted", available: () => Audio.source !== null, run: () => Audio.toggleMute(Audio.source) },
     streamVolume: { pair: true, icon: () => Glyphs.volume, available: () => Audio.stream !== null, run: up => Audio.adjust(Audio.stream, up) },
     streamMute: { icon: () => Glyphs.volumeOff, state: "streamMuted", available: () => Audio.stream !== null, run: () => Audio.toggleMute(Audio.stream) },
-    wifi: { icon: () => Network.wifiEnabled ? Glyphs.wifi : Glyphs.disconnected, state: "wifi", available: () => Network.wifiPresent, run: () => Network.toggleWifi() },
+    wifi: { icon: () => Network.wifiEnabled ? Glyphs.wifi : Glyphs.disconnected, state: "wifi", available: () => Network.wifiPresent && !Network.wifiBlocked, run: () => Network.toggleWifi() },
     bluetooth: { icon: () => Bluez.enabled ? Glyphs.bluetooth : Glyphs.bluetoothOff, state: "bluetooth", available: () => Bluez.present, run: () => Bluez.toggle() },
     playPause: { icon: () => Glyphs.playPause, available: () => Music.canPlay, run: () => Music.togglePlaying() },
     track: { pair: true, icon: () => Glyphs.track, available: () => Music.canSkip, run: forward => Music.skip(forward) },

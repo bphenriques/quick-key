@@ -14,6 +14,10 @@ Singleton {
   readonly property var paired: Array.from(Bluetooth.defaultAdapter?.devices.values ?? []).filter(device => device.paired)
   readonly property var connected: paired.filter(device => device.connected)
 
+  function changing(device) {
+    return device.state === BluetoothDeviceState.Connecting || device.state === BluetoothDeviceState.Disconnecting;
+  }
+
   // Powers the adapter off, or on; a blocked one is unblocked (Config.bluetooth.unblock), and BlueZ powers it on.
   function toggle() {
     if (blocked) Commands.run(Config.bluetooth.unblock);

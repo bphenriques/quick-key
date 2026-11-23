@@ -9,6 +9,10 @@ import qs.ui
 Singleton {
   id: root
 
+  // Wi-Fi scans while the level on top lists its networks, so those coming into range show.
+  readonly property bool scanning: Panels.top?.level?.entry?.list === "wifi"
+  onScanningChanged: Network.scan(scanning)
+
   // Each: items() as { id, desc, select, closes, detail, meter, adjust(up) for the wheel, ... }, the icon a pin shows while absent, why it is empty, extra keys.
   readonly property var builtin: Object.assign(Object.create(null), {
     tray: {
@@ -20,7 +24,7 @@ Singleton {
     wifi: {
       icon: Glyphs.wifi,
       empty: () => Network.wifiEnabled ? Words.emptyNetworks : Words.emptyWifiOff,
-      items: () => Network.known.map(network => ({ id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, select: () => root.toggle(network) }))
+      items: () => Network.known.map(network => ({ id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, busy: network.stateChanging, select: () => root.toggle(network) }))
     },
     bluetooth: {
       icon: Glyphs.bluetooth,
@@ -30,6 +34,7 @@ Singleton {
         desc: device.name,
         icon: Glyphs.bluetooth,
         active: device.connected,
+        busy: Bluez.changing(device),
         detail: device.connected && device.batteryAvailable ? Math.round(device.battery * 100) + "%" : "",
         select: () => root.toggle(device)
       })).sort((a, b) => a.desc.localeCompare(b.desc))
@@ -90,14 +95,13 @@ Singleton {
   // Each device with its own volume and meter, which the wheel over it changes.
   function audio(devices, current) {
     return devices.map(device => {
-      const audio = device.node.audio;
       return {
         id: device.name,
         desc: device.label,
         icon: Glyphs.audioDevice(device.type),
         active: device.name === current,
         detail: Audio.level(device.node),
-        meter: audio?.volume ?? 0,
+        meter: Audio.meter(device.node),
         adjust: up => Audio.adjust(device.node, up),
         select: () => Audio.select(device)
       };
@@ -113,7 +117,7 @@ Singleton {
       icon: Glyphs.volume,
       active: node === picked,
       detail: Audio.level(node),
-      meter: node.audio?.volume ?? 0,
+      meter: Audio.meter(node),
       adjust: up => Audio.adjust(node, up),
       select: () => Audio.pick(node)
     };

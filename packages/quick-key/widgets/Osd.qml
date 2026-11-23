@@ -14,9 +14,12 @@ Scope {
 
   // What is or was last shown, a status or a plugin; kept while the window closes.
   property string kind: ""
+  // The output it shows on, the focused one as a showing starts, so it never moves while shown.
+  property string output: ""
 
   function show(newKind) {
     if (root.covered) return;
+    if (!transient.shown) output = Compositor.focusedOutput;
     kind = newKind;
     transient.show();
   }
@@ -64,8 +67,8 @@ Scope {
     OverlayWindow {
       id: window
 
-      // The focused screen, named, so its size is known before the surface maps; left to the compositor, Qt would guess another.
-      screen: Quickshell.screens.find(each => each.name === Compositor.focusedOutput) ?? Quickshell.screens[0]
+      // Named, so its size is known before the surface maps; left to the compositor, Qt would guess another.
+      screen: Quickshell.screens.find(each => each.name === root.output) ?? Quickshell.screens[0]
       readonly property var status: Statuses.builtin[root.kind] ?? null
       readonly property var plugin: Plugins.get(root.kind)
       readonly property var fields: status ? status.fields((id, name) => name) : ({})

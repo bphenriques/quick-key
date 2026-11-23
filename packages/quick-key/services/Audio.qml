@@ -22,8 +22,6 @@ Singleton {
   readonly property string sourceType: internal.sourceDevice?.type ?? "microphone"
   readonly property string sinkName: internal.sinkDevice?.label || sink?.nickname || sink?.description || ""
   readonly property string sourceName: internal.sourceDevice?.label || source?.nickname || source?.description || ""
-  readonly property real sinkVolume: sink?.audio?.volume ?? 0
-  readonly property real sourceVolume: source?.audio?.volume ?? 0
   readonly property bool sinkMuted: sink?.audio?.muted ?? false
   readonly property bool sourceMuted: source?.audio?.muted ?? false
 
@@ -37,11 +35,17 @@ Singleton {
     return node?.audio?.muted ? Words.muted : Math.round((node?.audio?.volume ?? 0) * 100) + "%";
   }
 
-  // A device's or stream's volume a step down or up (Config.audio.step), never past Config.audio.max.
+  // A device's or stream's volume a step down or up (Config.audio.step), never past Config.audio.max; up never lowers one set above it elsewhere.
   function adjust(node, up) {
     if (!node?.audio) return;
     const step = Config.audio.step / 100;
-    node.audio.volume = Math.max(0, Math.min(Config.audio.max / 100, Math.round((node.audio.volume + (up ? step : -step)) / step) * step));
+    const next = Math.max(0, Math.min(Config.audio.max / 100, Math.round((node.audio.volume + (up ? step : -step)) / step) * step));
+    node.audio.volume = up ? Math.max(node.audio.volume, next) : next;
+  }
+
+  // A volume as a meter fills, full at Config.audio.max when it allows more than 100%.
+  function meter(node) {
+    return (node?.audio?.volume ?? 0) * 100 / Math.max(100, Config.audio.max);
   }
 
   function toggleMute(node) {

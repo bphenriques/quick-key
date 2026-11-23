@@ -101,6 +101,7 @@ Singleton {
   readonly property string wifiOff: "Wi-Fi off"
   readonly property string disconnected: "Disconnected"
   readonly property string ethernet: "Ethernet"
+  readonly property string noInternet: "No internet"
   readonly property string muted: "muted"
 
   // What carries the sound when its own name says nothing.

@@ -16,7 +16,7 @@ Singleton {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
       fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.level(Audio.sink) },
       format: "{device}|{volume}",
-      meter: () => Audio.sinkVolume,
+      meter: () => Audio.meter(Audio.sink),
       muted: () => Audio.sinkMuted,
       adjust: "sinkVolume",
       ready: () => Audio.sink?.ready ?? false
@@ -25,7 +25,7 @@ Singleton {
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
       fields: pinned => !Audio.source ? {} : { device: pinned(Audio.source.name, Audio.sourceName), volume: Audio.level(Audio.source) },
       format: "{device}|{volume}",
-      meter: () => Audio.sourceVolume,
+      meter: () => Audio.meter(Audio.source),
       muted: () => Audio.sourceMuted,
       adjust: "sourceVolume",
       ready: () => Audio.source?.ready ?? false
@@ -41,12 +41,16 @@ Singleton {
       })
     },
     network: {
-      glyph: () => Network.kind === "wifi" ? Glyphs.wifi : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected,
+      glyph: () => Network.kind === "wifi" ? Glyphs.wifiSignal(Network.strength, Network.limited) : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected,
       fields: pinned => ({
         name: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? Words.ethernet : Words.disconnected,
-        wifi: Network.wifiEnabled ? "" : Words.wifiOff
+        wifi: Network.wifiEnabled ? "" : Words.wifiOff,
+        internet: Network.limited ? Words.noInternet : ""
       }),
-      format: "{name}|{wifi}"
+      format: "{name}|{internet} {wifi}",
+      tone: () => Network.limited ? "warning" : "",
+      // A pop-up as the connection changes, not as its signal does.
+      change: () => [Network.kind, Network.ssid, Network.limited, Network.wifiEnabled]
     },
     bluetooth: {
       glyph: () => !Bluez.enabled ? Glyphs.bluetoothOff : Bluez.connected.length ? Glyphs.bluetoothConnected : Glyphs.bluetooth,
@@ -58,7 +62,9 @@ Singleton {
         if (others.length) return { device: Words.devicesConnected(Bluez.connected.length) };
         return { device: pinned(device.address, device.name), battery: device.batteryAvailable ? Math.round(device.battery * 100) + "%" : "" };
       },
-      format: "{device}|{state}{battery}"
+      format: "{device}|{state}{battery}",
+      // A pop-up as it powers on or off or a device comes or goes, not at every percent of a headset's battery.
+      change: () => [Bluez.enabled, Bluez.connected.map(device => device.address)]
     },
     brightness: {
       // Unlit, no level to report, not even in its glyph: the row dims for that, "off" would read as the screen being off, and a level changing unseen is no change to pop up.
