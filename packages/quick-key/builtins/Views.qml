@@ -2,19 +2,10 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import qs.services
 
-// What a level's `view` shows in place of a menu, by name, each given its model (MenuModel's, as the surfaces own them): its keys beyond the rows (legend), why its source failed, its own keys, what Escape closes first, and its state as a level opens or comes back.
+// What a level's `view` shows in place of a menu, by name: its model and its view, files beside MenuModel, which owns the model and gives it to the view. A model has legend (its keys beyond the rows), error (why its source failed), handleKey(name), stepBack() (what Escape closes first, false for none), reset() as its level opens and clearFocus() as any level comes or goes.
 Singleton {
   readonly property var builtin: Object.assign(Object.create(null), {
-    calendar: {
-      legend: model => model.legend,
-      error: () => Calendar.syncing ? "" : Calendar.error,
-      handleKey: (model, name) => model.handleKey(name),
-      // A focused event's details, then the focus, before the level.
-      stepBack: model => model.stepBack(),
-      reset: model => model.reset(),
-      clear: model => model.clearFocus()
-    }
+    calendar: { model: "calendar/CalendarModel.qml", source: "CalendarView.qml" }
   })
 }

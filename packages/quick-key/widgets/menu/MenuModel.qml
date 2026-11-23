@@ -4,7 +4,6 @@ import qs
 import qs.services
 import qs.ui
 import qs.builtins
-import qs.widgets.menu.calendar
 
 Scope {
   id: root
@@ -25,9 +24,9 @@ Scope {
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
-  readonly property CalendarModel calendar: CalendarModel {}
-  // By view name in Views.
-  readonly property var viewModels: ({ calendar: calendar })
+  // A model per view in Views, made from the file it names.
+  readonly property var viewModels: Object.keys(Views.builtin)
+    .reduce((models, name) => Object.assign(models, { [name]: Qt.createComponent(Views.builtin[name].model).createObject(root) }), {})
   readonly property var viewModel: viewModels[level?.entry?.view] ?? null
   readonly property var view: viewModel ? Views.builtin[level.entry.view] : null
   readonly property InputModel island: InputModel {
@@ -72,10 +71,10 @@ Scope {
   readonly property var hints: held === "Help" ? help : held === "Ctrl" ? barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name)))
     : held === "Super" ? barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item))) : []
   // Only keys the state changes; fixed ones are listed on `?`.
-  readonly property var levelLegend: (view ? view.legend(viewModel) : Lists.builtin[level?.entry?.list]?.legend ?? [])
+  readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend : levelLegend
-  readonly property string error: view ? view.error(viewModel) : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
+  readonly property string error: viewModel ? viewModel.error : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
 
   function itemOf(entry) {
     const action = actionOf(entry);
@@ -145,7 +144,7 @@ Scope {
   }
 
   function clearViews() {
-    for (const name in Views.builtin) Views.builtin[name].clear(viewModels[name]);
+    for (const model of Object.values(viewModels)) model.clearFocus();
   }
 
   // A name is a status or plugin to show, an entry with a list each of its items; `uid` is what the view follows an item by.
@@ -336,7 +335,7 @@ Scope {
   // Escape once the input is cleared.
   function stepBack() {
     if (filtering && !level.picking) return stopFilter();
-    if (view && view.stepBack(viewModel)) return;
+    if (viewModel && viewModel.stepBack()) return;
     if (stack.length <= base) Panels.back();
     else back();
   }
@@ -369,8 +368,8 @@ Scope {
     } else if (!item.entry) {
       Plugins.get(item.status)?.activate();
     } else if (item.entry.submenu || item.entry.list || item.entry.view) {
-      const next = Views.builtin[item.entry.view];
-      if (next) next.reset(viewModels[item.entry.view]);
+      const next = viewModels[item.entry.view];
+      if (next) next.reset();
       push({ kind: "entry", entry: item.entry, width: item.entry.width });
     } else {
       run(item.entry, name);
@@ -411,7 +410,7 @@ Scope {
     else if (name === "?") internal.held = "Help";
     else if (answerFocused && island.answerKey(name)) return true;
     else if (name === "Escape") stepBack();
-    else if (view && view.handleKey(viewModel, name)) return true;
+    else if (viewModel && viewModel.handleKey(name)) return true;
     else if (island.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
     else if (name === "/" && slashFilters) startFilter();

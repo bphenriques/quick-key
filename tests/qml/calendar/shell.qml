@@ -20,9 +20,9 @@ ShellRoot {
       {
         name: "a month or year away keeps the day, or the month's last when it has fewer",
         until: () => [[new Date(2027, 0, 31), [0, 1, 0]], [new Date(2028, 1, 29), [1, 0, 0]], [new Date(2026, 11, 31), [0, 0, 1]]].map(([from, move]) => {
-          menu.calendar.select(from);
-          menu.calendar.moveSelected(...move);
-          return Clock.dayKey(menu.calendar.selected);
+          menu.viewModels.calendar.select(from);
+          menu.viewModels.calendar.moveSelected(...move);
+          return Clock.dayKey(menu.viewModels.calendar.selected);
         }).join() === "2027-02-28,2029-02-28,2027-01-01"
       },
       {
@@ -103,14 +103,14 @@ ShellRoot {
         until: () => {
           const now = Clock.date.getTime();
           const today = Clock.dayKey(Clock.date);
-          menu.calendar.select(new Date());
-          menu.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
-          const ahead = menu.calendar.unfolded;
-          menu.calendar.focus({ id: "over", key: today, day: new Date(), event: { allDay: false, end: new Date(now - 60000) } });
-          menu.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
-          const kept = menu.calendar.unfolded;
-          menu.calendar.stepBack();
-          return !ahead && kept && !menu.calendar.unfolded;
+          menu.viewModels.calendar.select(new Date());
+          menu.viewModels.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
+          const ahead = menu.viewModels.calendar.unfolded;
+          menu.viewModels.calendar.focus({ id: "over", key: today, day: new Date(), event: { allDay: false, end: new Date(now - 60000) } });
+          menu.viewModels.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
+          const kept = menu.viewModels.calendar.unfolded;
+          menu.viewModels.calendar.stepBack();
+          return !ahead && kept && !menu.viewModels.calendar.unfolded;
         }
       },
       {
@@ -133,13 +133,13 @@ ShellRoot {
       {
         name: "Return on a focused event shows it whole, Escape hides it, then leaves the event",
         until: () => {
-          menu.calendar.select(new Date(2026, 10, 12));
-          menu.calendar.handleKey("Return");
-          const focused = menu.calendar.focused !== "" && !menu.calendar.details;
-          menu.calendar.handleKey("Return");
-          const shown = menu.calendar.details;
-          return focused && shown && menu.calendar.stepBack() && !menu.calendar.details && menu.calendar.focused !== ""
-            && menu.calendar.stepBack() && menu.calendar.focused === "" && !menu.calendar.stepBack();
+          menu.viewModels.calendar.select(new Date(2026, 10, 12));
+          menu.viewModels.calendar.handleKey("Return");
+          const focused = menu.viewModels.calendar.focused !== "" && !menu.viewModels.calendar.details;
+          menu.viewModels.calendar.handleKey("Return");
+          const shown = menu.viewModels.calendar.details;
+          return focused && shown && menu.viewModels.calendar.stepBack() && !menu.viewModels.calendar.details && menu.viewModels.calendar.focused !== ""
+            && menu.viewModels.calendar.stepBack() && menu.viewModels.calendar.focused === "" && !menu.viewModels.calendar.stepBack();
         }
       },
       {
@@ -161,9 +161,9 @@ ShellRoot {
         name: "two events alike on one day are told apart by uid, so Down steps from one to the other",
         until: () => {
           const pair = Calendar.timeline.filter(row => row.event.title === "Standup");
-          menu.calendar.focus(pair[0]);
-          menu.calendar.handleKey("Down");
-          return pair.length === 2 && pair[0].id !== pair[1].id && menu.calendar.focused === pair[1].id;
+          menu.viewModels.calendar.focus(pair[0]);
+          menu.viewModels.calendar.handleKey("Down");
+          return pair.length === 2 && pair[0].id !== pair[1].id && menu.viewModels.calendar.focused === pair[1].id;
         }
       },
       {

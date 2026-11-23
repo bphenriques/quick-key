@@ -26,6 +26,7 @@ QtObject {
   ]
   readonly property var eventKeys: [{ key: ["Up", "Down"], what: Words.event }, { key: "Return", what: Words.details }]
   readonly property var legend: focused ? eventKeys : keys.filter(entry => !entry.unlisted)
+  readonly property string error: Calendar.syncing ? "" : Calendar.error
 
   // Today, with no event in focus: how a calendar level opens.
   function reset() {

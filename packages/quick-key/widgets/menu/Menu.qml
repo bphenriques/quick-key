@@ -5,9 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs
-import qs.services
 import qs.ui
-import qs.widgets.menu.calendar
 
 Scope {
   id: root
@@ -192,45 +190,12 @@ Scope {
         }
       }
 
-      // Built only while shown, as it is most of what an opening builds.
+      // A level's view (Views) with its model, built only while shown, as it is most of what an opening builds.
       Loader {
+        readonly property var view: root.menu.view
         Layout.fillWidth: true
-        active: root.menu.viewModel === root.menu.calendar
-        visible: !root.hinting && active
-
-        sourceComponent: RowLayout {
-          spacing: Config.theme.padding
-
-          CalendarMonth {
-            // Two fifths of the level, but room for seven columns of three characters, the events beside it giving way first.
-            Layout.preferredWidth: Math.max(7 * 3.5 * Metrics.cell, parent.width * 2 / 5)
-            Layout.minimumWidth: minimumWidth
-            Layout.alignment: Qt.AlignTop
-            title: root.menu.calendar.title
-            selected: root.menu.calendar.selected
-            onStepped: months => root.menu.calendar.moveSelected(0, months, 0)
-            onPicked: day => root.menu.calendar.select(day)
-          }
-
-          Divider {
-            Layout.fillHeight: true
-            visible: events.visible
-          }
-
-          CalendarEvents {
-            id: events
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredWidth: 3
-            Layout.preferredHeight: 0
-            visible: Calendar.enabled
-            selected: root.menu.calendar.selected
-            focused: root.menu.calendar.focused
-            details: root.menu.calendar.details
-            unfolded: root.menu.calendar.unfolded
-            onPicked: row => root.menu.calendar.focus(row)
-          }
-        }
+        visible: !root.hinting && item !== null
+        onViewChanged: setSource(view ? view.source : "", { model: root.menu.viewModel })
       }
 
       // Hidden when empty, since an empty GridLayout keeps its last height.
