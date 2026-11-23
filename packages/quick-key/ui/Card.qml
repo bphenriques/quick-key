@@ -267,10 +267,17 @@ Surface {
                   source: action.entry.source ?? ""
                 }
 
+                // A gap after the icon as an item, not the label's padding, which its width would read back.
+                Item {
+                  id: iconGap
+                  visible: actionIcon.visible
+                  width: Metrics.cell
+                  height: 1
+                }
+
                 // Shortened only when one alone is wider than the card.
                 Label {
-                  width: Math.min(implicitWidth, actionArea.width - actionKey.implicitWidth - (actionIcon.visible ? actionIcon.width : 0))
-                  leftPadding: actionIcon.visible ? Metrics.cell : 0
+                  width: Math.min(implicitWidth, actionArea.width - actionKey.implicitWidth - (actionIcon.visible ? actionIcon.width + iconGap.width : 0))
                   elide: Text.ElideRight
                   tone: hover.containsMouse ? "primary" : "normal"
                   text: action.entry.desc ?? ""

@@ -11,6 +11,8 @@ ShellRoot {
   }
 
   readonly property var wrong: [
+    ["a rule's app that is no name", { plugins: { notifications: { rules: [{ app: false }] } } }, "rules[0] sets app to no name"],
+    ["a group named as a given value in another case", { plugins: { notifications: { rules: [{ match: { summary: "(?<App>.*)" } }] } } }, "a group named App, which its commands already get"],
     ["an app icon mode that is none", { theme: { appIcons: "gray" } }, "theme.appIcons is 'gray', not one of colour, grey, tint"],
     ["a setting since renamed", { theme: { monochromeTray: true } }, "theme.monochromeTray is now theme.appIcons"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],

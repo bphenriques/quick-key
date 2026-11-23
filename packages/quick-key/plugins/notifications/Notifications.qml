@@ -93,6 +93,11 @@ Plugin {
     return urgencyOf(entry) === "critical";
   }
 
+  // The app a card names: its sender's, unless a rule renames it, or hides it with "".
+  function appOf(entry) {
+    return entry.applied.app ?? entry.appName;
+  }
+
   // Its sender's, unless a rule sets another.
   function urgencyOf(entry) {
     return entry.applied.urgency ?? settings.urgencies[entry.urgency] ?? "normal";

@@ -16,10 +16,10 @@ PluginSettings {
   // A card's width, in pixels.
   property int width: 480
   // Shows the plugin's `shortcut` dimly by the cards at rest, to teach it.
-  property bool hint: false
+  property bool hint: true
   // Seconds without input after which no card's time runs, so none goes while you are away; 0 lets time run.
   property int idle: 120
-  // Each { match, hide, timeout, urgency, ignorePause, actions, default, run }, applied in order (docs/src/plugins.md#rules).
+  // Each { match, app, hide, timeout, urgency, ignorePause, actions, default, run }, applied in order (docs/src/plugins.md#rules).
   property var rules: []
   // Prints the process id holding the notifications' name on the session bus, last on its line, so another daemon there shows as the plugin's error.
   property string owner: "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s org.freedesktop.Notifications"
@@ -27,7 +27,7 @@ PluginSettings {
   readonly property var corners: ["top-right", "top-left", "bottom-right", "bottom-left"]
   readonly property var sides: ["right", "left"]
   readonly property var fields: ["app", "summary", "body", "category", "urgency", "desktopEntry"]
-  readonly property var ruleKeys: ["match", "hide", "timeout", "urgency", "ignorePause", "actions", "default", "run"]
+  readonly property var ruleKeys: ["match", "app", "hide", "timeout", "urgency", "ignorePause", "actions", "default", "run"]
   readonly property var actionKeys: ["key", "desc", "cmd", "closes", "icon"]
   // What its commands get as NOTIFICATION_<NAME>, so a group by one of these names would hide it.
   readonly property var given: ["app", "summary", "body", "urgency", "id", "icon"]
@@ -69,6 +69,7 @@ PluginSettings {
   function ruleProblems(rule) {
     if (rule === null || typeof rule !== "object" || Array.isArray(rule)) return ["is no object"];
     const found = Object.keys(rule).filter(key => !ruleKeys.includes(key)).map(key => "sets " + key + ", none of " + ruleKeys.join(", "));
+    if ("app" in rule && typeof rule.app !== "string") found.push("sets app to no name");
     if ("hide" in rule && typeof rule.hide !== "boolean") found.push("sets hide to no boolean");
     if ("ignorePause" in rule && typeof rule.ignorePause !== "boolean") found.push("sets ignorePause to no boolean");
     if ("timeout" in rule && (typeof rule.timeout !== "number" || rule.timeout < 0)) found.push("sets timeout to no number of seconds");
@@ -97,7 +98,8 @@ PluginSettings {
       else {
         try {
           new RegExp(pattern);
-          const taken = groupNames(pattern).filter(name => given.includes(name));
+          // By case too: its commands get them upper-cased.
+          const taken = groupNames(pattern).filter(name => name && given.includes(name.toLowerCase()));
           if (taken.length) found.push("matches " + field + " with a group named " + taken.join(", ") + ", which its commands already get");
         } catch (error) {
           found.push("matches " + field + " with '" + pattern + "': " + error.message);

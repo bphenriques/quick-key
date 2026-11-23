@@ -154,9 +154,10 @@ Scope {
                 iconColumn: view.icons
                 icon: entry ? view.iconOf(entry) : ""
                 image: entry ? view.pictureOf(entry) : ""
-                title: entry?.summary || entry?.appName || ""
+                readonly property string app: entry ? view.plugin.appOf(entry) : ""
+                title: entry?.summary || app
                 // The app, unless the title already says it, and when it came once it has waited.
-                aside: !entry ? "" : [entry.appName.toLowerCase() === title.toLowerCase() ? "" : entry.appName, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
+                aside: !entry ? "" : [app.toLowerCase() === title.toLowerCase() ? "" : app, view.plugin.ageOf(entry)].filter(part => part).join(" · ")
                 body: entry?.body ?? ""
                 tone: entry && view.plugin.critical(entry) ? "alert" : ""
                 meter: typeof hint === "number" ? Math.max(0, Math.min(100, hint)) / 100 : -1
