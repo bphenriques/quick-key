@@ -241,8 +241,6 @@ Scope {
 
       KeyList {
         id: list
-        // One column: the stack is a card wide.
-        columns: 1
         visible: view.plugin.mode === "help"
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left

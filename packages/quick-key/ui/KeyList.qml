@@ -2,9 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import qs
 
-// Keys and what each does, a row each across the menu's columns, as `?` lists the keys no row shows; a click is `picked`.
+// Keys and what each does, a row each, in one column unless `columns` says more; a click is `picked`.
 GridLayout {
   id: root
 
@@ -14,7 +13,7 @@ GridLayout {
 
   signal picked(var key)
 
-  columns: Config.menu.columns
+  columns: 1
   columnSpacing: Metrics.columnGap
   rowSpacing: 0
 

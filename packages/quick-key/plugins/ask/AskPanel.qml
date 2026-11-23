@@ -50,7 +50,7 @@ Scope {
     phase: drawn.phase ?? "done"
     kind: drawn.kind ?? ""
     // The wait too, once noticeable.
-    activity: [drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""].filter(part => part).join(" · ")
+    activity: Words.beside([drawn.activity, panel.plugin.waited >= 2 ? panel.plugin.waited + "s" : ""])
     table: !!drawn.table
     steps: drawn.steps ?? []
     copyable: true

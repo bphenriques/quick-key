@@ -11,6 +11,7 @@ Singleton {
   // A conversation's phases, as its answer and the prompt under it say them.
   readonly property string replyPrompt: "Reply" + ellipsis
   readonly property string approvePrompt: MenuKeys.label("Ctrl+y") + " allows, " + MenuKeys.label("Ctrl+n") + " denies, " + MenuKeys.label("Ctrl+c") + " stops" + ellipsis
+  readonly property string thinking: "Thinking"
   readonly property string syncing: "syncing" + ellipsis
   // A picker's filter, empty and when it leaves nothing.
   readonly property string filterPrompt: "Filter" + ellipsis

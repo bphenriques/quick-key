@@ -111,7 +111,7 @@ Plugin {
 
   // What sits beside a card's or an item's title: how many times it came, its app where nothing else names it, and when.
   function asideOf(entry, title, iconShown, when) {
-    return [entry.repeats > 1 ? "×" + entry.repeats : "", appShown(entry, title, iconShown), when].filter(part => part).join(" · ");
+    return Words.beside([entry.repeats > 1 ? "×" + entry.repeats : "", appShown(entry, title, iconShown), when]);
   }
 
   // Its sender's, unless a rule sets another.

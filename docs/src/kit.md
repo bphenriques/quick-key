@@ -26,7 +26,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend |
 | `KeyHint` | a key in its gutter, never narrower than the key |
 | `KeyLegend` | keys a level takes beyond its rows, on one line on its bar after a content level's actions: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
-| `KeyList` | keys and what each does, a row each across the menu's columns, as `?` lists them; a click is `picked` |
+| `KeyList` | keys and what each does, a row each, in one column unless `columns` says more (the cards' `?`); a click is `picked` |
 | `Meter` | a thin level bar |
 | `Markdown` | an agent's answer rendered from its Markdown (`markdown`) by `Markup` a piece at a time, so a stream redraws only its last; a selection, within a piece, is copied and reported (`selected`), and `kept` shows it again as its piece is rebuilt |
 | `Markup` | what the kit reads in an agent's Markdown, in one place: its `plain` lines (compact), its pieces (`split`, whole blocks gathered to a size), each one's `html` for `Markdown`, and whether it `hasTable`. The html is rich text of the kit's own making: the text escaped, an image or a link shown by its text, so nothing is fetched and no HTML runs. A table's header is bold over one divider, code sits on a faint wash, a quote dim behind a rule, a heading bold at the body size (as the calendar's month), prose at `theme.lineHeight` |
