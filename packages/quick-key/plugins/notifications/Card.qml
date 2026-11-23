@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs
+import qs.ui
 
 // A card that comes and goes on its own (a notification); its keys have their room at rest, so showing them moves nothing.
 Surface {

@@ -80,7 +80,7 @@ A plugin that needs behaviour (a timer, a surface, a protocol) is a folder, foun
 - `<Name>.qml`, rooted at `Plugin`: its state and actions. It never draws.
 - `Settings.qml`, rooted at `PluginSettings`: every setting it takes, with its default and a one-line comment, which is its entry in the reference. It is read as the configuration builds, so it must stay declarative; the shell creates it once to check the config and once to run the plugin.
 - One file per view it draws, listed in `views` (`["Minimap.qml"]`). Each is given the plugin as `plugin` and only reads it.
-- A type of its own it uses by name (Ask's `Acp`), listed in a `qmldir` beside it (`Acp 1.0 Acp.qml`), since the shipped folders resolve no type without one.
+- A type of its own it uses by name (Ask's `Acp`, the notifications' `Card`), listed in a `qmldir` beside it (`Acp 1.0 Acp.qml`), since the shipped folders resolve no type without one.
 
 What it gets:
 
