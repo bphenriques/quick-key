@@ -30,11 +30,8 @@ Singleton {
   Connections {
     target: Config
 
+    // Config sets invalid just before written, so this sees both.
     function onWrittenChanged() {
-      Qt.callLater(root.validate);
-    }
-
-    function onInvalidChanged() {
       Qt.callLater(root.validate);
     }
   }
