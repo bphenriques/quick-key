@@ -77,6 +77,7 @@ ShellRoot {
     ["a pop-up named after what every object inherits", { popups: { show: ["toString"] } }, "popups.show: 'toString' is neither a status nor a plugin"],
     ["a status named after what every object inherits", menu([{ key: "x", desc: "X", list: "tray", submenu: [{ key: "a", desc: "A", status: "constructor", cmd: "true" }] }]), "names status 'constructor'"],
     ["a field named after what every object inherits", menu([{ key: "x", desc: "X", cmd: "true", icon: "x", constructor: 1 }]), "sets constructor, which no entry takes"],
+    ["a format naming a field its status has not", menu([{ key: "a", desc: "Audio", icon: "x", status: "sink", format: "{device}|{volme}", cmd: "true" }]), "formats {volme}, which sink has not ({device}, {volume})"],
     ["a rule field named after what every object inherits", { plugins: { notifications: { rules: [{ toString: "x" }] } } }, "rules[0] toString is not a setting"],
     ["a volume past what speakers take", { audio: { max: 500 } }, "audio.max is 500, not 1 to 150"],
     ["a closed history past what is kept", { plugins: { notifications: { history: 500 } } }, "plugins.notifications sets history to 500, not 0 to 100"],

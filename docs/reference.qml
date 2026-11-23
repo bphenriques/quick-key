@@ -211,7 +211,7 @@ ShellRoot {
       return [code(field), takes, where || "any", prose(declared["fields." + field].comment)];
     });
     return "## Menu entries\n\nWhat an entry in `menu.entries`, a `submenu` or a bar takes, and the built-in names it can use ([Menu](menu.md)).\n\n### Fields\n\n" + table(["Field", "Takes", "On", "Description"], rows) + "\n"
-      + names("Statuses", "Status", Statuses.builtin, "builtins/Statuses.qml", [["Format", status => code(status.format ?? "")]])
+      + names("Statuses", "Status", Statuses.builtin, "builtins/Statuses.qml", [["Fields", status => status.names.map(name => code("{" + name + "}")).join(", ")], ["Format", status => code(status.format ?? "")]])
       + names("Actions", "Action", Actions.builtin, "builtins/Actions.qml", [["Keys", action => action.pair ? "a pair" : ""], ["Lit by", action => code(action.state ?? "")]])
       + names("Lists", "List", Lists.builtin, "builtins/Lists.qml", [])
       + names("States", "State", States.builtin, "builtins/States.qml", [])

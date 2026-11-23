@@ -10,9 +10,11 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned), value(fields) as { text, detail, glyphs }; optional fieldTones(), tone(), phase(), strong, meter() (below 0, none), muted(), adjust (the pair action the OSD wheel runs), popup and popupWidth (the OSD pill text and its widest), change() (what is worth a pop-up), ready() (its first value is state, not a change), brief (its value beside its icon in a bar).
+  // Each: glyph(), fields(pinned), names (the fields a format may name), value(fields) as { text, detail, glyphs }; optional fieldTones(), tone(), phase(), strong, meter() (below 0, none), muted(), adjust (the pair action the OSD wheel runs), popup and popupWidth (the OSD pill text and its widest), change() (what is worth a pop-up), ready() (its first value is state, not a change), brief (its value beside its icon in a bar).
   readonly property var builtin: Object.assign(Object.create(null), {
+    // The default audio output.
     sink: {
+      names: ["device", "volume"],
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),
       fields: pinned => !Audio.sink ? {} : { device: pinned(Audio.sink.name, Audio.sinkName), volume: Audio.level(Audio.sink) },
       format: "{device}|{volume}",
@@ -21,7 +23,9 @@ Singleton {
       adjust: "sinkVolume",
       ready: () => Audio.sink?.ready ?? false
     },
+    // The default audio input, the microphone.
     source: {
+      names: ["device", "volume"],
       glyph: () => Audio.sourceMuted ? Glyphs.microphoneOff : Glyphs.audioDevice(Audio.sourceType),
       fields: pinned => !Audio.source ? {} : { device: pinned(Audio.source.name, Audio.sourceName), volume: Audio.level(Audio.source) },
       format: "{device}|{volume}",
@@ -32,6 +36,7 @@ Singleton {
     },
     // Its glyph says whether it plays; with nothing playing it says so, which reads as state rather than something missing.
     music: {
+      names: ["song", "title", "artist", "state"],
       glyph: () => !Music.present || !Music.title ? Glyphs.musicOff : Music.playing ? Glyphs.music : Glyphs.musicPaused,
       fields: () => !Music.present || !Music.title ? { song: Words.noSong } : { song: Music.title + (Music.artist ? " · " + Music.artist : ""), title: Music.title, artist: Music.artist, state: Music.playing ? "" : Words.paused },
       value: fields => ({
@@ -41,6 +46,7 @@ Singleton {
       })
     },
     network: {
+      names: ["name", "internet", "wifi"],
       glyph: () => Network.kind === "wifi" ? Glyphs.wifiSignal(Network.strength, Network.limited) : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected,
       fields: pinned => ({
         name: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? Words.ethernet : Words.disconnected,
@@ -53,6 +59,7 @@ Singleton {
       change: () => [Network.kind, Network.ssid, Network.limited, Network.wifiEnabled]
     },
     bluetooth: {
+      names: ["device", "state", "battery"],
       glyph: () => !Bluez.enabled ? Glyphs.bluetoothOff : Bluez.connected.length ? Glyphs.bluetoothConnected : Glyphs.bluetooth,
       fields: pinned => {
         if (!Bluez.present) return {};
@@ -67,6 +74,7 @@ Singleton {
       change: () => [Bluez.enabled, Bluez.connected.map(device => device.address)]
     },
     brightness: {
+      names: ["level"],
       // Unlit, no level to report, not even in its glyph: the row dims for that, "off" would read as the screen being off, and a level changing unseen is no change to pop up.
       glyph: () => Glyphs.brightness(Brightness.lit ? Brightness.percentage : 0),
       fields: () => !Brightness.lit ? {} : { level: Brightness.percentage + "%" },
@@ -76,6 +84,7 @@ Singleton {
       ready: () => Brightness.present
     },
     calendar: {
+      names: ["title", "when", "updated"],
       glyph: () => Glyphs.calendar,
       fields: () => root.calendar(),
       phase: () => Calendar.syncing ? "working" : Calendar.error ? "error" : "idle",
@@ -84,6 +93,7 @@ Singleton {
       format: "|{when}"
     },
     clock: {
+      names: ["date"],
       glyph: () => Glyphs.calendar,
       fields: () => ({ date: Clock.text }),
       // The bar's anchor: bold, and not dimmed with the rest.
@@ -91,6 +101,7 @@ Singleton {
       format: "{date}"
     },
     battery: {
+      names: ["level"],
       glyph: () => Power.present ? Glyphs.battery(Power.percentage, Power.pluggedIn) : "",
       fields: () => !Power.present ? {} : { level: Power.percentage + "%" },
       format: "{level}",
@@ -100,6 +111,7 @@ Singleton {
       ready: () => Power.present
     },
     keyboardLayout: {
+      names: ["layout"],
       glyph: () => Glyphs.keyboard,
       brief: true,
       fields: () => ({ layout: KeyboardLayout.label || KeyboardLayout.name }),
@@ -109,11 +121,13 @@ Singleton {
     },
     // Where its daemon is (Power.profilesPresent); else nothing, so the row dims and a bar hides it.
     powerProfile: {
+      names: ["profile"],
       glyph: () => Glyphs.powerProfiles[Power.profile] ?? "",
       fields: () => Power.profile ? { profile: Words.powerProfiles[Power.profile].toLowerCase() } : {},
       format: "|{profile}"
     },
     keepAwake: {
+      names: [],
       glyph: () => Glyphs.keepAwake,
       fields: () => ({}),
       format: "",

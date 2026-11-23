@@ -100,25 +100,7 @@ The mouse reaches what the keys do. A click runs a row or a bar item. A right cl
 
 ## Built-in names
 
-Each field takes one of its column's names, or a plugin's. A plugin's status gives `format` its `text`, `detail` and fields of its own.
-
-| | `status` | its fields | `list` | `action` | `activeWhen` |
-|---|---|---|---|---|---|
-| Audio output | `sink` | `device`, `volume` | `sinks` | `sinkVolume`, `sinkMute` | `sinkMuted` |
-| Audio input | `source` | `device`, `volume` | `sources` | `sourceVolume`, `sourceMute` | `sourceMuted` |
-| App volume | | | `streams` | `streamVolume`, `streamMute` | `streamMuted` |
-| Network | `network` | `name`, `wifi`, `internet` | `wifi` | `wifi` | `wifi` |
-| Bluetooth | `bluetooth` | `device`, `battery`, `state` | `bluetooth` | `bluetooth` | `bluetooth` |
-| Backlight | `brightness` | `level` | | `brightness` | |
-| Music | `music` | `song`, `title`, `artist`, `state` | | `playPause`, `track`, `repeat`, `shuffle` | `repeat`, `shuffle` |
-| Tray | | | `tray` | | |
-| Calendar | `calendar` | `title`, `when`, `updated` | | | |
-| Clock | `clock` | `date` | | | |
-| Battery | `battery` | `level` | | | |
-| Power profile | `powerProfile` | `profile` | `powerProfiles` | `powerProfile` | |
-| Keyboard layout | `keyboardLayout` | `layout` | | `keyboardLayout` | |
-| Keep awake | `keepAwake` | | | `keepAwake` | `keepAwake` |
-| Any list | | | | `pick` | |
+Each of `status`, `list`, `action`, `activeWhen` and `view` takes a built-in name or a plugin's. The reference lists them, generated from the shell: [statuses](options.md#statuses) and their fields, [actions](options.md#actions), [lists](options.md#lists), [states](options.md#states) for `activeWhen`, and [views](options.md#views). A plugin's status gives `format` its `text`, `detail` and fields of its own.
 
 A digit on `streams` picks the app `streamVolume` and `streamMute` change, the first until you pick; the starter gives them Left and Right. The wheel over a device or an app changes its own volume. Where `audio.max` allows past 100%, a volume's meter is full at `audio.max`, and a step up never lowers a volume set past it elsewhere. The Wi-Fi list scans for networks while it is open, and a network or device shows a spinner as it connects or disconnects. The network's glyph follows the signal, and behind a captive portal or with no internet it warns, `internet` saying so; the `wifi` action dims while a hardware switch blocks the radio. Music follows `music.player`, else the player playing, else the last that played. Power profiles (power saver, balanced, performance where the machine has it) are offered only where their daemon, power-profiles-daemon or tuned-ppd, is on the system bus, which `daemons.list` reads as the menu opens. Without it the action dims, the list says so and the status shows nothing. Music reads song and artist out of the XML some radio streams (Bauer Media) send as their title, since MPRIS leaves no glue to do it in.
 
