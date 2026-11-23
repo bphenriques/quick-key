@@ -43,7 +43,7 @@ One of:
 - `action`: a built-in action (below), or one of the plugin its level lists (the tasks' `sort`). It brings its icon, which shows its state (Wi-Fi off), and what lights it, keeps the menu open, and dims while it has nothing to act on (no player, no adapter). What can never run on this machine is not declared.
 - `submenu`, `list` or `view`: a level. `list` adds items found at runtime on digits. `pins` keeps chosen ones on their digit, dim while absent, their label naming them wherever the menu shows them; the rest follow by name, internal audio first, never by signal or recency. `view = "calendar"` shows the [calendar](calendar.md).
 
-The label is `desc`, and never changes. Every row of a level carries an icon (`icon`, or an `action`'s own).
+The label is `desc`, and never changes. Every row of a level carries an icon: `icon`, or its `status`'s or `action`'s own.
 
 `status` shows live state on the right of the row, or beside the label for an action in its level (Brightness 55%). A status names its state in words only when it has no value to show (`off`, `muted`), and never for a state its icon or tone already shows. A level's state sits on the row that changes it: power in Power's icon. `format` picks its fields instead (`"{song}"`), and what follows a `|` stays whole on the right (`"{title}|{when}"`). A built-in status has a format of its own (the volume's is `"{device}|{volume}"`), which an entry's replaces. `activeWhen` lights an entry of your own. An entry showing a plugin's status with no `cmd` or `action` activates the plugin, as a click on it in a bar does.
 
@@ -73,7 +73,7 @@ An input takes letters only while focused, so keys hold still. `TAB` moves the k
 The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
 
 ```nix
-{ key = "k"; desc = "Tasks"; list = "tasks"; input = { desc = "Add a task"; }; }
+{ key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; input = { desc = "Add a task"; }; }
 ```
 
 `format` wraps the text that starts a conversation (`{text}`). `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).

@@ -34,6 +34,7 @@ let
             {
               key = "t";
               desc = "Tray";
+              icon = "x";
               list = "tray";
             }
           ])

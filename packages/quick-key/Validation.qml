@@ -363,8 +363,8 @@ Singleton {
     if (inBar && entry.list == null && entry.status == null && entry.icon == null && entry.action == null) found.push("shows nothing: needs a status, an icon or an action");
     // A plugin's actions are its own, known only once it runs: on a level listing one, any name may be one.
     if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is not built in nor its level's plugin's");
+    if (!inBar && entry.icon == null && entry.status == null && entry.action == null) found.push("needs an icon, as a status or an action brings one");
     found.push(...fieldProblems(entry, plugins, inBar));
-    if (rows.some(row => row.icon == null && row.action == null && row.status == null)) found.push("holds an action without an icon");
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
