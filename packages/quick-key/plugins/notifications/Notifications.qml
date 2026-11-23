@@ -41,14 +41,14 @@ Plugin {
   readonly property var keys: [
     { key: "1-9", desc: words.helpPick },
     { key: ["Up", "Down"], desc: words.helpMove },
-    { key: "Return", desc: words.helpOpen },
-    { key: "x", desc: words.helpDismiss },
+    { key: "Return", desc: words.helpOpen, run: () => !!internal.picked && (open(internal.picked), release(), true) },
+    { key: "x", desc: words.helpDismiss, run: () => !!internal.picked && (dismiss(internal.picked), true) },
     { key: "Tab", desc: words.helpReply },
     { key: "Ctrl+Shift+Return", desc: words.helpLeave },
-    { key: "Ctrl+Shift+x", desc: words.helpClear },
-    { key: "Ctrl+r", desc: words.helpRestore },
-    { key: "Ctrl+p", desc: words.helpPause },
-    { key: "Escape", desc: words.helpEscape }
+    { key: "Ctrl+X", desc: words.helpClear, run: () => clear() },
+    { key: "Ctrl+r", desc: words.helpRestore, run: () => restore() },
+    { key: "Ctrl+p", desc: words.helpPause, run: () => togglePause() },
+    { key: "Escape", desc: words.helpEscape, run: () => release() }
   ]
   // The card the keys act on while summoned, and the one replied to, its prompt in its actions' place.
   readonly property var picked: internal.picked
@@ -327,15 +327,10 @@ Plugin {
     else if (name === "?") internal.mode = "help";
     else if (/^[1-9]$/.test(name)) return pick(showable[Number(name) - 1]);
     else if (name === "Up" || name === "Down") move(name === "Down");
-    else if (name === "Return" && internal.picked) {
-      open(internal.picked);
-      release();
-    } else if (name === "x" && internal.picked) dismiss(internal.picked);
-    else if (name === "Ctrl+X") clear();
-    else if (name === "Ctrl+p") togglePause();
-    else if (name === "Ctrl+r") restore();
-    else if (name === "Escape") release();
     else {
+      // Its own keys, as `?` lists them, then the picked card's actions.
+      const own = keys.find(entry => entry.run && entry.key === name);
+      if (own) return own.run() !== false;
       const action = actionsOf(internal.picked).find(action => action.key && action.key === name);
       if (!action) return false;
       action.run();

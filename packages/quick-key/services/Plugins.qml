@@ -42,11 +42,10 @@ Singleton {
         console.warn("plugin", name, "not loaded:", file.errorString());
         return null;
       }
-      const keys = Object.keys(spec).filter(key => key !== "type");
-      const known = keys.filter(key => Config.settable(object, key));
-      const unknown = keys.filter(key => !known.includes(key));
-      if (unknown.length) console.warn("plugin", name + ": ignoring unknown settings:", unknown.join(", "));
-      for (const key of known) object[key] = Config.over(object[key], spec[key]);
+      const given = Config.pluginSettings(object, spec);
+      if (given.unknown.length) console.warn("plugin", name + ": ignoring unknown settings:", given.unknown.join(", "));
+      if (given.mistyped.length) console.warn("plugin", name + ": ignoring settings of another kind:", given.mistyped.join(", "));
+      for (const [key, value] of Object.entries(given.values)) object[key] = value;
       return object;
     }
 

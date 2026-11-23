@@ -170,21 +170,14 @@ Singleton {
         found.push(at + " Settings.qml does not instantiate");
         continue;
       }
-      const given = Object.assign({}, plugin);
-      delete given.type;
-      for (const key of Object.keys(given)) {
-        if (Config.settable(defaults, key)) given[key] = Config.over(defaults[key], given[key]);
-        else {
-          found.push(at + "." + key + " is not a setting");
-          delete given[key];
-        }
-      }
-      found.push(...Config.undeclared(given, Config.kindsOf(defaults), at + "."));
-      // Its own checks on what it declares, so every problem shows at once, not one build at a time.
-      const declared = {};
-      for (const [key, value] of Object.entries(given)) if (defaults[key] === null || Config.kind(value) === Config.kind(defaults[key])) declared[key] = value;
+      const given = Config.pluginSettings(defaults, plugin);
+      found.push(...given.unknown.map(key => at + "." + key + " is not a setting"));
+      const known = Object.assign({}, plugin);
+      for (const key of ["type"].concat(given.unknown)) delete known[key];
+      found.push(...Config.undeclared(known, Config.kindsOf(defaults), at + "."));
       defaults.destroy();
-      const object = settings.createObject(null, declared);
+      // Its own checks on what it declares, so every problem shows at once, not one build at a time.
+      const object = settings.createObject(null, given.values);
       found.push(...object.problems().map(problem => at + " " + problem));
       object.destroy();
     }

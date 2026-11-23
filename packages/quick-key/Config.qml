@@ -75,6 +75,17 @@ Singleton {
     return kind(declared) === "map" && kind(value) === "map" ? Object.assign({}, declared, value) : value;
   }
 
+  // A plugin's part of config.json over the settings it declares (`declared`, made with their defaults): the values it can take, a map over its default map; and the keys it cannot, undeclared or of another kind. The loader and the check both read it this way.
+  function pluginSettings(declared, spec) {
+    const [values, unknown, mistyped] = [{}, [], []];
+    for (const key of Object.keys(spec).filter(key => key !== "type")) {
+      if (!settable(declared, key)) unknown.push(key);
+      else if (declared[key] !== null && kind(spec[key]) !== kind(declared[key])) mistyped.push(key);
+      else values[key] = over(declared[key], spec[key]);
+    }
+    return { values, unknown, mistyped };
+  }
+
   // What json sets that the settings do not declare, or declare as another kind of value (`kinds`, as kindsOf reads them); lists and maps are not looked into.
   function undeclared(json, kinds = declaredKinds, path = "") {
     let found = [];
