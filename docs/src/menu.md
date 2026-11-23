@@ -45,7 +45,11 @@ One of:
 
 The label is `desc`, and never changes. Every row of a level carries an icon: `icon`, or its `status`'s or `action`'s own.
 
-`status` shows live state on the right of the row, or beside the label for an action in its level (Brightness 55%). A status names its state in words only when it has no value to show (`off`, `muted`), and never for a state its icon or tone already shows. A level's state sits on the row that changes it: power in Power's icon. `format` picks its fields instead (`"{song}"`), and what follows a `|` stays whole on the right (`"{title}|{when}"`). A built-in status has a format of its own (the volume's is `"{device}|{volume}"`), which an entry's replaces. `activeWhen` lights an entry of your own. An entry showing a plugin's status with no `cmd` or `action` activates the plugin, as a click on it in a bar does.
+`status` shows live state on the right of the row, or beside the label for an action in its level (Brightness 55%). A status names its state in words only when it has no value to show (`off`, `muted`), and never for a state its icon or tone already shows. A level's state sits on the row that changes it: power in Power's icon.
+
+`format` picks a status's fields (`"{song}"`), and what follows a `|` stays whole on the right (`"{title}|{when}"`). A built-in status has a format of its own (the volume's is `"{device}|{volume}"`), which an entry's replaces.
+
+`activeWhen` lights an entry of your own. An entry showing a plugin's status with no `cmd` or `action` activates the plugin, as a click on it in a bar does.
 
 A level is as wide as its entry's `width`, else `menu.width`, and lays its actions out in its entry's `columns`, else `menu.columns` (`columns = 1` for a level of three, so none sits alone). Neither is measured from what it shows, so it holds still. Entries flow across, so order decides neighbours. At the top the columns are equal, so values line up; in a level the last hugs its rows against the right edge. It is never wider than the screen, whatever it asks; short of room, text shortens, short values last and icons never. Make the menu wider before adding columns or truncating.
 
@@ -55,7 +59,9 @@ The menu sits at the bottom of the screen, centred, its bar against the edge. Ev
 
 `menu.header.left`, `center` and `right` are the top level's bar, like waybar's modules. An entry's `header` is its level's, with the same slots, and a level with nothing for its bar is its body alone. A bar holds content (a song, its modes), never a title. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). A crowded bar shortens its text, then shows actions by their glyphs alone; it never widens the menu, so one that still cannot fit runs past it, and the log says how wide it needs the menu.
 
-In a bar, an entry shows its status, else its icon, and may do nothing but show its status. With both, it shows its icon in the tone of what its `format` shows, a spinner while the status is busy, and its value on hover, beside it too while that tone warns or where the value is the point (the keyboard layout). So a Sync button stays out of the way until its sync is under way or stale ([Calendar](calendar.md)). An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all on a level of their own. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`).
+In a bar, an entry shows its status, else its icon, and may do nothing but show its status. With both, it shows its icon in the tone of what its `format` shows, a spinner while the status is busy, and its value on hover, beside it too while that tone warns or where the value is the point (the keyboard layout). So a Sync button stays out of the way until its sync is under way or stale ([Calendar](calendar.md)).
+
+An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all on a level of their own. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`).
 
 ```nix
 menu.header.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } ];
@@ -102,7 +108,15 @@ The mouse reaches what the keys do. A click runs a row or a bar item. A right cl
 
 Each of `status`, `list`, `action`, `activeWhen` and `view` takes a built-in name or a plugin's. The reference lists them, generated from the shell: [statuses](options.md#statuses) and their fields, [actions](options.md#actions), [lists](options.md#lists), [states](options.md#states) for `activeWhen`, and [views](options.md#views). A plugin's status gives `format` its `text`, `detail` and fields of its own.
 
-A digit on `streams` picks the app `streamVolume` and `streamMute` change, the first until you pick; the starter gives them Left and Right. The wheel over a device or an app changes its own volume. Where `audio.max` allows past 100%, a volume's meter is full at `audio.max`, and a step up never lowers a volume set past it elsewhere. The Wi-Fi list scans for networks while it is open, and a network or device shows a spinner as it connects or disconnects. The network's glyph follows the signal, and behind a captive portal or with no internet it warns, `internet` saying so; the `wifi` action dims while a hardware switch blocks the radio. Music follows `music.player`, else the player playing, else the last that played. Power profiles (power saver, balanced, performance where the machine has it) are offered only where their daemon, power-profiles-daemon or tuned-ppd, is on the system bus, which `daemons.list` reads as the menu opens. Without it the action dims, the list says so and the status shows nothing. A stream that packs song and artist into its title (some radios send an XML document) is split by `music.titleMatch`, since MPRIS leaves no glue to do it in.
+A digit on `streams` picks the app `streamVolume` and `streamMute` change, the first until you pick; the starter gives them Left and Right.
+
+The wheel over a device or an app changes its own volume. Where `audio.max` allows past 100%, a volume's meter is full at `audio.max`, and a step up never lowers a volume set past it elsewhere.
+
+The Wi-Fi list scans for networks while it is open, and a network or device shows a spinner as it connects or disconnects. The network's glyph follows the signal. Behind a captive portal or with no internet it warns, `internet` saying so. The `wifi` action dims while a hardware switch blocks the radio.
+
+Music follows `music.player`, else the player playing, else the last that played. A stream that packs song and artist into its title (some radios send an XML document) is split by `music.titleMatch`, since MPRIS leaves no glue to do it in.
+
+Power profiles (power saver, balanced, performance where the machine has it) are offered only where their daemon, power-profiles-daemon or tuned-ppd, is on the system bus, which `daemons.list` reads as the menu opens. Without it the action dims, the list says so and the status shows nothing.
 
 A level lists up to nine items on fixed digits. While the list holds more than the rows show, the legend says how many (`/ 1-9 of 14`). An empty list says why: off, or nothing found.
 
