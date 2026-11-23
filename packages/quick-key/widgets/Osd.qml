@@ -8,7 +8,7 @@ import qs.builtins
 import qs.services
 import qs.ui
 
-// A slim bar at the right edge on a change to any listed status or plugin, so it never reads as a notification.
+// A slim bar at the edge popups.position names, on a change to any listed status or plugin, so it never reads as a notification.
 Scope {
   id: root
 
