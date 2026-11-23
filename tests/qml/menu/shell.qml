@@ -34,6 +34,18 @@ ShellRoot {
         until: () => probe.rows.some(row => row.current && row.id === probe.item.id)
       },
       {
+        name: "a tray app that only offers a menu opens it on its digit, never activated",
+        until: () => {
+          let activated = false;
+          menu.hide();
+          menu.show();
+          menu.activate({ key: "1", desc: "Only menu", app: { onlyMenu: true, hasMenu: true, menu: null }, select: () => activated = true }, "1");
+          const opened = menu.level?.kind === "menu" && !activated;
+          menu.hide();
+          return opened;
+        }
+      },
+      {
         name: "the filter finds a label with accents typed without them, and its legend offers a tray app's menu",
         until: () => {
           probe.items = [{ id: "c", desc: "Café", app: { hasMenu: true } }, { id: "t", desc: "Tea" }];

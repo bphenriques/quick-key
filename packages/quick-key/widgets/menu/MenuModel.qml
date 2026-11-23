@@ -361,6 +361,8 @@ Scope {
 
   function activate(item, name) {
     if (item.enabled === false) return;
+    // A tray app that only offers a menu does nothing when activated (Quickshell's onlyMenu).
+    if (item.app?.onlyMenu) return openMenu(item);
     if (item.select) {
       if (item.closes) hide();
       item.select();
