@@ -8,9 +8,8 @@ import qs
 Singleton {
   // A character's width, the font being monospace.
   readonly property real cell: cellMetrics.advanceWidth
-  // A line's height, as a Label draws one, and a title's.
+  // A line's height, as a Label draws one.
   readonly property real line: fontMetrics.height
-  readonly property real titleLine: titleMetrics.height
 
   TextMetrics {
     id: cellMetrics
@@ -22,11 +21,5 @@ Singleton {
     id: fontMetrics
     font.family: Config.theme.monospaceFont
     font.pointSize: Config.theme.fontSize
-  }
-
-  FontMetrics {
-    id: titleMetrics
-    font.family: Config.theme.monospaceFont
-    font.pointSize: Config.theme.fontSize * Config.theme.titleScale
   }
 }

@@ -70,7 +70,6 @@ Singleton {
   readonly property var ranges: ({
       "theme.fontSize": [6, 32],
       "theme.lineHeight": [0.1, 4],
-      "theme.titleScale": [1, 1.5],
       "theme.iconSize": [4, 128],
       "menu.margin": [0, 400],
       "popups.margin": [0, 400],

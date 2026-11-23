@@ -143,8 +143,8 @@ Scope {
           x: cardSurface.x
           y: frame.height - stack.margin - height
           width: cardSurface.width
-          // At least a title's line, so a level's bar without the clock is as tall as the top level's and the body holds still.
-          height: Math.max(barRow.implicitHeight, Metrics.titleLine + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
+          // At least a padded line, so a level's bar without the clock is as tall as the top level's and the body holds still.
+          height: Math.max(barRow.implicitHeight, Metrics.line + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
           // As islands, only what is behind each item shows.
           color: root.islands ? "transparent" : Tone.surface()
           border.width: root.islands ? 0 : Config.theme.borderWidth / Screen.devicePixelRatio

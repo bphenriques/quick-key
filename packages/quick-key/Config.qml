@@ -69,7 +69,8 @@ Singleton {
   readonly property var renamed: ({
       "theme.monochromeTray": "theme.appIcons, true as \"grey\"",
       "menu.edge": "removed: the menu always sits at the bottom",
-      "menu.align": "removed: the menu is always centred"
+      "menu.align": "removed: the menu is always centred",
+      "theme.titleScale": "removed: titles take the font's size"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -242,8 +243,6 @@ Singleton {
         property string monospaceFont: "monospace"
         // The font's size, in points.
         property int fontSize: 11
-        // A title's size (the clock, a card's summary) as a multiple of the font's, 1 to 1.5.
-        property real titleScale: 1
         // Wrapped prose (an answer) at this multiple of a line; rows keep their own padding.
         property real lineHeight: 1.3
         // Corner radius of panels and cards, in pixels.

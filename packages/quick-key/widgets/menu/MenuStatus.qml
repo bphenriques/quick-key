@@ -45,8 +45,6 @@ StatusLine {
   detailGlyphs: status ? value.glyphs ?? [] : fallbackGlyphs
   // The one to find first: the bar's anchor (the clock), or on a row what is in use, so colour is not all that says so.
   strong: shape.strong || (!status && active)
-  // The clock is a title in a bar only: in a body every row is one size.
-  heading: quiet && shape.strong
   meter: itemMeter !== undefined ? itemMeter : inLevel ? shape.meter : -1
   meterTone: itemMeter !== undefined ? (active ? "primary" : "dim") : shape.muted ? "dim" : "primary"
   // Its own tone, but over a format, which shows other fields, the tone of the first field it shows that has one.
