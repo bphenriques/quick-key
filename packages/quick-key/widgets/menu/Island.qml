@@ -21,14 +21,19 @@ ColumnLayout {
     property real tallest: 0
     // A turn it cannot hold opens the plugin's panel by itself, once, as its answer ends: while it streams in, its size is not known.
     readonly property bool expands: visible && exchange.overflows && root.model.turn !== root.model.expandedTurn && root.model.turn?.phase !== "working"
-    visible: root.model.turn !== null && !root.menu.filtering
+    // Its turn gone before the visit ends (a task added), it holds the height alone, so the prompt holds still.
+    visible: (root.model.turn !== null || tallest > 0) && !root.menu.filtering
+    enabled: root.model.turn !== null
     Layout.fillWidth: true
     // The height held sits beyond it, outside what a hover lights, so the turn stays next to the prompt.
-    Layout.topMargin: Math.max(0, last.tallest - exchange.implicitHeight)
+    Layout.topMargin: Math.max(0, last.tallest - (enabled ? exchange.implicitHeight : 0))
     // Outset by its padding, so the turn lines up with the prompt.
     Layout.leftMargin: -Metrics.itemPaddingX
     Layout.rightMargin: -Metrics.itemPaddingX
-    onVisibleChanged: if (!visible) last.tallest = 0
+    readonly property string visit: root.model.visit
+    onVisitChanged: tallest = 0
+    // A turn as tall as the empty exchange changes no height.
+    onEnabledChanged: latch.restart()
     onExpandsChanged: if (expands) settle.restart()
     verticalPadding: Metrics.itemPaddingY / 2
     onActivated: root.model.expand()
@@ -44,11 +49,12 @@ ColumnLayout {
     Timer {
       id: latch
       interval: 100
-      onTriggered: last.tallest = Math.max(last.tallest, exchange.implicitHeight)
+      onTriggered: if (last.enabled) last.tallest = Math.max(last.tallest, exchange.implicitHeight)
     }
 
     Exchange {
       id: exchange
+      visible: last.enabled
       Layout.fillWidth: true
       onImplicitHeightChanged: latch.restart()
       lines: 3

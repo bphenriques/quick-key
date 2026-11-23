@@ -76,7 +76,7 @@ An entry's `input` floats a line of text over its level's body, a bar entry's to
 
 An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then gives the keys back to the body, as `TAB` does. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right. Empty, it shows its `desc`, which ends in `...`, as what waits on you does.
 
-The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
+The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). What a plugin makes of it shows over the body until done (a task until listed), and the island never shrinks within the visit. The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
 
 ```nix
 { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; input = { desc = "Add a task..."; }; }
