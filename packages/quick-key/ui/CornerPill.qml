@@ -40,6 +40,7 @@ Scope {
       model: Quickshell.screens
 
       OverlayWindow {
+        id: window
         required property var modelData
         screen: modelData
 
@@ -49,7 +50,9 @@ Scope {
         anchors.right: true
         margins.top: Config.theme.edgeMargin + CornerPills.offset(root)
         margins.bottom: Config.theme.edgeMargin + CornerPills.offset(root)
-        margins.right: Config.theme.edgeMargin
+        // Larger by the room a slide needs on the right, the margin smaller by as much.
+        readonly property real room: Math.min(fade.distance, Config.theme.edgeMargin)
+        margins.right: Config.theme.edgeMargin - room
         onImplicitHeightChanged: root.height = implicitHeight
         Component.onCompleted: root.height = implicitHeight
         WlrLayershell.namespace: "quick-key-" + root.namespace
@@ -59,18 +62,19 @@ Scope {
           radius: pill.radius
         }
 
-        implicitWidth: pill.implicitWidth
+        implicitWidth: pill.implicitWidth + room
         implicitHeight: pill.implicitHeight
 
         Pill {
           id: pill
           tone: root.tone
           opacity: fade.value
-          // Sliding, in from the right.
+          // Sliding, in from the right, within the room left for it.
           transform: Translate {
-            x: fade.offset
+            x: (1 - fade.value) * window.room
           }
-          anchors.fill: parent
+          width: implicitWidth
+          height: parent.height
 
           Loader {
             anchors.verticalCenter: parent.verticalCenter

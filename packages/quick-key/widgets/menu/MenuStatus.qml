@@ -42,7 +42,8 @@ ItemLine {
   detailGlyphs: status ? value.glyphs ?? [] : fallbackGlyphs
   // The one to find first: the bar's anchor (the clock), or on a row what is in use, so colour is not all that says so.
   strong: !!builtin?.strong || (!status && active)
-  heading: !!builtin?.strong
+  // The clock is a title in a bar only: in a body every row is one size.
+  heading: quiet && !!builtin?.strong
   meter: itemMeter !== undefined ? itemMeter : inLevel && builtin?.meter ? builtin.meter() : -1
   meterTone: itemMeter !== undefined ? (active ? "primary" : "dim") : builtin?.muted && builtin.muted() ? "dim" : "primary"
   // In a bar: its own tone (over a format, a field's it shows), else lit while on; what is not lit dims, but for the strong one.

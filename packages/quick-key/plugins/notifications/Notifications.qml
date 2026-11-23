@@ -106,7 +106,7 @@ Plugin {
   // The app a card or an item names, "" where nothing needs it: a name a rule sets always shows; else not when the title says it as a whole word ("Go" is not in "Good") or its icon shows it, so a song's cover keeps it.
   function appShown(entry, title, iconShown) {
     const app = appOf(entry);
-    const words = text => " " + text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() + " ";
+    const words = text => " " + text.toLowerCase().replace(/[\s!-\/:-@[-`{-~]+/g, " ").trim() + " ";
     return entry.applied.app === undefined && (iconShown || words(title).includes(words(app))) ? "" : app;
   }
 
@@ -450,6 +450,7 @@ Plugin {
       if (!tag) {
         entry.repeats++;
         entry.arrived = Date.now();
+        if (entry.timer.running) entry.timer.restart();
       }
       return old.expire();
     }

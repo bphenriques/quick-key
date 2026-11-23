@@ -16,6 +16,8 @@ Scope {
   property string kind: ""
 
   function show(newKind) {
+    // Not over a menu or panel open at its own edge, which shows the value itself.
+    if (Panels.top && Config.popups.position === Config.menu.edge) return;
     kind = newKind;
     transient.show();
   }
@@ -72,17 +74,20 @@ Scope {
       // At the edge `popups.position` names, centred along it; at the top or bottom a level reads across.
       readonly property bool across: Config.popups.position === "top" || Config.popups.position === "bottom"
       // Sliding, in from the edge it sits at.
-      readonly property point slide: Qt.point(Config.popups.position === "right" ? fade.offset : Config.popups.position === "left" ? -fade.offset : 0, Config.popups.position === "bottom" ? fade.offset : Config.popups.position === "top" ? -fade.offset : 0)
+      readonly property real room: Math.min(fade.distance, Config.popups.margin)
+      readonly property real left: (1 - fade.value) * room
+      readonly property point slide: Qt.point(Config.popups.position === "right" ? left : Config.popups.position === "left" ? -left : 0, Config.popups.position === "bottom" ? left : Config.popups.position === "top" ? -left : 0)
       // A level no longer than half its screen.
       readonly property real length: Math.min(Config.theme.osdLength, (across ? screen.width : screen.height) / 2 || Config.theme.osdLength)
       anchors.right: Config.popups.position === "right"
       anchors.left: Config.popups.position === "left"
       anchors.top: Config.popups.position === "top"
       anchors.bottom: Config.popups.position === "bottom"
-      margins.right: Config.popups.margin
-      margins.left: Config.popups.margin
-      margins.top: Config.popups.margin
-      margins.bottom: Config.popups.margin
+      // Larger by the room a slide needs on its edge's side, the margin smaller by as much.
+      margins.right: Config.popups.margin - (Config.popups.position === "right" ? room : 0)
+      margins.left: Config.popups.margin - (Config.popups.position === "left" ? room : 0)
+      margins.top: Config.popups.margin - (Config.popups.position === "top" ? room : 0)
+      margins.bottom: Config.popups.margin - (Config.popups.position === "bottom" ? room : 0)
       WlrLayershell.namespace: "quick-key-osd"
       // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
       BackgroundEffect.blurRegion: Region {
@@ -90,8 +95,8 @@ Scope {
         radius: (window.metered ? bar : pill).radius
       }
 
-      implicitWidth: metered ? bar.implicitWidth : pill.implicitWidth
-      implicitHeight: metered ? bar.implicitHeight : pill.implicitHeight
+      implicitWidth: (metered ? bar.implicitWidth : pill.implicitWidth) + (across ? 0 : room)
+      implicitHeight: (metered ? bar.implicitHeight : pill.implicitHeight) + (across ? room : 0)
 
       // A level: a bar, the level above the icon, or after it when it reads across.
       Surface {
@@ -101,7 +106,11 @@ Scope {
           x: window.slide.x
           y: window.slide.y
         }
-        anchors.fill: parent
+        // Within the window, past the room left for a slide.
+        x: Config.popups.position === "left" ? window.room : 0
+        y: Config.popups.position === "top" ? window.room : 0
+        width: implicitWidth
+        height: implicitHeight
         visible: window.metered
         implicitWidth: (window.across ? levelColumn.implicitWidth : Config.theme.osdIconSize) + 2 * Config.theme.padding
         implicitHeight: (window.across ? Config.theme.osdIconSize : levelColumn.implicitHeight) + 2 * Config.theme.padding
@@ -150,7 +159,10 @@ Scope {
           x: window.slide.x
           y: window.slide.y
         }
-        anchors.fill: parent
+        x: Config.popups.position === "left" ? window.room : 0
+        y: Config.popups.position === "top" ? window.room : 0
+        width: implicitWidth
+        height: implicitHeight
         visible: !window.metered
         padding: Config.theme.padding
         // The bar's radius, not the capsule: the two shapes swap as the kind changes, so they must agree.

@@ -153,11 +153,11 @@ Scope {
 
             Surface {
               required property Item modelData
-              // Its item's place in the bar, read again as the item or its slot moves or resizes.
-              readonly property rect box: modelData.visible && modelData.width + modelData.x + (modelData.parent?.x ?? 0) + (modelData.parent?.width ?? 0) >= 0 ? modelData.mapToItem(bar, 0, 0, modelData.width, modelData.height) : Qt.rect(0, 0, 0, 0)
-              visible: box.width > 0
-              x: box.x
-              width: box.width
+              // Its item's place in the bar: the bar's content, the slot holding the item (the bar's own items have none), the item; widened by the bar's padding, so the outer islands meet the card's edges.
+              readonly property Item slot: modelData.parent === barContent.item ? null : modelData.parent
+              visible: modelData.visible && modelData.width > 0
+              x: barRow.x + barContent.x + (slot?.x ?? 0) + modelData.x - Config.theme.padding
+              width: modelData.width + 2 * Config.theme.padding
               height: bar.height
             }
           }

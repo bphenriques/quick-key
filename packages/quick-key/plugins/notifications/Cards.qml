@@ -93,13 +93,15 @@ Scope {
       anchors.right: view.right
       anchors.left: !view.right
       // In the corner pills' corner (recording), past them as they stack, a gap more.
-      readonly property real pills: view.right && view.top !== Config.atTop && CornerPills.order.length > 0 ? CornerPills.height + Config.theme.spacing : 0
-      margins.top: view.settings.margin + (view.top ? pills : 0)
-      margins.bottom: view.settings.margin + (view.top ? 0 : pills)
-      margins.right: view.settings.margin
-      margins.left: view.settings.margin
+      readonly property real pills: view.right && view.top !== Config.atTop && CornerPills.order.length > 0 ? Config.theme.edgeMargin + CornerPills.height + Config.theme.spacing : 0
+      margins.top: view.top ? Math.max(view.settings.margin, pills) : view.settings.margin
+      margins.bottom: view.top ? view.settings.margin : Math.max(view.settings.margin, pills)
+      // Larger by the room a slide needs on its corner's side, the margin smaller by as much.
+      readonly property real room: Math.min(fade.distance, view.settings.margin)
+      margins.right: view.settings.margin - (view.right ? room : 0)
+      margins.left: view.settings.margin - (view.right ? 0 : room)
       // No wider than its screen within the margins, whatever width is set.
-      implicitWidth: Math.min(view.settings.width, (view.screen?.width ?? view.settings.width) - 2 * view.settings.margin)
+      implicitWidth: Math.min(view.settings.width, (view.screen?.width ?? view.settings.width) - 2 * view.settings.margin) + room
       implicitHeight: stack.implicitHeight
       WlrLayershell.namespace: "quick-key-notifications"
       WlrLayershell.keyboardFocus: view.plugin.summoned ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -138,12 +140,13 @@ Scope {
 
         Column {
           id: stack
-          width: parent.width
+          x: view.right ? 0 : window.room
+          width: parent.width - window.room
           spacing: Config.theme.spacing
           opacity: fade.value
-          // Sliding, in from the side of its corner.
+          // Sliding, in from the side of its corner, within the room left for it.
           transform: Translate {
-            x: view.right ? fade.offset : -fade.offset
+            x: (view.right ? 1 : -1) * (1 - fade.value) * window.room
           }
 
           // Over the whole stack, its gaps too, so moving between cards never lets go.

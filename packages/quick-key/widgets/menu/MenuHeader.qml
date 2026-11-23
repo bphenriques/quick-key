@@ -30,7 +30,8 @@ RowLayout {
 
   // Never widens the menu: a bar whose icons cannot fit overflows instead (rule 4: make the menu wider).
   Layout.minimumWidth: 0
-  spacing: Config.theme.spacing
+  // As islands, wider apart by the padding each island adds on either side.
+  spacing: Config.theme.spacing + (Config.menu.islands ? 2 * Config.theme.padding : 0)
 
   // As their rows draw them, so an action keeps its icon, state and value on the bar; filtering, the filter's keys alone.
   RowLayout {
