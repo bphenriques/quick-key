@@ -68,7 +68,7 @@ ColumnLayout {
     Layout.fillWidth: true
     // Filtering, it is the filter: its glyph, its range on the right.
     readonly property bool filter: root.menu.filtering
-    active: root.menu.inputFocused || filter
+    focused: root.menu.inputFocused || filter
     // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
     busy: root.model.busy && root.model.turn === null && !filter
     key: filter ? "" : "Tab"

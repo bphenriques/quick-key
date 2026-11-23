@@ -15,7 +15,7 @@ ColumnLayout {
   // A selection to show again as its piece is made, as `selected` reported it: { piece, start, end }.
   property var kept: null
   // The piece selected in last; a selection in another clears it, so one shows at a time.
-  property int current: -1
+  property int selectedPiece: -1
   // Characters a piece gathers before the next starts: what a streaming piece costs to redraw, against how many an answer arriving whole is drawn as.
   readonly property int pieceSize: 1000
 
@@ -47,7 +47,7 @@ ColumnLayout {
     TextEdit {
       required property int index
       required property string source
-      readonly property bool others: root.current !== index
+      readonly property bool others: root.selectedPiece !== index
       // Showing a kept selection again, which is not copied again, so it never overwrites what was copied since.
       property bool restoring: false
 
@@ -70,17 +70,17 @@ ColumnLayout {
       Component.onCompleted: {
         const kept = root.kept;
         if (!kept || kept.piece !== index || kept.end > length) return;
-        root.current = index;
+        root.selectedPiece = index;
         restoring = true;
         select(kept.start, kept.end);
         restoring = false;
       }
       onSelectedTextChanged: {
         if (!selectedText) {
-          if (root.current === index) root.selected(null);
+          if (root.selectedPiece === index) root.selected(null);
           return;
         }
-        root.current = index;
+        root.selectedPiece = index;
         if (restoring) return;
         Quickshell.clipboardText = selectedText;
         root.selected({ piece: index, start: selectionStart, end: selectionEnd });

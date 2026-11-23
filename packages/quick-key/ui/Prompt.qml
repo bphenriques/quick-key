@@ -7,7 +7,7 @@ RowLayout {
   id: root
 
   // Whether it has the keys; a click asks for them through `tapped`.
-  property bool active: true
+  property bool focused: true
   property bool busy: false
   property var key: ""
   property string glyph: Glyphs.prompt
@@ -55,16 +55,16 @@ RowLayout {
       id: keyHint
       anchors.left: parent.left
       anchors.verticalCenter: parent.verticalCenter
-      visible: !root.busy && !root.active && root.key !== ""
+      visible: !root.busy && !root.focused && root.key !== ""
       key: root.key
     }
 
     Icon {
       anchors.left: parent.left
       anchors.verticalCenter: parent.verticalCenter
-      visible: root.busy || root.active || root.key === ""
+      visible: root.busy || root.focused || root.key === ""
       busy: root.busy
-      tone: root.active && !root.busy ? "primary" : "dim"
+      tone: root.focused && !root.busy ? "primary" : "dim"
       glyph: root.glyph
       size: Metrics.line
     }
@@ -74,7 +74,7 @@ RowLayout {
     id: area
     Layout.fillWidth: true
     Layout.preferredHeight: implicitHeight
-    activeFocusOnPress: root.active
+    activeFocusOnPress: root.focused
     onKeyPressed: event => {
       const send = root.sends ? MenuKeys.sends(event) : "";
       if (send) {
@@ -90,7 +90,7 @@ RowLayout {
     }
 
     TapHandler {
-      enabled: !root.active
+      enabled: !root.focused
       onTapped: root.tapped()
     }
   }
