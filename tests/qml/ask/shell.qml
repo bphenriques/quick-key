@@ -381,7 +381,7 @@ ShellRoot {
           const ask = Plugins.get("recaller");
           if (root.resumeStep === 0) {
             ask.select("old");
-            root.resumeStep = ask.resuming && ask.shown ? 1 : -1;
+            root.resumeStep = ask.stage === "resuming" && ask.shown ? 1 : -1;
           } else if (root.resumeStep === 1 && !ask.busy) {
             root.resumeStep = ask.exchanges.length === 1 && ask.exchanges[0].prompt === "what was it?" && ask.exchanges[0].reply === "from before" && ask.items[0].active && ask.send("next", "") ? 2 : -1;
           }

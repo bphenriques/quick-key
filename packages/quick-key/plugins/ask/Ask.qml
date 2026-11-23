@@ -60,8 +60,8 @@ Plugin {
   readonly property bool shown: Panels.top === root
   property bool typing: true
   property bool unread: false
-  // A turn, or a load replaying a conversation, under way.
-  property bool running: false
+  // "working" on a turn (send), "resuming" a conversation it replays (resume), else "idle", as the agent's end sets it (close).
+  property string stage: "idle"
   // This visit sent it a turn, so the next send continues that conversation.
   property bool visited: false
   // `?` with the prompt dim: the panel keys until the next key.
@@ -80,7 +80,6 @@ Plugin {
   property bool listing: false
   property string failure: ""
   // The history the agent replays, built in place and shown once whole.
-  property bool resuming: false
   property var recalled: []
   // Seconds the run has taken, ticking only while it runs and shows.
   property int sentAt: 0
@@ -91,7 +90,7 @@ Plugin {
   // Ctrl+V found no image, so it pastes text as usual.
   signal pasteText
 
-  phase: running ? (approval ? "blocked" : "working") : unread ? (exchanges[exchanges.length - 1]?.error ? "error" : "done") : "idle"
+  phase: stage !== "idle" ? (approval ? "blocked" : "working") : unread ? (exchanges[exchanges.length - 1]?.error ? "error" : "done") : "idle"
   kind: approval ? "permission" : ""
   glyph: phase !== "idle" ? settings.glyph : ""
   error: failure
@@ -162,16 +161,14 @@ Plugin {
     if (id !== session || exchanges.length === 0) {
       reset();
       recalled = [];
-      resuming = true;
-      running = true;
+      stage = "resuming";
       agent.load(id);
     }
     show();
   }
 
   function resumed(outcome) {
-    resuming = false;
-    running = false;
+    stage = "idle";
     failure = outcome.error ?? "";
     exchanges = !outcome.loaded ? [] : recalled.map(entry => {
       const shaped = Markup.options(entry.reply);
@@ -234,9 +231,10 @@ Plugin {
   // As an Exchange draws it (Phase): blocked on an approval while running, on a question while its options wait.
   function describe(exchange) {
     const latest = exchange === exchanges[exchanges.length - 1];
-    const phase = latest && running ? (approval ? "blocked" : "working")
+    const working = latest && stage === "working";
+    const phase = working ? (approval ? "blocked" : "working")
       : exchange.stopped ? "idle" : exchange.error ? "error" : latest && choices.length > 0 ? "blocked" : "done";
-    const kind = phase !== "blocked" ? "" : latest && running ? "permission" : "question";
+    const kind = phase !== "blocked" ? "" : working ? "permission" : "question";
     return {
       question: exchange.prompt,
       image: exchange.image,
@@ -269,7 +267,7 @@ Plugin {
     const kept = retried ? exchanges.slice(0, -1) : exchanges;
     exchanges = kept.concat([{ prompt: prompt, image: image, reply: "", error: "", stopped: false, after: after || (retried ? last.after : ""), input: input || watched }]);
     if (image === root.image) root.image = "";
-    running = true;
+    stage = "working";
     approval = "";
     activity = "";
     touched = false;
@@ -282,7 +280,7 @@ Plugin {
   }
 
   function close(outcome) {
-    if (resuming) return resumed(outcome);
+    if (stage === "resuming") return resumed(outcome);
     flush();
     // Stopped, what streamed stays: people stop because they have read enough.
     if (!outcome.answered) return finish({ reply: outcome.stopped ? exchanges[exchanges.length - 1].reply : "", error: outcome.error ?? "Stopped", stopped: !!outcome.stopped });
@@ -307,7 +305,7 @@ Plugin {
 
   function finish(answer) {
     const last = setLast({ reply: answer.reply ?? "", error: answer.error ?? (answer.reply ? "" : words.noAnswer), stopped: !!answer.stopped, options: answer.reply ? answer.options ?? [] : [], table: !!answer.table });
-    running = false;
+    stage = "idle";
     approval = "";
     if (seen(last)) report();
     else notify(last.error || [last.reply].concat(last.options).join(" · "));
@@ -321,7 +319,7 @@ Plugin {
   }
 
   function encode(path, then) {
-    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : finish({ error: words.noImage }));
+    call(settings.encodeImage, [path], (code, output) => code === 0 ? then(output.trim()) : close({ error: words.noImage }));
   }
 
   function mimeOf(data) {
@@ -444,12 +442,12 @@ Plugin {
   // Saved once taken, so a conversation being made never overwrites the one it takes; and once a turn settles, not per streamed piece.
   property bool taken: false
   onKeptChanged: save()
-  onRunningChanged: save()
+  onStageChanged: save()
   // And the moment a turn opens its session, so a restart mid-answer resumes that session.
   onSessionChanged: if (taken) Kept.set(name, kept)
 
   function save() {
-    if (taken && !running) Kept.set(name, kept);
+    if (taken && stage === "idle") Kept.set(name, kept);
   }
 
   Component.onCompleted: take()

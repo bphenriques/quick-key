@@ -222,7 +222,7 @@ Scope {
           width: thread.width
           wrapMode: Text.Wrap
           tone: panel.plugin.failure ? "alert" : "dim"
-          text: panel.plugin.resuming ? panel.plugin.words.resuming : panel.plugin.failure || panel.plugin.words.newConversation
+          text: panel.plugin.stage === "resuming" ? panel.plugin.words.resuming : panel.plugin.failure || panel.plugin.words.newConversation
         }
       }
 
