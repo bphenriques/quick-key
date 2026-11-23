@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs
 import qs.ui
+import qs.ui.conversation
 
 Scope {
   id: panel

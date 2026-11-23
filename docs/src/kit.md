@@ -13,7 +13,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | a listed item (a task, a device) | `ListItem` |
 | keys: one, a legend, a list | `KeyHint`, `KeyLegend`, `KeyList` |
 | text to type or send | `TextField`, `TextArea`, `Prompt` |
-| a conversation | `Exchange`, `Bubble` and `Markdown` in it; an answer's Markdown read through `Markup` |
+| a conversation (`qs.ui.conversation`) | `Exchange`, `Bubble` and `Markdown` in it; an answer's Markdown read through `Markup` |
 | a surface, an outline | `Panel`, `Surface`, `Pill`, `Divider` |
 | a card that comes and goes (a notification) | `Card` |
 

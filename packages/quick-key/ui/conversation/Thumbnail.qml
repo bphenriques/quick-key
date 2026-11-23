@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.ui
 
 // A picture by its file path, four lines tall and as wide as its shape, so a screenshot gets no bands.
 Image {

@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs
+import qs.ui
 
 // One turn of a conversation: the question a bubble on the right, the answer on the left in Markdown; with `lines` it is compact, `overflows` saying what it cannot hold.
 ColumnLayout {

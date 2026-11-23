@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs
+import qs.ui
 
 // An agent's answer, rendered by Markup.html a piece at a time so a stream redraws only its last; a selection is copied, as a terminal does.
 ColumnLayout {

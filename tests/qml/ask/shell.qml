@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.ui
+import qs.ui.conversation
 
 // The ask plugin over ACP with a stand-in agent (agent.py), each case a plugin and an agent of its own; qs.ui is imported for them.
 ShellRoot {

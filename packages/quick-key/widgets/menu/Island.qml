@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs
 import qs.ui
+import qs.ui.conversation
 
 // The menu input island (InputModel): the last turn (Exchange) over the line to send; filtering, the line is the filter.
 GridLayout {

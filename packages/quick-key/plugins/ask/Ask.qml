@@ -6,6 +6,7 @@ import Quickshell.Io
 import qs
 import qs.services
 import qs.ui
+import qs.ui.conversation
 
 // An ACP agent in a panel, kept running between turns (docs/src/plugins.md).
 Plugin {

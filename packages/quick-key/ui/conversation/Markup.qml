@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import qs
+import qs.ui
 
 // What the kit reads in an agent's Markdown (ACP's text format), in one place: its plain lines, its rich text, its closing options, whether it holds a table.
 Singleton {

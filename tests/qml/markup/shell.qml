@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import qs
 import qs.ui
+import qs.ui.conversation
 
 // What Markup makes of an agent's Markdown, pure: each of `cases` is what it shows, what Markup gives, and what that must be.
 ShellRoot {
