@@ -14,7 +14,7 @@ Scope {
   property string namespace
   default property Component content
   readonly property bool hovered: internal.hovered
-  // As tall as it draws, for CornerPills to stack the rest under it.
+  // As tall as it draws with the gap after it, for CornerPills to stack the rest under it.
   property real height: 0
 
   signal clicked
@@ -58,8 +58,8 @@ Scope {
         // Larger by the room a slide needs on the right, the margin smaller by as much.
         readonly property real room: Math.min(fade.distance, Config.theme.edgeMargin)
         margins.right: Config.theme.edgeMargin - room
-        onImplicitHeightChanged: root.height = implicitHeight
-        Component.onCompleted: root.height = implicitHeight
+        onImplicitHeightChanged: root.height = implicitHeight + Config.theme.spacing
+        Component.onCompleted: root.height = implicitHeight + Config.theme.spacing
         WlrLayershell.namespace: "quick-key-" + root.namespace
         // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
         BackgroundEffect.blurRegion: Region {
