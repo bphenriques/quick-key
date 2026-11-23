@@ -11,7 +11,7 @@ Singleton {
   readonly property string backend: Quickshell.env("NIRI_SOCKET") ? "niri" : ""
   readonly property var impl: backend === "niri" ? Niri : Wayland
 
-  // Each output twice, by connector name and by make, model and serial: those connected, and those on. Read on refresh().
+  // Each output twice, by connector name and by make, model and serial: those connected, and those on. Read at start and on refresh().
   readonly property var connected: internal.connected
   readonly property var enabled: internal.enabled
   readonly property var layouts: impl.layouts
@@ -25,6 +25,8 @@ Singleton {
       internal.enabled = enabled;
     });
   }
+
+  Component.onCompleted: refresh()
 
   function nextLayout() {
     impl.switchLayout();

@@ -33,6 +33,10 @@ ShellRoot {
         until: () => Plugins.get("unread")?.items.length === 2 && !Statuses.of("unread").ready
       },
       {
+        name: "without niri, the outputs are read as the shell starts, before the menu first opens, so brightness can pop up",
+        until: () => Compositor.enabled.length > 0
+      },
+      {
         name: "a watch that ends takes its work with it, and leaves its result to be seen, as Rex has it",
         until: () => Plugins.get("finisher")?.phase === "done" && Plugins.get("finisher").text === "built" && !Plugins.get("finisher").busy
           && Plugins.get("worker")?.phase === "idle" && Plugins.get("worker").text === ""

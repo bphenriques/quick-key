@@ -12,7 +12,7 @@ Singleton {
   readonly property bool present: internal.maximum > 0
   // The backlight directory's name, which is how logind addresses it.
   readonly property string name: internal.file.replace(/\/brightness$/, "").split("/").pop()
-  // The panel it dims is on, as of the last time the menu opened.
+  // The panel it dims is on, as of the last time the outputs were read (Compositor).
   readonly property string panel: Config.brightness.panel || Compositor.connected.find(output => /^(eDP|LVDS|DSI)-/.test(output)) || ""
   readonly property bool lit: present && Compositor.enabled.includes(panel)
   readonly property int percentage: present ? Math.round(internal.current * 100 / internal.maximum) : 0
