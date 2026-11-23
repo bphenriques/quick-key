@@ -30,8 +30,8 @@ Scope {
   // An icon sent by its name, from the theme, at a glyph's size; a rule's own first.
   function iconOf(entry) {
     const icon = entry.applied.icon || (plugin.fileOf(entry) ? "" : plugin.iconOf(entry));
-    // Its symbolic version first, drawn in the text's colour, so a theme's icon made for another background never washes out.
-    return icon ? Quickshell.iconPath(icon + "-symbolic", true) || Quickshell.iconPath(icon, true) : "";
+    // Tinted, its symbolic version first, which tint draws in the text's colour.
+    return !icon ? "" : (Config.theme.appIcons === "tint" && Quickshell.iconPath(icon + "-symbolic", true)) || Quickshell.iconPath(icon, true);
   }
 
   // The focused screen, which the cards follow while nothing holds them still.
@@ -175,7 +175,7 @@ Scope {
                 readonly property var hint: entry?.hints.value
 
                 width: stack.width
-                recolour: icon.includes("symbolic") ? "tint" : Config.theme.appIcons
+                recolour: Config.theme.appIcons
                 iconColumn: view.icons
                 icon: entry ? view.iconOf(entry) : ""
                 image: entry ? view.pictureOf(entry) : ""

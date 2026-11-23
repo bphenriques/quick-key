@@ -22,6 +22,12 @@ RowLayout {
   property string valueTone: "dim"
   // Its value right after its title rather than on the right, for a row alone in reporting (an action in its level).
   property bool packed: false
+
+  // The least a value keeps when squeezed: all of a short one (80%, EN), else `chars` characters.
+  function least(label, chars) {
+    const whole = Math.ceil(label.implicitWidth);
+    return whole <= 6 * Metrics.cell ? whole : chars * Metrics.cell;
+  }
   // A picture of the value beside it (0 to 1), the volume or brightness; below 0, none.
   property real meter: -1
   property string meterTone: "primary"
@@ -71,7 +77,7 @@ RowLayout {
     Layout.fillWidth: true
     Layout.maximumWidth: root.packed ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
     // Squeezed, text ends in an ellipsis, but a short value (80%, EN) stays whole: only a longer one gives way.
-    Layout.minimumWidth: Math.ceil(implicitWidth) <= 6 * Metrics.cell ? Math.ceil(implicitWidth) : 2 * Metrics.cell
+    Layout.minimumWidth: root.least(textLabel, 2)
     horizontalAlignment: root.titled && !root.packed ? Text.AlignRight : Text.AlignLeft
     elide: Text.ElideRight
     font.strikeout: root.struck
@@ -95,7 +101,7 @@ RowLayout {
   Label {
     id: detailLabel
     visible: root.detail !== ""
-    Layout.minimumWidth: Math.ceil(implicitWidth) <= 6 * Metrics.cell ? Math.ceil(implicitWidth) : 4 * Metrics.cell
+    Layout.minimumWidth: root.least(detailLabel, 4)
     elide: Text.ElideRight
     horizontalAlignment: Text.AlignRight
     tone: root.valueTone

@@ -16,8 +16,7 @@ Scope {
   property string kind: ""
 
   function show(newKind) {
-    // Not over a menu or panel open at its own edge, which shows the value itself.
-    if (Panels.top && Config.popups.position === Config.menu.edge) return;
+    if (root.covered) return;
     kind = newKind;
     transient.show();
   }
@@ -26,14 +25,9 @@ Scope {
     id: transient
   }
 
-  // One already showing goes when a menu or panel opens at its edge, as a new one would not show.
-  Connections {
-    target: Panels
-
-    function onTopChanged() {
-      if (Panels.top && Config.popups.position === Config.menu.edge) transient.hide();
-    }
-  }
+  // A menu or panel open at its own edge shows the value itself: no pop-up then, and one showing goes.
+  readonly property bool covered: Panels.top !== null && Config.popups.position === Config.menu.edge
+  onCoveredChanged: if (covered) transient.hide()
 
   Fade {
     id: fade
