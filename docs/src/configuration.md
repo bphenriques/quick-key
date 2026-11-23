@@ -47,7 +47,7 @@ Unset, the menu is a starter one (audio, network, Bluetooth, music), with the ca
 | Session | `loginctl`, `systemctl` |
 | Calendar reminders | `notify-send` |
 | Battery warnings | `notify-send` |
-| The `ask` plugin's notifications and pasted images | `notify-send`, `wl-paste` |
+| The `ask` plugin's notifications | `notify-send` |
 | The `notifications` plugin, to see it holds the bus | `busctl` |
 
 `popups.show` lists what pops up as it changes, so another on-screen display can take any of it over. Listed, `battery` pops up as it is plugged in or out, not at every percent, and `bluetooth` as it turns on or off or a device connects or leaves, not at every percent of a headset. A plugin pops up as a pill with its glyph and text on every change of its text, so list only plugins that change rarely (not a recording's timer). None shows while a menu or panel is open, which shows the value itself.

@@ -56,7 +56,6 @@ let
         ++ [
           pkgs.util-linux
           pkgs.libnotify
-          pkgs.wl-clipboard
         ]
       )
     }''${PATH:+:$PATH}
