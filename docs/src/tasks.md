@@ -49,4 +49,6 @@ A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick
 
 calendarSync reads its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks. A tick edits the task's file, changing only its status, completion and percent done; todoman, which writes a task anew from what it reads, only adds a task and ticks off a repeating one. A task's `id` is todoman's, which numbers a task anew as its file changes, so a tick whose id no longer has its title fails ("tasks changed, try again"), touching nothing.
 
-Ticking a repeating task makes its next one; unticking reopens only the one ticked and leaves the next, to delete in your calendar app if unwanted. A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.
+Ticking a repeating task makes its next one; unticking reopens only the one ticked and leaves the next, to delete in your calendar app if unwanted. todoman writes both anew: the one ticked loses a start not before its due time, a language, categories on two lines and its times' zone, and the next one also loses its reminders, its links (`URL`, `RELATED-TO`) and an app's own properties (`X-`), its `COUNT` starting over, so a series meant to end never does. Your calendar app keeps a series whole; tick repeating tasks there.
+
+A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.
