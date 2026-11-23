@@ -6,7 +6,7 @@
 
 - Arrows move the selected day by a day or a week.
 - `Ctrl+←→` moves a month, `Ctrl+↑↓` a year, `t` goes back to today.
-- `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns. On an event, `Return` shows it whole, its title and place unshortened, until `ESC`.
+- `Return` steps into the events: the arrows then move through them, the month following, and `ESC` returns. On an event, `Return` shows it whole in the events' place, its title and place unshortened and its end to the minute, until `ESC`.
 
 A dot under a day marks each colour of its events, up to four; with more, the last is grey. The month and year head the grid, its keys sit on the bar, and a failed sync says why under the events.
 
@@ -18,7 +18,7 @@ header.right = [ { key = "s"; desc = "Sync"; icon = "<glyph>"; status = "calenda
 
 ## Events
 
-Each day heads its events, with its year when not this one. A timed event takes one line, `09:00–09:15`, and its place a second. One running past its day says when it ends (`to Sat 18:00`), and the days it fills are all day. What is over dims. Today opens at its first timed event not over yet when the day's start would leave it out of view, and any day, the last included, scrolls to the top. A row that does not fit whole is not drawn. On a level too narrow for titles beside the times, the times fold into each title's second line.
+Each day heads its events, with its year when not this one. A timed event takes one line, `09:00–09:15`, and its place a second. One running past its day says when it ends (`to Sat 18:00`), or only the date a week or more on (`to 3 Dec`), and the days it fills are all day. What is over dims, and today's timed events that are over fold into one line (`3 earlier`) until the arrows reach one. Today opens under its heading, or at its first timed event not over yet when the day's start would still leave it out of view, and any day, the last included, scrolls to the top. A row that does not fit whole is not drawn. On a level too narrow for titles beside the times, the times fold into each title's second line.
 
 ## The events file
 

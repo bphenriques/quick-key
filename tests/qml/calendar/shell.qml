@@ -41,6 +41,17 @@ ShellRoot {
         ].join() === "09:00–09:15|,09:00|,22:00|to Sat 01:00,All day|to Sat 01:00,to 01:00|,All day|to Sat,All day|"
       },
       {
+        name: "a timed event ending a week or more on says its date alone, as wide as the time column holds, and its time in the details",
+        until: () => {
+          const day = new Date(2026, 10, 23);
+          const far = { start: new Date(2026, 10, 23, 9), end: new Date(2026, 10, 30, 18), allDay: false };
+          const near = { start: new Date(2026, 10, 23, 9), end: new Date(2026, 10, 28, 18), allDay: false };
+          const column = events.times(far, day);
+          return column.join("|") === "09:00|to 30 Nov" && events.times(near, day).join("|") === "09:00|to Sat 18:00"
+            && column[1].length <= events.timeChars && events.times(far, day, true)[1].endsWith(" 18:00");
+        }
+      },
+      {
         name: "a day's heading says its year only when it is not this one",
         until: () => {
           const year = Clock.date.getFullYear();
@@ -65,6 +76,38 @@ ShellRoot {
             { key: today, event: { allDay: false, end: new Date(now + 3600000) } }
           ];
           return Calendar.firstOn(rows, today) === 3 && Calendar.firstOn(rows, "2000-01-01") === 0 && Calendar.firstOn(rows, "1999-01-01") === 0;
+        }
+      },
+      {
+        name: "today's timed events that are over fold into one line where the first was, so its heading and what is next stay in view",
+        until: () => {
+          const now = Clock.date.getTime();
+          const today = Clock.dayKey(Clock.date);
+          const rows = [
+            { id: "a", key: today, event: { title: "Holiday", allDay: true, end: new Date(now + 86400000) } },
+            { id: "b", key: today, event: { title: "Standup", allDay: false, end: new Date(now - 60000) } },
+            { id: "c", key: today, event: { title: "Review", allDay: false, end: new Date(now + 3600000) } },
+            { id: "d", key: today, event: { title: "Coffee", allDay: false, end: new Date(now - 30000) } },
+            { id: "e", key: "2000-01-01", event: { title: "Gym", allDay: false, end: new Date(2000, 0, 1, 10) } }
+          ];
+          const ids = rows.filter(row => Calendar.earlier(row)).map(row => row.id);
+          const shown = events.fold(rows, ids).map(row => row.earlier ? row.earlier.map(event => event.title).join("+") : row.event.title);
+          return ids.join() === "b,d" && shown.join() === "Holiday,Standup+Coffee,Review,Gym" && events.fold(rows, []) === rows;
+        }
+      },
+      {
+        name: "the keys reaching one of today's events that are over unfold them, and stepping back folds them again",
+        until: () => {
+          const now = Clock.date.getTime();
+          const today = Clock.dayKey(Clock.date);
+          menu.calendar.select(new Date());
+          menu.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
+          const ahead = menu.calendar.unfolded;
+          menu.calendar.focus({ id: "over", key: today, day: new Date(), event: { allDay: false, end: new Date(now - 60000) } });
+          menu.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
+          const kept = menu.calendar.unfolded;
+          menu.calendar.stepBack();
+          return !ahead && kept && !menu.calendar.unfolded;
         }
       },
       {
@@ -95,6 +138,21 @@ ShellRoot {
           return focused && shown && menu.calendar.stepBack() && !menu.calendar.details && menu.calendar.focused !== ""
             && menu.calendar.stepBack() && menu.calendar.focused === "" && !menu.calendar.stepBack();
         }
+      },
+      {
+        name: "an event's details take the place of the rows, which hold still, until they close",
+        start: () => {
+          events.selected = new Date(2026, 10, 12);
+          events.focused = Calendar.timeline[1].id;
+          events.details = true;
+        },
+        until: () => events.detailRow?.event.title === "Night shift" && !events.interactive
+          && events.rows.every((_, at) => !events.itemAtIndex(at)?.visible)
+      },
+      {
+        name: "closing the details shows the rows again",
+        start: () => events.details = false,
+        until: () => !events.detailRow && events.interactive && events.itemAtIndex(1)?.visible
       }
     ]
   }

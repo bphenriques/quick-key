@@ -94,10 +94,10 @@ Singleton {
     return text[0].toUpperCase() + text.slice(1);
   }
 
-  // A later day under the heading of `from`: its weekday within a week, else its date (3 Dec), with its time when `timed` (Sat 18:00).
+  // A later day under the heading of `from`: its weekday within a week, with its time when `timed` (Sat 18:00); beyond, its date alone (3 Dec), as narrow as those.
   function dayAfter(moment, from, timed) {
-    const day = moment - from < 7 * 86400000 ? weekdays[moment.getDay()] : format(moment, "%-d %b");
-    return timed ? day + " " + time(moment) : day;
+    if (moment - from >= 7 * 86400000) return format(moment, "%-d %b");
+    return timed ? weekdays[moment.getDay()] + " " + time(moment) : weekdays[moment.getDay()];
   }
 
   // A day as the files key it: 2026-11-12.

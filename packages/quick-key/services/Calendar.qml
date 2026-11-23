@@ -42,6 +42,11 @@ Singleton {
     return now >= 0 ? now : rows.findIndex(row => row.key >= key);
   }
 
+  // Whether a row is a timed event of today that is over, which the list folds into one line.
+  function earlier(row) {
+    return row.key === Clock.dayKey(Clock.date) && !!row.event && !row.event.allDay && row.event.end <= Clock.date;
+  }
+
   // Text on one line, as a row shows it: an address often comes as several.
   function line(text) {
     return (text ?? "").trim().replace(/\s*\n\s*/g, ", ");

@@ -56,6 +56,11 @@ Singleton {
     return "to " + when;
   }
 
+  // Today's events that are over, folded into one line.
+  function earlier(count) {
+    return count + " earlier";
+  }
+
   // What a line says beside another (09:00–09:15 · Rua Augusta 120), the empty left out.
   function beside(parts) {
     return parts.filter(part => part).join(" · ");

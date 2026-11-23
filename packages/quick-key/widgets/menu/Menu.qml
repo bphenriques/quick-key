@@ -227,6 +227,7 @@ Scope {
             selected: root.menu.calendar.selected
             focused: root.menu.calendar.focused
             details: root.menu.calendar.details
+            unfolded: root.menu.calendar.unfolded
             onPicked: row => root.menu.calendar.focus(row)
           }
         }

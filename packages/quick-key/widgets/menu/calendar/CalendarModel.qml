@@ -11,6 +11,8 @@ QtObject {
   readonly property string focused: internal.focused
   // Whether the focused event shows whole, its title and place unshortened.
   readonly property bool details: internal.details
+  // Whether today's events that are over show a row each, as the keys have reached one; else they fold into one line.
+  readonly property bool unfolded: internal.unfolded
 
   readonly property string title: Clock.monthHeading(selected)
   // Each moves the selected day by [years, months, days], or back to today (null); the arrows go unlisted, the grid shows them.
@@ -39,11 +41,13 @@ QtObject {
     internal.focused = row.id;
     internal.selected = row.day;
     internal.details = false;
+    internal.unfolded = internal.unfolded || Calendar.earlier(row);
   }
 
   function clearFocus() {
     internal.focused = "";
     internal.details = false;
+    internal.unfolded = false;
   }
 
   // Escape's step within the level: the details, then the focus; false with neither to leave.
@@ -88,5 +92,6 @@ QtObject {
     property var selected: new Date()
     property string focused: ""
     property bool details: false
+    property bool unfolded: false
   }
 }
