@@ -40,6 +40,7 @@
       "file": "chose-c"
     },
     "wallpaper": {
+      "type": "command",
       "file": "wallpaper"
     },
     "custom": {},

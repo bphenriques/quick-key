@@ -66,7 +66,7 @@ ShellRoot {
       },
       {
         name: "a file is read once it appears",
-        start: () => Quickshell.execDetached(["sh", "-c", 'echo /walls/sunset.jpg > "$XDG_RUNTIME_DIR/wallpaper"']),
+        start: () => Quickshell.execDetached(["sh", "-c", "echo '{\"value\":\"/walls/sunset.jpg\",\"text\":\"sunset\"}' > \"$XDG_RUNTIME_DIR/wallpaper\""]),
         until: () => Plugins.get("wallpaper")?.text === "sunset"
       },
       {
