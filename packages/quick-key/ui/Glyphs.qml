@@ -23,7 +23,6 @@ Singleton {
   readonly property string bluetooth: Config.glyphs.bluetooth ?? "\u{F00AF}" // md-bluetooth
   readonly property string bluetoothConnected: Config.glyphs.bluetoothConnected ?? "\u{F00B1}" // md-bluetooth_connect
   readonly property string bluetoothOff: Config.glyphs.bluetoothOff ?? "\u{F00B2}" // md-bluetooth_off
-  readonly property string power: Config.glyphs.power ?? "\u{F0521}" // md-toggle_switch
   readonly property string playPause: Config.glyphs.playPause ?? "\u{F040E}" // md-play_pause
   readonly property string track: Config.glyphs.track ?? "\u{F04AD}" // md-skip_next
   readonly property string keepAwake: Config.glyphs.keepAwake ?? "\u{F0176}" // md-coffee

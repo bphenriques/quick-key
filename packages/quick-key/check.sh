@@ -30,6 +30,11 @@ for file in $(grep -rlE '\bNiri\.' --include='*.qml' . | grep -vE '^\./(services
   fail "$file: reaches niri past Compositor"
 done
 
+# One-way data flow: a view never writes a model's or a plugin's state; it calls the model's functions.
+for file in $(grep -rlE '\b(menu|model|plugin)\.[A-Za-z_.]+\s*=[^=]' --include='*.qml' widgets plugins | grep -vE 'Model\.qml$'); do
+  fail "$file: a view writes its model's state"
+done
+
 # Rule 9: text renders through Label.
 for file in $(grep -rlE '^\s*Text \{' --include='*.qml' . | grep -v '^\./ui/Label\.qml$'); do
   fail "$file: Text outside Label"

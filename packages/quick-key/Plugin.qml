@@ -42,12 +42,16 @@ Scope {
   property var fieldTones: state.fieldTones ?? ({})
   // Its compositor key, shown beside it while Super is held.
   property string shortcut: settings.shortcut
-  // Whether the menu shows an input giving it text: set as a visit starts (InputModel), and cleared by `endVisit` as it ends, a change of the input or the menu closing.
-  property bool watched: false
+  // Whether the menu shows an input giving it text: from `startVisit` (InputModel) to `endVisit`, as it ends, the input changes or the menu closes.
+  readonly property bool watched: internal.watched
   signal visitEnded
 
+  function startVisit() {
+    internal.watched = true;
+  }
+
   function endVisit() {
-    watched = false;
+    internal.watched = false;
     visitEnded();
   }
   // The turn of the conversation that text started, as the menu draws it while watched (Exchange): { question, context, text, phase, kind, activity, options, table, steps }, `context` the answer a working turn follows, `steps` what you answered on the way, `phase` as Phase names it: working, done, blocked on a question (`options` a digit picks) or for permission, error (the input gets the text back) or idle (stopped); null before the first.
@@ -189,5 +193,11 @@ Scope {
     function press(path: string): void {
       root.press(path);
     }
+  }
+
+  // Its own state, written only by its functions.
+  QtObject {
+    id: internal
+    property bool watched: false
   }
 }

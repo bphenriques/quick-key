@@ -18,6 +18,16 @@ ShellRoot {
   property bool blocked: false
   property bool renewed: false
   property bool wasReset: false
+  // The list Picker was last asked for.
+  property string picked: ""
+
+  Connections {
+    target: Picker
+
+    function onRequested(list) {
+      root.picked = list;
+    }
+  }
   property int visitStep: 0
   property bool failedSent: false
   property int chooseStep: 0
@@ -178,7 +188,7 @@ ShellRoot {
           const ask = Plugins.get("visitor");
           if (!ask) return false;
           if (root.visitStep === 0) {
-            ask.watched = true;
+            ask.startVisit();
             root.visitStep = ask.submit("one", false, "") ? 1 : 0;
           } else if (root.visitStep === 1 && ask.turn?.text === "one") {
             root.visitStep = ask.submit("two", false, "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" && ask.turn.context === "one" ? 2 : -1;
@@ -196,7 +206,7 @@ ShellRoot {
           const ask = Plugins.get("unanswered");
           if (!ask) return false;
           if (!root.failedSent) {
-            ask.watched = true;
+            ask.startVisit();
             root.failedSent = ask.submit("lost", false, "");
           }
           const done = ask.turn?.phase === "error" && ask.draft === "";
@@ -211,7 +221,7 @@ ShellRoot {
           if (!ask || ask.busy) return false;
           switch (root.chooseStep) {
           case 0:
-            ask.watched = true;
+            ask.startVisit();
             root.chooseStep = ask.submit("pick one", false, "") ? 1 : -1;
             return false;
           case 1:
@@ -288,7 +298,7 @@ ShellRoot {
           if (!ask) return false;
           if (!root.recalledOnce) root.recalledOnce = ask.recall();
           const [old, older] = ask.items;
-          return Picker.list === "recaller" && !ask.listing && ask.items.length === 2 && old.label === "An old question" && old.verb === "resume" && old.enabled
+          return root.picked === "recaller" && !ask.listing && ask.items.length === 2 && old.label === "An old question" && old.verb === "resume" && old.enabled
             && old.detail === Clock.recent(new Date("2026-11-01T10:00:00Z")) && older.label === "older" && ask.recalls;
         }
       },

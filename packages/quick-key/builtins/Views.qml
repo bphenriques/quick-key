@@ -14,11 +14,11 @@ Singleton {
       // A day's event in focus, before the level.
       stepBack: model => {
         if (!model.focused) return false;
-        model.focused = "";
+        model.clearFocus();
         return true;
       },
       reset: model => model.reset(),
-      clear: model => model.focused = ""
+      clear: model => model.clearFocus()
     }
   })
 }

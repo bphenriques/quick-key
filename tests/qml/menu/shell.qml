@@ -127,7 +127,7 @@ ShellRoot {
           const filtered = menu.filtering;
           menu.stepBack();
           const rest = !menu.filtering && menu.stack.length === 1;
-          menu.inputFocused = true;
+          menu.focusOn("input");
           menu.pickList("devices");
           const picking = menu.stack.length === 2 && menu.filtering && !menu.inputFocused;
           menu.stepBack();
@@ -210,7 +210,7 @@ ShellRoot {
           const opened = menu.rows.length;
           const open = Date.now() - start;
           start = Date.now();
-          menu.filter.query = "item 99";
+          menu.filter.search("item 99");
           const filtered = menu.rows.length;
           const filter = Date.now() - start;
           start = Date.now();
@@ -222,18 +222,18 @@ ShellRoot {
       },
       {
         name: "the filter keeps the rows whose label holds every word, case aside; a digit never types",
-        start: () => menu.filter.query = "99 ITEM",
+        start: () => menu.filter.search("99 ITEM"),
         until: () => menu.filter.found.length === 280 && menu.rows[0].desc === "Item 99" && menu.filter.count === "1-9 of 280" && menu.filterKey("5") && menu.filter.query === "99 ITEM"
       },
       {
         name: "nothing matching says so, in the rows' place",
-        start: () => menu.filter.query = "plumb",
+        start: () => menu.filter.search("plumb"),
         until: () => menu.rows.length === 0 && menu.emptyText === "Nothing matches plumb"
       },
       {
         name: "while filtering, the digits label the rows shown and move with the cursor, its row lit",
         start: () => {
-          menu.filter.query = "";
+          menu.filter.search("");
           menu.filter.move(10);
         },
         until: () => menu.filter.index === 10 && menu.filter.first === 2 && menu.rows[0].desc === "Item 2" && menu.rows[8].key === "9" && menu.rows[8].desc === "Item 10" && menu.rows[8].current
@@ -289,7 +289,7 @@ ShellRoot {
       },
       {
         name: "Ctrl held lists the bar's keys, each named, a pair as one",
-        start: () => menu.held = "Ctrl",
+        start: () => menu.hold("Ctrl"),
         until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-k","Clicked"],["C-1","a-1"],["C-0","+1"]]'
       },
       {
@@ -315,7 +315,7 @@ ShellRoot {
       {
         name: "? lists the keys no row shows, and any key closes the list",
         start: () => {
-          menu.held = "";
+          menu.hold("");
           menu.handleKey({ key: Qt.Key_Question, modifiers: Qt.ShiftModifier, text: "?" });
         },
         until: () => {
@@ -364,7 +364,7 @@ ShellRoot {
         name: "in the body Tab moves to the input, and Shift+Tab is left to Qt",
         until: () => {
           menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "true" } } }];
-          menu.inputFocused = false;
+          menu.focusOn("body");
           const backtab = menu.handleKey({ key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, text: "" });
           const tab = menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
           return !backtab && tab && menu.inputFocused;
@@ -387,7 +387,7 @@ ShellRoot {
           case 2:
             if (agent.turn?.text !== "two") return false;
             const token = menu.island.visit;
-            menu.answerFocused = true;
+            menu.focusOn("answer");
             menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r" });
             // Under the panel, the menu keeps its level and the visit.
             const held = agent.shown && !menu.open && menu.inStack && menu.island.visit === token;

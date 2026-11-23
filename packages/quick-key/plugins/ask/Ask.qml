@@ -358,6 +358,26 @@ Plugin {
     Panels.close();
   }
 
+  // A key picked from `?`'s list: the list closes and the key runs.
+  function runListed(key) {
+    helping = false;
+    return act(key);
+  }
+
+  // The prompt takes the keys (a click on it).
+  function focusPrompt() {
+    typing = true;
+  }
+
+  function clearImage() {
+    image = "";
+  }
+
+  // What is typed, kept as it changes, so it outlasts a reload.
+  function keepDraft(text) {
+    draft = text;
+  }
+
   // The panel's keys, from the keyboard or a click on the legend; whether a key was the panel's, so the rest reach the prompt. Waiting, `?` lists them (any key closing the list) and its letters do what their Ctrl chords do, but for `y`.
   function act(key) {
     if (helping) {

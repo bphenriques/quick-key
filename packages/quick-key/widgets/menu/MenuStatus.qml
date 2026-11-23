@@ -4,10 +4,17 @@ import qs.services
 import qs.ui
 import qs.builtins
 
-// A status by name (`status` in an entry), or an icon and label without one, drawn as a listed item (ItemLine). On a row its label stays and the status follows as a value; in a bar the status alone.
-ItemLine {
+// A status by name (`status` in an entry), or an icon and label without one, drawn as a listed item: lit and bold while in use, dim and struck through once done. On a row its label stays and the status follows as a value; in a bar the status alone.
+StatusLine {
   id: root
 
+  property bool active: false
+  // Done (a ticked task): dim and struck through, though it still runs.
+  property bool done: false
+  // Its value's own tone (warning on a late task's date).
+  property string itemTone: ""
+  // Its own meter (each output's volume), lit while in use; unset, none.
+  property var itemMeter: undefined
   required property string status
   // The entry's own look over the status's fields ("{song}"); after a | its detail, kept whole on the right ("{title}|{when}").
   property string format: ""
@@ -55,8 +62,9 @@ ItemLine {
   readonly property string formatTone: format ? (format.match(/\{\w+\}/g) ?? []).map(field => fieldTones[field.slice(1, -1)]).find(tone => tone) ?? "" : ""
 
   // With a status, its label and icon stay plain and its value takes the tone; without one, a listed item's look.
-  tone: done ? "dim" : quiet ? barTone : status ? "normal" : itemLabelTone
-  valueTone: status ? (done ? "dim" : ownValueTone || (active ? "primary" : "dim")) : itemValueTone
+  tone: done ? "dim" : quiet ? barTone : status || !active ? "normal" : "primary"
+  valueTone: done ? "dim" : (status ? ownValueTone : itemTone) || (active ? "primary" : "dim")
+  struck: done
 
   function pinned(id, name) {
     return Array.from(pins).find(pin => MenuKeys.glob(pin.match, id))?.label ?? name;

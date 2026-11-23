@@ -217,6 +217,7 @@ What it gives:
 - `fieldTones`: a tone per field, kept when a `format` shows it (`{ updated: "warning" }` on an old sync).
 - `error`: why its source or its last action failed, by default its state's own `error`. A level listing it shows it beside its keys, in `alert`.
 - `activate()` for a click on it in a bar, and `refresh()`, called as the menu opens.
+- `press(path)` for a key path on a surface of its own (`<name> press "2 x"`), run as typing it would; false if it takes none.
 - `items`, `select(id)` and `run(id, key)` (an action from an item's own menu) for an entry whose `list` is its name. An item may bring a `meter` (0 to 1).
 - `actions`: actions by name, as the built-in ones (`{ icon, detail, available, run }`), which an entry of a level listing it names in its `action` (the tasks' `sort`).
 - `words`: what only it says (its empty list, its failures). The words the surfaces share are `Words`'s, which a plugin never adds to.

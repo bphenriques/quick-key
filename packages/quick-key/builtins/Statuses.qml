@@ -10,7 +10,7 @@ import qs.ui
 Singleton {
   id: root
 
-  // Each: glyph(), fields(pinned) by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own); change() what is a change worth a pop-up (else all it shows), ready() whether its source has reported, its first value then being state, not a change (else at once).
+  // Each: glyph(), fields(pinned) by name, optionally fieldTones() by name, and its value over them: `format` as an entry's is read, else value(fields) as { text, detail, glyphs } (music, which adds its modes), and optionally tone(), phase() (its work as Phase names it: working spins, blocked warns, error alerts), strong (bold, never dimmed in a bar), and a meter() for its level (below 0, none), dim while muted(). adjust names the pair action the OSD's wheel runs; popup is the OSD pill's text (else it shows the value's text) and popupWidth the characters it must hold at most (else the text's own); change() what is a change worth a pop-up (else all it shows), ready() whether its source has reported, its first value then being state, not a change (else at once).
   readonly property var builtin: Object.assign(Object.create(null), {
     sink: {
       glyph: () => Audio.sinkMuted ? Glyphs.volumeOff : Glyphs.audioDevice(Audio.sinkType),

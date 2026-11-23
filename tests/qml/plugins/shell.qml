@@ -106,7 +106,7 @@ ShellRoot {
       },
       {
         name: "a read with every reads again while the menu is open",
-        start: () => Plugins.menuOpen = true,
+        start: () => Panels.open(root),
         until: () => Number(Plugins.get("ticker")?.text) >= Number(root.ticked) + 2
       },
       {

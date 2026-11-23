@@ -89,14 +89,14 @@ GridLayout {
       : !root.model.turn && root.model.plugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
     onPicked: key => key === "Ctrl+r" ? root.model.recall() : key === "Escape" ? stepBack() : root.model.answerKey(key)
     maxLines: 1
-    onTapped: root.menu.inputFocused = true
+    onTapped: root.menu.focusOn("input")
     onBack: root.menu.stepBack()
     // The level's own unsent text, as it opens or moves to another input; filtering, the filter's.
     readonly property var owner: root.model.input
     onOwnerChanged: if (!filter) set(root.model.draftOf(owner))
     onFilterChanged: set(filter ? "" : root.model.draftOf(owner))
     Component.onCompleted: set(filter ? "" : root.model.draftOf(owner))
-    onTextChanged: filter ? root.menu.filter.query = text : root.model.keepDraft(text)
+    onTextChanged: filter ? root.menu.filter.search(text) : root.model.keepDraft(text)
     // Tab moves on to the turn, else to the body as Shift+Tab does; while the line is empty, a waiting choice takes the digits.
     onKeyPressed: event => {
       const send = MenuKeys.sends(event);
@@ -111,9 +111,8 @@ GridLayout {
       } else if (name === "Ctrl+r") {
         if (!root.model.recall()) return;
       } else if (name === "Tab" && last.visible) {
-        root.menu.inputFocused = false;
-        root.menu.answerFocused = true;
-      } else if (name === "Tab" || name === "Backtab") root.menu.inputFocused = false;
+        root.menu.focusOn("answer");
+      } else if (name === "Tab" || name === "Backtab") root.menu.focusOn("body");
       else return;
       event.accepted = true;
     }

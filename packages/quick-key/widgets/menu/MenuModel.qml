@@ -19,11 +19,11 @@ Scope {
   // How deep the menu opened (a level opened on its own by a shortcut or a key path), where Escape closes it.
   property int base: 0
   // What lists keys in place of the body: "Ctrl" or "Super" held a second (not at once, so a chord does not flash them), or "Help" after `?`.
-  property string held: ""
+  readonly property string held: internal.held
   // Whether the level's input has the keys, else its body.
-  property bool inputFocused: false
+  readonly property bool inputFocused: internal.focus === "input"
   // Whether Tab moved the keys on to the answer over the input, where Return opens the plugin's panel.
-  property bool answerFocused: false
+  readonly property bool answerFocused: internal.focus === "answer"
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
@@ -189,7 +189,7 @@ Scope {
     const shown = numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
     const onBar = shown.map(item => item.id);
     const more = all.filter(item => !item.hidden && !onBar.includes(item.id)).length;
-    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list, null) }) : shown;
+    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list) }) : shown;
   }
 
   // Pins first, each keeping its digit, dimmed while what it matches is absent; the rest follow in the list's order.
@@ -267,6 +267,16 @@ Scope {
     base = stack.length;
   }
 
+  // Which has the keys: "body", "input" (the level's input) or "answer" (the turn over it).
+  function focusOn(where) {
+    internal.focus = where;
+  }
+
+  // The modifier held long enough to list its keys, or "" as it is let go.
+  function hold(modifier) {
+    internal.held = modifier;
+  }
+
   // Closes it and whatever it was over, fresh for its next opening.
   function hide() {
     Panels.close();
@@ -278,9 +288,8 @@ Scope {
     stack = [];
     base = 0;
     stopFilter();
-    held = "";
-    inputFocused = false;
-    answerFocused = false;
+    internal.held = "";
+    internal.focus = "body";
   }
 
   // A level comes back with its input as it was left.
@@ -288,16 +297,14 @@ Scope {
     const left = level;
     stack = stack.slice(0, -1);
     stopFilter();
-    inputFocused = !!left?.inputFocused;
-    answerFocused = false;
+    internal.focus = left?.inputFocused ? "input" : "body";
     clearViews();
   }
 
   function push(next) {
     stack = stack.concat([Object.assign({}, next, { inputFocused: inputFocused })]);
     stopFilter();
-    inputFocused = false;
-    answerFocused = false;
+    internal.focus = "body";
     clearViews();
   }
 
@@ -368,7 +375,7 @@ Scope {
   // Runs as its digit would at rest, the cursor staying on it.
   function choose(item) {
     if (!item) return;
-    filter.current = item.id;
+    filter.point(item.id);
     activate(item, item.key);
   }
 
@@ -416,12 +423,12 @@ Scope {
     const target = alt && /^[0-9]$/.test(key) ? find(ctrl ? barItems : rows, key) : null;
     const barred = ctrl && !alt ? find(barItems, key) : null;
     // Any key closes the help, which only lists keys.
-    if (held === "Help") held = "";
-    else if (name === "?") held = "Help";
+    if (held === "Help") internal.held = "";
+    else if (name === "?") internal.held = "Help";
     else if (answerFocused && island.answerKey(name)) return true;
     else if (name === "Escape") stepBack();
     else if (view && view.handleKey(viewModel, name)) return true;
-    else if (island.input && name === "Tab") inputFocused = true;
+    else if (island.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
     else if (name === "/" && slashFilters) startFilter();
     else if (target) openMenu(target);
@@ -475,5 +482,12 @@ Scope {
   QsMenuOpener {
     id: menuOpener
     menu: root.level?.handle ?? null
+  }
+
+  // Its own state, written only by its functions: who has the keys, and the modifier held.
+  QtObject {
+    id: internal
+    property string held: ""
+    property string focus: "body"
   }
 }

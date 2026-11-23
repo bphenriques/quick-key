@@ -7,10 +7,10 @@ QtObject {
 
   // In the level's order, hidden ones too: a word typed finds them.
   property var items: []
-  property string query: ""
-  // The item the cursor is on, by id, and the first row shown.
-  property string current: ""
-  property int offset: 0
+  // What is typed, the item the cursor is on by id, and the first row shown: its own, changed only by its functions.
+  readonly property string query: internal.query
+  readonly property string current: internal.current
+  readonly property int offset: internal.offset
 
   // The rows it shows at a time: the level's own at rest, so its body keeps its height.
   property int size: 9
@@ -36,22 +36,34 @@ QtObject {
     .concat(item?.actions?.length > 0 ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
     .concat(query ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
 
-  onQueryChanged: {
-    current = "";
-    offset = 0;
+  // A new search starts at its first row.
+  function search(text) {
+    internal.query = text;
+    internal.current = "";
+    internal.offset = 0;
   }
 
   function reset() {
-    query = "";
-    current = "";
-    offset = 0;
+    search("");
+  }
+
+  // The cursor on an item, by its id.
+  function point(id) {
+    internal.current = id;
   }
 
   // The cursor by `by` rows, the rows shown following it.
   function move(by) {
     if (found.length === 0) return;
     const next = Math.max(0, Math.min(found.length - 1, index + by));
-    current = found[next].id;
-    offset = next < first ? next : next >= first + size ? next - size + 1 : first;
+    internal.current = found[next].id;
+    internal.offset = next < first ? next : next >= first + size ? next - size + 1 : first;
+  }
+
+  // Its own state, written only by its functions.
+  readonly property QtObject internal: QtObject {
+    property string query: ""
+    property string current: ""
+    property int offset: 0
   }
 }

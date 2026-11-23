@@ -6,9 +6,9 @@ import qs.ui
 QtObject {
   id: root
 
-  property var selected: new Date()
+  readonly property var selected: internal.selected
   // The event in focus, by its row id in Calendar.timeline, so a new read of the file keeps it; "" while the keys move the day.
-  property string focused: ""
+  readonly property string focused: internal.focused
 
   readonly property string title: Clock.monthHeading(selected)
   // Each moves the selected day by [years, months, days], or back to today (null); the arrows go unlisted, the grid shows them.
@@ -30,13 +30,18 @@ QtObject {
   }
 
   function select(day) {
-    selected = day;
-    focused = "";
+    internal.selected = day;
+    internal.focused = "";
   }
 
   function focus(row) {
-    focused = row.id;
-    selected = row.day;
+    internal.focused = row.id;
+    internal.selected = row.day;
+  }
+
+  // No event in focus, the day staying.
+  function clearFocus() {
+    internal.focused = "";
   }
 
   // Whether the key was a calendar key, acting on it: Return focuses events, arrows step them; Escape leaves them (MenuModel.stepBack).
@@ -66,5 +71,11 @@ QtObject {
     const month = selected.getMonth() + months;
     const last = new Date(year, month + 1, 0).getDate();
     select(new Date(year, month, Math.min(selected.getDate(), last) + days));
+  }
+
+  // Its own state, written only by its functions.
+  readonly property QtObject internal: QtObject {
+    property var selected: new Date()
+    property string focused: ""
   }
 }

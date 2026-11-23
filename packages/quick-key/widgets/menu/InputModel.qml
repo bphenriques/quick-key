@@ -17,7 +17,7 @@ QtObject {
   // The turn of the conversation the input started (Plugin.turn), its options a digit picks.
   readonly property var turn: plugin?.turn ?? null
   readonly property var choices: turn?.options ?? []
-  onTurnChanged: if (!turn) menu.answerFocused = false
+  onTurnChanged: if (!turn && menu.answerFocused) menu.focusOn("body")
   // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
 
@@ -34,7 +34,7 @@ QtObject {
   onVisitChanged: {
     if (visiting) visiting.endVisit();
     visiting = visit ? plugin : null;
-    if (visiting) visiting.watched = true;
+    if (visiting) visiting.startVisit();
   }
 
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
@@ -70,8 +70,7 @@ QtObject {
 
   // The plugin's own panel on the conversation, over the menu: stepping back from it shows this level again with its input focused, the visit going on.
   function expand() {
-    menu.inputFocused = true;
-    menu.answerFocused = false;
+    menu.focusOn("input");
     plugin?.expand();
   }
 
@@ -85,11 +84,9 @@ QtObject {
   function answerKey(name) {
     if (name === "Return") expand();
     else if (name === "y") Quickshell.clipboardText = turn?.text ?? "";
-    else if (name === "Tab") menu.answerFocused = false;
-    else if (name === "Backtab") {
-      menu.answerFocused = false;
-      menu.inputFocused = true;
-    } else return false;
+    else if (name === "Tab") menu.focusOn("body");
+    else if (name === "Backtab") menu.focusOn("input");
+    else return false;
     return true;
   }
 

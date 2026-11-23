@@ -10,7 +10,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | a glyph or an image | `Icon` |
 | a wait | `Spinner` |
 | a row to click | `ListItem`, `StatusLine` in it |
-| a listed item (a task, a device) | `ListItem`, `ItemLine` in it |
+| a listed item (a task, a device) | `ListItem` |
 | keys: one, a legend, a list | `KeyHint`, `KeyLegend`, `KeyList` |
 | text to type or send | `TextField`, `TextArea`, `Prompt` |
 | a conversation | `Exchange`, `Bubble` and `Markdown` in it; an answer's Markdown read through `Markup` |
@@ -24,7 +24,6 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Metrics` | the font's character width (`cell`) and line height (`line`), and a title's line (`titleLine`), for sizes given in characters or lines |
 | `Icon` | a glyph or an image in the same square; `recolour` draws an image as drawn, in greys, or as its shape in its tone's colour (`tint`, a symbolic icon only; any other goes grey) |
 | `StatusLine` | icon, an optional title that never changes, text (bold when `strong`), and a detail on the right, glyphs before it drawn as icons (a mode, a submenu), then an optional `meter`; with a title the text is a value, right-aligned unless `packed` beside the title, and `valueTone` colours what reports; its text names a state (`off`, `muted`) only when there is no value |
-| `ItemLine` | a listed item's `StatusLine`: lit and bold while `active`, dim and struck through once `done`, its value in its own `itemTone` (a late date), its own `itemMeter`; the menu's rows draw a status over it |
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend, `allowQuestion` |
 | `KeyHint` | a key in its gutter |
 | `KeyLegend` | keys a level takes beyond its rows, on one line on its bar after a content level's actions: only those the state changes, each while it applies (the fixed ones are `?`'s); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |

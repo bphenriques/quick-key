@@ -270,10 +270,7 @@ Scope {
           anchors.right: parent.right
           keys: panel.help
           // Runs as the key does, as the menu's list does.
-          onPicked: key => {
-            panel.plugin.helping = false;
-            panel.plugin.act(key);
-          }
+          onPicked: key => panel.plugin.runListed(key)
         }
       }
     }
@@ -297,11 +294,11 @@ Scope {
         placeholder: panel.last ? Words.next(panel.last.phase, panel.last.kind, !panel.plugin.draft, panel.last.options.length) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
         active: panel.plugin.typing
         key: "Tab"
-        onTapped: panel.plugin.typing = true
+        onTapped: panel.plugin.focusPrompt()
         onBack: Panels.back()
         empty: text === "" && !panel.plugin.image
-        onCleared: panel.plugin.image = ""
-        onTextChanged: panel.plugin.draft = text
+        onCleared: panel.plugin.clearImage()
+        onTextChanged: panel.plugin.keepDraft(text)
         Component.onCompleted: set(panel.plugin.draft)
 
         // Return sends, Ctrl+Shift+Return sends in the background and Shift+Return breaks the line; the rest go to the panel, as the legend's clicks do.

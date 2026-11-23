@@ -24,12 +24,6 @@ Scope {
     return "";
   }
 
-  Binding {
-    target: Plugins
-    property: "menuOpen"
-    value: root.menu.open
-  }
-
   Component {
     id: statuses
 
@@ -73,7 +67,7 @@ Scope {
     id: held
     property string modifier
     interval: 1000
-    onTriggered: root.menu.held = modifier
+    onTriggered: root.menu.hold(modifier)
   }
 
   Panel {
@@ -96,7 +90,7 @@ Scope {
     onKeyReleased: event => {
       if (!root.modifier(event)) return;
       held.stop();
-      root.menu.held = "";
+      root.menu.hold("");
     }
 
     bar: MenuHeader {
