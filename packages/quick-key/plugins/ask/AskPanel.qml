@@ -152,10 +152,15 @@ Scope {
 
     barShown: true
     statuses: true
+    islands: Config.menu.islands
     // Its keys on the left, the statuses Panel adds on the right.
     bar: RowLayout {
+      // The legend on an island of its own with `menu.islands`, the statuses on another.
+      readonly property var islands: [legend]
+
       // Only what the state changes, each while it applies; the fixed keys are `?`'s.
       KeyLegend {
+        id: legend
         // Each key as it runs now (Ask.typedAs): waiting, a chord's letter alone.
         keys: panel.plugin.keys.filter(entry => entry.what && entry.shows()).map(entry => ({ key: panel.plugin.typedAs(entry.key), what: entry.what, clickable: true }))
           .concat(panel.plugin.choices.length > 0 ? [{ key: "1-" + panel.plugin.choices.length, what: Words.choose }] : [])

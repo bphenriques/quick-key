@@ -102,13 +102,9 @@ Scope {
       Surface {
         id: bar
         opacity: fade.value
-        transform: Translate {
-          x: window.slide.x
-          y: window.slide.y
-        }
-        // Within the window, past the room left for a slide.
-        x: Config.popups.position === "left" ? window.room : 0
-        y: Config.popups.position === "top" ? window.room : 0
+        // Within the window, past the room left for a slide, and moved itself while sliding so its blur moves with it.
+        x: (Config.popups.position === "left" ? window.room : 0) + window.slide.x
+        y: (Config.popups.position === "top" ? window.room : 0) + window.slide.y
         width: implicitWidth
         height: implicitHeight
         visible: window.metered
@@ -155,12 +151,8 @@ Scope {
       Pill {
         id: pill
         opacity: fade.value
-        transform: Translate {
-          x: window.slide.x
-          y: window.slide.y
-        }
-        x: Config.popups.position === "left" ? window.room : 0
-        y: Config.popups.position === "top" ? window.room : 0
+        x: (Config.popups.position === "left" ? window.room : 0) + window.slide.x
+        y: (Config.popups.position === "top" ? window.room : 0) + window.slide.y
         width: implicitWidth
         height: implicitHeight
         visible: !window.metered

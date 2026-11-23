@@ -140,14 +140,11 @@ Scope {
 
         Column {
           id: stack
-          x: view.right ? 0 : window.room
+          // Sliding, in from the side of its corner within the room left for it, moved itself so the cards' blur moves with them.
+          x: view.right ? (1 - fade.value) * window.room : fade.value * window.room
           width: parent.width - window.room
           spacing: Config.theme.spacing
           opacity: fade.value
-          // Sliding, in from the side of its corner, within the room left for it.
-          transform: Translate {
-            x: (view.right ? 1 : -1) * (1 - fade.value) * window.room
-          }
 
           // Over the whole stack, its gaps too, so moving between cards never lets go.
           HoverHandler {

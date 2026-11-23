@@ -76,16 +76,20 @@ Scope {
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
       // Clicks beside the bar and the card reach the dismiss area below.
       mask: Region {
-        item: card
+        item: cardSurface
         Region {
-          item: bar.visible ? bar : null
+          item: bar.visible && !root.islands ? bar : null
+        }
+        // As islands, a click between them reaches the dismiss area too.
+        Region {
+          regions: Array.from({ length: islandRegions.count }, (_, i) => islandRegions.objectAt(i))
         }
         Region {
           item: inputSurface.visible ? inputSurface : null
         }
       }
       BackgroundEffect.blurRegion: Region {
-        item: card
+        item: cardSurface
         radius: Config.theme.radius
         Region {
           item: bar.visible && !root.islands ? bar : null
@@ -114,20 +118,24 @@ Scope {
 
       // Keys the body or the input leave reach the owner.
       FocusScope {
+        id: frame
         anchors.fill: parent
         focus: true
         Keys.onPressed: event => root.keyPressed(event)
         Keys.onReleased: event => root.keyReleased(event)
 
-        // Where the card and the input stack from, away from the edge: past the bar, else the edge.
-        Item {
-          id: base
-          anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.bottom: Config.atTop ? undefined : bar.visible ? bar.top : parent.bottom
-          anchors.top: !Config.atTop ? undefined : bar.visible ? bar.bottom : parent.top
-          anchors.bottomMargin: bar.visible ? Config.theme.spacing / 2 : Config.menu.margin
-          anchors.topMargin: bar.visible ? Config.theme.spacing / 2 : Config.menu.margin
+        // Each surface's distance from the screen's edge, stacking away from it: the bar against it, then the card and the input in their order; `along` places a distance at either edge, the one place the top edge mirrors.
+        QtObject {
+          id: stack
+          readonly property real gap: Config.theme.spacing / 2
+          readonly property real past: bar.visible ? Config.menu.margin + bar.height + gap : Config.menu.margin
+          readonly property bool between: inputSurface.visible && !root.inputOver
+          readonly property real card: between ? past + inputSurface.height + gap : past
+          readonly property real input: root.inputOver ? card + cardSurface.height + gap : past
+
+          function along(distance, height) {
+            return Config.atTop ? distance : frame.height - distance - height;
+          }
         }
 
         // Over the card, so a tip on its items shows over it.
@@ -135,12 +143,9 @@ Scope {
           id: bar
           visible: root.barShown
           z: 1
-          anchors.horizontalCenter: card.horizontalCenter
-          anchors.bottom: Config.atTop ? undefined : parent.bottom
-          anchors.top: Config.atTop ? parent.top : undefined
-          anchors.bottomMargin: Config.menu.margin
-          anchors.topMargin: Config.menu.margin
-          width: card.width
+          x: cardSurface.x
+          y: stack.along(Config.menu.margin, height)
+          width: cardSurface.width
           // At least a title's line, so a level's bar without the clock is as tall as the top level's and the body holds still.
           height: Math.max(barRow.implicitHeight, Metrics.titleLine + 2 * Config.theme.itemPaddingY) + Config.theme.padding / 2
           // As islands, only what is behind each item shows.
@@ -149,14 +154,19 @@ Scope {
 
           Repeater {
             id: islandsDrawn
-            model: root.islands ? barContent.item?.islands ?? [] : []
+            // What its content lists, and the statuses Panel adds on the right.
+            model: root.islands ? (barContent.item?.islands ?? []).concat(statusesContent.item ? [statusesContent.item] : []) : []
 
             Surface {
               required property Item modelData
-              // Its item's place in the bar: the bar's content, the slot holding the item (the bar's own items have none), the item; widened by the bar's padding, so the outer islands meet the card's edges.
-              readonly property Item slot: modelData.parent === barContent.item ? null : modelData.parent
               visible: modelData.visible && modelData.width > 0
-              x: barRow.x + barContent.x + (slot?.x ?? 0) + modelData.x - Config.theme.padding
+              // Its item's place in the bar, each holder's offset up to the bar's row, read again as any moves; widened by the bar's padding, so the outer islands meet the card's edges.
+              x: {
+                let x = barRow.x;
+                for (let item = modelData; item && item !== barRow; item = item.parent)
+                  x += item.x;
+                return x - Config.theme.padding;
+              }
               width: modelData.width + 2 * Config.theme.padding
               height: bar.height
             }
@@ -178,6 +188,7 @@ Scope {
             }
 
             Loader {
+              id: statusesContent
               active: root.statuses
               sourceComponent: Panels.statuses
             }
@@ -185,13 +196,10 @@ Scope {
         }
 
         Surface {
-          id: card
+          id: cardSurface
           // Along the edge as `menu.align` says; the bar and the input follow it.
           x: Config.menu.align === "left" ? Config.menu.margin : Config.menu.align === "right" ? parent.width - width - Config.menu.margin : (parent.width - width) / 2
-          anchors.bottom: Config.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.top : base.bottom
-          anchors.top: !Config.atTop ? undefined : inputSurface.visible && !root.inputOver ? inputSurface.bottom : base.top
-          anchors.bottomMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
-          anchors.topMargin: inputSurface.visible && !root.inputOver ? Config.theme.spacing / 2 : 0
+          y: stack.along(stack.card, height)
           // No wider than the screen leaves within its margins, whatever width a level asks for.
           width: Math.min(root.width, parent.width - 2 * Config.menu.margin)
           height: body.implicitHeight + 2 * Config.theme.padding
@@ -216,12 +224,9 @@ Scope {
         Surface {
           id: inputSurface
           visible: root.inputShown
-          anchors.horizontalCenter: card.horizontalCenter
-          anchors.bottom: Config.atTop ? undefined : root.inputOver ? card.top : base.bottom
-          anchors.top: !Config.atTop ? undefined : root.inputOver ? card.bottom : base.top
-          anchors.bottomMargin: root.inputOver ? Config.theme.spacing / 2 : 0
-          anchors.topMargin: root.inputOver ? Config.theme.spacing / 2 : 0
-          width: card.width
+          x: cardSurface.x
+          y: stack.along(stack.input, height)
+          width: cardSurface.width
           height: inputContent.implicitHeight + Config.theme.padding
 
           Loader {

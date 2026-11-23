@@ -69,10 +69,8 @@ Scope {
           id: pill
           tone: root.tone
           opacity: fade.value
-          // Sliding, in from the right, within the room left for it.
-          transform: Translate {
-            x: (1 - fade.value) * window.room
-          }
+          // Sliding, in from the right, within the room left for it, moved itself so its blur moves with it.
+          x: (1 - fade.value) * window.room
           width: implicitWidth
           height: parent.height
 
