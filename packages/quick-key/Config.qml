@@ -379,6 +379,8 @@ Singleton {
       property JsonObject music: JsonObject {
         // The MPRIS identity of the player the music status follows; unset, the one playing, else the last that played, else any.
         property string player
+        // A regular expression over the title: where it matches, its first group is the song and its second the artist; unset, titles as given.
+        property string titleMatch
       }
 
       // Optional parts by name, each its settings and `type`: see docs/src/plugins.md.

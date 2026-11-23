@@ -1,0 +1,5 @@
+{
+  "music": {
+    "titleMatch": "^<\\?xml(?=[\\s\\S]*<DB_SONG_NAME>([^<]*))(?=(?:[\\s\\S]*<DB_LEAD_ARTIST_NAME>([^<]*))?)"
+  }
+}

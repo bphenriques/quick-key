@@ -9,8 +9,8 @@ import qs
 Singleton {
   readonly property bool present: internal.player !== null
   readonly property bool playing: internal.player?.isPlaying ?? false
-  readonly property string title: internal.xml ? internal.field("DB_SONG_NAME") : internal.title
-  readonly property string artist: internal.xml ? internal.field("DB_LEAD_ARTIST_NAME") : internal.track?.trackArtist ?? ""
+  readonly property string title: internal.split?.[1]?.trim() ?? internal.title
+  readonly property string artist: internal.split?.[2]?.trim() ?? internal.track?.trackArtist ?? ""
   readonly property bool repeat: (internal.player?.loopState ?? MprisLoopState.None) !== MprisLoopState.None
   readonly property bool shuffle: internal.player?.shuffle ?? false
   // What the player takes: one that cannot ignores the call, so its action dims instead.
@@ -50,11 +50,7 @@ Singleton {
     // A stopped player keeps its last track.
     readonly property var track: player?.playbackState === MprisPlaybackState.Stopped ? null : player
     readonly property string title: track?.trackTitle ?? ""
-    // Bauer Media radio sends an XML document as the stream title; its song and artist are inside.
-    readonly property bool xml: title.startsWith("<?xml")
-
-    function field(name) {
-      return title.match(new RegExp("<" + name + ">([^<]*)</" + name + ">"))?.[1]?.trim() ?? "";
-    }
+    // Groups by position, as Qt's JavaScript never names them.
+    readonly property var split: Config.music.titleMatch ? title.match(new RegExp(Config.music.titleMatch)) : null
   }
 }

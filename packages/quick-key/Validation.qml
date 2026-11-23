@@ -60,7 +60,7 @@ Singleton {
     for (const slot of ["left", "center", "right"]) header[slot] = header[slot] ?? Config.starterHeader[slot];
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
-    return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}),
+    return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), patternProblems(json.music?.titleMatch ?? ""),
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
       levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
@@ -154,6 +154,15 @@ Singleton {
 
   function at(json, path) {
     return path.split(".").reduce((value, key) => value?.[key], json);
+  }
+
+  function patternProblems(titleMatch) {
+    try {
+      new RegExp(titleMatch);
+      return [];
+    } catch (error) {
+      return ["music.titleMatch: '" + titleMatch + "' is no regular expression: " + error.message];
+    }
   }
 
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices); objectName is what Glyphs inherits as a QObject.
