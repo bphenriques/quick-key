@@ -55,7 +55,7 @@ Singleton {
   readonly property string emptyBluetoothOff: "Bluetooth is off"
   readonly property string emptyOutputs: "No outputs"
   readonly property string emptyInputs: "No inputs"
-  readonly property string emptyStreams: "Nothing playing"
+  readonly property string emptyStreams: "No app playing sound"
   readonly property string noSong: "No song playing"
   readonly property string noDevice: "No device connected"
   readonly property string noEvents: "No events"

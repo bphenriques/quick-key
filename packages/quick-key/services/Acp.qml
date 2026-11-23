@@ -17,6 +17,8 @@ Item {
 
   property bool canLoad: false
   property bool canList: false
+  // Initialized: until then, what it can do (canList) is not yet known.
+  readonly property bool started: internal.ready
 
   signal text(string chunk)
   // A loaded conversation's history, as the agent replays it: `role` user or agent, a piece of its text.

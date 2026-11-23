@@ -84,7 +84,8 @@ Plugin {
   glyph: phase !== "idle" ? settings.glyph : ""
   error: failure
   views: ["AskPanel.qml"]
-  recalls: settings.ask !== ""
+  // Assumed until the agent has said, at its start, that it keeps no list.
+  recalls: settings.ask !== "" && (!agent.started || agent.canList)
   items: conversations.map(conversation => ({
     id: conversation.sessionId,
     label: conversation.title || conversation.sessionId,
