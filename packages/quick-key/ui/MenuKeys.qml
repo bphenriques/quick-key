@@ -52,7 +52,6 @@ Singleton {
   readonly property var names: Keys.names
   readonly property var matches: Keys.matches
   readonly property var label: Keys.label
-  readonly property var shortName: Keys.shortName
   readonly property var gutter: Keys.gutter
   readonly property var glob: Keys.glob
   readonly property var assign: Keys.assign
