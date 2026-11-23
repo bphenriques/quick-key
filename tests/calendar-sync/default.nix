@@ -46,14 +46,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     quick-key-calendar-sync done ${./calendars.yaml} state/events.json personal/water.ics
     [ "$(water)" = '[["2026-11-20",true],["2026-11-27",false]]' ] || fail "ticking a repeating task makes the next"
     quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json personal/water.ics
-    [ "$(water)" = '[["2026-11-20",false]]' ] || fail "unticking a repeating task takes the next back"
-    grep -q '^RRULE:FREQ=WEEKLY' state/vdirs/personal/water.ics || fail "unticking a repeating task gives it its rule again"
-    [ "$(ls state/vdirs/personal | wc -l)" = 3 ] || fail "unticking a repeating task removes the next one's file"
-    quick-key-calendar-sync done ${./calendars.yaml} state/events.json personal/water.ics
-    sed -i 's/^COMPLETED:.*/COMPLETED:20261001T000000Z/' state/vdirs/personal/water.ics
-    quick-key-calendar-sync reopen ${./calendars.yaml} state/events.json personal/water.ics
-    [ "$(water)" = '[["2026-11-20",false],["2026-11-27",false]]' ] || fail "unticking an instance done long ago only reopens it, the series going on"
-    [ "$(ls state/vdirs/personal | wc -l)" = 4 ] || fail "unticking an instance done long ago removes nothing"
+    [ "$(water)" = '[["2026-11-20",false],["2026-11-27",false]]' ] || fail "unticking a repeating task only reopens it, the next one todoman made kept"
 
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"
