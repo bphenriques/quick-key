@@ -21,12 +21,15 @@ pkgs.runCommand "quick-key-calendar-sync"
     todo() { PYTHONDONTWRITEBYTECODE=1 command todo --config state/todoman.py --porcelain "$@"; }
     task() { jq -c '.tasks[] | select(.title == "Pay the bills")' state/tasks.json; }
     fail() { echo "not ok - $1"; cat state/tasks.json; exit 1; }
+    # A file's lines unfolded, but for the three a tick sets: a tick changes only those.
+    others() { sed -z 's/\r\?\n[ \t]//g' "$1" | grep -avE '^(STATUS|COMPLETED|PERCENT-COMPLETE)[:;]'; }
+    completed() { [ "$(tr -d '\r' < "$1" | grep -cxE 'STATUS:COMPLETED|COMPLETED:[0-9]{8}T[0-9]{6}Z|PERCENT-COMPLETE:100')" = 3 ]; }
 
     sync tasks
     # The porcelain fields the script reads, so a todoman that changes them fails here rather than writing a wrong tasks file.
-    todo list --status ANY | jq -e 'length == 3 and all(.[]; ([.id, .summary, .list, .completed] | map(type)) == ["number", "string", "string", "boolean"]
+    todo list --status ANY | jq -e 'length == 3 and all(.[]; ([.id, .summary, .list, .completed, .recurring] | map(type)) == ["number", "string", "string", "boolean", "boolean"]
       and has("due") and has("completed_at") and has("priority") and all(.due, .completed_at, .priority; type == "number" or type == "null"))' > /dev/null \
-      || fail "todoman's porcelain list gives id, summary, list, completed, due, completed_at and priority as the script reads them"
+      || fail "todoman's porcelain list gives id, summary, list, completed, recurring, due, completed_at and priority as the script reads them"
     jq -e 'has("updated") | not' state/tasks.json > /dev/null || fail "a tasks file never synced says no sync"
     [ "$(jq '.tasks | length' state/tasks.json)" = 2 ] || fail "a task done more than 14 days ago is left out"
     [ "$(task | jq -c '[.due, .done, .list, .priority, .color]')" = '["2026-10-06T09:00",false,"personal",1,"#ff8c00"]' ] || fail "a task reads with its local time, open, with its list, priority and calendar's colour"
@@ -35,16 +38,17 @@ pkgs.runCommand "quick-key-calendar-sync"
     tick done "$id" "Pay the bills"
     [ "$(task | jq .done)" = true ] || fail "done ticks it off in the tasks file"
     task | jq -r .completed | grep -q "^$(date +%Y-%m-%d)" || fail "done says when, so the done ones can be shown"
-    grep -q '^STATUS:COMPLETED' state/vdirs/personal/bills.ics || fail "done marks the file completed"
-    grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "done keeps the reminder"
+    diff <(others ${./personal/bills.ics}) <(others state/vdirs/personal/bills.ics) && completed state/vdirs/personal/bills.ics \
+      || fail "done marks the file completed, every other line as it was, a start not before the due date included"
+    ! grep -qv $'\r$' state/vdirs/personal/bills.ics || fail "done keeps a file's line endings"
 
-    [ "$(task | jq -r .id)" = "$id" ] || fail "a task's id outlasts a tick"
+    # todoman numbers a task anew once its file changes outside it, as a tick's does: an id from before may name another task.
+    id=$(task | jq -r .id)
     tick reopen "$id" "Pay the bills"
     [ "$(task | jq .done)" = false ] || fail "reopen unticks it in the tasks file"
     grep -q '^STATUS:NEEDS-ACTION' state/vdirs/personal/bills.ics || fail "reopen marks the file as needing action"
     ! grep -qE '^(COMPLETED|PERCENT-COMPLETE)' state/vdirs/personal/bills.ics || fail "reopen drops the record of completion"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "reopen keeps the reminder"
-    # todoman numbers a task anew once its file changes outside it, as reopen's does: an id from before may name another task.
     id=$(task | jq -r .id)
     ! tick done "$id" "Water the plants" 2> err || fail "a tick whose id has another title fails"
     grep -q "tasks changed, try again" err && [ "$(task | jq .done)" = false ] || fail "a tick whose id has another title says so, touching no task"
@@ -58,7 +62,16 @@ pkgs.runCommand "quick-key-calendar-sync"
 
     # A long line folds onto the next after a space (RFC 5545): reopen drops a folded completion whole, the folded note beside it as it was.
     tick reopen "$(todo list --status ANY | jq '.[] | select(.summary == "Done long ago") | .id')" "Done long ago"
-    diff <(sed '/^COMPLETED/,+1d; /^PERCENT-COMPLETE/d; s/^STATUS:COMPLETED/STATUS:NEEDS-ACTION/' ${./personal/old.ics}) state/vdirs/personal/old.ics || fail "reopen reads folded lines whole"
+    diff <(others ${./personal/old.ics}) <(others state/vdirs/personal/old.ics) || fail "reopen reads folded lines whole"
+    grep -qx $'STATUS:NEEDS-ACTION\r' state/vdirs/personal/old.ics || fail "reopen marks the file as needing action, in its line endings"
+
+    # A tick leaves every line it does not set: a parameter, a property on two lines and a time's zone are kept.
+    cp ${./added/errands.ics} state/vdirs/personal/errands.ics && chmod u+w state/vdirs/personal/errands.ics
+    sync tasks
+    tick done "$(jq -r '.tasks[] | select(.title == "Run errands") | .id' state/tasks.json)" "Run errands"
+    diff <(others ${./added/errands.ics}) <(others state/vdirs/personal/errands.ics) && completed state/vdirs/personal/errands.ics \
+      || fail "done keeps every line it does not set, a language, categories on two lines and a time's zone included"
+    ! grep -q $'\r' state/vdirs/personal/errands.ics || fail "done keeps a file's bare newlines"
 
     quick-key-calendar-sync add ${./calendars.yaml} state/events.json "-Call the plumber"
     [ "$(jq -c '.tasks[] | select(.title == "-Call the plumber") | [.done, .due]' state/tasks.json)" = '[false,null]' ] || fail "add writes an open, undated task, a title like an option included"

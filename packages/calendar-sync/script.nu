@@ -281,16 +281,19 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: int, 
   let state = $events_file | path dirname
   let config = todoman-config $state
   let shown = ^todo --config $config --porcelain show $id | complete
-  if $shown.exit_code != 0 or ($shown.stdout | from json).summary != $title { error make --unspanned { msg: "tasks changed, try again" } }
-  if $how == "done" {
+  let task = if $shown.exit_code == 0 { $shown.stdout | from json } else { {} }
+  if $task.summary? != $title { error make --unspanned { msg: "tasks changed, try again" } }
+  if $how == "done" and $task.recurring {
+    # todoman makes a repeating task's next one.
     let run = ^todo --config $config done $id | complete
     if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   } else {
-    # todoman has no command to reopen: its status goes back to needing action, its completion dropped with the lines it folds onto (RFC 5545), all three a VTODO's alone.
+    # Edited in place, as todoman writes a task anew from its cache, losing what it does not read: the lines a tick sets go with those they fold onto (RFC 5545), only a task's in a CalDAV file (RFC 4791), and come back after BEGIN:VTODO in its line endings.
     let file = ^todo --config $config path $id | str trim
+    let set = if $how == "done" { [STATUS:COMPLETED $"COMPLETED:(date now | date to-timezone UTC | format date '%Y%m%dT%H%M%SZ')" PERCENT-COMPLETE:100] } else { [STATUS:NEEDS-ACTION] }
     open --raw $file
-    | str replace --all --regex '(?m)^(COMPLETED|PERCENT-COMPLETE)[:;].*\n([ \t].*\n)*' ''
-    | str replace --regex '(?m)^STATUS:COMPLETED(\r?)$' 'STATUS:NEEDS-ACTION$1'
+    | str replace --all --regex '(?m)^(STATUS|COMPLETED|PERCENT-COMPLETE)[:;].*\n([ \t].*\n)*' ''
+    | str replace --regex '(?m)^BEGIN:VTODO(\r?)\n' ($set | prepend BEGIN:VTODO | each { $in + '${1}' + "\n" } | str join)
     | save -f $"($file).tmp"
     mv -f $"($file).tmp" $file
   }
