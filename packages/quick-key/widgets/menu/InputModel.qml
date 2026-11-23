@@ -20,12 +20,14 @@ QtObject {
   // The text last sent, which a failed turn gives back to the input.
   property string lastSent: ""
 
-  // By input, kept as the menu closes and over a reload (Kept).
+  // By draftKey, kept as the menu closes and over a reload (Kept).
   readonly property var drafts: keptDrafts.value ?? ({})
   readonly property KeptValue keptDrafts: KeptValue {
     key: "drafts"
   }
-  readonly property string draft: draftOf(input)
+  // The keys of the levels down to its own, which a change to the input's label leaves be; "" without an input.
+  readonly property string draftKey: input ? JSON.stringify(menu.stack.map(level => level.entry?.key ?? "")) : ""
+  readonly property string draft: draftOf(draftKey)
 
   // The plugin a visit is with, while the menu, in Panels' stack, shows its input: a change of the plugin or the input, or the menu leaving the stack, ends it (Plugin.endVisit).
   readonly property string visit: menu.inStack && plugin ? plugin.name + "\n" + JSON.stringify(input) : ""
@@ -87,11 +89,11 @@ QtObject {
     return true;
   }
 
-  function draftOf(of) {
-    return of ? drafts[JSON.stringify(of)] ?? "" : "";
+  function draftOf(key) {
+    return key ? drafts[key] ?? "" : "";
   }
 
   function keepDraft(text) {
-    if (input && text !== draft) Kept.set("drafts", Object.assign({}, drafts, { [JSON.stringify(input)]: text }));
+    if (draftKey && text !== draft) Kept.set("drafts", Object.assign({}, drafts, { [draftKey]: text }));
   }
 }

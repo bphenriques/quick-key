@@ -92,7 +92,7 @@ GridLayout {
     onTapped: root.menu.focusOn("input")
     onBack: root.menu.stepBack()
     // The level's own unsent text, as it opens or moves to another input; filtering, the filter's.
-    readonly property var owner: root.model.input
+    readonly property string owner: root.model.draftKey
     onOwnerChanged: if (!filter) set(root.model.draftOf(owner))
     onFilterChanged: set(filter ? "" : root.model.draftOf(owner))
     Component.onCompleted: set(filter ? "" : root.model.draftOf(owner))

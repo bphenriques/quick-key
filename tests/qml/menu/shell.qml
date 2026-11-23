@@ -510,6 +510,15 @@ ShellRoot {
         }
       },
       {
+        name: "an input keeps its unsent text as its label changes",
+        until: () => {
+          menu.stack = [{ kind: "entry", entry: { key: "d", submenu: [], input: { desc: "Before", cmd: "true" } } }];
+          menu.island.keepDraft("kept");
+          menu.stack = [{ kind: "entry", entry: { key: "d", submenu: [], input: { desc: "After", cmd: "true" } } }];
+          return menu.island.draft === "kept";
+        }
+      },
+      {
         name: "C-r in an input to a plugin that recalls lists its conversations on a level over it, filtering, and ? names it",
         until: () => {
           menu.hide();
