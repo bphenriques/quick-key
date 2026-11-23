@@ -28,6 +28,8 @@ Singleton {
     case Qt.Key_Down: return "Down";
     case Qt.Key_Left: return "Left";
     case Qt.Key_Right: return "Right";
+    case Qt.Key_PageUp: return "Page_Up";
+    case Qt.Key_PageDown: return "Page_Down";
     case Qt.Key_Space: return "space";
     // Shift+Tab arrives as Backtab from a keyboard, or as Tab with Shift from some virtual ones.
     case Qt.Key_Tab: return event.modifiers & Qt.ShiftModifier ? "Backtab" : "Tab";

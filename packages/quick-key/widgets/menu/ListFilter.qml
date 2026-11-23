@@ -14,9 +14,9 @@ QtObject {
 
   // The rows it shows at a time: the level's own at rest, so its body keeps its height.
   property int size: 9
-  // Lowercased once per change of the list, not per key.
-  readonly property var labels: items.map(item => (item.desc ?? "").toLowerCase())
-  readonly property var words: query.toLowerCase().split(/\s+/).filter(word => word !== "")
+  // Folded once per change of the list, not per key.
+  readonly property var labels: items.map(item => fold(item.desc ?? ""))
+  readonly property var words: fold(query).split(/\s+/).filter(word => word !== "")
   readonly property var found: words.length === 0 ? items.filter(item => !item.hidden) : items.filter((item, i) => root.words.every(word => root.labels[i].includes(word)))
   // The cursor's item, else the first row shown, so the cursor never leaves the rows.
   readonly property int index: {
@@ -33,8 +33,13 @@ QtObject {
   // Only what the state changes, Escape while it clears.
   readonly property var legend: (rows.length > 0 ? [{ key: rows.length > 1 ? "1-" + rows.length : "1", what: Words.choose }, { key: ["Up", "Down"], what: Words.move }] : [])
     .concat(item ? [{ key: "Return", what: item.verb || Words.pick, clickable: true }] : [])
-    .concat(item?.actions?.length > 0 ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
+    .concat(item?.actions?.length > 0 || item?.app?.hasMenu ?[{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
     .concat(query ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
+
+  // Case and accents aside, so "cafe" finds "Café".
+  function fold(text) {
+    return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
 
   function search(text) {
     internal.query = text;

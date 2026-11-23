@@ -241,7 +241,8 @@ Scope {
   function toggleEntry(key) {
     const item = find(itemsOf(null).concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
     if (!item) return;
-    if (level?.entry === item.entry) {
+    // A bar list's item has no entry to toggle: it runs.
+    if (item.entry && level?.entry === item.entry) {
       hide();
       return;
     }
@@ -347,6 +348,7 @@ Scope {
     if (digit && digit[1] || name === "Alt+Return") openMenu(row);
     else if (digit || name === "Return") choose(row);
     else if (name === "Up" || name === "Down") filter.move(name === "Down" ? 1 : -1);
+    else if (name === "Page_Up" || name === "Page_Down") filter.move((name === "Page_Down" ? 1 : -1) * filter.size);
     else return false;
     return true;
   }
@@ -390,6 +392,9 @@ Scope {
   function handleKey(event) {
     // A bare modifier has no name, and Super belongs to the compositor.
     if (event.modifiers & Qt.MetaModifier) return false;
+    // A held key repeats on the level it was pressed on, never into the one it opened.
+    if (event.isAutoRepeat && level !== internal.pressedOn) return true;
+    if (!event.isAutoRepeat) internal.pressedOn = level;
     return handleName(MenuKeys.name(event));
   }
 
@@ -418,7 +423,9 @@ Scope {
   function press(path) {
     stack = [];
     if (!open) show();
-    for (const name of path.trim().split(/\s+/)) {
+    for (const [i, name] of path.trim().split(/\s+/).entries()) {
+      // A key that closed the menu ends the path, so none past it opens a level on the closed menu.
+      if (i > 0 && !inStack) return false;
       if (!(filtering ? filterKey(name) : handleName(name))) return false;
     }
     base = stack.length;
@@ -429,6 +436,14 @@ Scope {
   function keyMap() {
     const lines = [];
     const path = (prefix, key) => MenuKeys.names(key).map(name => "`" + (prefix + " " + name).trim() + "`").join(" ");
+    // A bar's entries, on Ctrl in the level they sit on.
+    const bar = (header, prefix, depth) => {
+      for (const slot of ["left", "center", "right"]) {
+        for (const part of Array.from(header?.[slot] ?? [])) {
+          if (typeof part !== "string" && part.key) lines.push("  ".repeat(depth) + "- " + MenuKeys.names(part.key).map(name => "`" + (prefix + " Ctrl+" + name).trim() + "`").join(" ") + " " + (part.desc ?? part.status ?? ""));
+        }
+      }
+    };
     const walk = (entries, prefix, depth) => {
       for (const entry of Array.from(entries ?? [])) {
         const at = (prefix + " " + MenuKeys.names(entry.key ?? "")[0]).trim();
@@ -436,14 +451,11 @@ Scope {
         for (const [i, pin] of Array.from(entry.pins ?? []).entries()) lines.push("  ".repeat(depth + 1) + "- `" + at + " " + (i + 1) + "` " + pin.label);
         if (entry.list) lines.push("  ".repeat(depth + 1) + "- `" + at + " 1-9` " + entry.list);
         walk(entry.submenu, at, depth + 1);
+        bar(entry.header, at, depth + 1);
       }
     };
     walk(entries, "", 0);
-    for (const slot of ["left", "center", "right"]) {
-      for (const part of Array.from(topBar[slot] ?? [])) {
-        if (typeof part !== "string" && part.key) lines.push("- " + MenuKeys.names(part.key).map(name => "`Ctrl+" + name + "`").join(" ") + " " + (part.desc ?? part.status ?? ""));
-      }
-    }
+    bar(topBar, "", 0);
     return lines.join("\n");
   }
 
@@ -464,5 +476,6 @@ Scope {
     id: internal
     property string held: ""
     property string focus: "body"
+    property var pressedOn: null
   }
 }

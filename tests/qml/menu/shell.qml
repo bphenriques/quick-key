@@ -34,6 +34,17 @@ ShellRoot {
         until: () => probe.rows.some(row => row.current && row.id === probe.item.id)
       },
       {
+        name: "the filter finds a label with accents typed without them, and its legend offers a tray app's menu",
+        until: () => {
+          probe.items = [{ id: "c", desc: "Café", app: { hasMenu: true } }, { id: "t", desc: "Tea" }];
+          probe.search("cafe");
+          const found = probe.found.length === 1 && probe.item.id === "c";
+          const offered = probe.legend.some(key => key.key === "Alt+Return");
+          probe.search("CAFÉ");
+          return found && offered && probe.found.length === 1;
+        }
+      },
+      {
         name: "an app's stream lists as a device does: its name, its volume and meter, the wheel over it a step, its mute said beside it; with none playing, nothing to pick or change",
         until: () => {
           const node = { id: 7, properties: { "application.name": "Player" }, audio: { volume: 0.4, muted: false } };
@@ -239,6 +250,16 @@ ShellRoot {
         until: () => menu.filter.index === 10 && menu.filter.first === 2 && menu.rows[0].desc === "Item 2" && menu.rows[8].key === "9" && menu.rows[8].desc === "Item 10" && menu.rows[8].current
       },
       {
+        name: "while filtering, PgDn and PgUp move the cursor a page of rows",
+        until: () => {
+          menu.filter.search("");
+          const named = MenuKeys.name({ key: Qt.Key_PageDown, modifiers: Qt.NoModifier, text: "" }) === "Page_Down";
+          const down = menu.filterKey("Page_Down") && menu.filter.index === 9 && menu.rows[8].current;
+          const up = menu.filterKey("Page_Up") && menu.filter.index === 0 && menu.rows[0].current;
+          return named && down && up;
+        }
+      },
+      {
         name: "the pick row says how many rows show at rest of all the list holds",
         start: () => menu.stack = [{ kind: "entry", entry: { list: "many", submenu: [{ key: "/", desc: "All...", action: "pick" }] } }],
         until: () => menu.actions[0]?.detail === "1-9 of 10000"
@@ -438,7 +459,37 @@ ShellRoot {
           const ran = menu.press("Ctrl+x");
           const missing = menu.press("Ctrl+x nope");
           const map = menu.keyMap();
-          return ran && !missing && map.includes("- `Ctrl+x` X") && map.includes("- `Ctrl+Down` `Ctrl+Up` Volume") && Plugins.get("picked")?.text === "bar";
+          return ran && !missing && map.includes("- `Ctrl+x` X") && map.includes("- `Ctrl+Down` `Ctrl+Up` Volume") && map.includes("  - `a Ctrl+v` Vee") && Plugins.get("picked")?.text === "bar";
+        }
+      },
+      {
+        name: "a key path ends at a key that closes the menu, leaving no level for its next opening",
+        until: () => {
+          menu.hide();
+          return !menu.press("Ctrl+x a") && !menu.open && menu.stack.length === 0;
+        }
+      },
+      {
+        name: "a held key repeats on the level it was pressed on, never into the one it opened",
+        until: () => {
+          const plugin = Plugins.get("devices");
+          if (!plugin) return false;
+          let ran = 0;
+          plugin.actions = { flip: { icon: () => Glyphs.search, available: () => true, run: () => ran++ } };
+          const key = (key, text, repeat) => ({ key, modifiers: Qt.NoModifier, text, isAutoRepeat: repeat });
+          menu.hide();
+          menu.show();
+          menu.handleKey(key(Qt.Key_A, "a", false));
+          menu.handleKey(key(Qt.Key_A, "a", true));
+          const held = menu.stack.length === 1;
+          menu.handleKey(key(Qt.Key_A, "a", false));
+          const pressed = menu.stack.length === 2;
+          menu.hide();
+          menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "Down", desc: "Down", action: "flip" }] } });
+          for (const repeat of [false, true, true]) menu.handleKey(key(Qt.Key_Down, "", repeat));
+          menu.hide();
+          plugin.actions = {};
+          return held && pressed && ran === 3;
         }
       },
       {
@@ -448,6 +499,14 @@ ShellRoot {
           menu.press("Ctrl+k");
         },
         until: () => Plugins.get("picked")?.text === "clicked"
+      },
+      {
+        name: "toggleEntry on a bar list's digit runs its item",
+        start: () => {
+          menu.hide();
+          menu.toggleEntry("1");
+        },
+        until: () => Plugins.get("picked")?.text === "a-1"
       }
     ]
   }

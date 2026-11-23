@@ -26,14 +26,14 @@ Letters are actions and digits are list items.
 - `ESC` is the one way back, as in a launcher. It clears what you typed, then closes the filter or a focused event, then returns where you came from (the level above, or the panel or input that opened it), and at the root closes the menu. It never moves the keys, stops or answers anything. `DEL` only deletes. A level opened on its own, by a shortcut or a key path, is a root.
 - Digits pick from a level's list; `Alt+digit` opens an item's own menu (a tray app's).
 - `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second lists the bar's keys in place of the body, as icons alone cannot say what they run.
-- Two keys with a command or action each (`[ "Down" "Up" ]`) share a row, named for what it changes (`Volume`, `Track`). The first steps down or back: `↓↑` is less then more, and `←→` and `↑↓` are back then forward, up going back in time as on a scrolled page.
+- Two keys with a command or action each (`[ "Down" "Up" ]`) share a row, named for what it changes (`Volume`, `Track`). The first steps down or back: `↓↑` is less then more, and `←→` and `↑↓` are back then forward, up going back in time as on a scrolled page. Held, a key repeats on its level, never into the level it opens.
 - Device levels put Power on `p` and Configure... on `c`. `space` is only ever a picker, and what ends the session takes Shift (Reboot, Shutdown).
 - `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`, as niri writes bindings) where its bar does not take it. A modifier never runs the plain key, Shift only picks the capital letter, and Super stays the compositor's.
 - Hints show keys Emacs-style: `C-` Ctrl, `M-` Alt, `s-` Super, Shift as the capital letter, symbols for the arrows, `DEL` for Backspace and `ESC` for Escape (`C-←→`, `s-k`).
 - Holding `Super` for a second lists each bar entry's `shortcut`, the compositor key bound to it.
 - `?` lists the keys no row shows: the holds, `M-1` for an item's own menu, `ESC` and, on a level with an input, `TAB` and `C-S-RET`. Any key closes it.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
-- `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A digit is the same item only while pinned. `menu keys` prints every path as Markdown.
+- `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A key that closes the menu ends the path. A digit is the same item only while pinned. `menu keys` prints every path as Markdown.
 
 ## What an entry does
 
@@ -124,8 +124,8 @@ A digit on `streams` picks the app `streamVolume` and `streamMute` change, the f
 
 A level lists up to nine items on fixed digits. While the list holds more than the rows show, the legend says how many (`/ 1-9 of 14`). An empty list says why: off, or nothing found.
 
-`/` filters the list in place, as in a pager or a browser, unless the level binds `/` itself; `pick` filters on any other key. The filter takes the level's input and keeps the items whose label holds every word typed, hidden ones too. They show in the rows' place, as many as the level showed, so nothing moves.
+`/` filters the list in place, as in a pager or a browser, unless the level binds `/` itself; `pick` filters on any other key. The filter takes the level's input and keeps the items whose label holds every word typed, case and accents aside (`cafe` finds `Café`), hidden ones too. They show in the rows' place, as many as the level showed, so nothing moves.
 
-While filtering, digits pick from the rows shown and never type. `↑↓` move the cursor, `RET` runs its item as its digit would, and `M-RET` opens its own menu. The filter's range sits on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, and with it a level opened only to filter.
+While filtering, digits pick from the rows shown and never type. `↑↓` move the cursor, `PgUp` and `PgDn` a page of rows, `RET` runs its item as its digit would, and `M-RET` opens its own menu. The filter's range sits on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, and with it a level opened only to filter.
 
 A level's other pickers take any free key (`.` or a letter), their labels ending in `...`.

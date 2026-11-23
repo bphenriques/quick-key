@@ -45,6 +45,28 @@
     }
   },
   "menu": {
+    "entries": [
+      {
+        "key": "a",
+        "desc": "Audio",
+        "submenu": [
+          {
+            "key": "a",
+            "desc": "Again",
+            "submenu": []
+          }
+        ],
+        "header": {
+          "left": [
+            {
+              "key": "v",
+              "desc": "Vee",
+              "cmd": "true"
+            }
+          ]
+        }
+      }
+    ],
     "header": {
       "left": [
         {
