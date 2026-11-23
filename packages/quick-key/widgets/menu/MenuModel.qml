@@ -75,7 +75,7 @@ Scope {
   readonly property var levelLegend: (view ? view.legend(viewModel) : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend : levelLegend
-  readonly property string error: view ? view.error(viewModel) : Plugins.get(level?.entry?.list ?? "")?.error ?? ""
+  readonly property string error: view ? view.error(viewModel) : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
 
   function itemOf(entry) {
     const action = actionOf(entry);

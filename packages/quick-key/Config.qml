@@ -4,7 +4,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import qs.services
 
 // The schema of $XDG_CONFIG_HOME/quick-key/config.json: each key, its kind and its default; Validation.qml holds what else can be wrong.
 Singleton {
@@ -169,6 +168,9 @@ Singleton {
   }
   onThemeMissingChanged: if (themeMissing) console.warn("theme", adapter.theme.name, "not found in", configDir + "/themes or the presets");
 
+  // Why the last save is not running, which the top level shows; a reload starts it empty.
+  property string broken: ""
+
   // A save, read first: unchanged, nothing reloads; not JSON (a typo, a write caught halfway), the running config stays and says why; else a reload, so removed settings fall back to their defaults. Not where a service restarts on a change (QUICK_KEY_WATCH_CONFIG=0, as the module sets).
   FileView {
     path: root.configDir + "/config.json"
@@ -181,8 +183,8 @@ Singleton {
       try {
         JSON.parse(text());
       } catch (error) {
-        console.warn("config.json:", String(error) + "; the last good one runs");
-        return Commands.run("notify-send --app-name=quick-key --icon=dialog-warning", "config.json is not JSON", String(error) + "; the last good one runs");
+        root.broken = "config.json is not JSON: the last good one runs";
+        return console.warn(root.broken, "(" + error + ")");
       }
       Quickshell.reload(false);
     }

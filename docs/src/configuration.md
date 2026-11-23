@@ -1,6 +1,6 @@
 # Configuration
 
-Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `battery`, ...), a plugin's under `plugins.<name>`. The shell reloads it on save; a save that is not JSON (a typo, a write caught halfway) leaves the running config in place and says so in a notification. With Nix, `programs.quick-key.settings` writes it as given. The [reference](options.md) lists every setting and its default.
+Everything is optional. `$XDG_CONFIG_HOME/quick-key/config.json` holds what you change, grouped by feature like waybar's modules (`clock`, `audio`, `battery`, ...), a plugin's under `plugins.<name>`. The shell reloads it on save; a save that is not JSON (a typo, a write caught halfway) leaves the running config in place and says so in the menu's top level. With Nix, `programs.quick-key.settings` writes it as given. The [reference](options.md) lists every setting and its default.
 
 ```json
 {
