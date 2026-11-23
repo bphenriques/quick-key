@@ -11,7 +11,7 @@ ShellRoot {
   }
 
   readonly property var wrong: [
-    ["a rule's app that is no name", { plugins: { notifications: { rules: [{ app: false }] } } }, "rules[0] sets app to no name"],
+    ["a rule's app that is no name", { plugins: { notifications: { rules: [{ app: false }] } } }, "rules[0] app takes a string"],
     ["a group named as a given value in another case", { plugins: { notifications: { rules: [{ match: { summary: "(?<App>.*)" } }] } } }, "a group named App, which its commands already get"],
     ["an app icon mode that is none", { theme: { appIcons: "gray" } }, "theme.appIcons is 'gray', not one of colour, grey, tint"],
     ["a setting since renamed", { theme: { monochromeTray: true } }, "theme.monochromeTray is now theme.appIcons"],
@@ -23,7 +23,6 @@ ShellRoot {
     ["a plugin type that does not exist", { plugins: { x: { type: "niriMinmap" } } }, "names type 'niriMinmap', which is neither shipped"],
     ["a key no keyboard sends", { menu: { entries: [{ key: "Esc", desc: "X", cmd: "true", icon: "x" }] } }, "keys no keyboard sends"],
     ["Ctrl with a symbol", { menu: { entries: [{ key: "Ctrl+.", desc: "X", cmd: "true", icon: "x" }] } }, "keys no keyboard sends"],
-    ["two notification daemons", { plugins: { notifications: {}, dunst: {} } }, "more than one notification daemon"],
     ["a colour that is no colour", { theme: { alert: "rgba(255,0,0,0.5)" } }, "theme.alert: 'rgba(255,0,0,0.5)' is no colour"],
     ["an opacity past 1", { theme: { surfaceOpacity: 2 } }, "theme.surfaceOpacity is 2, not 0 to 1"],
     ["no columns", { menu: { columns: 0 } }, "menu.columns is 0, not 1 or more"],

@@ -27,8 +27,8 @@ PluginSettings {
   readonly property var corners: ["top-right", "top-left", "bottom-right", "bottom-left"]
   readonly property var sides: ["right", "left"]
   readonly property var fields: ["app", "summary", "body", "category", "urgency", "desktopEntry"]
-  readonly property var ruleKeys: ["match", "app", "hide", "timeout", "urgency", "ignorePause", "actions", "default", "run"]
-  readonly property var actionKeys: ["key", "desc", "cmd", "closes", "icon"]
+  readonly property var ruleKinds: ({ match: "map", app: "string", hide: "boolean", timeout: "number", urgency: "string", ignorePause: "boolean", actions: "list", default: "string", run: "string" })
+  readonly property var actionKinds: ({ key: "string", desc: "string", cmd: "string", closes: "boolean", icon: "string" })
   // What its commands get as NOTIFICATION_<NAME>, so a group by one of these names would hide it.
   readonly property var given: ["app", "summary", "body", "urgency", "id", "icon"]
   readonly property var urgencies: ["low", "normal", "critical"]
@@ -67,24 +67,16 @@ PluginSettings {
   }
 
   function ruleProblems(rule) {
-    if (rule === null || typeof rule !== "object" || Array.isArray(rule)) return ["is no object"];
-    const found = Object.keys(rule).filter(key => !ruleKeys.includes(key)).map(key => "sets " + key + ", none of " + ruleKeys.join(", "));
-    if ("app" in rule && typeof rule.app !== "string") found.push("sets app to no name");
-    if ("hide" in rule && typeof rule.hide !== "boolean") found.push("sets hide to no boolean");
-    if ("ignorePause" in rule && typeof rule.ignorePause !== "boolean") found.push("sets ignorePause to no boolean");
-    if ("timeout" in rule && (typeof rule.timeout !== "number" || rule.timeout < 0)) found.push("sets timeout to no number of seconds");
+    if (Config.kind(rule) !== "map") return ["is no object"];
+    const found = Config.undeclared(rule, ruleKinds);
+    if (rule.timeout < 0) found.push("sets timeout below 0");
     if ("urgency" in rule && !urgencies.includes(rule.urgency)) found.push("sets urgency to '" + rule.urgency + "', none of " + urgencies.join(", "));
-    for (const key of ["default", "run"]) {
-      if (key in rule && typeof rule[key] !== "string") found.push("sets " + key + " to no command");
-    }
     const keys = [];
     Array.from(rule.actions ?? []).forEach((action, i) => {
       const at = "actions[" + i + "] ";
-      if (action === null || typeof action !== "object") return found.push(at + "is no object");
-      found.push(...Object.keys(action).filter(key => !actionKeys.includes(key)).map(key => at + "sets " + key + ", none of " + actionKeys.join(", ")));
+      if (Config.kind(action) !== "map") return found.push(at + "is no object");
+      found.push(...Config.undeclared(action, actionKinds, at));
       if (typeof action.desc !== "string" || typeof action.cmd !== "string") found.push(at + "needs a desc and a cmd");
-      if ("closes" in action && typeof action.closes !== "boolean") found.push(at + "sets closes to no boolean");
-      if ("icon" in action && typeof action.icon !== "string") found.push(at + "sets icon to no glyph");
       if (!/^[a-wyz]$/.test(action.key ?? "")) found.push(at + "sets key to '" + action.key + "': one letter, any but x, which dismisses");
       else if (keys.includes(action.key)) found.push(at + "takes key " + action.key + " twice");
       keys.push(action.key);

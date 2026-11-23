@@ -347,10 +347,6 @@ Plugin {
   }
 
   function refresh() {
-    check();
-  }
-
-  function check() {
     if (!settings.owner) return;
     call(settings.owner, [], (code, output) => internal.error = code === 0 && Number(output.trim().split(/\s+/).pop()) === Quickshell.processId ? "" : words.taken);
   }
@@ -486,7 +482,7 @@ Plugin {
     return { id: entry.id, summary: entry.summary, body: entry.body, appName: entry.appName, appIcon: entry.appIcon, image: entry.image.startsWith("image://qsimage") ? "" : entry.image, urgency: entry.urgency, hints: ({ "image-path": entry.hints["image-path"], value: entry.hints.value }), desktopEntry: entry.desktopEntry, expireTimeout: -1 };
   }
 
-  Component.onCompleted: check()
+  Component.onCompleted: refresh()
 
   // A card: its notification while its sender keeps it, else what it showed; when it came, what its rules set, your unsent reply, and its time.
   component Entry: QtObject {
@@ -527,14 +523,6 @@ Plugin {
       interval: Math.max(1, entry.timeout)
       running: entry.plugin.counting(entry)
       onTriggered: entry.plugin.expire(entry)
-    }
-
-    function dismiss() {
-      plugin.dismiss(entry);
-    }
-
-    function expire() {
-      plugin.expire(entry);
     }
   }
 

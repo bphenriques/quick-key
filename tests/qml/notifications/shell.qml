@@ -135,7 +135,7 @@ ShellRoot {
         start: () => {
           root.owner = root.plugin.settings.owner;
           root.plugin.settings.owner = "echo u 1";
-          root.plugin.check();
+          root.plugin.refresh();
         },
         until: () => root.plugin.error === root.plugin.words.taken
       },
@@ -143,7 +143,7 @@ ShellRoot {
         name: "the server holds it, so no error",
         start: () => {
           root.plugin.settings.owner = root.owner;
-          root.plugin.check();
+          root.plugin.refresh();
         },
         until: () => root.plugin.error === ""
       },
@@ -523,13 +523,13 @@ ShellRoot {
           const kept = root.find("Keep me");
           if (kept && !kept.restored && !("restore" in root.marks)) {
             root.mark("restore");
-            kept.dismiss();
+            root.plugin.dismiss(kept);
             root.send("--transient", "Passing");
           }
           const passing = root.find("Passing");
           if (passing && !("passing" in root.marks)) {
             root.mark("passing");
-            passing.dismiss();
+            root.plugin.dismiss(passing);
           }
           if ("passing" in root.marks && !root.find("Passing") && !("back" in root.marks)) {
             root.mark("back");
@@ -677,7 +677,7 @@ ShellRoot {
           const ghost = root.find("Ghost");
           if (ghost && !ghost.restored && !("ghost" in root.marks)) {
             root.mark("ghost");
-            ghost.dismiss();
+            root.plugin.dismiss(ghost);
             root.plugin.restore();
             root.plugin.open(root.find("Ghost"));
           }
@@ -741,7 +741,7 @@ ShellRoot {
           const siren = root.find("Siren");
           if (siren && !siren.restored && !("siren" in root.marks)) {
             root.mark("siren");
-            siren.dismiss();
+            root.plugin.dismiss(siren);
             root.plugin.restore();
           }
           return "siren" in root.marks && root.mark("siren") > 2000 && root.find("Siren")?.restored === true;
@@ -776,7 +776,7 @@ ShellRoot {
           const first = root.find("R1");
           if (first && !first.restored && !("r1" in root.marks)) {
             root.mark("r1");
-            first.dismiss();
+            root.plugin.dismiss(first);
             ["R2", "R3", "R4"].forEach(summary => root.send(summary));
           }
           if (root.plugin.ordered.length === 3 && !("r1Back" in root.marks)) {
@@ -873,7 +873,7 @@ ShellRoot {
             root.mark("scrolled");
             root.plugin.summon();
             root.plugin.pick(root.plugin.showable[4]);
-            root.plugin.showable[0].dismiss();
+            root.plugin.dismiss(root.plugin.showable[0]);
           }
           return root.plugin.ordered.length === 4 && root.plugin.shown.includes(root.plugin.picked);
         }

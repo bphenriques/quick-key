@@ -56,7 +56,8 @@ Singleton {
     const values = numberProblems(json).concat(colourProblems(json.theme ?? {}), choiceProblems(json));
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
-    const header = { left: json.menu?.header?.left ?? Config.starterHeader.left, center: json.menu?.header?.center ?? Config.starterHeader.center, right: json.menu?.header?.right ?? Config.starterHeader.right };
+    const header = Object.assign({}, json.menu?.header);
+    for (const slot of ["left", "center", "right"]) header[slot] = header[slot] ?? Config.starterHeader[slot];
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
     return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}),
@@ -100,10 +101,8 @@ Singleton {
     })
 
   function choiceProblems(json) {
-    return Object.keys(choices).filter(path => {
-      const value = path.split(".").reduce((at, key) => at?.[key], json);
-      return value !== undefined && !choices[path].includes(value);
-    }).map(path => path + " is '" + path.split(".").reduce((at, key) => at?.[key], json) + "', not one of " + choices[path].join(", "));
+    return Object.keys(choices).filter(path => at(json, path) !== undefined && !choices[path].includes(at(json, path)))
+      .map(path => path + " is '" + at(json, path) + "', not one of " + choices[path].join(", "));
   }
 
   // A colour as Qt reads it: #rgb, #rrggbb, or #aarrggbb with its alpha first; any other text would draw black. Its names are Config.colors'.
@@ -113,7 +112,12 @@ Singleton {
 
   // Each old key, by its path, that json still sets.
   function renames(json, renamed) {
-    return Object.keys(renamed).filter(path => path.split(".").reduce((at, key) => at?.[key], json) !== undefined).map(path => path + " is now " + renamed[path]);
+    return Object.keys(renamed).filter(path => at(json, path) !== undefined).map(path => path + " is now " + renamed[path]);
+  }
+
+  // A value by its dotted path, undefined where a step is missing.
+  function at(json, path) {
+    return path.split(".").reduce((value, key) => value?.[key], json);
   }
 
   // A glyph by its name in Glyphs, of the same kind: a glyph, a list of them, or a map (audioDevices); objectName is what Glyphs inherits as a QObject.
@@ -181,10 +185,6 @@ Singleton {
       found.push(...object.problems().map(problem => at + " " + problem));
       object.destroy();
     }
-    // One daemon holds the notifications' bus: the plugin, under any name, or dunst's.
-    const types = Object.entries(plugins).map(([name, plugin]) => Config.kind(plugin) === "map" ? plugin.type ?? name : "");
-    const servers = types.filter(type => type === "notifications").length;
-    if (servers > 1 || servers > 0 && types.includes("dunst")) found.push("plugins: more than one notification daemon (notifications, dunst); keep one");
     return found;
   }
 
