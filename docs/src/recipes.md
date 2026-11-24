@@ -158,9 +158,10 @@ plugins.backup = {
   show.running = { text = "Backing up"; phase = "working"; };
   show.failed = { text = "Backup failed"; phase = "error"; };
 };
+menu.header.right = [ "backup" ];
 ```
 
-The script writes `running` to the file as it starts, then empties it, or writes `failed`; the shell reads it on every change, with nothing running in between. `phase` is how every surface draws work: `working` spins, `error` alerts ([The state line](plugins.md#the-state-line)).
+The script writes `running` to the file as it starts, then empties it, or writes `failed`. The bar shows it only while the file holds a state, read on every change with nothing running in between. `phase` is how every surface draws work: `working` spins, `error` alerts ([The state line](plugins.md#the-state-line)).
 
 ### A VPN
 
@@ -175,7 +176,7 @@ plugins.vpn = {
 menu.header.right = [ "vpn" ];
 ```
 
-A click on it in the bar toggles it; for a key, make it an entry (`{ key = "v"; desc = "VPN"; status = "vpn"; activeWhen = "vpn"; cmd = "..."; }`). A NetworkManager or WireGuard connection is the same shape: `read` from `nmcli -g GENERAL.STATE connection show wg0`, toggle with `nmcli connection up` and `down`.
+A click on it in the bar toggles it. For a key, give it one: `{ key = "v"; desc = "VPN"; status = "vpn"; }` in a bar runs it on `C-v`. A NetworkManager or WireGuard connection is the same shape: `read` from `nmcli -g GENERAL.STATE connection show wg0`, toggle with `nmcli connection up` and `down`.
 
 ### The weather
 
@@ -185,7 +186,7 @@ plugins.weather = {
   # wttr.in's symbol for the sky, then the temperature: {"value": "m", "text": "+13°C"}
   read = ''curl -sf 'https://wttr.in/Lisbon?format=%x+%t' | jq -Rc 'split(" ") | {value: .[0], text: .[1]}' '';
   glyph = "<cloud>";
-  show = { "o".glyph = "<sun>"; "m".glyph = "<sun behind cloud>"; "/".glyph = "<rain>"; "//".glyph = "<showers>"; "*".glyph = "<snow>"; };
+  show = { "o".glyph = "<sun>"; "m".glyph = "<sun behind cloud>"; "/".glyph = "<rain>"; "//".glyph = "<showers>"; ".".glyph = "<showers>"; "*".glyph = "<snow>"; };
 };
 menu.header.center = [ "weather" ];
 ```
@@ -203,11 +204,11 @@ plugins.monitor = {
 };
 menu.entries = [
   { key = [ "Down" "Up" ]; desc = "Monitor brightness"; icon = "<glyph>"; status = "monitor"; keepOpen = true;
-    cmd = [ "ddcutil setvcp 10 - 10" "ddcutil setvcp 10 + 10" ]; }
+    cmd = [ "ddcutil setvcp 10 - 10; qs -c quick-key ipc call monitor refresh" "ddcutil setvcp 10 + 10; qs -c quick-key ipc call monitor refresh" ]; }
 ];
 ```
 
-DDC is slow, a second or so a step, and the level is read again as the menu opens.
+DDC is slow, a second or so a step; each step asks for another read once it is done, as the night light does.
 
 ### A focus timer
 
