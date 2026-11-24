@@ -26,11 +26,8 @@ ListItem {
   MenuStatus {
     id: status
     visible: !!root.item.status
+    item: root.item
     quiet: true
-    status: root.item.status ?? ""
-    format: root.item.format ?? ""
-    active: root.item.active ?? false
-    icon: root.item.icon ?? ""
     // Its value beside it while its tone warns, so colour is not all that says so.
     glyphOnly: !!root.item.icon && !shape.brief && barTone !== "warning" && barTone !== "alert"
     busy: glyphOnly && statusBusy

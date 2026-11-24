@@ -29,23 +29,9 @@ ListItem {
   MenuStatus {
     id: status
     Layout.fillWidth: true
+    item: row.item
     labelShown: !row.compact || glyph === "" && image === ""
-    image: row.item.image ?? ""
-    status: row.item.status ?? ""
-    format: row.item.format ?? ""
-    fallback: row.item.desc ?? ""
-    fallbackDetail: row.item.detail ?? ""
-    fallbackGlyphs: row.item.glyphs ?? []
-    swatch: row.item.swatch ?? ""
-    icon: row.item.icon ?? ""
-    active: row.item.active ?? false
-    done: row.item.done ?? false
-    busy: row.item.busy ?? false
-    itemTone: row.item.tone ?? ""
-    pins: row.item.entry?.pins ?? []
-    inLevel: row.item.inLevel ?? false
     packed: inLevel && !row.hugs
-    itemMeter: row.item.meter
   }
 
   Tip {
