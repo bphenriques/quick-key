@@ -15,6 +15,9 @@ Settled with the owner up to v0.27.0-beta.5 (2026-11-24). A review round reads t
 - **An input's `context`, not a `format`.** The conversation shows the text as typed; the context goes with every message, replies included, worded as where the text comes from.
 - **How an agent behaves is the agent's config.** For Hermes over ACP: the assistant's tool set, `coding_context` off, a one-line platform hint; routing lives in its skills. quick-key sends no agent-specific wording, and never calendar titles as context (anyone who can invite the owner writes them).
 - **Kept as they are:** Ask's `lines`, `placeholder`, `idle` and `promptGlyph`; `C-r` history; the default `notify`'s replace tag; `PluginSettings` ranges.
+- **A notification's actions stay in fuzzel (`makoctl menu`)**, not a quick-key level: a level needs a source of notifications and their actions, the server just removed. Fuzzel's look is the dotfiles' to match. Delete needs no guard: it goes to the trash, sits last, and fuzzel needs it picked; rule 6's Shift is for what ends the session.
+- **The do-not-disturb pop-up is its glyph alone.** The pop-up adds text only where a toggle's glyph does not change (keep awake); the bell is struck or not. A plugin's text would show in the bar too. No card is sent on a toggle.
+- **Status values are lowercase** ("off", "no song playing"), as values beside a label.
 - **The minimalism round's outcome:** `menu.keysHint`, an entry's `legend`, the quieter defaults (no year, no single-layout status, no medium priority glyph), a key path closing the menu it opened.
 
 ## Not doing
