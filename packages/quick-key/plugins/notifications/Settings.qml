@@ -17,7 +17,7 @@ PluginSettings {
   // A card's width, in pixels, never past the screen; unset, it follows the font, 480 at 11 points.
   property int width: Math.round(480 * Config.theme.fontSize / 11)
   // Shows the plugin's `shortcut` dimly by the cards at rest, to teach it.
-  property bool hint: true
+  property bool hint: false
   // Seconds without input after which no card's time runs, so none goes while you are away; 0 lets time run.
   property int idle: 120
   // Each { match, app, icon, hide, silent, timeout, urgency, ignorePause, actions, default, run }, applied in order (docs/src/notifications.md#rules).
