@@ -55,7 +55,6 @@ Singleton {
   // A task's priority, as iCalendar groups its ranks.
   readonly property var priorities: Object.assign({
     high: "\u{F013F}", // md-chevron_double_up
-    medium: "\u{F01FC}", // md-equal
     low: "\u{F013C}" // md-chevron_double_down
   }, Config.glyphs.priorities ?? {})
   readonly property string submenu: Config.glyphs.submenu ?? "\u{F0142}" // md-chevron_right

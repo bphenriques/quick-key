@@ -12,10 +12,10 @@ function isLate(task, now, today) {
   return !task.done && !!task.due && (task.due.includes("T") ? task.due < now : task.due < today);
 }
 
-// As iCalendar ranks them: 1 to 4 high, 5 medium, 6 to 9 low; unset or 0, none.
+// As iCalendar ranks them: 1 to 4 high, 6 to 9 low; medium (5), unset or 0, none.
 function priorityOf(task) {
   const rank = task.priority ?? 0;
-  return rank <= 0 ? "" : rank < 5 ? "high" : rank === 5 ? "medium" : "low";
+  return rank <= 0 || rank === 5 ? "" : rank < 5 ? "high" : "low";
 }
 
 // Those `settled` (done as the menu opened) after the rest, then by `sort`, then by due (undated last), then by title; priority 1 first, none last.

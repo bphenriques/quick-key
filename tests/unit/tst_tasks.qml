@@ -20,7 +20,7 @@ TestCase {
   }
 
   function test_priorityOf() {
-    compare([0, 1, 4, 5, 6, 9].map(priority => Tasks.priorityOf({ priority })).concat(Tasks.priorityOf({})), ["", "high", "high", "medium", "low", "low", ""]);
+    compare([0, 1, 4, 5, 6, 9].map(priority => Tasks.priorityOf({ priority })).concat(Tasks.priorityOf({})), ["", "high", "high", "", "low", "low", ""]);
   }
 
   // Those settled after the rest, then by the order chosen, then by due (undated last), then by title; priority 1 first, none last.

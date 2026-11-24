@@ -151,7 +151,7 @@ ShellRoot {
           return tasks.items.map(item => item.id).join() === "a,e,f,b,c,d" && tasks.text === "" && tasks.fields.title === "Late" && tasks.detail === "1"
             && tasks.tone === "warning" && item("e").done && item("e").icon === Glyphs.checkboxChecked
             && ["a", "e", "f", "c", "d"].map(id => item(id).tone).join() === "warning,,,," && item("e").glyphs.length === 0
-            && JSON.stringify(item("a").glyphs) === JSON.stringify([Glyphs.priorities.medium, Glyphs.late]) && item("b").glyphs[0] === Glyphs.priorities.high
+            && JSON.stringify(item("a").glyphs) === JSON.stringify([Glyphs.late]) && item("b").glyphs[0] === Glyphs.priorities.high
             && item("a").swatch === "#4285f4" && item("d").swatch === "";
         }
       },
