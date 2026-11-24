@@ -356,7 +356,7 @@ Singleton {
         property int step: 5
         // Given the backlight's name and a value, sets it; by default through logind, which lets the active session do so without root.
         property string set: "busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto org.freedesktop.login1.Session SetBrightness ssu backlight"
-        // The output the backlight lights, by connector name or by make, model and serial; unset, the built-in one (eDP, LVDS or DSI).
+        // The output the backlight lights, by connector name or, on niri, by make, model and serial; unset, the built-in one (eDP, LVDS or DSI).
         property string panel
       }
 
