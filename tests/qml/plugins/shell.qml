@@ -15,6 +15,8 @@ ShellRoot {
   property int repeats: 0
   // The minute the timed task was last written as due.
   property string dueMinute: ""
+  // The tasks' rows as a case began.
+  property string rows: ""
   // Whether task a showed done, at each change after a burst of presses; null outside it.
   property var burst: null
 
@@ -178,6 +180,23 @@ ShellRoot {
         name: "picking an open task ticks it off, then syncs, and it stays to untick",
         start: () => Plugins.get("tasks").select("c"),
         until: () => Plugins.get("tasks").items.find(item => item.id === "c").done && !Plugins.get("tasks").items.find(item => item.id === "c").hidden && Plugins.get("tasks").items.find(item => item.id === "c").verb === "untick" && Plugins.get("synced")?.text === "synced"
+      },
+      {
+        name: "with the done ones shown, unticking one done before the menu opened holds every row still",
+        start: () => {
+          const tasks = Plugins.get("tasks");
+          Kept.set("tasks.completed", "shown");
+          tasks.refresh();
+          root.rows = tasks.items.map(item => item.id).join();
+          tasks.select("c");
+        },
+        until: () => {
+          const tasks = Plugins.get("tasks");
+          const held = !Array.from(tasks.state.tasks).find(task => task.id === "c").done && tasks.queue.length === 0 && !tasks.items.find(item => item.id === "c").done
+            && tasks.items.map(item => item.id).join() === root.rows && tasks.items.every(item => !item.hidden);
+          if (held) Kept.set("tasks.completed", "hidden");
+          return held;
+        }
       },
       {
         name: "picking a done task unticks it",
