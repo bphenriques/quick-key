@@ -345,6 +345,22 @@ ShellRoot {
         }
       },
       {
+        name: "the wheel steps a pair on any keys, up as its second",
+        until: () => {
+          const plugin = Plugins.get("devices");
+          if (!plugin) return false;
+          const steps = [];
+          plugin.actions = { step: { pair: true, icon: () => "", available: () => true, run: up => steps.push(up) } };
+          menu.hide();
+          menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: ["Left", "Right"], desc: "Step", action: "step" }] } });
+          menu.act(menu.actions[0], true);
+          menu.act(menu.actions[0], false);
+          menu.hide();
+          plugin.actions = {};
+          return JSON.stringify(steps) === "[true,false]";
+        }
+      },
+      {
         name: "a list of 10000 opens and filters, printing how long each took",
         until: () => {
           if (Plugins.get("many")?.items.length !== 10000) return false;

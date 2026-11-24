@@ -18,7 +18,7 @@ ListItem {
   current: !!row.item.current
   onActivated: menu.activate(row.item)
   onSecondaryActivated: menu.openMenu(row.item)
-  onScrolled: up => menu.act(row.item, up ? "Up" : "Down")
+  onScrolled: up => menu.act(row.item, up)
 
   KeyHint {
     key: row.item.key ?? ""

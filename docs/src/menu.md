@@ -103,7 +103,7 @@ An input writes, never filters. Put an agent's input only on a level showing wha
 
 ## Mouse
 
-The mouse reaches what the keys do. A click runs a row or a bar item. A right click opens a tray app's menu or, beside the rows, goes back a level. The wheel steps a pair (volume, brightness) or the calendar's month. Resting on an icon in a bar names it.
+The mouse reaches what the keys do. A click runs a row or a bar item. A right click opens a tray app's menu or, beside the rows, goes back a level. The wheel steps a pair (volume, brightness), up as its second key, or the calendar's month. Over a row that opens a level, it steps the pair its status adjusts (Audio output's volume); a command pair there steps only on its own row. Resting on an icon in a bar names it.
 
 ## Built-in names
 

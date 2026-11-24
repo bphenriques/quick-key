@@ -405,11 +405,12 @@ Scope {
     else if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, image: item.image ?? "", handle: item.app.menu, width: width });
   }
 
-  // The wheel: a listed item adjusts itself; an entry runs its own row on that key (volume).
-  function act(item, name) {
-    if (item.adjust) return item.adjust(name === "Up");
-    const action = item.entry?.submenu ? find(Array.from(item.entry.submenu), name) : MenuKeys.matches(item.entry?.key ?? [], name) ? item.entry : null;
-    if (action && available(action)) run(action, name);
+  // The wheel, up as a pair's second key (more): a listed item adjusts itself, a pair steps, a row opening a level steps the pair its status adjusts.
+  function act(item, up) {
+    if (item.adjust) return item.adjust(up);
+    const adjust = Statuses.of(item.status ?? "").adjust;
+    const pair = item.entry?.submenu ? Array.from(item.entry.submenu).find(entry => adjust && entry.action === adjust) : item.paired ? item.entry : null;
+    if (pair && available(pair)) run(pair, MenuKeys.names(pair.key)[up ? 1 : 0]);
   }
 
   // Escape and Tab are kept free by Validation.

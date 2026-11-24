@@ -21,7 +21,7 @@ ListItem {
   dimsWhenDisabled: runs
   onActivated: menu.activate(root.item, root.item.key)
   onSecondaryActivated: menu.openMenu(root.item)
-  onScrolled: up => menu.act(root.item, up ? "Up" : "Down")
+  onScrolled: up => menu.act(root.item, up)
 
   MenuStatus {
     id: status
