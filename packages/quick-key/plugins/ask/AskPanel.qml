@@ -26,7 +26,10 @@ Scope {
 
   // The plugin's keys first, so any key closes its list of them.
   function handle(event) {
-    if (plugin.act(MenuKeys.name(event))) return true;
+    const name = MenuKeys.name(event);
+    // Held, C-y would answer the approval queued behind this one too.
+    if (event.isAutoRepeat && plugin.keys.some(entry => entry.key === name)) return true;
+    if (plugin.act(name)) return true;
     if (event.key !== Qt.Key_PageUp && event.key !== Qt.Key_PageDown) return false;
     paged(event.key === Qt.Key_PageDown);
     return true;
