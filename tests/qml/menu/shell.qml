@@ -475,12 +475,12 @@ ShellRoot {
         }
       },
       {
-        name: "on a calendar level, ? lists the arrows its legend leaves to the grid",
+        name: "on a calendar level, ? lists the arrows its legend leaves to the grid, and the year's keys",
         until: () => {
           menu.hide();
           menu.push(root.calendarLevel);
           const labels = keys => keys.map(key => MenuKeys.label(key.key, true));
-          const listed = labels(menu.help).join().startsWith("←→,↑↓,") && !labels(menu.legend).includes("←→");
+          const listed = labels(menu.help).join().startsWith("←→,↑↓,C-↑↓,") && !labels(menu.legend).includes("←→") && !labels(menu.legend).includes("C-↑↓");
           menu.hide();
           return listed;
         }

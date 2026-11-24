@@ -117,7 +117,6 @@ Singleton {
   readonly property string pick: "pick"
   readonly property string sendLeave: "send and leave"
   readonly property string today: "today"
-  readonly property string year: "year"
 
   // What a key does, listed on `?`.
   readonly property string helpBarKeys: "Hold: the bar's keys"
@@ -126,6 +125,7 @@ Singleton {
   readonly property string helpFilter: "Filter the list"
   readonly property string helpDay: "Move a day"
   readonly property string helpWeek: "Move a week"
+  readonly property string helpYear: "Move a year"
   readonly property string helpTab: "Go to the input and back"
   readonly property string helpSendLeave: "Send and leave"
   readonly property string helpRecall: "Resume an earlier conversation"

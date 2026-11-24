@@ -15,12 +15,12 @@ QtObject {
   readonly property bool unfolded: internal.unfolded
 
   readonly property string title: Clock.monthHeading(selected)
-  // Each moves the selected day by [years, months, days], or back to today (null); the arrows, which the grid shows, are listed on `?` (desc), the rest in the legend (what).
+  // Each moves the selected day by [years, months, days], or back to today (null); the arrows, which the grid shows, and the year are listed on `?` (desc), the rest in the legend (what).
   readonly property var keys: [
     { key: ["Left", "Right"], paired: true, desc: Words.helpDay, moves: { Left: [0, 0, -1], Right: [0, 0, 1] } },
     { key: ["Up", "Down"], paired: true, desc: Words.helpWeek, moves: { Up: [0, 0, -7], Down: [0, 0, 7] } },
     { key: ["Ctrl+Left", "Ctrl+Right"], what: Words.month, moves: { "Ctrl+Left": [0, -1, 0], "Ctrl+Right": [0, 1, 0] } },
-    { key: ["Ctrl+Up", "Ctrl+Down"], what: Words.year, moves: { "Ctrl+Up": [-1, 0, 0], "Ctrl+Down": [1, 0, 0] } },
+    { key: ["Ctrl+Up", "Ctrl+Down"], paired: true, desc: Words.helpYear, moves: { "Ctrl+Up": [-1, 0, 0], "Ctrl+Down": [1, 0, 0] } },
     { key: "t", what: Words.today, clickable: true, moves: { t: null } },
     { key: "Return", what: Words.events, clickable: true }
   ]
