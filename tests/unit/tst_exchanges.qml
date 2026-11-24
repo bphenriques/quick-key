@@ -60,6 +60,13 @@ TestCase {
     compare(history, [{ prompt: "", reply: "hello" }, { prompt: "what was it?", reply: "from before" }, { prompt: "next", reply: "" }]);
   }
 
+  function test_typed() {
+    // As an agent joins the blocks it got, with a newline (Hermes) or nothing.
+    compare(Exchanges.typed("milk\n" + Exchanges.marked("From the menu's Tasks input")), "milk");
+    compare(Exchanges.typed("milk" + Exchanges.marked("Tasks")), "milk");
+    compare(Exchanges.typed("see the note [1]"), "see the note [1]");
+  }
+
   function test_activityOf() {
     compare(Exchanges.activityOf("mcp__meals__plan_week"), "meals");
     compare(Exchanges.activityOf("Read"), "Read");

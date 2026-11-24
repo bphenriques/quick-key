@@ -285,13 +285,14 @@ Singleton {
   function inputProblems(entry, plugins) {
     const input = entry.input;
     const found = [];
-    const unknown = Object.keys(input).filter(key => !["desc", "cmd", "plugin", "format", "after"].includes(key));
+    const unknown = Object.keys(input).filter(key => !["desc", "cmd", "plugin", "context", "format", "after"].includes(key));
     if (unknown.length) found.push("sets input." + unknown.join(", input.") + ", which no input takes");
     if (typeof input.desc !== "string") found.push("needs an input with a desc");
     if (input.cmd != null && input.plugin != null) found.push("gives its input's text to both input.cmd and input.plugin");
     if (input.plugin != null && !plugins.includes(input.plugin)) found.push("gives its input's text to plugin '" + input.plugin + "', which is not one");
     if (input.cmd == null && input.plugin == null && !plugins.includes(entry.list)) found.push("gives its input's text to nothing: needs input.cmd, input.plugin, or a list that is a plugin");
-    if (input.format != null && !String(input.format).includes("{text}")) found.push("sets input.format without {text}, where the text goes");
+    if (input.format != null) found.push("sets input.format, now input.context: what the agent is told beside each message, the text sent as typed");
+    if (input.context != null && input.cmd != null) found.push("sets input.context, which only a plugin is told: input.cmd gets the text alone");
     found.push(...endsInOperator("input.cmd", input.cmd));
     return found;
   }
@@ -342,7 +343,7 @@ Singleton {
       shortcut: { kind: "string", bar: true },
       // The most items of its list a bar shows; past it, +N.
       limit: { kind: "number", bar: true, needs: ["list"], range: [1, 9] },
-      // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, format, after }.
+      // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, context, after }.
       input: { kind: "map", level: true },
       // Keys of its level's `?` list to show in its bar too, after the bar's own: ["Ctrl+Up"].
       legend: { kind: "list", level: true, invalid: names => legendProblem(names) }

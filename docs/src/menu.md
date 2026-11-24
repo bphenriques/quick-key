@@ -82,7 +82,7 @@ The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level l
 { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; input = { desc = "Add a task..."; }; }
 ```
 
-`format` wraps the text that starts a conversation (`{text}`). `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
+`context` is what a plugin is told beside each message, on a line of its own; the conversation shows the text as typed. Word it as where the text comes from, not as an order, since a reply to the agent's question carries it too. `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
 
 Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows over the body: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
 
@@ -95,7 +95,7 @@ An input writes, never filters. Put an agent's input only on a level showing wha
   key = "c"; desc = "Calendar"; status = "clock"; view = "calendar";
   input = {
     desc = "Add an event..."; plugin = "assistant"; after = "calendar-sync";
-    format = "Add this event to my calendar, or nothing if it has no day: {text}";
+    context = "From the menu's Calendar input: an event to add, or an answer to your question";
   };
 }
 ```

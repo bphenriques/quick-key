@@ -39,6 +39,15 @@ function restored(exchanges) {
   return last && !last.reply && !last.error ? exchanges.slice(0, -1).concat([Object.assign({}, last, { error: "Stopped", stopped: true })]) : exchanges;
 }
 
+// An input's context, sent beside what was typed on a line of its own; `typed` drops it from a replayed prompt, so a turn shows as typed.
+function marked(context) {
+  return "\n[" + context + "]";
+}
+
+function typed(prompt) {
+  return prompt.replace(/\n+\[[^\n]*\]\s*$/, "").trim();
+}
+
 // A chunk of the history an agent replays, added to `history` in place, as it is built whole before it shows: a user's after a reply starts the next exchange.
 function replayed(history, role, chunk) {
   const last = history[history.length - 1];

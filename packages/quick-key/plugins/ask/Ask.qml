@@ -138,7 +138,7 @@ Plugin {
     failure = outcome.error ?? "";
     if (!outcome.loaded) session = "";
     exchanges = !outcome.loaded ? [] : recalled.map(entry => {
-      return { prompt: entry.prompt.trim(), reply: entry.reply, error: "", stopped: false, after: "", input: false, table: Markup.hasTable(entry.reply) };
+      return { prompt: Exchanges.typed(entry.prompt), reply: entry.reply, error: "", stopped: false, after: "", input: false, table: Markup.hasTable(entry.reply) };
     });
     recalled = [];
   }
@@ -164,10 +164,10 @@ Plugin {
   }
 
   // Answered above the input while the menu shows it, else as a notification; one conversation per visit.
-  function submit(text, after) {
+  function submit(text, after, context) {
     if (busy || !settings.ask) return false;
     if (!visited) reset();
-    if (!send(text, after, true)) return false;
+    if (!send(text, after, true, context)) return false;
     visited = watched;
     return true;
   }
@@ -188,7 +188,7 @@ Plugin {
   }
 
   // `after` runs once the turn is answered.
-  function send(prompt, after = "", input = false) {
+  function send(prompt, after = "", input = false, context = "") {
     prompt = prompt.trim();
     if (!prompt || busy || !settings.ask) return false;
     exchanges = Exchanges.sent(exchanges, prompt, after, input || watched);
@@ -199,7 +199,7 @@ Plugin {
     streamed = "";
     sentAt = now = Math.floor(Date.now() / 1000);
     report();
-    agent.turn([{ type: "text", text: prompt }]);
+    agent.turn([{ type: "text", text: prompt }].concat(context ? [{ type: "text", text: Exchanges.marked(context) }] : []));
     return true;
   }
 

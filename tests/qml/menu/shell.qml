@@ -521,15 +521,15 @@ ShellRoot {
         until: () => menu.inputFocused && Plugins.get("picked")?.text === "typed" && Plugins.get("followed")?.text === "done 0"
       },
       {
-        name: "an input naming a plugin gives it its text in its format, the level's legend staying as it was; in the background the menu closes",
+        name: "an input naming a plugin gives it its text, its context beside it and the text shown as typed, the level's legend staying as it was; in the background the menu closes",
         start: () => {
           menu.stack = [];
-          menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}." } } });
+          menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", context: "Calendar" } } });
           menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
           root.typingLegend = menu.legend.map(key => MenuKeys.label(key.key));
           menu.island.submit("typed", true);
         },
-        until: () => root.typingLegend.length > 0 && !root.typingLegend.includes("ESC") && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.reply === "Add: typed."
+        until: () => root.typingLegend.length > 0 && !root.typingLegend.includes("ESC") && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.prompt === "typed" && Plugins.get("agent")?.exchanges[0]?.reply.endsWith("[Calendar]")
       },
       {
         name: "an input whose plugin did not load takes nothing, so the menu stays and the input keeps its text",
@@ -558,27 +558,27 @@ ShellRoot {
         }
       },
       {
-        name: "a visit's first message takes the input's format, the answer to it as typed; expanding holds the visit, and stepping back returns to the level with the input focused",
+        name: "every message of a visit carries the input's context, each shown as typed; expanding holds the visit, and stepping back returns to the level with the input focused",
         until: () => {
           const agent = Plugins.get("agent");
           if (!agent || agent.busy) return false;
           switch (root.visitStep) {
           case 0:
             menu.show();
-            menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", format: "Add: {text}." } } }];
+            menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", context: "Tasks" } } }];
             root.visitStep = menu.island.submit("one", false) ? 1 : -1;
             return false;
           case 1:
-            root.visitStep = agent.turn?.text === "Add: one." && menu.island.submit("two", false) ? 2 : -1;
+            root.visitStep = agent.turn?.question === "one" && agent.turn?.text.endsWith("[Tasks]") && menu.island.submit("two", false) ? 2 : -1;
             return false;
           case 2:
-            if (agent.turn?.text !== "two") return false;
+            if (agent.turn?.question !== "two" || !agent.turn?.text.endsWith("[Tasks]")) return false;
             const token = menu.island.visit;
             menu.island.expand();
             // Under the panel, the menu keeps its level and the visit.
             const held = agent.shown && !menu.open && menu.inStack && menu.island.visit === token;
             Panels.back();
-            root.visitStep = held && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.island.visit === token && agent.turn?.text === "two" ? 3 : -1;
+            root.visitStep = held && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.island.visit === token && agent.turn?.question === "two" ? 3 : -1;
             return false;
           }
           menu.hide();

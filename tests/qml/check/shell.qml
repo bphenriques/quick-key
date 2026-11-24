@@ -82,7 +82,8 @@ ShellRoot {
     ["an input with nowhere for its text", menu([{ key: "x", desc: "X", icon: "x", list: "tray", input: { desc: "Add" } }]), "gives its input's text to nothing"],
     ["an input giving its text to both a command and a plugin", { plugins: { p: { type: "command" } }, menu: { entries: [{ key: "x", desc: "X", icon: "x", list: "tray", input: { desc: "Add", cmd: "true", plugin: "p" } }] } }, "to both input.cmd and input.plugin"],
     ["an input naming a plugin that is not one", menu([{ key: "x", desc: "X", icon: "x", list: "tray", input: { desc: "Add", plugin: "nope" } }]), "plugin 'nope', which is not one"],
-    ["an input format without its text", menu([{ key: "x", desc: "X", icon: "x", list: "tray", input: { desc: "Add", cmd: "true", format: "Add it" } }]), "input.format without {text}"],
+    ["an input format, now its context", Object.assign(menu([{ key: "x", desc: "X", icon: "x", list: "tray", input: { desc: "Add", plugin: "agent", format: "Add: {text}" } }]), { plugins: { agent: { type: "ask", ask: "true" } } }), "sets input.format, now input.context"],
+    ["an input context given to a command", menu([{ key: "x", desc: "X", icon: "x", list: "tray", input: { desc: "Add", cmd: "true", context: "Tasks" } }]), "sets input.context, which only a plugin is told"],
     ["an ask plugin without its command", { plugins: { a: { type: "ask" } } }, "plugins.a needs ask"],
     ["a plugin setting its plugin does not declare", { plugins: { d: { type: "dunst", activat: "x" } } }, "plugins.d.activat is not a setting"],
     ["a plugin setting of another kind", { plugins: { t: { type: "tasks", syncAfter: "5" } } }, "plugins.t.syncAfter takes a number"],
@@ -115,9 +116,9 @@ ShellRoot {
         until: () => Config.starterEntries.length > 0 && root.names({}, []) && root.names(root.menu(Array.from(Config.starterEntries)), [])
       },
       {
-        name: "an input handing a plugin its text, in its format, on a view in a bar has nothing wrong",
+        name: "an input handing a plugin its text and context, on a view in a bar has nothing wrong",
         timeout: 0,
-        until: () => root.names({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { header: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", input: { desc: "Add an event", plugin: "agent", format: "Add: {text}", after: "true" } }] } } }, [])
+        until: () => root.names({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { header: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", input: { desc: "Add an event", plugin: "agent", context: "Calendar", after: "true" } }] } } }, [])
       },
       {
         name: "a top-level input handing a plugin its text has nothing wrong",

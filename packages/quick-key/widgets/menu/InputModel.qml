@@ -8,7 +8,7 @@ QtObject {
 
   required property MenuModel menu
 
-  // { desc, cmd, plugin, format, after }: an entry's `input`, or `menu.input` at the top level.
+  // { desc, cmd, plugin, context, after }: an entry's `input`, or `menu.input` at the top level.
   readonly property var input: menu.level === null ? Config.menu.input ?? null : menu.level.entry?.input ?? null
   // Without a `cmd`: its own plugin, else the one the level lists.
   readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.level?.entry?.list ?? "") : null
@@ -45,11 +45,9 @@ QtObject {
   function submit(text, background) {
     text = text.trim();
     if (!text || !input || busy) return false;
-    // The format wraps what starts a conversation; once the plugin has answered, the next send answers it as typed.
-    const sent = input.format && (!turn || turn.phase === "error") ? input.format.replace(/\{text\}/g, () => text) : text;
-    if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", sent);
+    if (input.cmd) Commands.runThen(input.cmd, input.after ?? "", text);
     // A plugin that failed to load takes nothing.
-    else if (!plugin || plugin.submit(sent, input.after ?? "") === false) return false;
+    else if (!plugin || plugin.submit(text, input.after ?? "", input.context ?? "") === false) return false;
     lastSent = text;
     if (background) menu.hide();
     return true;
