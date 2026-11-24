@@ -282,6 +282,10 @@ ShellRoot {
         until: () => Plugins.get("tasks").detail === "9+"
       },
       {
+        name: "with one list in the file, no row shows its colour",
+        until: () => Plugins.get("tasks").items.length === 10 && Plugins.get("tasks").items.every(item => item.swatch === "")
+      },
+      {
         name: "a sync that failed is the plugin's error, for its level to show",
         start: () => root.tasks("broken"),
         until: () => Plugins.get("tasks").error.endsWith("personal: could not sync")

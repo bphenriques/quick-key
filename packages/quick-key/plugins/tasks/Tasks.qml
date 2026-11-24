@@ -40,6 +40,8 @@ Plugin {
   property var settled: []
   // Reminders fired, by title and due, kept so a restart repeats none; unset before the first check.
   readonly property var reminded: keptReminded.value
+  // A list's colour tells lists apart, so with one it shows on no row.
+  readonly property bool manyLists: new Set(tasks.map(task => task.list)).size > 1
 
   text: ""
   empty: completed === "only" ? words.noneDone : words.none
@@ -69,7 +71,7 @@ Plugin {
       // Showing only the done ones, when each was done.
       detail: root.completed === "only" && task.done && task.completed ? Clock.recent(Clock.parse(task.completed))
         : task.due ? Clock.when(Clock.parse(task.due), task.due.includes("T")) : "",
-      swatch: task.color ?? "",
+      swatch: root.manyLists ? task.color ?? "" : "",
       done: !!task.done,
       hidden: root.completed === "hidden" ? !!task.done && root.settled.includes(task.id) : root.completed === "only" && !task.done && !root.settled.includes(task.id),
       tone: late ? "warning" : "",
