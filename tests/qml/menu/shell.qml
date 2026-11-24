@@ -16,6 +16,8 @@ ShellRoot {
   property int orderStep: 0
   // Whether a case pressed its key, once.
   property bool pressed: false
+  property bool pathRan: false
+  property bool pathClosed: false
   // The keyed plugin's action a key ran.
   property string ran: ""
 
@@ -648,6 +650,15 @@ ShellRoot {
           plugin.actions = {};
           return ran === 3 && closed && kept && stayed;
         }
+      },
+      {
+        name: "a key path ending on a list pick closes the menu it opened",
+        start: () => {
+          menu.hide();
+          root.pathRan = menu.press("t 2");
+          root.pathClosed = !menu.open;
+        },
+        until: () => root.pathRan && root.pathClosed && Plugins.get("picked")?.text === "b-2"
       },
       {
         name: "a held key repeats on the level it was pressed on, never into the one it opened",

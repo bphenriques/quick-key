@@ -317,7 +317,10 @@ Scope {
     }
     const cmd = MenuKeys.isPair(entry) ? Array.from(entry.cmd)[MenuKeys.names(entry.key).indexOf(name)] : entry.cmd;
     // No command: an entry showing a plugin activates it, as a click on it in a bar does.
-    if (!cmd) return Plugins.get(entry.status ?? "")?.activate();
+    if (!cmd) {
+      internal.ran = entry;
+      return Plugins.get(entry.status ?? "")?.activate();
+    }
     if (!entry.keepOpen) hide();
     Commands.run(cmd);
   }
@@ -376,8 +379,10 @@ Scope {
     if (item.app?.onlyMenu) return openMenu(item);
     if (item.select) {
       if (item.closes) hide();
+      internal.ran = item;
       item.select();
     } else if (!item.entry) {
+      internal.ran = item;
       Plugins.get(item.status)?.activate();
     } else if (item.entry.submenu || item.entry.list || item.entry.view) {
       const next = viewModels[item.entry.view];
@@ -495,7 +500,7 @@ Scope {
     property string held: ""
     property string focus: "body"
     property var pressedOn: null
-    // The entry whose action the last key ran.
+    // The entry or item whose action the last key ran.
     property var ran: null
   }
 }
