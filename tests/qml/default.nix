@@ -15,9 +15,6 @@ let
         ]
         ++ pkgs.lib.optionals (bus name) [
           pkgs.dbus
-          pkgs.glib
-          pkgs.libnotify
-          pkgs.systemd
           (pkgs.mpv.override { scripts = [ pkgs.mpvScripts.mpris ]; })
         ];
       }

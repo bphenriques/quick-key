@@ -118,7 +118,7 @@ in
       type = lib.types.listOf lib.types.package;
       default = [ ];
       example = lib.literalExpression "[ config.services.dunst.package ]";
-      description = "Packages first on the shell's PATH, for what commands, plugins and notification rules call by name; one here wins over a standard tool's";
+      description = "Packages first on the shell's PATH, for what commands and plugins call by name; one here wins over a standard tool's";
     };
 
     exec.ipc = lib.mkOption {

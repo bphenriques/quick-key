@@ -46,7 +46,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
 | `OverlayWindow`, `DismissArea` | a popup above everything, `edgeMargin` from its screen's edge (`theme.edgeMargin`, no more than a quarter of the screen); the click-outside catcher under it, one per screen |
 | `CornerPill` | a pill in the top-right corner of every screen while `shown`, fading in and out, stacked under the pills already showing; `hovered` and `clicked` for its pointer |
-| `CornerPills` | the corner pills on screen, in the order they showed, which is the order they stack in, each as tall as it draws, and the stack's `height` for what sits under it |
+| `CornerPills` | the corner pills on screen, in the order they showed, which is the order they stack in, each as tall as it draws |
 | `Transient` | shown for a moment on `show()`, held while `held`, ignoring startup's replayed state until `armed` |
 | `Fade` | fades a surface in and out over `theme.animationDuration`; `loaded` holds a `LazyLoader` until it has faded out; the menu appears and closes at once, since its background blur cannot fade with it and a fade-out would hold the keyboard |
 | `MenuKeys` | key names as entries declare them (`Ctrl+Left`), their hints, the gutter a key column takes (`gutter`, a character past a letter), and keys for an app's own menu, keeping letters from the labels its app supplies |
