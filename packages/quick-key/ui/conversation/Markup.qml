@@ -148,8 +148,9 @@ Singleton {
     return /^\s*(`{3,}|~{3,})|^\s{0,3}(#{1,6}\s|>)/.test(lines[i]) || listItem.test(lines[i]) || startsTable(lines, i);
   }
 
+  // An escaped pipe (\|) is text, held out of the split by a stand-in.
   function cells(row) {
-    return row.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(cell => cell.trim());
+    return row.trim().replace(/\\\|/g, "").replace(/^\|/, "").replace(/\|$/, "").split("|").map(cell => cell.trim().replace(//g, "|"));
   }
 
   function escaped(text) {

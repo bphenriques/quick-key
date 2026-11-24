@@ -40,6 +40,7 @@ ShellRoot {
     ["a paragraph's lines join, and a heading or a list ends it", () => bare("one\ntwo\n# Head\n- item"), "<p>one two</p><p><b>Head</b></p><ul><li>item</li></ul>"],
     ["a table's header is bold, each column aligned as its separator says, a short row filled", () => bare("| L | C | R |\n|:--|:-:|--:|\n| 1 |").match(/<td align="\w+">(<b>)?\w*/g),
       ["<td align=\"left\"><b>L", "<td align=\"center\"><b>C", "<td align=\"right\"><b>R", "<td align=\"left\">1", "<td align=\"center\">", "<td align=\"right\">"]],
+    ["an escaped pipe is text in its cell, not a column", () => [bare("| a \\| b | c |\n|---|---|").match(/<b>[^<]*<\/b>/g), Markup.plain("| a \\| b | c |\n|---|---|")], [["<b>a | b</b>", "<b>c</b>"], "a | b  c"]],
     ["a rule is a divider without text", () => bare("---"), "<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td colspan=\"1\"></td></tr></table>"],
     ["a quote's blocks render inside it", () => bare("> *w*").includes("<td><p><i>w</i></p></td>"), true],
     ["a quote nests as written up to three deep", () => [1, 2, 3].map(depth => bare("> ".repeat(depth) + "x")), [quote("<p>x</p>"), quote(quote("<p>x</p>")), quote(quote(quote("<p>x</p>")))]],
