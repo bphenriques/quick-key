@@ -15,4 +15,4 @@ A recipe's image proves it runs. Each recipe is a fixture in `recipes/`: `<name>
    Each `shot` lands in `docs/src/images/<image>.png`, cropped to what differs from the empty output. Any warning the shell logs (a setting the check rejects) is printed.
 3. Look at each image: nothing personal shows, and the recipe's part is there. Reference it from the recipe: `![What it shows](images/<image>.png)`.
 
-The steps run commands for real: never press a session action, change volume or brightness, and undo what a recipe starts (`focus.sh` stops its timer and removes its file). Stop a process by a pattern anchored to its command's start (`pkill -f '^sh -c for m'`), as a loose one matches the shell that runs the script.
+The steps run commands for real: never press a session action, change volume or brightness, and undo what a recipe starts (`focus.sh` stops its timer and removes its file). Stop a process by a pattern anchored to its command's start (`pkill -f '^[^ ]*sh -c for m'`, as sh runs by its full path), as a loose one matches the shell that runs the script.
