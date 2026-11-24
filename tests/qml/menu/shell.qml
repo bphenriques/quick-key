@@ -147,6 +147,10 @@ ShellRoot {
           && Statuses.builtin.powerProfile.glyph() === "" && Statuses.value(Statuses.builtin.powerProfile, Statuses.builtin.powerProfile.fields()).detail === ""
       },
       {
+        name: "without an adapter, the bluetooth status is not ready, so one appearing after startup is its first state, not a change to pop up",
+        until: () => !Bluez.present && !Statuses.of("bluetooth").ready
+      },
+      {
         name: "a bar list's +N counts only what the bar leaves out and its picker shows, never a hidden item",
         until: () => Lists.items("hides").length === 2 && menu.barOf([{ desc: "H", list: "hides", limit: 1 }]).length === 1
       },

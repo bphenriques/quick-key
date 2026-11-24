@@ -73,7 +73,8 @@ Singleton {
       },
       format: "{device}|{state}{battery}",
       // A pop-up as it powers on or off or a device comes or goes, not at every percent of a headset's battery.
-      change: () => [Bluez.enabled, Bluez.connected.map(device => device.address)]
+      change: () => [Bluez.enabled, Bluez.connected.map(device => device.address)],
+      ready: () => Bluez.present
     },
     brightness: {
       names: ["level"],
