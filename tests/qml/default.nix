@@ -1,4 +1,4 @@
-# The shell's logic in a real Quickshell, headless, one check per folder: its shell.qml replaces the shipped one and runs its cases through Suite.qml; a TypeError fails it too, as does a view not created for any reason but its window, which needs a session.
+# The shell's logic in a real Quickshell, headless, one check per folder: its shell.qml replaces the shipped one and runs its cases through Suite.qml; a TypeError or ReferenceError fails it too, as does a view not created for any reason but its window, which needs a session.
 { pkgs, self }:
 let
   # This suite runs on a session bus of its own: music played by mpv over MPRIS.
@@ -31,7 +31,7 @@ let
         cp ${./. + "/${name}/shell.qml"} shell/shell.qml
         ${pkgs.lib.optionalString (bus name) "dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- "}timeout 60 qs -p shell 2>&1 | tee log
         grep -q '# done' log
-        if grep -qE 'not ok|TypeError' log || grep 'not created' log | grep -vq 'unavailable$'; then exit 1; fi
+        if grep -qE 'not ok|TypeError|ReferenceError' log || grep 'not created' log | grep -vq 'unavailable$'; then exit 1; fi
         touch $out
       '';
 in
