@@ -66,7 +66,7 @@ List one by name to use it: `plugins.niriMinimap = { };`.
 
 - **`command`:** the state its source gives, as above, under any name.
 - **`dunst`:** do-not-disturb for those who keep dunst as their notification daemon. A bell, struck and lit while dunst is paused; a click pauses or resumes it. Needs `dunstctl` and `dbus-monitor` on `PATH` (with Nix, add dunst to `extraPackages`).
-- **`mako`:** the same for mako, through a mode named `do-not-disturb` that your mako config hides notifications in (`[mode=do-not-disturb]` with `invisible=1`). Read as the menu opens, as mako signals no change of mode; bind a key to `mako activate` over IPC, not to `makoctl`, so the bell follows it. Needs `makoctl` on `PATH`.
+- **`mako`:** the same for mako, through a mode named `do-not-disturb` that your mako config hides notifications in (`[mode=do-not-disturb]` with `invisible=1`). Needs `makoctl` and `dbus-monitor` on `PATH` (with Nix, add mako to `extraPackages`).
 - **`recording`:** a pill on every screen while recording, and the elapsed time as a status. Its source gives `{"active": true, "since": <epoch seconds>}` while recording.
 - **`dictation`:** a pill while dictating, a spinner while transcribing. Its source gives `recording`, `transcribing` or anything else for idle, as its value or as the `stage` its `show` gives (`show.streaming.stage = "recording"`).
 - **`niriMinimap`:** a minimap of niri's workspaces as you move between them.
