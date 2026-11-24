@@ -5,6 +5,7 @@ import Quickshell
 import qs
 
 // The icon set, named after the Nerd Fonts glyph list; `glyphs` in config.json overrides any by its name here.
+// A list given as another kind keeps its default, so Validation.glyphProblems sees the default's kind.
 Singleton {
   readonly property string microphone: Config.glyphs.microphone ?? "\u{F036C}" // md-microphone
   readonly property string microphoneOff: Config.glyphs.microphoneOff ?? "\u{F036D}" // md-microphone_off
@@ -36,7 +37,7 @@ Singleton {
   readonly property string checkboxChecked: Config.glyphs.checkboxChecked ?? "\u{F0132}" // md-checkbox_marked
   readonly property string tasks: Config.glyphs.tasks ?? "\u{F0756}" // md-format_list_checks
   readonly property string late: Config.glyphs.late ?? "\u{F0020}" // md-alarm
-  readonly property var brightnessLevels: Config.glyphs.brightnessLevels ?? ["\u{F00DE}", "\u{F00DF}", "\u{F00E0}"] // md-brightness_5, _6, _7
+  readonly property var brightnessLevels: Array.isArray(Config.glyphs.brightnessLevels) ? Config.glyphs.brightnessLevels : ["\u{F00DE}", "\u{F00DF}", "\u{F00E0}"] // md-brightness_5, _6, _7
   readonly property string check: Config.glyphs.check ?? "\u{F012C}" // md-check
   readonly property string search: Config.glyphs.search ?? "\u{F0349}" // md-magnify
   // The tasks' order and what their done ones show, each by its value.
@@ -77,14 +78,14 @@ Singleton {
     microphone: "\u{F036C}" // md-microphone
   }, Config.glyphs.audioDevices ?? {})
   // md-battery_outline, md-battery_10 to _90, md-battery
-  readonly property var batteryLevels: Config.glyphs.batteryLevels ?? ["\u{F008E}", "\u{F007A}", "\u{F007B}", "\u{F007C}", "\u{F007D}", "\u{F007E}", "\u{F007F}", "\u{F0080}", "\u{F0081}", "\u{F0082}", "\u{F0079}"]
+  readonly property var batteryLevels: Array.isArray(Config.glyphs.batteryLevels) ? Config.glyphs.batteryLevels : ["\u{F008E}", "\u{F007A}", "\u{F007B}", "\u{F007C}", "\u{F007D}", "\u{F007E}", "\u{F007F}", "\u{F0080}", "\u{F0081}", "\u{F0082}", "\u{F0079}"]
   // md-battery_charging_outline, md-battery_charging_10 to _100
-  readonly property var batteryChargingLevels: Config.glyphs.batteryChargingLevels ?? ["\u{F089F}", "\u{F089C}", "\u{F0086}", "\u{F0087}", "\u{F0088}", "\u{F089D}", "\u{F0089}", "\u{F089E}", "\u{F008A}", "\u{F008B}", "\u{F0085}"]
+  readonly property var batteryChargingLevels: Array.isArray(Config.glyphs.batteryChargingLevels) ? Config.glyphs.batteryChargingLevels : ["\u{F089F}", "\u{F089C}", "\u{F0086}", "\u{F0087}", "\u{F0088}", "\u{F089D}", "\u{F0089}", "\u{F089E}", "\u{F008A}", "\u{F008B}", "\u{F0085}"]
 
   // md-wifi_strength_outline, md-wifi_strength_1 to _4
-  readonly property var wifiLevels: Config.glyphs.wifiLevels ?? ["\u{F092F}", "\u{F091F}", "\u{F0922}", "\u{F0925}", "\u{F0928}"]
+  readonly property var wifiLevels: Array.isArray(Config.glyphs.wifiLevels) ? Config.glyphs.wifiLevels : ["\u{F092F}", "\u{F091F}", "\u{F0922}", "\u{F0925}", "\u{F0928}"]
   // md-wifi_strength_alert_outline, md-wifi_strength_1_alert to _4_alert
-  readonly property var wifiLimitedLevels: Config.glyphs.wifiLimitedLevels ?? ["\u{F092B}", "\u{F0920}", "\u{F0923}", "\u{F0926}", "\u{F0929}"]
+  readonly property var wifiLimitedLevels: Array.isArray(Config.glyphs.wifiLimitedLevels) ? Config.glyphs.wifiLimitedLevels : ["\u{F092B}", "\u{F0920}", "\u{F0923}", "\u{F0926}", "\u{F0929}"]
 
   // A device type: headphones, headset, internal, external or microphone.
   function audioDevice(type) {
