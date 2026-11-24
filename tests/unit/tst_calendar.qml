@@ -87,5 +87,9 @@ TestCase {
     compare(due.fired, ["kept", "soon"]);
     compare(Calendar.due(events, due.fired, now, 10).remind, []);
     compare(Calendar.due(events, [], now, 30).remind.map(event => event.id), ["soon", "later", "kept"]);
+    // Before 0 reminds at the start, and once: a restart then keeps the id.
+    const start = Calendar.due(events, [], at(14, 5), 0);
+    compare(start.remind.map(event => event.id), ["soon"]);
+    compare(Calendar.due(events, start.fired, at(14, 5), 0).remind, []);
   }
 }
