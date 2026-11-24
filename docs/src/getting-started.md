@@ -61,7 +61,7 @@ With Nix, the same through `exec.ipc`, a command line that needs a shell: `Mod+S
 
 ## First run
 
-It runs without a config. The starter menu holds audio, network, Bluetooth and music, with the calendar on the clock and the tray and the session in its bar. Press its key: each row's letter runs it, `ESC` goes back, and `?` lists every key (see [Menu](menu.md)).
+It runs without a config. The starter menu holds audio, network, Bluetooth and music, with the calendar on the clock and the tray and the session in its bar. Press its key: each row's letter runs it, `ESC` goes back, and `?` lists the keys no row shows (see [Menu](menu.md)).
 
 ## Check and logs
 
@@ -74,7 +74,7 @@ The shell logs the same as it starts, and every warning after: `journalctl --use
 Add a row of your own. Start from the starter's entries in `~/.config/quick-key/config.json` ([Extend the starter](recipes.md#extend-the-starter)), then append one to `menu.entries`:
 
 ```json
-{ "key": "l", "desc": "Lock", "icon": "󰌾", "cmd": "loginctl lock-session" }
+{ "key": "s", "desc": "Screenshot", "icon": "󰹑", "cmd": "grim" }
 ```
 
 With Nix, the config that owns a tool adds its entries next to it (`lib.mkOrder` keeps the top level in order), so the menu grows with the desktop rather than in one file.

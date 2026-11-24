@@ -4,15 +4,7 @@ nix flake check -L          # formatting, package builds (check.sh included) and
 nix build .#docs            # docs site → result/index.html
 ```
 
-`packages/quick-key/check.sh` holds the design rules in [AGENTS.md](AGENTS.md) that a text search can check, and every build runs it:
-
-- A plugin's folder, root, settings and views, and its imports.
-- Built-ins only in their tables.
-- No optional calls, `flatMap` or `Object.fromEntries`, which Qt's JavaScript cannot run.
-- The compositor only through `Compositor`, text only through `Label`.
-- Glyphs through `Icon`, only by the names `Glyphs` declares.
-- Colours only through tones and the kit, font measures through `Metrics`, dates and times through `Clock`.
-- Commands from the config; plugins declaring no source or IPC of their own.
+`packages/quick-key/check.sh` holds the design rules in [AGENTS.md](AGENTS.md) that a text search can check, each under a comment naming its rule, and every build runs it.
 
 `tests/` holds the flake checks beyond the builds, listed in `tests/default.nix`: `module-eval` (what the module writes into `config.json`, and that the build fails on a setting the check rejects) and `qml-<concern>` (the shell's logic in a real Quickshell, headless, one check per folder of `tests/qml/`: its `shell.qml` holds the cases, a TAP line each, and the rest of the folder is the config they run against), `unit` (pure logic in qmltestrunner, no shell: each `tests/unit/tst_*.qml` beside the `.js` library it tests: a decision moved out of its QML file, given what it reads, `now` included), `lint` (qmllint over the shell, through the `qs` module Quickshell writes for tools), `calendar-sync` (the script offline, against a calendar served on loopback), `recipes` (each recipe in `docs/src/recipes.md` over the starter, through the shell's check) and `comments` (no comment block over four lines). One case per behaviour a user relies on, run against real commands and files, never stand-ins. What needs a session (PipeWire, UPower, niri, windows) is seen working on the desktop instead. `git add -N` a new test file, or the flake cannot see it.
 
