@@ -52,8 +52,9 @@ Scope {
         onImplicitHeightChanged: root.height = implicitHeight + Config.theme.spacing
         Component.onCompleted: root.height = implicitHeight + Config.theme.spacing
         WlrLayershell.namespace: "quick-key-" + root.namespace
-        // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
-        BackgroundEffect.blurRegion: Region {
+        // Blurred behind, as the menu is, so a translucent theme reads the same on every surface; only once faded in, as a compositor blurs at full strength at once.
+        BackgroundEffect.blurRegion: fade.value === 1 ? blur : null
+        readonly property Region blur: Region {
           item: pill
           radius: pill.radius
         }

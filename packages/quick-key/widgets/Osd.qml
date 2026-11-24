@@ -77,8 +77,9 @@ Scope {
       anchors.right: true
       margins.right: window.edgeMargin
       WlrLayershell.namespace: "quick-key-osd"
-      // Blurred behind, as the menu is, so a translucent theme reads the same on every surface.
-      BackgroundEffect.blurRegion: Region {
+      // Blurred behind, as the menu is, so a translucent theme reads the same on every surface; only once faded in, as a compositor blurs at full strength at once (from the wallpaper, for niri).
+      BackgroundEffect.blurRegion: fade.value === 1 ? blur : null
+      readonly property Region blur: Region {
         item: window.shape
         radius: window.shape.radius
       }
