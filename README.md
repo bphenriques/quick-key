@@ -5,9 +5,9 @@
 [![Status](https://img.shields.io/badge/status-unstable-orange)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-A keyboard-driven [Quickshell](https://quickshell.org) menu with live status, in the style of [`wlr-which-key`](https://github.com/MaxVerevkin/wlr-which-key), plus pop-ups for volume, the microphone, brightness, keyboard layout and keep-awake. Works out of the box; configured from a home-manager module or a `config.json`.
+A keyboard-driven [Quickshell](https://quickshell.org) menu in the style of [`wlr-which-key`](https://github.com/MaxVerevkin/wlr-which-key), whose rows show live state beside labels that never change, and where the key path you press (`a 2`) is the binding you script. Pop-ups show volume, the microphone, brightness, keyboard layout and keep-awake as they change. Works out of the box; configured from a home-manager module or a `config.json`.
 
-It is a menu first: it sits beside the bar or shell you have and replaces neither. The rest is plugins, off until listed. Most are a command and a few lines of config ([recipes](https://bphenriques.github.io/quick-key/recipes.html)); the shipped ones (a panel to ask an agent, pills for recording and dictation, a niri minimap) show how far one can go.
+It is a menu first: it sits beside the bar or shell you have and replaces neither. The rest is plugins, off until listed. Most are a command and a few lines of config ([recipes](https://bphenriques.github.io/quick-key/recipes.html)); the shipped ones add a panel to ask an agent, pills for recording and dictation, and a niri minimap.
 
 | Menu | Audio output |
 |---|---|
