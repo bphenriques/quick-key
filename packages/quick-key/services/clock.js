@@ -81,7 +81,7 @@ function heading(moment, now, names) {
 
 // A later day under the heading of `from`: its weekday within a week, with its time when `timed` (Sat 18:00); beyond, its date alone (3 Dec), as narrow as those.
 function dayAfter(moment, from, timed, names) {
-  if (moment - from >= 7 * 86400000) return format(moment, "%-d %b", names);
+  if (daysFrom(moment, from) >= 7) return format(moment, "%-d %b", names);
   return timed ? names.weekdays[moment.getDay()] + " " + time(moment, names) : names.weekdays[moment.getDay()];
 }
 

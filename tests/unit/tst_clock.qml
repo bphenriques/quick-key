@@ -49,6 +49,8 @@ TestCase {
     compare(Clock.dayAfter(new Date(2026, 10, 28, 18, 0), at(0, 0, 0), true, names), "Sat 18:00");
     compare(Clock.dayAfter(new Date(2026, 10, 28, 18, 0), at(0, 0, 0), false, names), "Sat");
     compare(Clock.dayAfter(new Date(2026, 11, 3, 18, 0), at(0, 0, 0), true, names), "3 Dec");
+    // Spring-forward makes this week 167 hours: a week is counted in days.
+    compare(Clock.dayAfter(new Date(2026, 3, 1, 0, 30), new Date(2026, 2, 25), true, names), "1 Apr");
   }
 
   function test_format() {
