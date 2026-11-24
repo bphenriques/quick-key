@@ -44,13 +44,13 @@ Singleton {
   // Esc steps back, ? lists the keys no row shows, Tab moves to the input and Shift+Tab back.
   readonly property var reservedKeys: ["Escape", "?", "Tab", "Backtab"]
 
-  // Renamed keys first, so a config from before a rename says what to write instead; then kinds, as the checks after them read the config in the shapes the settings declare.
+  // Renamed keys, saying what to write instead, beside what else is wrong without them; kinds before the rest, as the checks after them read the config in the shapes the settings declare.
   function check(json) {
     const moved = renames(json, Config.renamed);
-    if (moved.length) return moved;
+    if (moved.length) json = without(json, Object.keys(Config.renamed));
     const kinds = Config.undeclared(json);
-    if (kinds.length) return kinds;
-    const values = settingProblems(json).concat(colourProblems(json.theme ?? {}), operatorProblems(json));
+    if (kinds.length) return moved.concat(kinds);
+    const values = moved.concat(settingProblems(json), colourProblems(json.theme ?? {}), operatorProblems(json));
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
     const header = Object.assign({}, json.menu?.header);
@@ -149,6 +149,16 @@ Singleton {
   // Each old key, by its path, that json still sets.
   function renames(json, renamed) {
     return Object.keys(renamed).filter(path => at(json, path) !== undefined).map(path => path + " is now " + renamed[path]);
+  }
+
+  // A copy of json without the keys at `paths`.
+  function without(json, paths) {
+    const copy = JSON.parse(JSON.stringify(json));
+    for (const path of paths) {
+      const parent = at(copy, path.slice(0, path.lastIndexOf(".")));
+      if (Config.kind(parent) === "map") delete parent[path.slice(path.lastIndexOf(".") + 1)];
+    }
+    return copy;
   }
 
   function at(json, path) {
