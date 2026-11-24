@@ -12,6 +12,8 @@ Singleton {
   readonly property var headingLine: /^ {0,3}#{1,6}\s/
   readonly property var ruleLine: /^\s{0,3}([-*_])(\s*\1){2,}\s*$/
   readonly property var quoteLine: /^\s{0,3}>/
+  // A link or an image, its address holding one level of parentheses (a wiki's Foo_(bar)).
+  readonly property var linkMark: /!?\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g
 
   // As compact lines show it, from the blocks html() renders, so the two agree on what a block is.
   function plain(markdown) {
@@ -32,7 +34,7 @@ Singleton {
   }
 
   function bare(text) {
-    return text.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1");
+    return text.replace(linkMark, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1");
   }
 
   // Rich text of the kit's own making (rule 9): text escaped, an image or a link by its text, so nothing is fetched and no HTML runs.
@@ -165,7 +167,7 @@ Singleton {
   }
 
   function emphasis(text) {
-    return text.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*(.+?)\*\*|__(.+?)__/g, (match, stars, unders) => "<b>" + (stars ?? unders) + "</b>")
+    return text.replace(linkMark, "$1").replace(/\*\*(.+?)\*\*|__(.+?)__/g, (match, stars, unders) => "<b>" + (stars ?? unders) + "</b>")
       .replace(/~~(.+?)~~/g, "<s>$1</s>").replace(/\*([^*\s][^*]*?)\*/g, "<i>$1</i>").replace(/(^|\W)_([^_\s][^_]*?)_(?!\w)/g, "$1<i>$2</i>");
   }
 

@@ -44,6 +44,7 @@ ShellRoot {
     ["a quote nests as written up to three deep", () => [1, 2, 3].map(depth => bare("> ".repeat(depth) + "x")), [quote("<p>x</p>"), quote(quote("<p>x</p>")), quote(quote(quote("<p>x</p>")))]],
     ["a deeper quote renders three deep, as each level multiplies its layout time", () => bare("> ".repeat(30) + "x"), quote(quote(quote("<p>x</p>")))],
     ["a link or an image shows by its text", () => bare("[site](https://e.com) ![pic](https://e.com/a.png)"), "<p>site pic</p>"],
+    ["a link whose address holds parentheses shows by its text alone", () => [bare("[Foo](https://e.com/wiki/Foo_(bar)) after"), Markup.plain("[Foo](https://e.com/wiki/Foo_(bar)) after")], ["<p>Foo after</p>", "Foo after"]],
     ["HTML shows as text, so a script never runs", () => bare("<script>alert(1)</script> & <img src=x>"), "<p>&lt;script&gt;alert(1)&lt;/script&gt; &amp; &lt;img src=x&gt;</p>"],
     ["nothing it renders fetches: no link, image or stylesheet in any block", () => /<a |<img|href|src=|url\(|<link|<style/.test(Markup.html(everything)), false],
     ["a table is told by its separator row; a rule or a lone pipe is none", () => ["| a | b |\n|---|:-:|", "text\n---|---", "a | b", "---"].map(text => Markup.hasTable(text)), [true, true, false, false]]
