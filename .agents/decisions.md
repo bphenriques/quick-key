@@ -32,4 +32,5 @@ Settled with the owner up to v0.27.0-beta.5 (2026-11-24). A review round reads t
 - The owner, at the desk: paste a copied recording into WhatsApp; add from the real menu.
 - Watch: the menu suite's "an input's key gives it the keys" failed once in about 20 runs; todoman 4.7 logs a traceback on two CATEGORIES lines (todoman's).
 - Reminders are plain notifications; a script with Snooze and Open link if the owner wants it.
+- Audio output's Apps: two streams of one app (two browser tabs) show alike, as a row names only the app; telling them apart would show `media.name`, the owner's call. Moving an app to another device stays with pavucontrol.
 - `notifications` holds every release since beta.1; `main` is behind it.
