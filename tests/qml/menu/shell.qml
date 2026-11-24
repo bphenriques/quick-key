@@ -213,10 +213,10 @@ ShellRoot {
         }
       },
       {
-        name: "pick filters the level's list in place, its rows held, and a digit runs its row as at rest",
+        name: "/ filters the level's list in place, its rows held, and a digit runs its row as at rest",
         start: () => {
-          menu.push({ kind: "entry", title: "Devices", entry: { list: "devices", submenu: [{ key: "space", desc: "All...", action: "pick" }] } });
-          menu.activate(menu.items.find(item => item.key === "space"), "space");
+          menu.push({ kind: "entry", title: "Devices", entry: { list: "devices" } });
+          menu.handleName("/");
         },
         until: () => {
           if (!root.pressed && menu.filtering && menu.filterSlots === 2 && menu.rows.length === 2) root.pressed = menu.filterKey("2");
@@ -303,8 +303,8 @@ ShellRoot {
           menu.handleKey({ key: Qt.Key_Slash, modifiers: Qt.NoModifier, text: "/" });
           const filtering = menu.filtering && menu.barActions.length === 0;
           menu.hide();
-          menu.push({ kind: "entry", entry: { list: "many", submenu: [{ key: "/", desc: "All...", action: "pick" }] } });
-          const bound = !menu.slashFilters && menu.legend.length === 0 && menu.barActions[0]?.detail === "1-9 of 10000";
+          menu.push({ kind: "entry", entry: { list: "many", submenu: [{ key: "/", desc: "Slash", cmd: "true" }] } });
+          const bound = !menu.slashFilters && menu.legend.length === 0;
           menu.push({ kind: "entry", entry: { submenu: [{ key: "m", desc: "Mute", cmd: "true" }] } });
           const bare = !menu.content && !menu.barShown;
           menu.hide();
@@ -374,11 +374,6 @@ ShellRoot {
           const up = menu.filterKey("Page_Up") && menu.filter.index === 0 && menu.rows[0].current;
           return named && down && up;
         }
-      },
-      {
-        name: "the pick row says how many rows show at rest of all the list holds",
-        start: () => menu.stack = [{ kind: "entry", entry: { list: "many", submenu: [{ key: "/", desc: "All...", action: "pick" }] } }],
-        until: () => menu.actions[0]?.detail === "1-9 of 10000"
       },
       {
         name: "the cursor stays on its item as the list changes",
