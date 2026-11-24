@@ -46,7 +46,7 @@ in
       type = lib.types.str;
       default = "${config.xdg.stateHome}/quick-key/events.json";
       defaultText = lib.literalExpression ''"''${config.xdg.stateHome}/quick-key/events.json"'';
-      description = "Events written for the shell, with vdirsyncer's and khal's own files beside it";
+      description = "Events written for the shell, in a folder of calendar-sync's own (made 0700, its contents replaced) with vdirsyncer's and khal's files";
     };
 
     tasksFile = lib.mkOption {
