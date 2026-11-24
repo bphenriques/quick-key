@@ -42,10 +42,6 @@ let
     name: colors: json.generate "quick-key-theme-${name}.json" (lib.filterAttrs (_: color: color != null) colors)
   ) cfg.themes;
   presets = map (lib.removeSuffix ".json") (lib.attrNames (builtins.readDir (self + "/packages/quick-key/themes")));
-  # The notifications plugin, under any name: a notification server, as dunst and mako are.
-  notificationsListed = lib.any (name: (cfg.settings.plugins.${name}.type or name) == "notifications") (
-    lib.attrNames (cfg.settings.plugins or { })
-  );
   themeName = cfg.settings.theme.name or null;
 
   # extraPackages, then the standard tools the shell's and its plugins' defaults name, before the session's PATH; systemd's come with the system.
@@ -148,10 +144,6 @@ in
           || lib.elem themeName presets
           || config.xdg.configFile ? "quick-key/themes/${themeName}.json";
         message = "programs.quick-key.settings.theme.name: '${toString themeName}' is neither in programs.quick-key.themes, a file under quick-key/themes/, nor a preset: ${toString presets}";
-      }
-      {
-        assertion = !(notificationsListed && (config.services.dunst.enable || config.services.mako.enable));
-        message = "programs.quick-key: plugins.notifications is a notification server, as services.dunst and services.mako are; keep one, as only one can hold the bus";
       }
     ];
 

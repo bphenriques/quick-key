@@ -25,7 +25,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `Words` | the words the surfaces share, one per meaning: the one ellipsis, a conversation's phases as its answer and prompt say them, what a key does in a legend |
 | `KeyHint` | a key in its gutter, never narrower than the key |
 | `KeyLegend` | keys a level takes beyond its rows, on one line on its bar after a content level's actions: only those the state changes, each while it applies (the fixed ones are `?`'s, unless a `legend` names them); each key as `KeyHint` shows it, then what it does in a lowercase word or two (`today`, `terminal...`) |
-| `KeyList` | keys and what each does, a row each, in one column unless `columns` says more (the cards' `?`); a click is `picked` |
+| `KeyList` | keys and what each does, a row each, in one column unless `columns` says more; a click is `picked` |
 | `Meter` | a thin level bar |
 | `Markdown` | an agent's answer rendered from its Markdown (`markdown`) by `Markup` a piece at a time, so a stream redraws only its last; a selection, within a piece, is copied and reported (`selected`), and `kept` shows it again as its piece is rebuilt |
 | `Markup` | what the kit reads in an agent's Markdown, in one place: its `plain` lines (compact), its pieces (`split`, whole blocks gathered to a size), each one's `html` for `Markdown`, and whether it `hasTable`. The html is rich text of the kit's own making: the text escaped, an image or a link shown by its text, so nothing is fetched and no HTML runs. A table's header is bold over one divider, code sits on a faint wash, a quote dim behind a rule, a heading bold at the body size (as the calendar's month), prose at `theme.lineHeight` |
@@ -39,7 +39,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined the same, or in its `tone` for a state (recording) |
-| `PlacedRegion` | a blur or input region over an item at a place its holder gives, for an item that what holds it moves (a card the pills push down, an island on the bar); empty while the item hides |
+| `PlacedRegion` | a blur or input region over an item at a place its holder gives, for an item that what holds it moves (an island on the bar); empty while the item hides |
 | `Panel` | a surface the keyboard opens, the menu or a plugin's: centred at the screen's bottom edge, its `bar` against it (with the top level's right slot on its right when `statuses`), its `body` over it and its `input` over the body (`inputOver`, a level's island) or between the body and the bar (with the keys while `inputFocused`), one open at a time, dismissed by a click anywhere else; keys its body leaves reach `keyPressed` |
 | `Panels` | the surfaces the keyboard opens as one stack of their owners: the top one shows, `open` covers or brings one back, `back` shows what it covered, `close` hides them all; and the top level's right slot a plugin's panel's bar repeats |
 | `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |

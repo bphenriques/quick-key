@@ -53,7 +53,7 @@ The label is `desc`, and never changes. Every row of a level carries an icon: `i
 
 A level is as wide as its entry's `width`, else `menu.width`, and lays its actions out in its entry's `columns`, else `menu.columns` (`columns = 1` for a level of three, so none sits alone). Neither is measured from what it shows, so it holds still. Entries flow across, so order decides neighbours. At the top the columns are equal, so values line up; in a level the last hugs its rows against the right edge. It is never wider than the screen, whatever it asks; short of room, text shortens, short values last and icons never. Make the menu wider before adding columns or truncating.
 
-The menu sits at the bottom of the screen, centred, its bar against the edge. Everything stacks up from there: the bar, the body, then the level's input. A plugin's panel sits where the menu does, and the notifications' cards default to the top-right corner. Nothing else moves: the bar never sits apart from the body, and every level keeps the bottom edge.
+The menu sits at the bottom of the screen, centred, its bar against the edge. Everything stacks up from there: the bar, the body, then the level's input. A plugin's panel sits where the menu does. Nothing else moves: the bar never sits apart from the body, and every level keeps the bottom edge.
 
 ## Bars
 

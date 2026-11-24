@@ -11,7 +11,6 @@
 - [Menu](menu.md)
 - [Calendar](calendar.md)
 - [Tasks](tasks.md)
-- [Notifications](notifications.md)
 - [Ask](ask.md)
 - [Compositor](compositor.md)
 

@@ -78,8 +78,7 @@ Singleton {
       "popups.position": "removed: the pop-up always sits at the right edge",
       "menu.margin": "removed: every surface sits theme.edgeMargin from the edge",
       "popups.margin": "removed: every surface sits theme.edgeMargin from the edge",
-      "plugins.notifications.margin": "removed: every surface sits theme.edgeMargin from the edge",
-      "plugins.notifications.actionSide": "removed: a card's actions sit on its right",
+      "plugins.notifications": "removed: run a notification daemon, and list its plugin (mako, dunst) for do-not-disturb",
       "theme.osdLength": "removed: a fixed size of the kit",
       "theme.osdIconSize": "removed: a fixed size of the kit",
       "theme.meterThickness": "removed: a fixed size of the kit",
@@ -274,7 +273,7 @@ Singleton {
         property int itemRadius: 6
         // An icon's size, in pixels; unset, it follows the font, 24 at 11 points.
         property int iconSize: Math.round(24 * fontSize / 11)
-        // Apps' own icons (the tray's, a notification's): "colour" as drawn, "grey" like the glyphs beside them, or "tint", a symbolic icon in the text's colour so a white one reads on a light theme, any other in greys.
+        // Apps' own icons (the tray's): "colour" as drawn, "grey" like the glyphs beside them, or "tint", a symbolic icon in the text's colour so a white one reads on a light theme, any other in greys.
         property string appIcons: "colour"
         // The menu, pop-ups and cards keep clear of space another bar reserves, instead of covering it.
         property bool besideBars: false

@@ -30,7 +30,7 @@ Leave the tag off to follow `main`. Import the module in home-manager and enable
 
 The module runs it as its own user service, `quick-key`, bound to the Wayland session target and restarted when the configuration changes. A Quickshell config of your own (a bar) runs beside it.
 
-Commands run on the service's `PATH`: `extraPackages` first, then the standard tools the defaults use, then the session's. Put in `extraPackages` what your commands, plugins and notification rules call by name (`config.services.dunst.package` for the `dunst` plugin).
+Commands run on the service's `PATH`: `extraPackages` first, then the standard tools the defaults use, then the session's. Put in `extraPackages` what your commands and plugins call by name (`config.services.dunst.package` for the `dunst` plugin).
 
 ## Install without Nix
 

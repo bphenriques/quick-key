@@ -1,8 +1,8 @@
 # The shell's logic in a real Quickshell, headless, one check per folder: its shell.qml replaces the shipped one and runs its cases through Suite.qml; a TypeError fails it too, as does a view not created for any reason but its window, which needs a session.
 { pkgs, self }:
 let
-  # These suites run on a session bus of their own: notifications sent with notify-send, replied to through gdbus, their name's holder asked of busctl; music played by mpv over MPRIS.
-  bus = name: name == "notifications" || name == "music";
+  # This suite runs on a session bus of its own: music played by mpv over MPRIS.
+  bus = name: name == "music";
   # The folder is the shell's config and state at once, so its config.json, plugins, scripts and events.json are found by name.
   run =
     name:
@@ -46,6 +46,5 @@ pkgs.lib.genAttrs' [
   "markup"
   "check"
   "load"
-  "notifications"
   "music"
 ] (name: pkgs.lib.nameValuePair "qml-${name}" (run name))

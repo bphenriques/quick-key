@@ -65,14 +65,13 @@ A line that is not a JSON object is logged and skipped. The shell ignores fields
 List one by name to use it: `plugins.niriMinimap = { };`.
 
 - **`command`:** the state its source gives, as above, under any name.
-- **`dunst`:** do-not-disturb for those who keep dunst as their notification daemon; it is not for use with the `notifications` plugin. A bell, struck and lit while dunst is paused; a click pauses or resumes it. Needs `dunstctl` and `dbus-monitor` on `PATH` (with Nix, add dunst to `extraPackages`).
+- **`dunst`:** do-not-disturb for those who keep dunst as their notification daemon. A bell, struck and lit while dunst is paused; a click pauses or resumes it. Needs `dunstctl` and `dbus-monitor` on `PATH` (with Nix, add dunst to `extraPackages`).
 - **`mako`:** the same for mako, through a mode named `do-not-disturb` that your mako config hides notifications in (`[mode=do-not-disturb]` with `invisible=1`). Read as the menu opens, as mako signals no change of mode; bind a key to `mako activate` over IPC, not to `makoctl`, so the bell follows it. Needs `makoctl` on `PATH`.
 - **`recording`:** a pill on every screen while recording, and the elapsed time as a status. Its source gives `{"active": true, "since": <epoch seconds>}` while recording.
 - **`dictation`:** a pill while dictating, a spinner while transcribing. Its source gives `recording`, `transcribing` or anything else for idle, as its value or as the `stage` its `show` gives (`show.streaming.stage = "recording"`).
 - **`niriMinimap`:** a minimap of niri's workspaces as you move between them.
 - **`tasks`:** tasks to tick off, from a tasks file (see [Tasks](tasks.md)).
 - **`ask`:** a panel for quick turns with an agent (see [Ask](ask.md)).
-- **`notifications`** (experimental): a notification server in the shell's look, keyboard first (see [Notifications](notifications.md)).
 
 ## Writing one in QML
 
@@ -81,7 +80,7 @@ A plugin that needs behaviour (a timer, a surface, a protocol) is a folder, foun
 - `<Name>.qml`, rooted at `Plugin`: its state and actions. It never draws.
 - `Settings.qml`, rooted at `PluginSettings`: every setting it takes, with its default and a one-line comment, which is its entry in the reference. It is read as the configuration builds, so it must stay declarative; the shell creates it once to check the config and once to run the plugin.
 - One file per view it draws, listed in `views` (`["Minimap.qml"]`). Each is given the plugin as `plugin` and only reads it.
-- A type of its own it uses by name (Ask's `Acp`, the notifications' `Card`), listed in a `qmldir` beside it (`Acp 1.0 Acp.qml`), since the shipped folders resolve no type without one.
+- A type of its own it uses by name (Ask's `Acp`), listed in a `qmldir` beside it (`Acp 1.0 Acp.qml`), since the shipped folders resolve no type without one.
 
 What it gets:
 
