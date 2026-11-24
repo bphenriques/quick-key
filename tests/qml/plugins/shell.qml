@@ -41,8 +41,8 @@ ShellRoot {
           && Plugins.get("worker")?.phase === "idle" && Plugins.get("worker").text === ""
       },
       {
-        name: "a phase or kind it does not know is idle and none",
-        until: () => Plugins.get("later")?.phase === "idle" && Plugins.get("later").kind === "" && !Plugins.get("later").busy
+        name: "a phase it does not know is idle",
+        until: () => Plugins.get("later")?.phase === "idle" && !Plugins.get("later").busy
       },
       {
         name: "with its daemon on the bus, power profiles are offered: the ones the machine has, the one in use lit",

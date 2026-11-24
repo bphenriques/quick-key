@@ -27,7 +27,6 @@ Scope {
   // Unset, its phase's, else lit by active.
   property string tone: state.tone ?? ""
   property string phase: Phase.of(state.phase)
-  property string kind: Phase.kinds.includes(state.kind) ? state.kind : ""
   property string error: state.error ?? ""
   property string empty: state.empty ?? ""
   property var glyphs: state.glyphs ?? []

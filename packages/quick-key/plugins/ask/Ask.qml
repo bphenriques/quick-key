@@ -86,7 +86,6 @@ Plugin {
   readonly property bool canMove: !busy && exchanges.length > 0 && settings.open !== ""
 
   phase: stage !== "idle" ? (approval ? "blocked" : "working") : unread ? (exchanges[exchanges.length - 1]?.error ? "error" : "done") : "idle"
-  kind: approval ? "permission" : ""
   glyph: phase !== "idle" ? settings.glyph : ""
   error: failure
   views: ["AskPanel.qml"]

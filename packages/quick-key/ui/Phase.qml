@@ -3,10 +3,9 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Work as Rex's Program Status Protocol names it, one vocabulary for every surface: idle, working, blocked on you (`kind`: permission, question or auth), done (a result not seen yet) or error.
+// Work as Rex's Program Status Protocol names it, one vocabulary for every surface: idle, working, blocked on you, done (a result not seen yet) or error.
 Singleton {
   readonly property var names: ["idle", "working", "blocked", "done", "error"]
-  readonly property var kinds: ["permission", "question", "auth"]
 
   // A phase a source gave; an unknown word is idle, so a later one never reads as another.
   function of(value) {

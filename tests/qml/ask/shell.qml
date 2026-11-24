@@ -169,7 +169,7 @@ ShellRoot {
         name: "the session it opens is kept, and an approval, which blocks it on permission, is answered by the user with C-y, and stays as a step",
         until: () => root.asked("approved", ask => {
           if (ask.approval === "rm") {
-            root.blocked = ask.phase === "blocked" && ask.kind === "permission" && ask.busy && ask.describe(ask.exchanges[0]).kind === "permission";
+            root.blocked = ask.phase === "blocked" && ask.busy && ask.describe(ask.exchanges[0]).kind === "permission";
             ask.act("Ctrl+y");
           }
           return root.blocked && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";

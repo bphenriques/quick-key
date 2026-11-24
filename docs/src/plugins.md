@@ -46,7 +46,7 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 
 - `value`: what `show` and `items` look up; a plain line is its value.
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
-- `phase` and `kind`: its work, as Rex's [Program Status Protocol](https://www.superlogical.com/rex/docs/build/program-status) names it. `idle`; `working`, a spinner; `blocked` on you, in warning, with `kind` `permission`, `question` or `auth`; `done`, lit, a result not seen yet; `error`, in alert. A word it does not know is `idle`. A `watch` that ends takes `working` and `blocked` with it and leaves `done` and `error` to be seen.
+- `phase`: its work, as Rex's [Program Status Protocol](https://www.superlogical.com/rex/docs/build/program-status) names it. `idle`; `working`, a spinner; `blocked` on you, in warning; `done`, lit, a result not seen yet; `error`, in alert. A word it does not know is `idle`. A `watch` that ends takes `working` and `blocked` with it and leaves `done` and `error` to be seen.
 - `enabled`: the ids of `items` that can be picked; unset, all.
 - `items`: items that change, when the settings list none, each `{ id, label, icon, glyphs, detail, swatch, active, enabled, done, hidden, busy, tone, verb, closes, actions }`:
   - `done` dims it, struck through; it can still be picked.
@@ -102,7 +102,7 @@ What it gives:
 - `words`: what only it says (its empty list, its failures). The words the surfaces share are `Words`'s, which a plugin never adds to.
 - `submit(text, after, context)` for an input's text when it sets no `cmd`, running `after` once done; `context` is the input's, for an agent to be told beside the text. It answers false when it does not take the text, which the input then keeps. `busy` while it takes no text shows a spinner in the input; a plugin sets its `phase` to working or blocked rather than `busy`.
 - `watched` while the menu shows an input giving it text, set as a visit starts, and `visitEnded` (through `endVisit()`) as it ends: the input or its plugin changes, or the menu closes.
-- `turn`, the conversation's turn as the menu draws it while watched, null before the first: `{ question, text, phase, kind, activity, table, steps }`. `phase` and `kind` are a state line's: `working` (with `activity`), `done`, `blocked` for `permission`, `error` (the input getting the text back), or `idle` once stopped. `steps` are what you answered on the way (an approval).
+- `turn`, the conversation's turn as the menu draws it while watched, null before the first: `{ question, text, phase, kind, activity, table, steps }`. `phase` is a state line's: `working` (with `activity`), `done`, `blocked` (`kind` `permission`), `error` (the input getting the text back), or `idle` once stopped. `steps` are what you answered on the way (an approval).
 - `recall()` to show its past conversations filtered in the menu, for `C-r` in an input giving it text, while `recalls`: the picker opens over what asked for it.
 - `expand()` to show the conversation in its own panel over the menu, when the answer over the input cannot fit it; stepping back shows the menu again where it was, the visit going on. It answers false without a panel.
 - `empty`: why its list is empty, shown in its place; by default its state's own `empty`.

@@ -132,7 +132,7 @@
     },
     "later": {
       "type": "command",
-      "read": "echo '{\"phase\":\"later\",\"kind\":\"nope\"}'"
+      "read": "echo '{\"phase\":\"later\"}'"
     },
     "bare": {
       "type": "tasks",
