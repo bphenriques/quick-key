@@ -390,7 +390,6 @@ Singleton {
     if (named.length) found.push("formats " + named.join(", ") + ", which " + entry.status + " has not (" + (status.names.map(name => "{" + name + "}").join(", ") || "none") + ")");
     if (typeof entry.desc !== "string") found.push("needs a desc");
     if (!inBar && !keys.length) found.push("needs a key");
-    if (inBar && entry.list == null && entry.status == null && entry.icon == null && entry.action == null) found.push("shows nothing: needs a status, an icon or an action");
     // A plugin's actions are its own, known only once it runs: on a level listing one, any name may be one.
     if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is neither built in nor its level's plugin's");
     found.push(...fieldProblems(entry, plugins, inBar));

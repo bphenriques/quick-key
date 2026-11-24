@@ -59,6 +59,7 @@ ShellRoot {
     ["a bar key with a modifier", { menu: { header: { left: [{ key: "Alt+x", desc: "X", icon: "x", cmd: "true" }] } } }, "bar keys with a modifier"],
     ["a limit outside a bar", menu([{ key: "x", desc: "X", icon: "x", list: "tray", limit: 3 }]), "can only set limit on a list in a bar"],
     ["a format without a status", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", format: "{a}" }]), "can only set format with status"],
+    ["a bar entry with only its text, which does nothing", { menu: { header: { left: [{ key: "x", desc: "X" }] } } }, "needs one of cmd, action, submenu, list or view, or only a status"],
     ["an entry in the body that only shows a status", menu([{ key: "x", desc: "X", status: "battery" }]), "needs one of cmd, action, submenu, list or view"],
     ["a field misspelt, which is why the entry does nothing", menu([{ key: "l", desc: "Lock", icon: "x", command: "true" }]), "sets command, which no entry takes"],
     ["a list neither built in nor a plugin's", menu([{ key: "x", desc: "X", icon: "x", list: "nope" }]), "names list 'nope'"],
@@ -129,6 +130,11 @@ ShellRoot {
         name: "a row without an icon has nothing wrong",
         timeout: 0,
         until: () => root.names(root.menu([{ key: "l", desc: "Lock", cmd: "true" }]), [])
+      },
+      {
+        name: "a bar entry showing only its text has nothing wrong",
+        timeout: 0,
+        until: () => root.names({ menu: { header: { left: [{ key: "x", desc: "Lock", cmd: "true" }] } } }, [])
       },
       {
         name: "a plugin's own settings have nothing wrong",
