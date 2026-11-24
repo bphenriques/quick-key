@@ -73,7 +73,7 @@ The plugin's `shortcut` only labels that key. Their keys show where they act, an
 
 A key path runs as typing it would: `notifications press "2 x"`. The plugin's actions, for a binding (`notifications action <name>`) or an entry, are `summon`, `invoke` (opens the newest card), `dismiss` (the newest), `clear`, `restore` and `pause`.
 
-As a list, `{ key = "N"; desc = "Notifications"; icon = "<glyph>"; list = "notifications"; }` shows the cards in their order, then those closed struck through, newest first, each by its time, or its day if not today, a critical one by its glyph: a digit opens a card, or brings a closed one back, and its own menu dismisses it.
+As a list, `{ key = "N"; desc = "Notifications"; icon = "󰂚"; list = "notifications"; }` shows the cards in their order, then those closed struck through, newest first, each by its time, or its day if not today, a critical one by its glyph: a digit opens a card, or brings a closed one back, and its own menu dismisses it.
 
 ## Replies
 

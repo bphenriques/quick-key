@@ -32,7 +32,7 @@ A colour set in `theme` itself wins over the theme's. Colours are `#rgb`, `#rrgg
 
 With [stylix](https://github.com/nix-community/stylix), the module themes the shell like one of stylix's own targets: on whenever stylix themes every target (`stylix.autoEnable`), else with `stylix.targets.quick-key.enable = true`. It writes its colours as a theme named `stylix` (`border` from `base03`), picked unless you name another, and sets the monospace font and the popups' font size and opacity, each a default your own `theme` settings override. Stylix's popups are opaque by default, which hides the background blur; `stylix.opacity.popups = 0.92` keeps it.
 
-`glyphs` overrides any icon by its name in the kit's `Glyphs`, in the shape of its default: one glyph, a list (`batteryLevels`, one per 10%), or a map (`{ "audioDevices": { "headset": "<glyph>" } }`).
+`glyphs` overrides any icon by its name in the kit's `Glyphs`, in the shape of its default: one glyph, a list (`batteryLevels`, one per 10%), or a map (`{ "audioDevices": { "headset": "󰋎" } }`).
 
 ## Defaults
 

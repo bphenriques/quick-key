@@ -13,7 +13,7 @@ A body holds one thing. It is either entries, each a key and a label that does s
   submenu = [         # and its actions, on letters
     { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; }
     { key = "m"; desc = "Mute"; action = "sinkMute"; }
-    { key = "c"; desc = "Configure..."; icon = "<glyph>"; cmd = "pavucontrol"; }
+    { key = "c"; desc = "Configure..."; icon = "󰘮"; cmd = "pavucontrol"; }
   ];
 }
 ```

@@ -13,7 +13,7 @@ A dot under a day marks each colour of its events, up to four; with more, the la
 The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it; one under way says when it ends (`to 12:00`). Its fields are `title`, `when` and `updated`: how old the events are, or `syncing...` while a sync runs. A Sync button in the level's bar shows only its icon, spinning while the sync runs, `updated` on hover; past `calendar.staleAfter` it turns warning with `updated` beside it:
 
 ```nix
-header.right = [ { key = "s"; desc = "Sync"; icon = "<glyph>"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
+header.right = [ { key = "s"; desc = "Sync"; icon = "󰓦"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
 ```
 
 ## Events
