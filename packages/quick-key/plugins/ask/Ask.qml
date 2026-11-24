@@ -15,7 +15,6 @@ Plugin {
 
   words: ({
     resuming: "Resuming" + Words.ellipsis,
-    newConversation: "New conversation",
     listing: "Listing conversations" + Words.ellipsis,
     none: "No conversations yet",
     noAnswer: "No answer",

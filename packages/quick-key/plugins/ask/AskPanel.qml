@@ -124,9 +124,9 @@ Scope {
         delegate: Turn {
           width: thread.width
         }
-        // Empty, it says so, or that it is being resumed or could not be.
+        // Empty, it says only that it is being resumed or could not be.
         emptyTone: panel.plugin.failure ? "alert" : "dim"
-        emptyText: panel.plugin.stage === "resuming" ? panel.plugin.words.resuming : panel.plugin.failure || panel.plugin.words.newConversation
+        emptyText: panel.plugin.stage === "resuming" ? panel.plugin.words.resuming : panel.plugin.failure
 
         Connections {
           target: panel
