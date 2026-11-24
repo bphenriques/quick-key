@@ -121,6 +121,7 @@ Singleton {
   readonly property string helpBarKeys: "Hold: the bar's keys"
   readonly property string helpCompositor: "Hold: compositor shortcuts"
   readonly property string helpItemMenu: "Open an item's menu"
+  readonly property string helpMove: "Move"
   readonly property string helpFilter: "Filter the list"
   readonly property string helpDay: "Move a day"
   readonly property string helpWeek: "Move a week"

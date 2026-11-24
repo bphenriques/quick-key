@@ -30,11 +30,8 @@ QtObject {
   // The rows shown of all that match, as a pager says it (1-9 of 11).
   readonly property string count: found.length === 0 ? "" : Words.rangeOf(first, rows.length, found.length)
   readonly property string emptyText: items.length > 0 && found.length === 0 ? Words.noMatch(query.trim()) : ""
-  // Only what the state changes, Escape while it clears.
-  readonly property var legend: (rows.length > 0 ? [{ key: rows.length > 1 ? "1-" + rows.length : "1", what: Words.pick }, { key: ["Up", "Down"], what: Words.move }] : [])
-    .concat(item ? [{ key: "Return", what: item.verb || Words.pick, clickable: true }] : [])
-    .concat(item?.actions?.length > 0 || item?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
-    .concat(query ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
+  // Only what the state changes; the menu adds what its item takes and Escape while it clears.
+  readonly property var legend: rows.length > 0 ? [{ key: rows.length > 1 ? "1-" + rows.length : "1", what: Words.pick }, { key: ["Up", "Down"], what: Words.move }] : []
 
   // Case and accents aside, so "cafe" finds "Café".
   function fold(text) {

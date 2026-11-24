@@ -30,7 +30,9 @@ ShellRoot {
   readonly property var bareLevel: ({ kind: "entry", entry: { list: "keyed" } })
   readonly property var slashLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "/", desc: "Slash", action: "row" }] } })
   readonly property var calendarLevel: ({ kind: "entry", entry: { view: "calendar", list: "keyed", submenu: [{ key: "Right", desc: "Right", action: "row" }] } })
+  readonly property var downLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "Down", desc: "Down", action: "row" }] } })
   readonly property var startFilter: () => menu.startFilter()
+  readonly property var cursorDown: () => menu.cursorKey("Down")
 
   // What a key does, by precedence: the level it opens on, what is done first, the key, and what it runs.
   readonly property var keyed: [
@@ -55,7 +57,12 @@ ShellRoot {
     ["a bar letter without Ctrl does nothing", keyedLevel, null, "x", "nothing"],
     ["while filtering, a digit runs the row shown", keyedLevel, startFilter, "1", "item"],
     ["while filtering, Alt and a digit open its item's own menu", keyedLevel, startFilter, "Alt+1", "item menu"],
-    ["while filtering, a letter is left to the text", keyedLevel, startFilter, "f", "nothing"]
+    ["while filtering, a letter is left to the text", keyedLevel, startFilter, "f", "nothing"],
+    ["↓ moves a cursor onto the list where no row binds it", keyedLevel, null, "Down", "cursor 1"],
+    ["Return runs the cursor's item", keyedLevel, cursorDown, "Return", "item"],
+    ["Alt+Return opens the cursor's item's own menu", keyedLevel, cursorDown, "Alt+Return", "item menu"],
+    ["a level binding ↓ runs its row rather than move the cursor", downLevel, null, "Down", "row"],
+    ["Escape with a cursor goes back at once", keyedLevel, cursorDown, "Escape", "back"]
   ]
 
   // What the key did, told by what changed; the keyed item closes the menu, which is how a run of it shows.
@@ -69,18 +76,19 @@ ShellRoot {
     if (menu.stack.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
     if (was.input) return "body";
+    if (menu.cursorItem?.id !== was.cursor) return "cursor " + (menu.cursorItem?.key ?? "none");
     return handled ? "taken" : "nothing";
   }
 
-  // As press() runs a key: the filter's keys while filtering, else the level's.
+  // As typing runs a key: the filter's keys while filtering, else the level's, then the cursor's.
   function pressOn(level, before, name) {
     menu.hide();
     menu.show();
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused };
-    const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name), was);
+    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused, cursor: menu.cursorItem?.id };
+    const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name) || menu.cursorKey(name), was);
     menu.hide();
     return did;
   }
@@ -136,14 +144,13 @@ ShellRoot {
         }
       },
       {
-        name: "the filter finds a label with accents typed without them, and its legend offers a tray app's menu",
+        name: "the filter finds a label with accents typed without them",
         until: () => {
-          probe.items = [{ id: "c", desc: "Café", app: { hasMenu: true } }, { id: "t", desc: "Tea" }];
+          probe.items = [{ id: "c", desc: "Café" }, { id: "t", desc: "Tea" }];
           probe.search("cafe");
           const found = probe.found.length === 1 && probe.item.id === "c";
-          const offered = probe.legend.some(key => key.key === "Alt+Return");
           probe.search("CAFÉ");
-          return found && offered && probe.found.length === 1;
+          return found && probe.found.length === 1;
         }
       },
       {
@@ -455,6 +462,38 @@ ShellRoot {
         }
       },
       {
+        name: "at rest the arrows move a cursor from the item in use and stop at the last row shown, digits staying on their items; the legend names Return, ? the arrows",
+        until: () => {
+          const plugin = Plugins.get("keyed");
+          if (!plugin) return false;
+          const was = plugin.items;
+          plugin.items = Array.from({ length: 12 }, (_, i) => ({ id: "i" + i, verb: "open", active: i === 2, actions: [{ key: "d" }] }));
+          menu.hide();
+          menu.show();
+          menu.push(root.bareLevel);
+          const listed = menu.help.some(key => key.desc === Words.helpMove);
+          menu.cursorKey("Down");
+          const moved = menu.cursorItem?.id === "i3" && menu.rows[3].current && menu.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join(", ") === "/ 1-9 of 12, RET open, M-RET menu";
+          for (let i = 0; i < 20; i++) menu.cursorKey("Down");
+          const stopped = menu.cursorItem?.key === "9" && menu.rows[0].id === "i0" && menu.rows[0].key === "1";
+          menu.push(root.downLevel);
+          const bound = !menu.help.some(key => key.desc === Words.helpMove);
+          menu.hide();
+          plugin.items = was;
+          return listed && moved && stopped && bound;
+        }
+      },
+      {
+        name: "a key path never moves the cursor",
+        until: () => {
+          menu.hide();
+          const ran = menu.press("t Down");
+          const none = !menu.cursorItem;
+          menu.hide();
+          return !ran && none;
+        }
+      },
+      {
         name: "Ctrl held lists the bar's keys, each named, a pair as one",
         start: () => menu.hold("Ctrl"),
         until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-k","Clicked"],["C-1","a-1"],["C-0","+1"]]'
@@ -507,8 +546,8 @@ ShellRoot {
             return menu.help.map(key => key.key).join();
           };
           const hinted = () => menu.legend.some(key => key.key === "?");
-          return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && hinted() && listed({ kind: "entry", entry: { list: "acting" } }) === "Alt+1,/,Escape"
-            && !hinted() && listed({ kind: "entry", entry: { list: "devices" } }) === "/,Escape";
+          return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && hinted() && listed({ kind: "entry", entry: { list: "acting" } }) === "Up,Down,Alt+1,/,Escape"
+            && !hinted() && listed({ kind: "entry", entry: { list: "devices" } }) === "Up,Down,/,Escape";
         }
       },
       {
