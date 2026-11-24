@@ -82,13 +82,16 @@ A plugin that needs behaviour (a timer, a surface, a protocol) is a folder, foun
 - One file per view it draws, listed in `views` (`["Minimap.qml"]`). Each is given the plugin as `plugin` and only reads it.
 - A type of its own it uses by name (Ask's `Acp`), listed in a `qmldir` beside it (`Acp 1.0 Acp.qml`), since the shipped folders resolve no type without one.
 
+`import qs` brings `Plugin`, `PluginSettings` and `Config`, `qs.ui` the kit and `qs.services` the services. The smallest to start from is [`plugins/dunst/`](https://github.com/bphenriques/quick-key/tree/main/packages/quick-key/plugins/dunst), all of it settings.
+
 What it gets:
 
 - `name`, `settings` (its part of the config), and `state` (the state line, with `show` and `items` applied).
 - `exec(setting, ...args)` runs a command setting, its arguments as `$1`, `$2` after its text, which the check fails when it ends in `;`, `&` or `|`. `call(setting, args, then)` runs one and always answers `then(code, output)` once done (127 when unset), so a second call never drops one still running; one that exits non-zero is logged with its last line on stderr. `commandLine(setting, ...args)` builds one for a `Process`.
-- The theme (`Config.theme`), the [kit](kit.md), and the services: `Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Compositor`, `Niri` for niri's own events, and:
+- The theme (`Config.theme`) and the menu's settings (`Config.menu`), the [kit](kit.md), and the services: `Audio`, `Network`, `Bluez`, `Power`, `Brightness`, `Music`, `Tray`, `Compositor`, `Niri` for niri's own events, and:
   - `Picker`: `pick(list)` shows a list by name, filtered, on a menu level of its own over the plugin's panel, which Escape shows again.
-  - `Panels`, the stack of surfaces: `open(owner)` shows a plugin's panel on top, `back()` closes it to show what it covered, and `close()` hides them all.
+  - `Panels`, the stack of surfaces: `top` is the one showing, `open(owner)` shows a plugin's panel on top, `back()` closes it to show what it covered, and `close()` hides them all.
+  - `Kept`, what is kept by key over a reload or a restart: `set(key, value)` writes one, and a `KeptValue { key }` binds to its `value`.
 
 What it gives:
 
