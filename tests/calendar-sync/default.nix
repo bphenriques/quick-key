@@ -129,5 +129,6 @@ pkgs.runCommand "quick-key-calendar-sync"
     [ "$(events | wc -l)" = 1 ] || efail "a failed sync keeps the last events"
     jq -e '.error | startswith("work: ")' events/events.json > /dev/null || efail "a failed sync names the calendar"
     ! grep -q secret-token events/events.json || efail "a failed sync's reason leaves the address out"
+    ! grep -q '127\.0\.0\.1' events/events.json || efail "a failed sync's reason leaves the host out, bare as a library names it"
     touch $out
   ''

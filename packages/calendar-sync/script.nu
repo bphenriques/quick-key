@@ -176,11 +176,12 @@ def write-tasks [calendars: list, state: path, --synced, --error: string] {
   mv -f $"($file).tmp" $file
 }
 
-# vdirsyncer's first error line, its addresses left out: one can be secret.
+# vdirsyncer's first error line, its addresses left out: one can be secret. A URL, a bare host:port, and Python's ('host', port).
 def reason [stderr: string]: nothing -> string {
   let errors = $stderr | lines | where {|line| $line =~ '(?i)error' }
   if ($errors | is-empty) { return "could not sync" }
-  $errors | first | str replace --all --regex 'https?://\S+' '<address>' | str replace --regex '^.*?error:\s*' '' | str trim
+  let address = r#'https?://\S+|[\w-]+(\.[\w-]+)+:\d+|\('[^']+', \d+\)'#
+  $errors | first | str replace --all --regex $address '<address>' | str replace --regex '^.*?error:\s*' '' | str trim
 }
 
 # Replaced whole, so the shell never reads half a file.
