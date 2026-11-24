@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 
 // Runs `cases` in order and prints a TAP line for each: `start` once, then up to its `timeout` (five seconds) for `until` to hold, checked at once and every 50 ms after.
+// `until` runs on every check, so a case that waits starts what it waits on once, in `start` or behind a guard: a key or a submit that runs a command, or `menu.show()`, which re-reads every plugin.
 Scope {
   id: root
 
