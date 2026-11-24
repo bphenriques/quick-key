@@ -417,10 +417,13 @@ Scope {
   function handleKey(event) {
     // A bare modifier has no name, and Super belongs to the compositor.
     if (event.modifiers & Qt.MetaModifier) return false;
-    // A held key repeats on the level it was pressed on, never into the one it opened.
+    // A held key repeats on the level it was pressed on, never into the one it opened; of the level's rows, only a pair steps on.
     if (event.isAutoRepeat && level !== internal.pressedOn) return true;
     if (!event.isAutoRepeat) internal.pressedOn = level;
-    return handleName(MenuKeys.name(event));
+    const name = MenuKeys.name(event);
+    const own = event.isAutoRepeat ? find(items, name) : null;
+    if (own && !own.paired) return true;
+    return handleName(name);
   }
 
   function handleName(name) {

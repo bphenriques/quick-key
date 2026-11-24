@@ -709,12 +709,13 @@ ShellRoot {
         until: () => root.pathRan && root.pathClosed && Plugins.get("picked")?.text === "b-2"
       },
       {
-        name: "a held key repeats on the level it was pressed on, never into the one it opened",
+        name: "a held pair steps on the level it was pressed on, never into the one it opened, and a held letter or digit acts once",
         until: () => {
           const plugin = Plugins.get("devices");
           if (!plugin) return false;
           let ran = 0;
-          plugin.actions = { flip: { icon: () => Glyphs.search, available: () => true, run: () => ran++ } };
+          let steps = 0;
+          plugin.actions = { flip: { icon: () => Glyphs.search, available: () => true, run: () => ran++ }, step: { pair: true, icon: () => "", available: () => true, run: () => steps++ } };
           const key = (key, text, repeat) => ({ key, modifiers: Qt.NoModifier, text, isAutoRepeat: repeat });
           menu.hide();
           menu.show();
@@ -724,11 +725,16 @@ ShellRoot {
           menu.handleKey(key(Qt.Key_A, "a", false));
           const pressed = menu.stack.length === 2;
           menu.hide();
-          menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "Down", desc: "Down", action: "flip" }] } });
-          for (const repeat of [false, true, true]) menu.handleKey(key(Qt.Key_Down, "", repeat));
+          menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "f", desc: "Flip", action: "flip" }, { key: "9", desc: "Nine", action: "flip" },
+            { key: ["Left", "Right"], desc: "Step", action: "step" }] } });
+          for (const repeat of [false, true, true]) {
+            menu.handleKey(key(Qt.Key_F, "f", repeat));
+            menu.handleKey(key(Qt.Key_9, "9", repeat));
+            menu.handleKey(key(Qt.Key_Right, "", repeat));
+          }
           menu.hide();
           plugin.actions = {};
-          return held && pressed && ran === 3;
+          return held && pressed && ran === 2 && steps === 3;
         }
       },
       {
