@@ -46,11 +46,11 @@ The menu closes as it runs; `keepOpen = true` keeps it open, for a command you r
 
 ```nix
 { key = "p"; desc = "Power"; status = "powerProfile"; list = "powerProfiles"; submenu = [
-  { key = [ "Down" "Up" ]; desc = "Brightness"; action = "brightness"; }
+  { key = [ "Left" "Right" ]; desc = "Brightness"; action = "brightness"; }
 ]; }
 ```
 
-Both are built in, so neither needs a command: the profiles take the digits, the one in use shown beside the label, and `↓↑` step the backlight as they step the volume.
+Both are built in, so neither needs a command: the profiles take the digits, the one in use shown beside the label, and `←→` step the backlight as they step the volume.
 
 ### Open an entry from a compositor key
 

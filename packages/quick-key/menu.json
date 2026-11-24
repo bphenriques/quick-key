@@ -8,8 +8,8 @@
         "submenu": [
           {
             "key": [
-              "Down",
-              "Up"
+              "Left",
+              "Right"
             ],
             "desc": "Volume",
             "action": "sinkVolume"
@@ -53,8 +53,8 @@
         "submenu": [
           {
             "key": [
-              "Down",
-              "Up"
+              "Left",
+              "Right"
             ],
             "desc": "Volume",
             "action": "sourceVolume"

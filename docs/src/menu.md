@@ -11,7 +11,7 @@ A body holds one thing. It is either entries, each a key and a label that does s
   status = "sink";    # on the right of its row: the output in use and its volume
   list = "sinks";     # its level lists the outputs, on digits, each with its volume
   submenu = [         # and its actions, on letters
-    { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; }
+    { key = [ "Left" "Right" ]; desc = "Volume"; action = "sinkVolume"; }
     { key = "m"; desc = "Mute"; action = "sinkMute"; }
     { key = "c"; desc = "Configure..."; icon = "󰘮"; cmd = "pavucontrol"; }
   ];
@@ -26,7 +26,7 @@ Letters are actions and digits are list items.
 - `ESC` is the one way back, as in a launcher. It clears what you typed, then leaves an input for its level's body, closes the filter or a focused event, then returns where you came from (the level above, or the panel or input that opened it), and at the root closes the menu. It never stops or answers anything. `DEL` only deletes. A level opened on its own, by a shortcut or a key path, is a root.
 - Digits pick from a level's list; `Alt+digit` opens an item's own menu (a tray app's).
 - `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second lists the bar's keys in place of the body, as icons alone cannot say what they run.
-- Two keys with a command or action each (`[ "Down" "Up" ]`) share a row, named for what it changes (`Volume`, `Track`). The first steps down or back: `↓↑` is less then more, and `←→` and `↑↓` are back then forward, up going back in time as on a scrolled page. Held, a key repeats on its level, never into the level it opens.
+- Two keys with a command or action each (`[ "Left" "Right" ]`) share a row, named for what it changes (`Volume`, `Track`). The first steps down or back: `←→` is less then more or back then forward, `↓↑` less then more, and `↑↓` back then forward, up going back in time as on a scrolled page. Held, a key repeats on its level, never into the level it opens.
 - Device levels put Power on `p` and Configure... on `c`, and what ends the session takes Shift (Reboot, Shutdown).
 - `Ctrl` and `Alt` may prefix a key in the body (`Ctrl+Left`, as niri writes bindings) where its bar does not take it. A modifier never runs the plain key, Shift only picks the capital letter, and Super stays the compositor's.
 - Hints show keys Emacs-style: `C-` Ctrl, `M-` Alt, `s-` Super, Shift as the capital letter, symbols for the arrows, `DEL` for Backspace and `ESC` for Escape (`C-←→`, `s-k`).
