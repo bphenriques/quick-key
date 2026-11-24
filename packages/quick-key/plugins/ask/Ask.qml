@@ -143,10 +143,6 @@ Plugin {
   }
 
   function activate() {
-    toggle();
-  }
-
-  function toggle() {
     if (shown) Panels.close();
     else show();
   }
