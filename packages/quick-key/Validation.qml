@@ -311,7 +311,7 @@ Singleton {
       width: { kind: "number", range: [1] },
       // Its level's entries.
       submenu: { kind: "list" },
-      // Keeps the menu open once its cmd runs.
+      // Keeps the menu open once its cmd runs, or its action at the end of a key path that opened the menu.
       keepOpen: { kind: "boolean", needs: ["cmd", "action"] },
       // Lights it while the state it names is on.
       activeWhen: { kind: "string", names: States.builtin },

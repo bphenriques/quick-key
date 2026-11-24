@@ -609,6 +609,25 @@ ShellRoot {
         }
       },
       {
+        name: "a key path ending on an action closes the menu it opened, unless the entry keeps it open or the menu was open before",
+        until: () => {
+          const plugin = Plugins.get("devices");
+          if (!plugin) return false;
+          let ran = 0;
+          plugin.actions = { flip: { icon: () => Glyphs.search, available: () => true, run: () => ran++ } };
+          menu.hide();
+          menu.press("t f");
+          const closed = !menu.open;
+          menu.press("t k");
+          const kept = menu.open && menu.stack.length === 1;
+          menu.press("t f");
+          const stayed = menu.open && menu.stack.length === 1;
+          menu.hide();
+          plugin.actions = {};
+          return ran === 3 && closed && kept && stayed;
+        }
+      },
+      {
         name: "a held key repeats on the level it was pressed on, never into the one it opened",
         until: () => {
           const plugin = Plugins.get("devices");

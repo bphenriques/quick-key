@@ -310,6 +310,7 @@ Scope {
       // Read before hide(), which leaves the level.
       const list = levelList;
       if (entry.keepOpen === false || action.closes) hide();
+      internal.ran = entry;
       action.run(second === 1, list, root);
       return;
     }
@@ -431,14 +432,18 @@ Scope {
 
   // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would: what a binding reaches.
   function press(path) {
+    const closed = !open;
     stack = [];
     if (!open) show();
     for (const [i, name] of path.trim().split(/\s+/).entries()) {
       // A key that closed the menu ends the path, so none past it opens a level on the closed menu.
       if (i > 0 && !inStack) return false;
+      internal.ran = null;
       if (!(filtering ? filterKey(name) : handleName(name))) return false;
     }
     base = stack.length;
+    // Opened for the path, the menu closes after the action it ends on, unless that opened a picker or another surface.
+    if (closed && internal.ran && !internal.ran.keepOpen && open && !filtering) hide();
     return true;
   }
 
@@ -489,5 +494,7 @@ Scope {
     property string held: ""
     property string focus: "body"
     property var pressedOn: null
+    // The entry whose action the last key ran.
+    property var ran: null
   }
 }

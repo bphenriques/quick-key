@@ -33,7 +33,7 @@ Letters are actions and digits are list items.
 - Holding `Super` for a second lists each bar entry's `shortcut`, the compositor key bound to it.
 - `?` lists the keys no row shows, where they act: each hold while it lists something, `M-1` while an item has its own menu, `ESC` and, on a level with an input, `TAB` and `C-S-RET`. Any key closes it. The top level's bar shows `? keys`, as every surface with such a list shows its key there; `menu.keysHint` off leaves these out, the keys still acting.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
-- `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A key that closes the menu ends the path. A digit is the same item only while pinned. `menu keys` prints every path as Markdown.
+- `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A key that closes the menu ends the path. A path that opened the menu closes it after the action it ends on, unless that entry sets `keepOpen = true`. A digit is the same item only while pinned. `menu keys` prints every path as Markdown.
 
 ## What an entry does
 

@@ -72,6 +72,24 @@
             }
           ]
         }
+      },
+      {
+        "key": "t",
+        "desc": "Toggles",
+        "list": "devices",
+        "submenu": [
+          {
+            "key": "f",
+            "desc": "Flip",
+            "action": "flip"
+          },
+          {
+            "key": "k",
+            "desc": "Kept",
+            "action": "flip",
+            "keepOpen": true
+          }
+        ]
       }
     ],
     "header": {
