@@ -26,8 +26,8 @@ ShellRoot {
     ["a level of 40 columns", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: [], columns: 40 }] } }, "sets columns to 40, not 1 to 9"],
     ["an app icon mode that is none", { theme: { appIcons: "gray" } }, "theme.appIcons is 'gray', not one of colour, grey, tint"],
     ["a setting since renamed", { theme: { monochromeTray: true } }, "theme.monochromeTray is now theme.appIcons"],
-    ["a setting since removed", { menu: { edge: "top" } }, "menu.edge is now removed: the menu always sits at the bottom"],
-    ["a setting since removed beside a misspelt one", { menu: { edge: "top" }, audio: { stepp: 1 } }, ["menu.edge is now removed", "audio.stepp is not a setting"]],
+    ["a setting since removed", { menu: { edge: "top" } }, "menu.edge is removed: the menu always sits at the bottom"],
+    ["a setting since removed beside a misspelt one", { menu: { edge: "top" }, audio: { stepp: 1 } }, ["menu.edge is removed", "audio.stepp is not a setting"]],
     ["an entry without an icon beside a command plugin named as a removed one", { plugins: { notifications: { type: "command", read: "true" } }, menu: { entries: [{ key: "l", desc: "Lock", cmd: "true" }] } }, "'Lock' in the top level needs an icon"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
     ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: "abc" }] } }, "sets submenu to a string, not a list"],
@@ -63,7 +63,7 @@ ShellRoot {
     ["an entry in the body that only shows a status", menu([{ key: "x", desc: "X", status: "battery" }]), "needs one of cmd, action, submenu, list or view"],
     ["a field misspelt, which is why the entry does nothing", menu([{ key: "l", desc: "Lock", icon: "x", command: "true" }]), "sets command, which no entry takes"],
     ["a list neither built in nor a plugin's", menu([{ key: "x", desc: "X", icon: "x", list: "nope" }]), "names list 'nope'"],
-    ["an action that is not built in", menu([{ key: "x", desc: "X", action: "nope" }]), "runs action 'nope'"],
+    ["an action that is not built in", menu([{ key: "x", desc: "X", action: "nope" }]), "runs action 'nope', which is neither built in nor"],
     ["a pair action with one key", menu([{ key: "v", desc: "Volume", action: "sinkVolume" }]), "needs two keys"],
     ["both cmd and action", menu([{ key: "m", desc: "Mute", cmd: "true", action: "sinkMute" }]), "needs one of cmd, action"],
     ["a field no entry takes", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", command: "true" }]), "sets command, which no entry takes"],
@@ -148,7 +148,7 @@ ShellRoot {
       },
       {
         name: "a key renamed is named with what to write instead, and one not set is not",
-        until: () => Validation.renames({ clock: { fmt: "x" } }, { "clock.fmt": "clock.format", "audio.top": "audio.max" }).join() === "clock.fmt is now clock.format"
+        until: () => Validation.renames({ clock: { fmt: "x" } }, { "clock.fmt": "now clock.format", "audio.top": "now audio.max" }).join() === "clock.fmt is now clock.format"
       }
     ].concat(root.wrong.map(([what, config, problem]) => ({
       name: what + " is named, and nothing else",

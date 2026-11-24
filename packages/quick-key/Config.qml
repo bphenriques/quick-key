@@ -69,7 +69,7 @@ Singleton {
   // Keys renamed or removed, by their old path to what to write instead: a config still setting an old one fails its check saying so. A rename adds its line here.
   // A plugin's name is the user's, so a removed plugin gets no line.
   readonly property var renamed: ({
-      "theme.monochromeTray": "theme.appIcons, true as \"grey\"",
+      "theme.monochromeTray": "now theme.appIcons, true as \"grey\"",
       "menu.edge": "removed: the menu always sits at the bottom",
       "menu.align": "removed: the menu is always centred",
       "theme.titleScale": "removed: titles take the font's size",

@@ -148,7 +148,7 @@ Singleton {
 
   // Each old key, by its path, that json still sets.
   function renames(json, renamed) {
-    return Object.keys(renamed).filter(path => at(json, path) !== undefined).map(path => path + " is now " + renamed[path]);
+    return Object.keys(renamed).filter(path => at(json, path) !== undefined).map(path => path + " is " + renamed[path]);
   }
 
   // A copy of json without the keys at `paths`.
@@ -393,7 +393,7 @@ Singleton {
     if (!inBar && !keys.length) found.push("needs a key");
     if (inBar && entry.list == null && entry.status == null && entry.icon == null && entry.action == null) found.push("shows nothing: needs a status, an icon or an action");
     // A plugin's actions are its own, known only once it runs: on a level listing one, any name may be one.
-    if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is not built in nor its level's plugin's");
+    if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is neither built in nor its level's plugin's");
     if (!inBar && entry.icon == null && entry.status == null && entry.action == null) found.push("needs an icon, as a status or an action brings one");
     found.push(...fieldProblems(entry, plugins, inBar));
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
