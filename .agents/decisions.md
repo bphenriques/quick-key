@@ -47,13 +47,15 @@ Found in the beta.7 round, real but rare or low impact; reopen on a sighting in 
 - An ACP session id starting with `-` reaches `open` as a flag (needs a hostile adapter).
 - `notify-send` bodies carry untrusted text into mako's Pango markup (cosmetic, unseen).
 - Qt's `textinput` warning, twice per close; silencing the category could hide real ones.
+- KeyList's rows (Ask's keys) wash on hover though a click does nothing.
 
 ## Open
 
 - Ask's cost: about 17% of the shell's lines and 25% of commits since 2026-11-13 (80 of 346 since 11-20). Its shape is settled; if the churn stays above the core's after the bug-log weeks, consider moving it out as a user plugin (needs rule 12 amended).
 
 - The owner, at the desk: paste a copied recording into WhatsApp; add from the real menu.
-- Watch: the menu suite's "an input's key gives it the keys" failed once in about 20 runs; todoman 4.7 logs a traceback on two CATEGORIES lines (todoman's).
+- A plugin's `file` source can miss a write: a file rewritten with `>` is read while truncated (text ""), and the write that follows is never read, as Quickshell's FileView skips a reload while a read runs (fileview.cpp:302). Seen as the menu suite's last flake, about 1 in 50 runs at 16 at once, after the beta.7 round fixed the tests' own (cases acting inside `until`). Unseen in daily use; a re-read after each change, or writing via a rename, would cover it.
+- Watch: todoman 4.7 logs a traceback on two CATEGORIES lines (todoman's).
 - Reminders are plain notifications; a script with Snooze and Open link if the owner wants it.
 - The tray draws Solaar's icon (`battery-090`, an Ayatana item with no pixmap) as a missing-image checkerboard, though the icon resolves in Quickshell outside the tray; seen since 2026-11-18, not yet traced (Quickshell's tray or Solaar).
 - Audio output's Apps: two streams of one app (two browser tabs) show alike, as a row names only the app; telling them apart would show `media.name`, the owner's call. Moving an app to another device stays with pavucontrol.
