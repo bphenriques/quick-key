@@ -46,7 +46,7 @@ A line is a plain value (`true`, `45`, `/walls/sunset.jpg`) or a JSON object, an
 
 - `value`: what `show` and `items` look up; a plain line is its value.
 - `glyph`, `text`, `detail`, `active`, `tone`: the look, over what `show` gives the value.
-- `phase`: its work, as Rex's [Program Status Protocol](https://www.superlogical.com/rex/docs/build/program-status) names it. `idle`; `working`, a spinner; `blocked` on you, in warning; `done`, lit, a result not seen yet; `error`, in alert. A word it does not know is `idle`. A `watch` that ends takes `working` and `blocked` with it and leaves `done` and `error` to be seen.
+- `phase`: its work, as Rex's [Program Status Protocol](https://www.superlogical.com/rex/docs/build/program-status) names it. `idle`; `working`, its icon spinning where a bar entry shows one; `blocked` on you, in warning; `done`, lit, a result not seen yet; `error`, in alert. A word it does not know is `idle`. A `watch` that ends takes `working` and `blocked` with it and leaves `done` and `error` to be seen.
 - `enabled`: the ids of `items` that can be picked; unset, all.
 - `items`: items that change, when the settings list none, each `{ id, label, icon, glyphs, detail, swatch, active, enabled, done, hidden, busy, tone, verb, closes, actions }`:
   - `done` dims it, struck through; it can still be picked.

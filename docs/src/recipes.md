@@ -161,7 +161,7 @@ plugins.backup = {
 menu.header.right = [ "backup" ];
 ```
 
-The script writes `running` to the file as it starts, then empties it, or writes `failed`. The bar shows it only while the file holds a state, read on every change with nothing running in between. `phase` is how every surface draws work: `working` spins, `error` alerts ([The state line](plugins.md#the-state-line)).
+The script writes `running` to the file as it starts, then empties it, or writes `failed`; the shell reads it on every change, with nothing running in between. The bar shows the text only while the file holds a state, and `error` turns it alert ([The state line](plugins.md#the-state-line)).
 
 ### A VPN
 
@@ -171,7 +171,7 @@ plugins.vpn = {
   read = ''tailscale status --json | jq -r 'if .BackendState == "Running" then "up" else "down" end' '';
   show.up = { glyph = "<glyph>"; text = "connected"; active = true; };
   show.down = { glyph = "<glyph>"; text = "off"; };
-  activate = ''tailscale status --json | jq -e '.BackendState == "Running"' > /dev/null && tailscale down || tailscale up; qs -c quick-key ipc call vpn refresh'';
+  activate = ''tailscale status --json | jq -e '.BackendState == "Running"' > /dev/null && tailscale down || tailscale up'';
 };
 menu.header.right = [ "vpn" ];
 ```
