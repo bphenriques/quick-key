@@ -22,6 +22,7 @@ Settled with the owner up to v0.27.0-beta.5 (2026-11-24). A review round reads t
 - **The minimalism round's outcome:** `menu.keysHint`, an entry's `legend`, the quieter defaults (no year, no single-layout status, no medium priority glyph), a key path closing the menu it opened.
 - **The beta.7 round (2026-11-24):** a fix goes in only when measured and either common or a broken contract, or when it is a line or two; rare, low-impact or unmeasured findings are parked below. `every` and `pick` are cut (rule 3 holds under every setting; `/` filters every list). A plugin may not take a name the shell uses itself (`menu`, `drafts`, the built-ins); no prefix, which would break every binding. `theme.fontSize` stays whole; stylix's size is rounded. `notify` bodies are not escaped (rule 2: the command is the config's); mako's `markup` is the dotfiles'.
 - **Kept after the beta.7 round:** Daemons (Quickshell's PowerProfiles cannot tell a daemon is running); calendar-sync over home-manager's calendar accounts (its vdirsyncer service never runs `discover`, names no failed calendar, needs a rebuild per edit); niriMinimap; Qt's GPU renderer (the software one may drop the tray's tint and the conversation's fade).
+- **A task's id is its title** (calendar-sync), todoman's number only between two listed tasks of one title, which a tick refuses and which renumber as their files change. A tick acts on the one task of its title, whatever id it carries. No todoman cache or private schema: only its CLI and porcelain output. A task keeps at most one tick running and one queued, a press taking back the queued one: writes merge, no debounce.
 - **The resource budget, measured 2026-11-24:** start +81 ms over bare Quickshell, idle CPU 0, no leak over 400 opens. Memory is 35-38 MB anon before the first surface and 65-75 MB (starter) or about 80 MB (the owner's config) after it, Mesa's GL context being most of the step (the software renderer stays at 28 MB); `systemctl status`'s Memory figure is lower as it lists swap apart.
 
 ## Not doing
@@ -40,6 +41,7 @@ Found in the beta.7 round, real but rare or low impact; reopen on a sighting in 
 
 - The pop-up's tone ignores a plugin's `phase` (Osd.qml:72); folding it into `Statuses.of` would add pop-ups on error.
 - `themes.<name>` colours typed `str` in the module (warns at runtime, where `settings.theme` fails the build); a misspelt colour name in a theme file is ignored silently.
+- Calendar steps cost more CPU with hundreds of events (854: 42 ms a day step, 88 ms a month); key repeat slows itself and nothing lags after release.
 - `times()` in CalendarEvents decides in a view; CalendarMonth's Repeater takes the array (no visible effect).
 - A bar tip cut at the screen's edge when the menu spans the screen.
 - Suite's timeout counts polls, not time; no positive control for the "never runs" cases; no guard on two `.js` libraries of one name.
@@ -54,7 +56,7 @@ Found in the beta.7 round, real but rare or low impact; reopen on a sighting in 
 - Ask's cost: about 17% of the shell's lines and 25% of commits since 2026-11-13 (80 of 346 since 11-20). Its shape is settled; if the churn stays above the core's after the bug-log weeks, consider moving it out as a user plugin (needs rule 12 amended).
 
 - The owner, at the desk: paste a copied recording into WhatsApp; add from the real menu.
-- A plugin's `file` source can miss a write: a file rewritten with `>` is read while truncated (text ""), and the write that follows is never read, as Quickshell's FileView skips a reload while a read runs (fileview.cpp:302). Seen as the menu suite's last flake, about 1 in 50 runs at 16 at once, after the beta.7 round fixed the tests' own (cases acting inside `until`). Unseen in daily use; a re-read after each change, or writing via a rename, would cover it.
+- A plugin's `file` source can miss a write: a file rewritten with `>` is read while truncated (text ""), and the write that follows is never read, as Quickshell's FileView skips a reload while a read runs (fileview.cpp:302). Seen as the menu suite's last flake, about 1 in 50 runs at 16 at once, after the beta.7 round fixed the tests' own (cases acting inside `until`). Measured 2026-11-24: single writes and renames 30 ms apart missed none; five in-place writes microseconds apart left 23 to 85 of 100 runs on the wrong content. calendar-sync renames, so it is safe; plugins.md tells a writer to rename. Unseen in daily use; a re-read after each change would cover the rest.
 - Watch: todoman 4.7 logs a traceback on two CATEGORIES lines (todoman's).
 - Reminders are plain notifications; a script with Snooze and Open link if the owner wants it.
 - The tray draws Solaar's icon (`battery-090`, an Ayatana item with no pixmap) as a missing-image checkerboard, though the icon resolves in Quickshell outside the tray; seen since 2026-11-18, not yet traced (Quickshell's tray or Solaar).
