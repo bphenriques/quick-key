@@ -35,6 +35,7 @@ in
   module-eval = import ./module.nix { inherit pkgs evalHome; };
   comments = import ./comments.nix { inherit pkgs self; };
   lint = import ./lint.nix { inherit pkgs self; };
+  recipes = import ./recipes.nix { inherit pkgs self; };
   unit = import ./unit.nix { inherit pkgs self; };
   calendar-sync = import ./calendar-sync { inherit pkgs self; };
 }
