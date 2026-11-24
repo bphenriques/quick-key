@@ -21,9 +21,6 @@ Singleton {
   function switchLayout() {
   }
 
-  function focusApp(names) {
-  }
-
   Connections {
     target: Quickshell
 

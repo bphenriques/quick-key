@@ -29,8 +29,6 @@ Singleton {
   readonly property string tray: Config.glyphs.tray ?? "\u{F003B}" // md-apps
   readonly property string notifications: Config.glyphs.notifications ?? "\u{F009A}" // md-bell
   readonly property string notificationsPaused: Config.glyphs.notificationsPaused ?? "\u{F009B}" // md-bell_off
-  readonly property string close: Config.glyphs.close ?? "\u{F0156}" // md-close
-  readonly property string urgent: Config.glyphs.urgent ?? "\u{F0026}" // md-alert
   readonly property string window: Config.glyphs.window ?? "\u{F0614}" // md-application_outline
   readonly property string record: Config.glyphs.record ?? "\u{F044B}" // md-record_rec
   readonly property string calendar: Config.glyphs.calendar ?? "\u{F00ED}" // md-calendar

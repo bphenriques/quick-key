@@ -58,19 +58,6 @@ Singleton {
     requestComponent.createObject(root, { message: JSON.stringify(message), callback: callback ?? null });
   }
 
-  // Focuses the window of the app named, by its desktop entry or its name: an app id that is one, or ends with one (com.rtosta.zapzap for ZapZap); nothing when none or several are open.
-  function focusApp(names) {
-    const wanted = names.filter(name => name).map(name => String(name).toLowerCase());
-    request("Windows", reply => {
-      const windows = reply.Windows.filter(window => {
-        const id = (window.app_id ?? "").toLowerCase();
-        return wanted.some(name => id === name || id.endsWith("." + name));
-      });
-      // Only one: of several (terminals, browser windows), the one that sent it cannot be told, and the wrong one would cover the right one.
-      if (windows.length === 1) request({ Action: { FocusWindow: { id: windows[0].id } } });
-    });
-  }
-
   function switchLayout() {
     request({ Action: { SwitchLayout: { layout: "Next" } } });
   }

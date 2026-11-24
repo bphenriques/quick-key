@@ -32,11 +32,6 @@ Singleton {
     impl.switchLayout();
   }
 
-  // A window of the app named, by its desktop entry or its name, focused; without a backend, nothing.
-  function focusApp(names) {
-    impl.focusApp(names);
-  }
-
   // A screen turned on or off: the outputs read again, as no event says which.
   Connections {
     target: root.impl

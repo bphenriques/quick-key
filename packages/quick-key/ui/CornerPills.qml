@@ -6,8 +6,6 @@ import Quickshell
 // The corner pills on screen, in the order they showed, so each stacks under those before it.
 Singleton {
   property var order: []
-  // The stack's height, each pill with the gap after it, so what sits under it (the cards) starts below.
-  readonly property real height: order.reduce((sum, pill) => sum + pill.height, 0)
 
   // Where a pill starts below the first: the height of those before it.
   function offset(pill) {

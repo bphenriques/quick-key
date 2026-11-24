@@ -74,6 +74,8 @@ Singleton {
       "theme.titleScale": "removed: titles take the font's size",
       "theme.motion": "removed: pop-ups always fade",
       "glyphs.link": "removed: an answer's links stay in its text",
+      "glyphs.close": "removed with the notifications plugin",
+      "glyphs.urgent": "removed with the notifications plugin",
       "menu.inputSide": "removed: a level's input always sits past its body",
       "popups.position": "removed: the pop-up always sits at the right edge",
       "menu.margin": "removed: every surface sits theme.edgeMargin from the edge",

@@ -115,7 +115,6 @@ Singleton {
   readonly property string month: "month"
   readonly property string move: "move"
   readonly property string pick: "pick"
-  readonly property string sendLeave: "send and leave"
   readonly property string today: "today"
 
   // What a key does, listed on `?`.
