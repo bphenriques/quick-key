@@ -37,6 +37,7 @@ ShellRoot {
     ["a list nests by indent", () => bare("- a\n- b\n  - c"), "<ul><li>a</li><li>b<ul><li>c</li></ul></li></ul>"],
     ["a numbered list starts at its first number", () => [bare("3. x\n4. y"), bare("1) x")], ["<ol start=\"3\"><li>x</li><li>y</li></ol>", "<ol><li>x</li></ol>"]],
     ["a loose list is one list, and an indented line goes on with its item", () => [bare("- a\n\n- b"), bare("1. one\n   more")], ["<ul><li>a</li><li>b</li></ul>", "<ol><li>one more</li></ol>"]],
+    ["a line right under an item goes on with it, unindented too; after a blank line it is a paragraph", () => [bare("- item\ncontinued"), bare("- item\n\nafter")], ["<ul><li>item continued</li></ul>", "<ul><li>item</li></ul><p>after</p>"]],
     ["a paragraph's lines join, and a heading or a list ends it", () => bare("one\ntwo\n# Head\n- item"), "<p>one two</p><p><b>Head</b></p><ul><li>item</li></ul>"],
     ["a table's header is bold, each column aligned as its separator says, a short row filled", () => bare("| L | C | R |\n|:--|:-:|--:|\n| 1 |").match(/<td align="\w+">(<b>)?\w*/g),
       ["<td align=\"left\"><b>L", "<td align=\"center\"><b>C", "<td align=\"right\"><b>R", "<td align=\"left\">1", "<td align=\"center\">", "<td align=\"right\">"]],

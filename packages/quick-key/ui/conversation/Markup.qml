@@ -107,8 +107,10 @@ Singleton {
     } else if (quoteLine.test(line)) {
       while (end < lines.length && quoteLine.test(lines[end])) end++;
     } else if (listItem.test(line)) {
-      // A blank line goes on with the list when an item or an indented line follows it.
-      while (end < lines.length && (listItem.test(lines[end]) || /^\s{2,}\S/.test(lines[end]) || !lines[end].trim() && /^\s*([-*+]|\d+[.)])\s|^\s{2,}\S/.test(lines[end + 1] ?? ""))) end++;
+      // A line right under one of it goes on with its item, indented or not; a blank line goes on with the list when an item or an indented line follows it.
+      while (end < lines.length && (listItem.test(lines[end]) || /^\s{2,}\S/.test(lines[end])
+        || lines[end].trim() && lines[end - 1].trim() && !interrupts(lines, end) && !ruleLine.test(lines[end])
+        || !lines[end].trim() && /^\s*([-*+]|\d+[.)])\s|^\s{2,}\S/.test(lines[end + 1] ?? ""))) end++;
     } else {
       while (end < lines.length && lines[end].trim() && !interrupts(lines, end)) end++;
     }
