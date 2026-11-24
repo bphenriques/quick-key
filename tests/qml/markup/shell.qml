@@ -30,6 +30,7 @@ ShellRoot {
     ["a heading is a bold paragraph, its closing hashes dropped", () => bare("## Setup ##"), "<p><b>Setup</b></p>"],
     ["a hash without a space is text", () => bare("#not one"), "<p>#not one</p>"],
     ["emphasis is bold, italic by either mark, or struck; underscores inside a word stay", () => bare("**b** *i* _u_ ~~s~~ snake_case_name"), "<p><b>b</b> <i>i</i> <i>u</i> <s>s</s> snake_case_name</p>"],
+    ["double underscores inside a word stay, a tool's name among them", () => [bare("__b__ mcp__tasks__delete_done"), Markup.plain("__b__ mcp__tasks__delete_done")], ["<p><b>b</b> mcp__tasks__delete_done</p>", "b mcp__tasks__delete_done"]],
     ["inline code keeps its marks and links as written, and an unclosed backtick is text", () => bare("`a*b*` `[b](v)` and `open"), "<p><span>a*b*</span> <span>[b](v)</span> and `open</p>"],
     ["emphasis spans inline code inside it", () => bare("**a `b` c** and *`d`*"), "<p><b>a <span>b</span> c</b> and <i><span>d</span></i></p>"],
     ["a fenced block is code as written: its links, emphasis and HTML stay text", () => bare("```sh\n[site](https://x) **no** <b>\n```"), "<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td><table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td>[site](https://x) **no** &lt;b&gt;</td></tr></table></td></tr></table>"],

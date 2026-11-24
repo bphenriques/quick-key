@@ -34,7 +34,7 @@ Singleton {
   }
 
   function bare(text) {
-    return text.replace(linkMark, "$1").replace(/\*\*|__|~~|`/g, "").replace(/\*([^*\n]+)\*/g, "$1");
+    return text.replace(linkMark, "$1").replace(/\*\*|~~|`/g, "").replace(/(^|\W)__(.+?)__(?!\w)/g, "$1$2").replace(/\*([^*\n]+)\*/g, "$1");
   }
 
   // Rich text of the kit's own making (rule 9): text escaped, an image or a link by its text, so nothing is fetched and no HTML runs.
@@ -169,7 +169,7 @@ Singleton {
   }
 
   function emphasis(text) {
-    return text.replace(linkMark, "$1").replace(/\*\*(.+?)\*\*|__(.+?)__/g, (match, stars, unders) => "<b>" + (stars ?? unders) + "</b>")
+    return text.replace(linkMark, "$1").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|\W)__(.+?)__(?!\w)/g, "$1<b>$2</b>")
       .replace(/~~(.+?)~~/g, "<s>$1</s>").replace(/\*([^*\s][^*]*?)\*/g, "<i>$1</i>").replace(/(^|\W)_([^_\s][^_]*?)_(?!\w)/g, "$1<i>$2</i>");
   }
 
