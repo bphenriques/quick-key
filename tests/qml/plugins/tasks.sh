@@ -1,4 +1,4 @@
-# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks in one list, `missed` one whose reminder fell due five minutes ago, `broken` one whose sync failed, `titled` one whose id is its title, a name every object has, `done` and `reopen` flip a task after a moment (task d fails, and once `stick` has run the next leaves the file as it was), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
+# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks in one list, `missed` one whose reminder fell due five minutes ago, `broken` one whose sync failed, `titled` one whose id is its title, a name every object has, `done` and `reopen` count their runs by task and flip it after a moment (task d fails, and once `stick` has run the next leaves the file as it was), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
 file="$XDG_RUNTIME_DIR/tasks"
 case "$1" in
   write)
@@ -24,6 +24,7 @@ case "$1" in
     ;;
   stick) touch "$XDG_RUNTIME_DIR/stuck" ;;
   done | reopen)
+    echo $(($(cat "$XDG_RUNTIME_DIR/writes-$2" 2>/dev/null || echo 0) + 1)) > "$XDG_RUNTIME_DIR/writes-$2"
     sleep 0.5
     [ "$2" = d ] && exit 1
     rm "$XDG_RUNTIME_DIR/stuck" 2>/dev/null && exit 0

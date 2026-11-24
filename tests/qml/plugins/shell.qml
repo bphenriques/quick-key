@@ -15,6 +15,8 @@ ShellRoot {
   property int repeats: 0
   // The minute the timed task was last written as due.
   property string dueMinute: ""
+  // Whether task a showed done, at each change after a burst of presses; null outside it.
+  property var burst: null
 
   CommandProcess {
     id: complainer
@@ -195,6 +197,18 @@ ShellRoot {
           && Object.keys(Plugins.get("tasks").pending).length === 0 && Plugins.get("tasks").error === "Could not tick off Undated"
       },
       {
+        name: "a burst of presses on one task writes at most twice, the row holding the last press's state with no flicker after it",
+        start: () => {
+          for (let i = 0; i < 4; i++) Plugins.get("tasks").select("a");
+          root.burst = [];
+        },
+        until: () => {
+          const tasks = Plugins.get("tasks");
+          return Plugins.get("writes")?.text === "2" && tasks.queue.length === 0 && !Array.from(tasks.state.tasks).find(task => task.id === "a").done
+            && !tasks.items.find(item => item.id === "a").done && root.burst.every(done => !done);
+        }
+      },
+      {
         name: "an added task shows at once in the input, as a working turn, no row moving, before its command has written the file, its after waiting for it",
         start: () => Plugins.get("tasks").submit("New", "echo added > \"$XDG_RUNTIME_DIR/added\""),
         until: () => Plugins.get("tasks").turn?.question === "New" && Plugins.get("tasks").turn?.phase === "working" && !Plugins.get("tasks").items.some(item => item.label === "New")
@@ -327,6 +341,13 @@ ShellRoot {
     target: Plugins.get("watcher")
     function onTextChanged() {
       root.watched = root.watched.concat([target.text]);
+    }
+  }
+
+  Connections {
+    target: Plugins.get("tasks")
+    function onTasksChanged() {
+      if (root.burst) root.burst.push(!!target.tasks.find(task => task.id === "a")?.done);
     }
   }
 

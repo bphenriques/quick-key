@@ -109,6 +109,10 @@
       "type": "command",
       "file": "synced"
     },
+    "writes": {
+      "type": "command",
+      "file": "writes-a"
+    },
     "reminded": {
       "type": "command",
       "file": "reminded"

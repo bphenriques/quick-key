@@ -83,14 +83,23 @@ Plugin {
     return cycle[(cycle.indexOf(current) + 1) % cycle.length];
   }
 
-  // A tick shows at once; its command waits its turn, as each holds the calendar's lock and a sync may hold it too.
+  // A tick shows at once; its command waits its turn, as each holds the calendar's lock and a sync may hold it too. A press takes back its task's queued tick, so a task has at most one running and one queued.
   function select(id) {
     const task = tasks.find(task => task.id === id);
     if (!task) return;
     failure = "";
     pending = Object.assign({}, pending, { [id]: !task.done });
-    queue = queue.concat([{ verb: task.done ? "reopen" : "done", arg: id, title: task.title }]);
+    queue = queue.some(job => ticks(job, id)) ? queue.filter(job => !ticks(job, id)) : queue.concat([{ verb: task.done ? "reopen" : "done", arg: id, title: task.title }]);
     next();
+  }
+
+  function ticks(job, id) {
+    return job.verb !== "add" && job.arg === id;
+  }
+
+  // A tick stays shown while its task has a command queued or running.
+  function busy(id) {
+    return queue.some(job => ticks(job, id)) || toggler.running && ticks(toggler.job, id);
   }
 
   // Shows at once, dim until the file has it.
@@ -109,9 +118,14 @@ Plugin {
     toggler.running = true;
   }
 
-  // The file has a tick once it says the same, and an added task once it holds its title: neither needs showing on its own then.
+  // The file has a tick once it says the same with no command of its task left: it needs showing on its own no longer.
+  function landed() {
+    pending = kept((id, done) => busy(id) || Array.from(state.tasks ?? []).find(task => task.id === id)?.done !== done);
+  }
+
+  // An added task needs showing on its own no longer once the file holds its title.
   onStateChanged: {
-    pending = kept((id, done) => Array.from(state.tasks ?? []).find(task => task.id === id)?.done !== done);
+    landed();
     adding = adding.filter(title => !Array.from(state.tasks ?? []).some(task => task.title === title));
     // Once `tasks` has the change: a task the file adds already due reminds without waiting for the minute.
     Qt.callLater(root.remind);
@@ -162,7 +176,7 @@ Plugin {
   Timer {
     id: settle
     interval: 5000
-    onTriggered: root.pending = root.kept(id => root.queue.some(job => job.arg === id) || toggler.running && toggler.job.arg === id)
+    onTriggered: root.pending = root.kept(id => root.busy(id))
   }
 
   // Each tick and add written in turn; the sync after the last takes them to the server.
@@ -175,11 +189,14 @@ Plugin {
       if (job.verb === "add") root.adding = root.adding.filter(title => title !== job.arg);
       if (code === 0) {
         root.exec(job.after);
+        root.landed();
         settle.restart();
       }
       if (code !== 0 && job.verb === "add") {
         root.failure = root.words.addFailed(job.arg);
       } else if (code !== 0) {
+        // Its queued reverse goes too, which would run against the file's state and fail again.
+        root.queue = root.queue.filter(other => !root.ticks(other, job.arg));
         root.pending = root.kept(id => id !== job.arg);
         root.failure = (job.verb === "done" ? root.words.tickFailed : root.words.reopenFailed)(job.title);
       }
