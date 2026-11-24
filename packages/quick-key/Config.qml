@@ -310,7 +310,7 @@ Singleton {
       }
 
       property JsonObject clock: JsonObject {
-        // The clock status's format: strftime as waybar takes it, plus %o for the English ordinal; unset, the locale's long date and short time.
+        // The clock status's format: strftime as waybar takes it, plus %o for the English ordinal; unset, the weekday, day and month (Tuesday 24 November) and the locale's time.
         property string format
         // The locale every date and time is said in (en_GB): its names, and 24 or 12 hours; unset, the system's (LC_TIME).
         property string locale

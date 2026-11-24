@@ -16,6 +16,8 @@ The `calendar` status shows when the next event is, timed ones first, so a daily
 header.right = [ { key = "s"; desc = "Sync"; icon = "󰓦"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
 ```
 
+Once something writes `calendar.file`, put `"calendar"` in the top bar beside the clock (`menu.header.left`), so the next event shows without opening the month.
+
 ## Events
 
 Each day heads its events, with its year when not this one. A timed event takes one line, `09:00–09:15`, and its place a second. One running past its day says when it ends (`to Sat 18:00`), or only the date a week or more on (`to 3 Dec`), and the days it fills are all day. What is over dims, and today's timed events that are over fold into one line (`3 earlier`) until the arrows reach one. Today opens under its heading, or at its first timed event not over yet when the day's start would still leave it out of view, and any day, the last included, scrolls to the top. A row that does not fit whole is not drawn. On a level too narrow for titles beside the times, the times fold into each title's second line.

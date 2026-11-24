@@ -147,6 +147,10 @@ ShellRoot {
           && Statuses.builtin.powerProfile.glyph() === "" && Statuses.value(Statuses.builtin.powerProfile, Statuses.builtin.powerProfile.fields()).detail === ""
       },
       {
+        name: "with no clock.format, the clock says the day and the time, never the year",
+        until: () => !Clock.text.includes(String(Clock.date.getFullYear())) && Clock.text.includes(Clock.time(Clock.date))
+      },
+      {
         name: "without layouts to switch between, the keyboard layout status shows nothing, so a bar hides it",
         until: () => KeyboardLayout.names.length < 2 && Statuses.of("keyboardLayout").glyph === "" && Statuses.of("keyboardLayout").text === ""
       },

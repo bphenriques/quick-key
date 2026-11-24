@@ -15,7 +15,7 @@ Singleton {
   readonly property var names: Lib.names(locale, Locale.ShortFormat)
   readonly property var weekdays: names.weekdays
   readonly property string text: Config.clock.format ? Lib.format(date, Config.clock.format, names)
-    : date.toLocaleDateString(locale, Locale.LongFormat) + " " + date.toLocaleTimeString(locale, Locale.ShortFormat)
+    : Lib.format(date, "%A %-d %B", names) + " " + Lib.time(date, names)
   // As clock.js has them, needing no now.
   readonly property var dayKey: Lib.dayKey
   readonly property var minuteKey: Lib.minuteKey
