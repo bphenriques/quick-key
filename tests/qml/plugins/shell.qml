@@ -282,6 +282,10 @@ ShellRoot {
         until: () => Plugins.get("tasks").detail === "9+"
       },
       {
+        name: "tasks bring a glyph of their own, so their row has an icon without one set",
+        until: () => Statuses.of("bare").glyph === Glyphs.tasks && Glyphs.tasks !== ""
+      },
+      {
         name: "with one list in the file, no row shows its colour",
         until: () => Plugins.get("tasks").items.length === 10 && Plugins.get("tasks").items.every(item => item.swatch === "")
       },

@@ -1,7 +1,10 @@
 import qs
+import qs.ui
 
 // The tasks' commands, each given its arguments as $1, $2... (docs/src/tasks.md); `file` is the tasks file.
 PluginSettings {
+  // Its glyph, so its row has an icon without one of its own.
+  glyph: Glyphs.tasks
   // Given a task's id and title, ticks it off and writes the file again.
   property string done
   // Given a task's id and title, unticks it and writes the file again.
