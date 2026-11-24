@@ -67,7 +67,7 @@ The plugin's `shortcut` only labels that key. Their keys show where they act, an
 
 - A digit picks a card by its place among all, so it holds still, scrolling it into view. `↑↓` move the pick, scrolling past the last one.
 - The picked card's letters run its actions. The keys stay, so one summon can clear several.
-- `RET` opens it and lets go. `x` dismisses it, the pick moving on.
+- `RET` opens it and lets go. `x` dismisses it, the pick moving on; once the last goes, the keys stay until `ESC`, the bar offering `C-r`.
 - `C-X` clears all. `C-r` brings back the last closed, of the `history` kept, unless its sender marked it transient; it stays until dismissed, then goes back among them. `C-p` pauses or resumes.
 - `ESC`, or a click beside the cards, lets go.
 

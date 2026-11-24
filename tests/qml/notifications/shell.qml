@@ -517,6 +517,29 @@ ShellRoot {
         }
       },
       {
+        name: "the last card dismissed or cleared, the keys stay, so C-r brings it back with no new summon",
+        start: () => {
+          root.reset();
+          root.send("Last one");
+        },
+        until: () => {
+          const last = root.find("Last one");
+          if (last && !last.restored && !("last" in root.marks)) {
+            root.mark("last");
+            root.plugin.summon();
+            root.plugin.key("x");
+          }
+          if (!("last" in root.marks) || !root.plugin.summoned) return false;
+          if (!last && !("lastBack" in root.marks)) {
+            root.mark("lastBack");
+            root.plugin.key("Ctrl+r");
+          }
+          if (!last?.restored || root.plugin.picked !== last) return false;
+          root.plugin.key("Ctrl+X");
+          return root.plugin.summoned && root.plugin.ordered.length === 0;
+        }
+      },
+      {
         name: "run runs for a new card, not again when it is replaced",
         start: () => {
           root.plugin.release();

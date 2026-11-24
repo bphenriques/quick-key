@@ -59,6 +59,7 @@ Plugin {
       taken: "Another notification daemon has the bus: stop it, then restart quick-key",
       pause: "pause",
       resume: "resume",
+      restore: "bring back",
       none: "No notifications",
       send: "send",
       replyCopied: "Reply copied",
@@ -168,7 +169,6 @@ Plugin {
     endReply();
     const all = internal.list;
     internal.list = [];
-    if (internal.picked && internal.mode !== "closed") release();
     internal.picked = null;
     internal.closed = all.reduce((history, entry) => {
       const notification = entry.notification;
@@ -407,15 +407,12 @@ Plugin {
     if (entry === internal.replying && !entry.hasInlineReply) interrupt();
   }
 
-  // The pick moves to the card that takes its place; the last one gone lets go of the keys. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient).
+  // The pick moves to the card that takes its place, the keys staying once the last one goes. The card you reply to closing interrupts the reply. Kept to bring back (C-r), unless its sender marked it passing (transient).
   function leave(entry, keep = true) {
     if (entry === internal.replying) interrupt();
     const before = shown;
     internal.list = internal.list.filter(each => each !== entry);
-    if (internal.picked === entry) {
-      internal.picked = Stack.successor(entry, before, shown);
-      if (internal.picked === null && internal.mode !== "closed") release();
-    }
+    if (internal.picked === entry) internal.picked = Stack.successor(entry, before, shown);
     if (!keep || entry.notification?.transient) return entry.destroy();
     internal.closed = shelved(internal.closed, entry);
   }
