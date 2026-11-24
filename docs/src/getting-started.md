@@ -59,6 +59,8 @@ binds {
 
 With Nix, the same through `exec.ipc`, a command line that needs a shell: `Mod+Space { spawn-sh "${config.programs.quick-key.exec.ipc} menu toggle"; }`.
 
+Any key path binds the same way, so a binding never drifts from what the menu shows: `Mod+F2 { spawn "qs" "-c" "quick-key" "ipc" "call" "menu" "press" "a 2"; }` picks the second audio output as typing `a 2` would ([Keys](menu.md#keys)).
+
 ## First run
 
 It runs without a config. The starter menu holds audio, network, Bluetooth and music, with the calendar on the clock and the tray and the session in its bar. Press its key: each row's letter runs it, `ESC` goes back, and `?` lists the keys no row shows (see [Menu](menu.md)).

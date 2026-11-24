@@ -1,7 +1,7 @@
 [book]
 title = "quick-key"
 authors = ["Bruno Henriques"]
-description = "A keyboard-driven Quickshell menu with live status."
+description = "A keyboard-driven Quickshell menu: live state beside fixed labels, key paths as bindings."
 language = "en"
 src = "src"
 
