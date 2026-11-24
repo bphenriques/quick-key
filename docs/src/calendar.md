@@ -16,7 +16,11 @@ The `calendar` status shows when the next event is, timed ones first, so a daily
 header.right = [ { key = "s"; desc = "Sync"; icon = "󰓦"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
 ```
 
-Once something writes `calendar.file`, put `"calendar"` in the top bar beside the clock (`menu.header.left`), so the next event shows without opening the month.
+Once something writes `calendar.file`, put `"calendar"` in the top bar beside the clock, so the next event shows without opening the month. Setting `menu.header.left` replaces the starter's clock, so it names that too:
+
+```nix
+menu.header.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } "calendar" ];
+```
 
 ## Events
 

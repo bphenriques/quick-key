@@ -33,6 +33,7 @@ Letters are actions and digits are list items.
 - Holding `Super` for a second lists each bar entry's `shortcut`, the compositor key bound to it.
 - `?` lists the keys no row shows, where they act: each hold while it lists something, `M-1` while an item has its own menu, `ESC` and, on a level with an input, `TAB` and `C-S-RET`. Any key closes it. The top level's bar shows `? keys`, as every surface with such a list shows its key there; `menu.keysHint` off leaves these out, the keys still acting. A level's `legend` names those of its keys to show in its bar too (`[ "Ctrl+Up" ]`), as which matter is yours to say.
 - `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
+- `keepAwake toggle` over IPC switches keep awake without the menu, and `keepAwake enable` turns it on, for a script.
 - `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A key that closes the menu ends the path. A path that opened the menu closes it after the action it ends on, unless that entry sets `keepOpen = true`. A digit is the same item only while pinned. `menu keys` prints every path as Markdown.
 
 ## What an entry does
@@ -106,7 +107,7 @@ The mouse reaches what the keys do. A click runs a row or a bar item. A right cl
 
 ## Built-in names
 
-Each of `status`, `list`, `action`, `activeWhen` and `view` takes a built-in name or a plugin's. The reference lists them, generated from the shell: [statuses](options.md#statuses) and their fields, [actions](options.md#actions), [lists](options.md#lists), [states](options.md#states) for `activeWhen`, and [views](options.md#views). A plugin's status gives `format` its `text`, `detail` and fields of its own.
+Each of `status`, `list`, `action` and `activeWhen` takes a built-in name or a plugin's, and `view` a built-in. The reference lists them, generated from the shell: [statuses](options.md#statuses) and their fields, [actions](options.md#actions), [lists](options.md#lists), [states](options.md#states) for `activeWhen`, and [views](options.md#views). A plugin's status gives `format` its `text`, `detail` and fields of its own.
 
 A digit on `streams` picks the app `streamVolume` and `streamMute` change, the first until you pick; the starter gives them Left and Right.
 
