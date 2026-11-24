@@ -41,6 +41,8 @@ RowLayout {
   property bool busy: false
   property bool labelShown: true
   readonly property bool titled: title !== ""
+  // Its value shortened to fit, so a bar item tips it whole.
+  readonly property bool cut: textLabel.truncated || detailLabel.truncated
 
   spacing: Config.theme.spacing
 

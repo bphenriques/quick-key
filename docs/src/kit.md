@@ -42,7 +42,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `PlacedRegion` | a blur or input region over an item at a place its holder gives, for an item that what holds it moves (an island on the bar); empty while the item hides |
 | `Panel` | a surface the keyboard opens, the menu or a plugin's: centred at the screen's bottom edge, its `bar` against it (with the top level's right slot on its right when `statuses`), its `body` over it and its `input` over the body (`inputOver`, a level's island) or between the body and the bar (with the keys while `inputFocused`), one open at a time, dismissed by a click anywhere else; keys its body leaves reach `keyPressed` |
 | `Panels` | the surfaces the keyboard opens as one stack of their owners: the top one shows, `open` covers or brings one back, `back` shows what it covered, `close` hides them all; and the top level's right slot a plugin's panel's bar repeats |
-| `Tip` | names what the pointer rests on (an icon alone) above it, after a moment |
+| `Tip` | names what the pointer rests on (an icon alone), or shows text cut to fit whole, above it, after a moment |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |
 | `OverlayWindow`, `DismissArea` | a popup above everything, `edgeMargin` from its screen's edge (`theme.edgeMargin`, no more than a quarter of the screen); the click-outside catcher under it, one per screen |
 | `CornerPill` | a pill in the top-right corner of every screen while `shown`, fading in and out, stacked under the pills already showing; `hovered` and `clicked` for its pointer |

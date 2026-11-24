@@ -95,6 +95,23 @@ ShellRoot {
     menu: menu
   }
 
+  function tipOf(item) {
+    return Array.from(item.children).find(child => child instanceof Tip)?.text;
+  }
+
+  // The clock squeezed in a crowded bar, which lays it out only in a window.
+  FloatingWindow {
+    implicitWidth: 300
+    implicitHeight: 100
+
+    HeaderItem {
+      id: cutItem
+      menu: menu
+      width: 80
+      item: ({ desc: "Calendar", status: "clock" })
+    }
+  }
+
   Suite {
     cases: [
       {
@@ -722,6 +739,15 @@ ShellRoot {
           if (barItem.enabled) barItem.activated();
         },
         until: () => barItem.enabled && Plugins.get("picked")?.text === "clicked"
+      },
+      {
+        name: "a bar status cut to fit tips its value whole",
+        until: () => root.tipOf(cutItem) === Clock.text
+      },
+      {
+        name: "a bar status shown whole has no tip",
+        start: () => cutItem.width = cutItem.implicitWidth,
+        until: () => root.tipOf(cutItem) === ""
       },
       {
         name: "the keyed plugin lists one item with a menu of its own, and runs the actions the table's rows name",
