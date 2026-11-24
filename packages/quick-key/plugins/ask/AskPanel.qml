@@ -167,9 +167,9 @@ Scope {
       Connections {
         target: panel.plugin
 
-        // A failed prompt put back, or dropped with its conversation.
+        // A failed prompt put back, selected so typing replaces it, or dropped with its conversation.
         function onDraftChanged() {
-          if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft);
+          if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft, true);
         }
       }
     }

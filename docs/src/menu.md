@@ -86,7 +86,7 @@ The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level l
 
 Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows over the body: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
 
-An answer the island cannot hold (past three lines, a table, an approval) opens the whole conversation in Ask, and `ESC` there comes back. A click on the turn opens it too, where `C-C` copies the answer. A failure shows in alert, what you sent faded and given back for `RET` to retry. `C-S-RET` leaves the answer to a notification.
+An answer the island cannot hold (past three lines, a table, an approval) opens the whole conversation in Ask, and `ESC` there comes back. A click on the turn opens it too, where `C-C` copies the answer. A failure shows in alert, what you sent faded and given back, selected: `RET` retries it, typing replaces it. `C-S-RET` leaves the answer to a notification.
 
 An input writes, never filters. Put an agent's input only on a level showing what it changes:
 

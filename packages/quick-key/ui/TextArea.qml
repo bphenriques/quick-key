@@ -16,9 +16,11 @@ Flickable {
     field.clear();
   }
 
-  function set(text) {
+  // Selected, typing replaces it.
+  function set(text, selected) {
     field.text = text;
-    field.cursorPosition = field.length;
+    if (selected) field.selectAll();
+    else field.cursorPosition = field.length;
   }
 
   implicitHeight: Math.min(field.contentHeight, maxLines * Metrics.line)

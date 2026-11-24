@@ -124,12 +124,12 @@ ColumnLayout {
       }
     }
 
-    // A failed turn gives back what was sent, so Return retries it.
+    // A failed turn gives back what was sent, selected: Return retries it, typing replaces it.
     Connections {
       target: root.model.plugin
 
       function onTurnChanged() {
-        if (root.model.plugin?.turn?.phase === "error" && prompt.text === "") prompt.set(root.model.lastSent);
+        if (root.model.plugin?.turn?.phase === "error" && prompt.text === "") prompt.set(root.model.lastSent, true);
       }
     }
   }

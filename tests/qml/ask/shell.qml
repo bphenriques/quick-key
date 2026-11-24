@@ -58,17 +58,17 @@ ShellRoot {
     return lateStep[name] === 2 && !ask.busy && ask.exchanges[0].stopped && ask.exchanges[1]?.reply === "next" && done(ask);
   }
 
-  // The text in `item` cut at `lines`, as a compact turn's answer is.
-  function cutAt(item, lines) {
+  // The first item within `item` that `test` holds for.
+  function within(item, test) {
     for (let i = 0; i < item.children.length; i++) {
       const child = item.children[i];
-      const found = child.maximumLineCount === lines ? child : cutAt(child, lines);
+      const found = test(child) ? child : within(child, test);
       if (found) return found;
     }
     return null;
   }
 
-  // A turn as the menu's island draws it.
+  // A turn as the menu's island draws it, and a prompt.
   FloatingWindow {
     implicitWidth: 300
     implicitHeight: 200
@@ -79,6 +79,11 @@ ShellRoot {
       lines: 3
       table: true
       text: "A paragraph long enough to wrap across this narrow turn more than once, and then some more.\n\n| a | b |\n|---|---|\n| 1 | 2 |"
+    }
+
+    Prompt {
+      id: retry
+      width: 300
     }
   }
 
@@ -258,6 +263,11 @@ ShellRoot {
         }
       },
       {
+        name: "a prompt put back for a retry is selected, so typing replaces it and Return sends it whole",
+        start: () => retry.set("fail now", true),
+        until: () => retry.text === "fail now" && root.within(retry, child => child.selectedText !== undefined)?.selectedText === "fail now"
+      },
+      {
         name: "a failed answer shows in alert where the menu shows it, and stays out of the panel's prompt",
         until: () => {
           const ask = Plugins.get("unanswered");
@@ -287,7 +297,7 @@ ShellRoot {
       {
         name: "a compact answer holding a table still wraps, its last line ending in the ellipsis rather than cut through a letter",
         until: () => {
-          const brief = root.cutAt(compact, 3);
+          const brief = root.within(compact, child => child.maximumLineCount === 3);
           return brief !== null && brief.lineCount === 3 && brief.truncated && brief.contentWidth <= brief.width;
         }
       },

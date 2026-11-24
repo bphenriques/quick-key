@@ -39,8 +39,8 @@ RowLayout {
     area.clear();
   }
 
-  function set(text) {
-    area.set(text);
+  function set(text, selected) {
+    area.set(text, selected);
   }
 
   spacing: Config.theme.spacing
