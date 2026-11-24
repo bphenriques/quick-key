@@ -141,8 +141,9 @@ assert lib.assertMsg (
 pkgs.runCommand "quick-key-module-eval"
   {
     nativeBuildInputs = [ pkgs.jq ];
+    # With stylix's theme, which the check must find as the shell will.
     rejected = pkgs.testers.testBuildFailure (
-      configOf (evalHome {
+      configOf (stylix {
         programs.quick-key.settings.audio.stepp = 1;
       })
     );
@@ -157,5 +158,6 @@ pkgs.runCommand "quick-key-module-eval"
     jq -e '.menu.entries | map(.key) == ["t", "v"]' $config
     jq -e '.primary == "#0000ff" and (has("border") | not)' ${cfg.xdg.configFile."quick-key/themes/mine.json".source}
     grep -q 'audio.stepp is not a setting' $rejected/testBuildFailure.log
+    if grep -q 'theme stylix not found' $rejected/testBuildFailure.log; then exit 1; fi
     touch $out
   ''

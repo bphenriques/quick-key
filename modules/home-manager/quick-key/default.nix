@@ -9,8 +9,8 @@ let
   cfg = config.programs.quick-key;
 
   json = pkgs.formats.json { };
-  # The user's own plugins, so the check finds them as the shell will; it reads no theme.
-  besides = lib.filterAttrs (name: _: lib.hasPrefix "quick-key/plugins/" name) config.xdg.configFile;
+  # The files under quick-key/<dir>/ (plugins, themes), so the check finds them as the shell will.
+  besides = dir: lib.filterAttrs (name: _: lib.hasPrefix "quick-key/${dir}/" name) config.xdg.configFile;
   # The shell checks the settings it is given, so a wrong one fails the build, not the session.
   configFile =
     pkgs.runCommand "quick-key-config.json"
@@ -29,7 +29,13 @@ let
           lib.mapAttrsToList (name: file: ''
             if [ -e ${file.source} ]; then mkdir -p "$(dirname $TMPDIR/${name})" && cp -rL ${file.source} $TMPDIR/${name}
             else echo "${name} links out of the store, where the check cannot read it: its settings go unchecked" >&2; unread+=(${lib.head (lib.splitString "/" (lib.removePrefix "quick-key/plugins/" name))}); fi
-          '') besides
+          '') (besides "plugins")
+        )}
+        # A theme linked out of the store (matugen's) is skipped: the theme's assertion has found its name.
+        ${lib.concatStrings (
+          lib.mapAttrsToList (name: file: ''
+            if [ -e ${file.source} ]; then install -D ${file.source} $TMPDIR/${name}; fi
+          '') (besides "themes")
         )}
         # One unread checks as a command plugin, so what names it still does.
         if [ ''${#unread[@]} -gt 0 ]; then
