@@ -53,14 +53,15 @@ Mod+P { spawn "qs" "-c" "quick-key" "ipc" "call" "menu" "toggleEntry" "d"; }
 
 ### Keep a device on its digit
 
+`pins` go on the starter's Audio output, so this takes the place of `entries = starter.entries` in [Extend the starter](#extend-the-starter):
+
 ```nix
-{ key = "a"; desc = "Audio output"; status = "sink"; list = "sinks";
+menu.entries = map (entry: if entry.key == "a" then entry // {
   pins = [
     { match = "alsa_output.pci-*"; label = "Speakers"; }
     { match = "bluez_output.*"; label = "Headphones"; }
   ];
-  submenu = [ { key = [ "Down" "Up" ]; desc = "Volume"; action = "sinkVolume"; } ];
-}
+} else entry) starter.entries;
 ```
 
 Pins take the digits from 1, dimmed while absent, so `a 2` is always the headphones.
@@ -233,7 +234,7 @@ plugins.dunst = { };
 menu.header.right = [ "dunst" ];
 ```
 
-A plugin in a bar shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same. For a key, make it an entry: `{ key = "d"; desc = "Do not disturb"; status = "dunst"; cmd = "dunstctl set-paused toggle"; }` runs on `C-d`.
+A plugin in a bar shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same. For a key, give it one: `{ key = "d"; desc = "Do not disturb"; status = "dunst"; }` in a bar runs it on `C-d`.
 
 ### Text of your own in the bar
 
