@@ -7,6 +7,4 @@ PluginSettings {
   property int maxWidth: 180
   // A window tile's background opacity, 0 to 1.
   property real opacity: 0.7
-  // A window tile's outline, in pixels, the focused one's in the primary colour.
-  property int borderWidth: 1
 }

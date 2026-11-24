@@ -19,7 +19,7 @@ Scope {
   }
 
   readonly property var screen: Quickshell.screens.find(screen => screen.name === view.plugin.map?.output) ?? null
-  readonly property int gap: 2 * view.settings.borderWidth
+  readonly property int gap: 2 * Config.theme.borderWidth
   readonly property real dot: view.settings.height / 8
   readonly property real strip: view.settings.height / 5
   // Sized to mapHeight for the output's height, shrunk further if any of the three workspaces would pass maxWidth.
@@ -46,7 +46,7 @@ Scope {
 
     radius: Config.theme.itemRadius / 2
     color: Tone.surface(view.settings.opacity)
-    border.width: view.settings.borderWidth
+    border.width: Config.theme.borderWidth
     border.color: Tone.color(focused ? "primary" : "dim")
 
     Icon {
