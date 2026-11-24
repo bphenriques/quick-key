@@ -51,7 +51,8 @@ Singleton {
       glyph: () => Network.kind === "wifi" ? Glyphs.wifiSignal(Network.strength, Network.limited) : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected,
       fields: pinned => ({
         name: Network.kind === "wifi" ? pinned(Network.ssid, Network.ssid) : Network.kind === "wired" ? Words.ethernet : Words.disconnected,
-        wifi: Network.wifiEnabled ? "" : Words.wifiOff,
+        // Off only says why there is no connection: wired, it is beside the point.
+        wifi: Network.wifiEnabled || Network.kind === "wired" ? "" : Words.wifiOff,
         internet: Network.limited ? Words.noInternet : ""
       }),
       format: "{name}|{internet} {wifi}",
