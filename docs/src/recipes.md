@@ -213,7 +213,7 @@ plugins.monitor = {
   read = ''ddcutil getvcp 10 --brief | awk '{ printf "{\"text\": \"%s%%\"}\n", $4 }' '';
 };
 menu.entries = [
-  { key = [ "Down" "Up" ]; desc = "Monitor brightness"; icon = "<glyph>"; status = "monitor"; keepOpen = true;
+  { key = [ "Left" "Right" ]; desc = "Monitor brightness"; icon = "<glyph>"; status = "monitor"; keepOpen = true;
     cmd = [ "ddcutil setvcp 10 - 10; qs -c quick-key ipc call monitor refresh" "ddcutil setvcp 10 + 10; qs -c quick-key ipc call monitor refresh" ]; }
 ];
 ```
