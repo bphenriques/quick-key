@@ -24,7 +24,8 @@ in
     programs.quick-key.settings.theme = lib.mapAttrs (_: lib.mkDefault) {
       name = "stylix";
       monospaceFont = stylix.fonts.monospace.name;
-      fontSize = stylix.fonts.sizes.popups;
+      # The shell's size is whole points; stylix's may be a fraction.
+      fontSize = builtins.floor (stylix.fonts.sizes.popups + 0.5);
       surfaceOpacity = stylix.opacity.popups;
     };
   };

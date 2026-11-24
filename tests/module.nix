@@ -108,6 +108,9 @@ assert lib.assertMsg (
   !((stylix { stylix.autoEnable = false; }).programs.quick-key.settings ? theme)
 ) "with autoEnable off, stylix leaves the shell alone";
 assert lib.assertMsg (
+  (stylix { stylix.fonts.sizes.popups = 10.5; }).programs.quick-key.settings.theme.fontSize == 11
+) "a fractional stylix size is rounded, as the shell's is whole";
+assert lib.assertMsg (
   (stylix {
     stylix.autoEnable = false;
     stylix.targets.quick-key.enable = true;
