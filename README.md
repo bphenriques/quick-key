@@ -23,7 +23,6 @@ Example:
 
   programs.quick-key = {
     enable = true;
-    calendarSync.enable = true;
     settings = {
       theme.name = "catppuccin-mocha";
       plugins.niriMinimap = { };   # niri workspace minimap
