@@ -21,7 +21,7 @@ Plugin {
     reopenFailed: what => "Could not reopen " + what
   })
   // In the order chosen, those done as the menu opened last: a tick in the visit keeps its digit, so the same key unticks it. A tick shows before the file has it.
-  readonly property var tasks: Array.from(state.tasks ?? []).map(task => task.id in pending ? Object.assign({}, task, { done: pending[task.id] }) : task).sort((a, b) => Lib.compare(a, b, root.sort, root.settled))
+  readonly property var tasks: Array.from(state.tasks ?? []).map(task => Object.prototype.hasOwnProperty.call(pending, task.id) ? Object.assign({}, task, { done: pending[task.id] }) : task).sort((a, b) => Lib.compare(a, b, root.sort, root.settled))
   // A task being added shows in the input, as a turn does, so no row moves under the keys until it is listed.
   turn: adding.length > 0 ? { question: adding.join(" · "), text: "", phase: "working", activity: words.adding } : null
   // Kept once the level's actions step them, over a reload or a restart.

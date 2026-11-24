@@ -155,8 +155,11 @@ def shown [state: path]: nothing -> list {
 
 def write-tasks [calendars: list, state: path, --synced, --error: string] {
   let colors = $calendars | reduce --fold {} {|c, colors| $colors | insert $c.name $c.color }
-  let tasks = shown $state | each {|t| {
-    id: ($t.id | into string)
+  let shown = shown $state
+  # A title names a task over a tick, which todoman numbers anew; two of one title, whose tick is refused, take todoman's number.
+  let twins = $shown.summary | uniq --repeated
+  let tasks = $shown | each {|t| {
+    id: (if $t.summary in $twins { $t.id | into string } else { $t.summary })
     title: $t.summary
     due: (if $t.due == null { null } else { local-time $t.due })
     done: $t.completed
@@ -283,21 +286,22 @@ def "main tasks" [calendars_file: path, events_file: path, --synced, --error: st
 }
 
 # Ticks a task off by its id and title in the tasks file, and writes that file again; the next sync takes it to its server.
-def "main done" [calendars_file: path, events_file: path, id: int, title: string] {
+def "main done" [calendars_file: path, events_file: path, id: string, title: string] {
   locked $events_file tick "--" done $calendars_file $events_file $id $title
 }
 
-def "main reopen" [calendars_file: path, events_file: path, id: int, title: string] {
+def "main reopen" [calendars_file: path, events_file: path, id: string, title: string] {
   locked $events_file tick "--" reopen $calendars_file $events_file $id $title
 }
 
-# What done and reopen run under the lock. todoman numbers tasks anew as their files change, an id landing on another alike, so only the one task shown with that title, open for done and done for reopen, is acted on.
-def "main tick" [how: string, calendars_file: path, events_file: path, id: int, title: string] {
+# What done and reopen run under the lock: the one task shown with that title, open for done and done for reopen, whatever id it was given, as a tick queued behind another may carry the number todoman gave it before.
+def "main tick" [how: string, calendars_file: path, events_file: path, id: string, title: string] {
   let state = $events_file | path dirname
   let config = todoman-config $state
   let alike = shown $state | where {|t| $t.summary == $title and $t.completed == ($how == "reopen") }
-  if $id not-in $alike.id { error make --unspanned { msg: "tasks changed, try again" } }
+  if ($alike | is-empty) { error make --unspanned { msg: "tasks changed, try again" } }
   if ($alike | length) > 1 { error make --unspanned { msg: $"two tasks are called ($title): tick it in your calendar app" } }
+  let id = $alike.0.id
   # A series with instances of its own in one file, which todoman lists as one and an edit would change whole.
   let file = ^todo --config $config path $id | str trim
   let ics = open --raw $file

@@ -37,6 +37,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     id=$(task | jq -r .id)
     tick done "$id" "Pay the bills"
     [ "$(task | jq .done)" = true ] || fail "done ticks it off in the tasks file"
+    [ "$(task | jq -r .id)" = "$id" ] || fail "a task's id stays the same after a tick, though todoman numbers it anew"
     task | jq -r .completed | grep -q "^$(date +%Y-%m-%d)" || fail "done says when, so the done ones can be shown"
     diff <(others ${./personal/bills.ics}) <(others state/vdirs/personal/bills.ics) && completed state/vdirs/personal/bills.ics \
       || fail "done marks the file completed, every other line as it was, a start not before the due date included"
@@ -44,20 +45,28 @@ pkgs.runCommand "quick-key-calendar-sync"
     [ "$(grep -c '^LAST-MODIFIED:' state/vdirs/personal/bills.ics)" = 1 ] && grep -q "^LAST-MODIFIED:$(date -u +%Y%m%d)T" state/vdirs/personal/bills.ics \
       || fail "done stamps LAST-MODIFIED once, so another client takes the change as the newer"
     [ -e state/changed ] || fail "a tick leaves word for a running sync to sync again"
-    ! tick done "$(task | jq -r .id)" "Pay the bills" 2> err && grep -q "tasks changed, try again" err || fail "a done of a task done already fails, as its id may since name another alike"
+    ! tick done "$(task | jq -r .id)" "Pay the bills" 2> err && grep -q "tasks changed, try again" err || fail "a done of a task done already fails"
 
-    # todoman numbers a task anew once its file changes outside it, as a tick's does: an id from before may name another task.
     id=$(task | jq -r .id)
     tick reopen "$id" "Pay the bills"
     [ "$(task | jq .done)" = false ] || fail "reopen unticks it in the tasks file"
     grep -q '^STATUS:NEEDS-ACTION' state/vdirs/personal/bills.ics || fail "reopen marks the file as needing action"
     ! grep -qE '^(COMPLETED|PERCENT-COMPLETE)' state/vdirs/personal/bills.ics || fail "reopen drops the record of completion"
     grep -q '^BEGIN:VALARM' state/vdirs/personal/bills.ics || fail "reopen keeps the reminder"
-    id=$(task | jq -r .id)
-    ! tick done "$id" "Water the plants" 2> err || fail "a tick whose id has another title fails"
-    grep -q "tasks changed, try again" err && [ "$(task | jq .done)" = false ] || fail "a tick whose id has another title says so, touching no task"
 
+    # The owner's two presses 300 ms apart: the shell runs the second after the first, with the id the file gave at the press.
+    tick done "$(task | jq -r .id)" "Pay the bills" & sleep 0.3
+    id=$(task | jq -r .id)
+    wait $!
+    tick reopen "$id" "Pay the bills" && [ "$(task | jq .done)" = false ] || fail "a press during a tick of the same task, with the id seen at the press, runs after it"
+
+    # todoman numbers a task anew once its file changes outside it, as a tick's does, so a tick goes by its title.
     water() { jq -c '[.tasks[] | select(.title == "Water the plants")] | sort_by(.due) | map([.due, .done])' state/tasks.json; }
+    before=$(water)
+    tick done "$(jq -r '.tasks[] | select(.title == "Water the plants") | .id' state/tasks.json)" "Pay the bills" && [ "$(task | jq .done)" = true ] && [ "$(water)" = "$before" ] \
+      || fail "a tick acts on the task of its title, whatever its id names"
+    tick reopen "$(task | jq -r .id)" "Pay the bills"
+
     id=$(jq -r '.tasks[] | select(.title == "Water the plants") | .id' state/tasks.json)
     tick done "$id" "Water the plants"
     [ "$(water)" = '[["2026-11-20",true],["2026-11-27",false]]' ] || fail "ticking a repeating task makes the next"
@@ -66,7 +75,7 @@ pkgs.runCommand "quick-key-calendar-sync"
 
     # A long line folds onto the next after a space (RFC 5545): reopen drops a folded completion whole, the folded note beside it as it was.
     ! tick reopen "$(todo list --status ANY | jq '.[] | select(.summary == "Done long ago") | .id')" "Done long ago" 2> err && grep -q "tasks changed, try again" err \
-      || fail "a tick of a task the file leaves out fails, as its id may since name another alike"
+      || fail "a tick of a task the file leaves out fails"
     sed "s/^COMPLETED:20260102/COMPLETED:$(date -u +%Y%m%d)/" ${./personal/old.ics} > state/vdirs/personal/old.ics
     sync tasks
     tick reopen "$(jq -r '.tasks[] | select(.title == "Done long ago") | .id' state/tasks.json)" "Done long ago"
@@ -81,9 +90,11 @@ pkgs.runCommand "quick-key-calendar-sync"
       || fail "done keeps every line it does not set, a language, categories on two lines and a time's zone included"
     ! grep -q $'\r' state/vdirs/personal/errands.ics || fail "done keeps a file's bare newlines"
 
-    # Two tasks alike: an id renumbered onto the other still has its title, so a tick of either is refused rather than guessed.
+    # Two tasks alike: a title cannot tell them apart, so a tick of either is refused rather than guessed.
     for f in milk-home milk-office; do install -m 644 ${./added}/$f.ics state/vdirs/personal/$f.ics; done
     sync tasks
+    jq -e '[.tasks[] | select(.title == "Buy milk") | .id] | length == 2 and (unique | length == 2) and all(test("^[0-9]+$"))' state/tasks.json > /dev/null \
+      || fail "two tasks of one title get todoman's ids, one each"
     ! tick done "$(jq -r 'first(.tasks[] | select(.title == "Buy milk")) | .id' state/tasks.json)" "Buy milk" 2> err || fail "a done of one of two open tasks alike fails"
     grep -q "two tasks are called Buy milk" err && cmp ${./added}/milk-home.ics state/vdirs/personal/milk-home.ics && cmp ${./added}/milk-office.ics state/vdirs/personal/milk-office.ics \
       || fail "a done of one of two open tasks alike says so, touching neither"

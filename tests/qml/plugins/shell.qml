@@ -276,6 +276,11 @@ ShellRoot {
         until: () => Plugins.get("tasks").items.length === 10 && Plugins.get("tasks").items.every(item => item.swatch === "")
       },
       {
+        name: "a task titled as a name every object has (constructor), its id, reads as the file says",
+        start: () => root.tasks("titled"),
+        until: () => Plugins.get("tasks").items.length === 1 && Plugins.get("tasks").items[0].id === "constructor" && !Plugins.get("tasks").items[0].done
+      },
+      {
         name: "a sync that failed is the plugin's error, for its level to show",
         start: () => root.tasks("broken"),
         until: () => Plugins.get("tasks").error.endsWith("personal: could not sync")

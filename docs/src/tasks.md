@@ -39,7 +39,7 @@ One line, so the plugin reads it as its state:
 
 - `updated` is when the lists last synced, left out until one has; `error` is why the last sync failed. A tick or an add writes neither anew, so a file that cannot sync shows its age.
 - Times are local, without an offset; a due date without a time is due that day.
-- `id` is what `done` and `reopen` are given, with `title`, so a command can tell whether the id still names that task.
+- `id` names one task and stays the same after a tick; `done` and `reopen` are given it, with `title`.
 - `priority` runs from 1, the highest, to 9; unset or 0, none.
 - It holds the open tasks, and those done in the last 14 days, so a mistaken tick can be undone and `completed` has some to show.
 
@@ -47,7 +47,7 @@ One line, so the plugin reads it as its state:
 
 A calendar with `tasks: true` in its list syncs both ways over CalDAV, so a tick or an added task reaches its server; the others are only read, and new tasks go to the first. `exec.done`, `exec.reopen` and `exec.add` are the tasks plugin's commands.
 
-calendarSync reads its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks. A tick edits the task's file, changing only its status, completion and percent done; todoman, which writes a task anew from what it reads, only adds a task and ticks off a repeating one. A task's `id` is todoman's, which numbers tasks anew as their files change, so a tick acts only on a task the file lists with its title, open for a tick and done for an untick, else fails ("tasks changed, try again"), touching nothing. Two such tasks of one title fail too, as an id may have moved to either, and so does a file holding more than one task (a series with instances of its own): tick them in your calendar app.
+calendarSync reads its tasks with todoman, whose config it keeps beside the events (`todoman.py`), so `todo --config` on that file sees the same tasks. A tick edits the task's file, changing only its status, completion and percent done; todoman, which writes a task anew from what it reads, only adds a task and ticks off a repeating one. A task's `id` is its title, as todoman numbers tasks anew as their files change; two listed tasks of one title take todoman's number instead. A tick acts on the one task the file lists with its title, open for a tick and done for an untick, else fails ("tasks changed, try again"), touching nothing. Two such tasks of one title fail too, as the title cannot tell them apart, and so does a file holding more than one task (a series with instances of its own): tick them in your calendar app.
 
 Ticking a repeating task makes its next one; unticking reopens only the one ticked and leaves the next, to delete in your calendar app if unwanted. todoman writes both anew: the one ticked loses a start not before its due time, a language, categories on two lines and its times' zone, and the next one also loses its reminders, its links (`URL`, `RELATED-TO`) and an app's own properties (`X-`), its `COUNT` starting over, so a series meant to end never does. Your calendar app keeps a series whole; tick repeating tasks there.
 

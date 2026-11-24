@@ -1,4 +1,4 @@
-# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks in one list, `missed` one whose reminder fell due five minutes ago, `broken` one whose sync failed, `done` and `reopen` flip a task after a moment (task d fails, and once `stick` has run the next leaves the file as it was), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
+# The tasks plugin's commands over a tasks file: `write` makes one around today (updated at $2, else now), `many` one of ten late tasks in one list, `missed` one whose reminder fell due five minutes ago, `broken` one whose sync failed, `titled` one whose id is its title, a name every object has, `done` and `reopen` flip a task after a moment (task d fails, and once `stick` has run the next leaves the file as it was), `add` adds one (Fail fails), `sync` and `remind` leave a trace.
 file="$XDG_RUNTIME_DIR/tasks"
 case "$1" in
   write)
@@ -37,6 +37,10 @@ case "$1" in
     ;;
   broken)
     echo "{\"updated\":\"$(date +%Y-%m-%dT%H:%M)\",\"error\":\"personal: could not sync\",\"tasks\":[]}" > "$file.tmp"
+    mv "$file.tmp" "$file"
+    ;;
+  titled)
+    echo "{\"updated\":\"$(date +%Y-%m-%dT%H:%M)\",\"tasks\":[{\"id\":\"constructor\",\"done\":false,\"title\":\"constructor\"}]}" > "$file.tmp"
     mv "$file.tmp" "$file"
     ;;
   sync) echo synced > "$XDG_RUNTIME_DIR/synced" ;;
