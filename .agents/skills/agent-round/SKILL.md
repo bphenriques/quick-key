@@ -42,4 +42,4 @@ For each implementer, in order:
 4. `nix flake check -L`, colour codes stripped before grepping (`sed 's/\x1b\[[0-9;]*m//g'`); a failure from two agents' changes meeting is fixed in its own commit.
 5. Build the owner's downstream configuration against the branch, if they keep one, before saying it is done.
 6. Tell the owner what changed, what was verified and how, and what is left; AGENTS.md lines go to them to apply.
-7. Remove its worktree and branch (`git worktree remove`, `git branch -D`) once its commits are in; a branch the owner declines becomes an annotated `archive/<name>` tag first.
+7. Remove its worktree and branch (`git worktree remove`, `git branch -D`) once its commits are in; a branch the owner declines is kept first as `git update-ref refs/archive/<name> <branch>` (not a tag: the owner's git config prunes local tags on every fetch).

@@ -28,7 +28,7 @@ Settled with the owner up to v0.27.0-beta.5 (2026-11-24). A review round reads t
 - Structured write paths for the owner's adds: khal's and todoman's date parsing fail on Portuguese. `input.cmd` stays for those who have one.
 - Recordings: "Copy smaller" (WhatsApp compresses).
 - calendar-sync: `SEQUENCE` (scheduling only), keeping an in-progress percentage on reopen, cancelled tasks.
-- D5, fields' `opens`/`does` flags: kept as the local tag `archive/trim-d5-opens`.
+- D5, fields' `opens`/`does` flags: kept locally as `refs/archive/trim-d5-opens`.
 - Deferred features, out until the owner asks: battery time left, week numbers, per-event reminders, muting an app, a device-switch pill, mic in use, every backlight as a list, letters by scan code. Skipped for good: grouping notifications by app, frecency, diff-based reload, async thumbnails, a `due:` shortcut.
 
 ## Open
