@@ -7,6 +7,8 @@ description: Run a round of delegated work on quick-key with subagents: read-onl
 
 quick-key is trimming: major features are closed (README's Scope). A round finds bugs, cuts and simplifications, never features, and the owner decides each item before anything changes.
 
+Read [decisions.md](../../decisions.md) first and put it in every brief: what is settled or declined there is out of scope, and a finding that repeats one is dropped unless it brings new evidence (a bug, a measured cost). A round starts from the owner's bug log from daily use, not from a fresh look at everything; with no bugs to start from, ask the owner whether a round is wanted at all. Add what the owner settles to decisions.md in the same change.
+
 ## Reviewers
 
 Read-only. A reviewer's brief says:
@@ -14,6 +16,7 @@ Read-only. A reviewer's brief says:
 - every finding verified: a bug with a repro (a failing case, a preview shot, or an exact code path with inputs and wrong output), a cut or simplification with its code (file:line) and lines saved; anything else marked unverified;
 - read-only: no edits, no commits, no `qs ipc` against the live shell, no change to volume or brightness;
 - what other agents are doing at the same time, so it does not repeat or collide;
+- decisions.md, and that repeating a settled or declined item without new evidence is not a finding;
 - "where not to": the reviewer says honestly where a change would add indirection;
 - a word budget, ranked findings, one or two lines each.
 
@@ -39,3 +42,4 @@ For each implementer, in order:
 4. `nix flake check -L`, colour codes stripped before grepping (`sed 's/\x1b\[[0-9;]*m//g'`); a failure from two agents' changes meeting is fixed in its own commit.
 5. Build the owner's downstream configuration against the branch, if they keep one, before saying it is done.
 6. Tell the owner what changed, what was verified and how, and what is left; AGENTS.md lines go to them to apply.
+7. Remove its worktree and branch (`git worktree remove`, `git branch -D`) once its commits are in; a branch the owner declines becomes an annotated `archive/<name>` tag first.
