@@ -38,4 +38,3 @@ Settled with the owner up to v0.27.0-beta.5 (2026-11-24). A review round reads t
 - Reminders are plain notifications; a script with Snooze and Open link if the owner wants it.
 - The tray draws Solaar's icon (`battery-090`, an Ayatana item with no pixmap) as a missing-image checkerboard, though the icon resolves in Quickshell outside the tray; seen since 2026-11-18, not yet traced (Quickshell's tray or Solaar).
 - Audio output's Apps: two streams of one app (two browser tabs) show alike, as a row names only the app; telling them apart would show `media.name`, the owner's call. Moving an app to another device stays with pavucontrol.
-- `notifications` holds every release since beta.1; `main` is behind it.
