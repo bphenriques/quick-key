@@ -118,9 +118,8 @@ ColumnLayout {
     Connections {
       target: root.model
 
-      function onPicked(key) {
-        if (key === "Escape") prompt.stepBack();
-        else prompt.send(true);
+      function onEscaped() {
+        prompt.stepBack();
       }
     }
 

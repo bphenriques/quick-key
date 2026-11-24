@@ -87,7 +87,7 @@ Scope {
 
     bar: MenuHeader {
       menu: root.menu
-      onPicked: key => root.menu.filtering ? (key === "Escape" ? root.menu.island.picked(key) : root.menu.filterKey(key)) : root.menu.handleName(key)
+      onPicked: key => root.menu.filtering ? (key === "Escape" ? root.menu.island.escaped() : root.menu.filterKey(key)) : root.menu.handleName(key)
     }
 
     // Filtering, the filter takes the island, the level's input waiting under it.

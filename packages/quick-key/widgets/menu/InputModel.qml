@@ -38,8 +38,8 @@ QtObject {
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
   property var expandedTurn: null
 
-  // An input key clicked in the bar legend, for the prompt.
-  signal picked(var key)
+  // ESC clicked in the bar's legend while filtering, for the prompt to step back as the key does.
+  signal escaped
 
   // True when taken; the input keeps the text if not.
   function submit(text, background) {
