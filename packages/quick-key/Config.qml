@@ -67,6 +67,7 @@ Singleton {
   }
 
   // Keys renamed or removed, by their old path to what to write instead: a config still setting an old one fails its check saying so. A rename adds its line here.
+  // A plugin's name is the user's, so a removed plugin gets no line.
   readonly property var renamed: ({
       "theme.monochromeTray": "theme.appIcons, true as \"grey\"",
       "menu.edge": "removed: the menu always sits at the bottom",
@@ -80,7 +81,6 @@ Singleton {
       "popups.position": "removed: the pop-up always sits at the right edge",
       "menu.margin": "removed: every surface sits theme.edgeMargin from the edge",
       "popups.margin": "removed: every surface sits theme.edgeMargin from the edge",
-      "plugins.notifications": "removed: run a notification daemon, and list its plugin (mako, dunst) for do-not-disturb",
       "theme.osdLength": "removed: a fixed size of the kit",
       "theme.osdIconSize": "removed: a fixed size of the kit",
       "theme.meterThickness": "removed: a fixed size of the kit",

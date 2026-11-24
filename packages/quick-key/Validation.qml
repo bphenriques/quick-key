@@ -182,7 +182,8 @@ Singleton {
   }
 
   function pluginProblems(plugins) {
-    const builtin = [Statuses, Lists, States].reduce((names, table) => names.concat(Object.keys(table.builtin)), []);
+    // With the names the shell takes itself: Menu's IPC target, the inputs' kept drafts.
+    const builtin = [Statuses, Lists, States].reduce((names, table) => names.concat(Object.keys(table.builtin)), ["menu", "drafts"]);
     const found = [];
     for (const [name, plugin] of Object.entries(plugins)) {
       const at = "plugins." + name;

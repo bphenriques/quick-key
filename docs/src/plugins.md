@@ -4,7 +4,7 @@ A plugin adds a status, a list or a surface. List it by name under `plugins`, wi
 
 ## Without QML
 
-Most plugins need no QML: `type = "command"`, under any name. A source gives a value, and `show` says how each value looks.
+Most plugins need no QML: `type = "command"`, under any name the shell does not take: a built-in status, list or state, `menu`, `drafts`. A source gives a value, and `show` says how each value looks.
 
 ```nix
 plugins.doNotDisturb = {
