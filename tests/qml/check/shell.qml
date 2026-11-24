@@ -32,7 +32,7 @@ ShellRoot {
     ["a setting since removed beside a misspelt one", { menu: { edge: "top" }, audio: { stepp: 1 } }, ["menu.edge is now removed", "audio.stepp is not a setting"]],
     ["a plugin setting since removed beside an entry without an icon", { plugins: { notifications: { margin: 5 } }, menu: { entries: [{ key: "l", desc: "Lock", cmd: "true" }] } }, ["plugins.notifications.margin is now removed", "'Lock' in the top level needs an icon"]],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
-    ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: "abc" }] } }, ["sets submenu to a string, not a list", "the top level > A takes a list of entries"]],
+    ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: "abc" }] } }, "sets submenu to a string, not a list"],
     ["an empty row in a submenu", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: [null] }] } }, "holds something that is not an entry"],
     ["a key that is no name", { menu: { header: { right: [{ key: 5, desc: "X", status: "battery" }] } } }, "sets key to a number, not a string or a list"],
     ["a pair of keys holding no name", { menu: { header: { right: [{ key: ["a", 5], desc: "X", status: "battery" }] } } }, "sets key to no key names"],
