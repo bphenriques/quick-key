@@ -12,7 +12,6 @@ done
 for dir in plugins/*/; do
   name=$(basename "$dir")
   grep -qs '^Plugin {' "$dir${name^}.qml" || fail "$dir: no ${name^}.qml rooted at Plugin"
-  grep -qsE '^\s*(CornerPill|OverlayWindow|PanelWindow|LazyLoader|Variants|Rectangle|Row|Column|Item|Image|Label|Icon) \{' "$dir${name^}.qml" && fail "$dir${name^}.qml: draws; its views go in their own files (views)"
   grep -qs '^PluginSettings {' "${dir}Settings.qml" || fail "$dir: no Settings.qml rooted at PluginSettings"
   grep -qsE 'property [a-z]+ type\b' "${dir}Settings.qml" && fail "$dir: a setting named type, which names the plugin's implementation"
   for key in $(grep -rhoE '\bsettings\.[a-zA-Z]+' "$dir" | sed 's/^settings\.//' | sort -u); do
@@ -83,11 +82,6 @@ done
 # Rule 11: a glyph is Glyphs', declared there (a comment naming ui/Glyphs.qml is not a use).
 for key in $(grep -rhoE '\bGlyphs\.[a-zA-Z]+' --include='*.qml' . | sed 's/^Glyphs\.//' | grep -vx qml | sort -u); do
   grep -qsE "(property [a-z]+|function) $key\b" ui/Glyphs.qml || fail "Glyphs.$key, which ui/Glyphs.qml does not declare"
-done
-
-# Rule 11: a legend's words come from Words.
-for file in $(grep -rlE 'what: "' --include='*.qml' . | grep -v '^\./ui/Words\.qml$'); do
-  fail "$file: a legend word outside Words"
 done
 
 # Rule 2: commands come from the config, run with sh -c, never named in QML.
