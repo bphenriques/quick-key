@@ -308,9 +308,11 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: int, 
     if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   } else {
     # Edited in place, as todoman writes a task anew from its cache, losing what it does not read: the lines a tick sets go with those they fold onto (RFC 5545), only a task's in a CalDAV file (RFC 4791), and come back after BEGIN:VTODO in its line endings.
-    let set = if $how == "done" { [STATUS:COMPLETED $"COMPLETED:(date now | date to-timezone UTC | format date '%Y%m%dT%H%M%SZ')" PERCENT-COMPLETE:100] } else { [STATUS:NEEDS-ACTION] }
+    # LAST-MODIFIED too, so another client takes this change as the newer.
+    let now = date now | date to-timezone UTC | format date '%Y%m%dT%H%M%SZ'
+    let set = (if $how == "done" { [STATUS:COMPLETED $"COMPLETED:($now)" PERCENT-COMPLETE:100] } else { [STATUS:NEEDS-ACTION] }) | append $"LAST-MODIFIED:($now)"
     $ics
-    | str replace --all --regex '(?m)^(STATUS|COMPLETED|PERCENT-COMPLETE)[:;].*\n([ \t].*\n)*' ''
+    | str replace --all --regex '(?m)^(STATUS|COMPLETED|PERCENT-COMPLETE|LAST-MODIFIED)[:;].*\n([ \t].*\n)*' ''
     | str replace --regex '(?m)^BEGIN:VTODO(\r?)\n' ($set | prepend BEGIN:VTODO | each { $in + '${1}' + "\n" } | str join)
     | save -f $"($file).tmp"
     mv -f $"($file).tmp" $file

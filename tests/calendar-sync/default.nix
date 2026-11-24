@@ -21,8 +21,8 @@ pkgs.runCommand "quick-key-calendar-sync"
     todo() { PYTHONDONTWRITEBYTECODE=1 command todo --config state/todoman.py --porcelain "$@"; }
     task() { jq -c '.tasks[] | select(.title == "Pay the bills")' state/tasks.json; }
     fail() { echo "not ok - $1"; cat state/tasks.json; exit 1; }
-    # A file's lines unfolded, but for the three a tick sets: a tick changes only those.
-    others() { sed -z 's/\r\?\n[ \t]//g' "$1" | grep -avE '^(STATUS|COMPLETED|PERCENT-COMPLETE)[:;]'; }
+    # A file's lines unfolded, but for those a tick sets: a tick changes only those.
+    others() { sed -z 's/\r\?\n[ \t]//g' "$1" | grep -avE '^(STATUS|COMPLETED|PERCENT-COMPLETE|LAST-MODIFIED)[:;]'; }
     completed() { [ "$(tr -d '\r' < "$1" | grep -cxE 'STATUS:COMPLETED|COMPLETED:[0-9]{8}T[0-9]{6}Z|PERCENT-COMPLETE:100')" = 3 ]; }
 
     sync tasks
@@ -41,6 +41,8 @@ pkgs.runCommand "quick-key-calendar-sync"
     diff <(others ${./personal/bills.ics}) <(others state/vdirs/personal/bills.ics) && completed state/vdirs/personal/bills.ics \
       || fail "done marks the file completed, every other line as it was, a start not before the due date included"
     ! grep -qv $'\r$' state/vdirs/personal/bills.ics || fail "done keeps a file's line endings"
+    [ "$(grep -c '^LAST-MODIFIED:' state/vdirs/personal/bills.ics)" = 1 ] && grep -q "^LAST-MODIFIED:$(date -u +%Y%m%d)T" state/vdirs/personal/bills.ics \
+      || fail "done stamps LAST-MODIFIED once, so another client takes the change as the newer"
     [ -e state/changed ] || fail "a tick leaves word for a running sync to sync again"
     ! tick done "$(task | jq -r .id)" "Pay the bills" 2> err && grep -q "tasks changed, try again" err || fail "a done of a task done already fails, as its id may since name another alike"
 
