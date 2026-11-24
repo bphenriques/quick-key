@@ -373,6 +373,12 @@ Scope {
     activate(item, item.key);
   }
 
+  // Whether activating an item does anything: a name only shows, unless it is a plugin's, by name or an entry's status.
+  function runs(item) {
+    const entry = item.entry;
+    return !!(item.select || Plugins.get(item.status ?? "") || entry && (entry.cmd || entry.action || entry.submenu || entry.list || entry.view));
+  }
+
   function activate(item, name) {
     if (item.enabled === false) return;
     // A tray app that only offers a menu does nothing when activated (Quickshell's onlyMenu).

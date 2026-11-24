@@ -88,6 +88,11 @@ ShellRoot {
     size: 3
   }
 
+  HeaderItem {
+    id: barItem
+    menu: menu
+  }
+
   Suite {
     cases: [
       {
@@ -708,6 +713,15 @@ ShellRoot {
           menu.toggleEntry("1");
         },
         until: () => Plugins.get("picked")?.text === "a-1"
+      },
+      {
+        name: "a bar entry showing only a plugin's status takes a click, which activates the plugin",
+        start: () => {
+          menu.hide();
+          barItem.item = menu.barSlots.left.find(item => item.key === "k");
+          if (barItem.enabled) barItem.activated();
+        },
+        until: () => barItem.enabled && Plugins.get("picked")?.text === "clicked"
       },
       {
         name: "the keyed plugin lists one item with a menu of its own, and runs the actions the table's rows name",

@@ -10,10 +10,8 @@ ListItem {
 
   required property MenuModel menu
   property var item: ({})
-  readonly property var entry: item.entry ?? null
-  readonly property var plugin: entry ? null : Plugins.get(item.status)
-  // Whether a click does anything: a name only shows, unless it is a plugin's.
-  readonly property bool runs: !!(item.select || plugin || entry && (entry.cmd || entry.action || entry.submenu || entry.list || entry.view))
+  readonly property var plugin: item.entry ? null : Plugins.get(item.status)
+  readonly property bool runs: menu.runs(item)
 
   // Shrinks, never grows: its text gives way before its neighbours.
   Layout.fillWidth: true

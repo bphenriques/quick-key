@@ -49,7 +49,7 @@ The label is `desc`, and never changes. Every row of a level carries an icon: `i
 
 `format` picks a status's fields (`"{song}"`), and what follows a `|` stays whole on the right (`"{title}|{when}"`). A built-in status has a format of its own (the volume's is `"{device}|{volume}"`), which an entry's replaces.
 
-`activeWhen` lights an entry of your own. An entry showing a plugin's status with no `cmd` or `action` activates the plugin, as a click on it in a bar does.
+`activeWhen` lights an entry of your own. A bar entry showing a plugin's status with no `cmd` or `action` activates the plugin, on a click or its key.
 
 A level is as wide as its entry's `width`, else `menu.width`, and lays its actions out in its entry's `columns`, else `menu.columns` (`columns = 1` for a level of three, so none sits alone). Neither is measured from what it shows, so it holds still. Entries flow across, so order decides neighbours. At the top the columns are equal, so values line up; in a level the last hugs its rows against the right edge. It is never wider than the screen, whatever it asks; short of room, text shortens, short values last and icons never. Make the menu wider before adding columns or truncating.
 
