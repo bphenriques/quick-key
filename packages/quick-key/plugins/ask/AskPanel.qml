@@ -117,7 +117,7 @@ Scope {
         onWidthChanged: panel.threadWidth = width
         Component.onCompleted: panel.threadWidth = width
         Layout.fillWidth: true
-        Layout.preferredHeight: Math.min(panel.plugin.settings.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra
+        Layout.preferredHeight: Math.round(Math.min(panel.plugin.settings.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra)
         Layout.leftMargin: Metrics.itemPaddingX
         Layout.rightMargin: Metrics.itemPaddingX
         model: panel.plugin.exchanges.length

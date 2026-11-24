@@ -177,9 +177,9 @@ Scope {
 
         Surface {
           id: cardSurface
-          // Centred; the bar and the input follow it.
-          x: (parent.width - width) / 2
-          y: frame.height - stack.card - height
+          // Centred; the bar and the input follow it. On whole pixels, so a layer inside (a faded conversation) is not resampled.
+          x: Math.round((parent.width - width) / 2)
+          y: Math.round(frame.height - stack.card - height)
           // No wider than the screen leaves within its margins, whatever width a level asks for.
           width: Math.min(root.width, parent.width - 2 * stack.margin)
           // No taller than the screen leaves past what stacks before it, cut only when it must be.
