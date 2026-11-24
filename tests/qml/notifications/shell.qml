@@ -195,12 +195,12 @@ ShellRoot {
         until: () => root.plugin.shown.length === 1 && root.plugin.shown[0].summary === "Alarm" && root.plugin.held === 5 && root.plugin.active && root.plugin.glyph === Glyphs.notificationsPaused
       },
       {
-        name: "clearing dismisses every one, and the bar's action resumes",
+        name: "clearing dismisses every one, and the bar's action resumes, so the bell goes with nothing to count",
         start: () => {
           root.plugin.actions.clear.run();
           root.plugin.actions.pause.run();
         },
-        until: () => root.plugin.ordered.length === 0 && !root.plugin.paused && root.plugin.text === ""
+        until: () => root.plugin.ordered.length === 0 && !root.plugin.paused && root.plugin.text === "" && root.plugin.glyph === ""
       },
       {
         name: "a rule hides what it matches",

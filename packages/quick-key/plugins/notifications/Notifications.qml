@@ -51,7 +51,8 @@ Plugin {
   // The reply whose card closed went to the clipboard; else it was empty.
   readonly property bool copied: internal.copied
 
-  glyph: paused ? Glyphs.notificationsPaused : Glyphs.notifications
+  // Only with something to count or while paused, so a bar hides it at rest.
+  glyph: paused || text !== "" ? internal.bell : ""
   text: ordered.length > 0 ? String(ordered.length) : ""
   active: paused
   error: internal.error
@@ -80,7 +81,7 @@ Plugin {
   empty: words.none
   actions: ({
       summon: { icon: () => Glyphs.notifications, available: () => true, run: () => root.summon() },
-      pause: { icon: () => root.glyph, state: root.name, available: () => true, run: () => root.togglePause() },
+      pause: { icon: () => internal.bell, state: root.name, available: () => true, run: () => root.togglePause() },
       clear: { icon: () => Glyphs.close, available: () => internal.list.length > 0, run: () => root.clear() },
       dismiss: { icon: () => Glyphs.close, available: () => root.newest() !== null, run: () => root.dismiss(root.newest()) },
       invoke: { icon: () => Glyphs.notifications, available: () => root.newest() !== null, run: () => root.open(root.newest()) },
@@ -502,6 +503,9 @@ Plugin {
 
   QtObject {
     id: internal
+
+    // The bell, struck while paused: the status's glyph when it shows, and the pause action's always.
+    readonly property string bell: root.paused ? Glyphs.notificationsPaused : Glyphs.notifications
 
     // A focused fullscreen window holds them as pause does: under it they would expire unseen.
     readonly property bool fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
