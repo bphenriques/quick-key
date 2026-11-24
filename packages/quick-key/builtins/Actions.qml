@@ -29,7 +29,7 @@ Singleton {
       available: () => Power.profilesPresent,
       run: () => Power.nextProfile()
     },
-    keyboardLayout: { icon: () => Glyphs.keyboard, available: () => KeyboardLayout.names.length > 1, run: () => KeyboardLayout.next() },
+    keyboardLayout: { icon: () => KeyboardLayout.names.length > 1 ? Glyphs.keyboard : "", available: () => KeyboardLayout.names.length > 1, run: () => KeyboardLayout.next() },
     // Filters the level's list in place; beside it, the nine rows at rest of all it can show, when there are more (1-9 of 14).
     pick: {
       icon: () => Glyphs.search,

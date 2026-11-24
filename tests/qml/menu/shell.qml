@@ -151,8 +151,8 @@ ShellRoot {
         until: () => !Clock.text.includes(String(Clock.date.getFullYear())) && Clock.text.includes(Clock.time(Clock.date))
       },
       {
-        name: "without layouts to switch between, the keyboard layout status shows nothing, so a bar hides it",
-        until: () => KeyboardLayout.names.length < 2 && Statuses.of("keyboardLayout").glyph === "" && Statuses.of("keyboardLayout").text === ""
+        name: "without layouts to switch between, the keyboard layout status and action show nothing, so a bar hides them",
+        until: () => KeyboardLayout.names.length < 2 && Statuses.of("keyboardLayout").glyph === "" && Statuses.of("keyboardLayout").text === "" && Actions.builtin.keyboardLayout.icon() === ""
       },
       {
         name: "without an adapter, the bluetooth status is not ready, so one appearing after startup is its first state, not a change to pop up",
