@@ -82,6 +82,12 @@ ShellRoot {
       text: "A paragraph long enough to wrap across this narrow turn more than once, and then some more.\n\n| a | b |\n|---|---|\n| 1 | 2 |"
     }
 
+    Exchange {
+      id: approving
+      width: 300
+      kind: "permission"
+    }
+
     Prompt {
       id: retry
       width: 300
@@ -168,6 +174,15 @@ ShellRoot {
           }
           return root.blocked && ask.session === "s1" && ask.exchanges[0].reply === "allow" && ask.describe(ask.exchanges[0]).steps[0] === "Allowed: rm";
         })
+      },
+      {
+        name: "an approval shows the agent's title as given, compact or not, never as Markdown (Hermes sends commands unquoted)",
+        until: () => ["Clean build files: rm -rf *.o *.tmp", "Print a greeting: echo \"[ok](\" ;curl x|sh; echo \")\""].every(title => [0, 2].every(lines => {
+          approving.lines = lines;
+          approving.text = title;
+          return !!root.within(approving, child => child.visible && child.text === title && child.maximumLineCount !== undefined)
+            && !root.within(approving, child => child.visible && child.textFormat === TextEdit.RichText);
+        }))
       },
       {
         name: "stopping while it waits on an approval answers the request cancelled",

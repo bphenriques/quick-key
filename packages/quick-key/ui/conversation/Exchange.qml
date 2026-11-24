@@ -11,7 +11,7 @@ ColumnLayout {
   id: root
 
   property string question
-  // Markdown, as ACP sends text; plain when compact.
+  // Markdown, as ACP sends text; plain when compact, and a permission's as given.
   property string text
   property string phase: "done"
   property string kind: ""
@@ -105,26 +105,26 @@ ColumnLayout {
           size: Metrics.line
         }
 
-        // Cut at `lines`, which is how `overflows` knows.
+        // Cut at `lines`, which is how `overflows` knows; a permission as given, as its title is the agent's command, not Markdown.
         Label {
           id: brief
           Layout.fillWidth: true
-          visible: root.compact
+          visible: root.compact || root.kind === "permission"
           tone: root.tone || "normal"
           wrapMode: Text.Wrap
-          maximumLineCount: Math.max(1, root.lines)
+          maximumLineCount: root.compact ? root.lines : undefined
           elide: Text.ElideRight
           // Hidden, a view still lays its text out: each takes the answer only while it shows.
-          text: root.compact ? Markup.plain(root.text) : ""
+          text: root.kind === "permission" ? root.text : root.compact ? Markup.plain(root.text) : ""
         }
 
         Markdown {
           id: answer
           Layout.fillWidth: true
           onSelected: selection => root.selected(selection)
-          visible: !root.compact
+          visible: !brief.visible
           tone: root.tone || "normal"
-          markdown: root.compact ? "" : root.text
+          markdown: brief.visible ? "" : root.text
         }
       }
     }
