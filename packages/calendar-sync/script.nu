@@ -332,5 +332,6 @@ def "main create" [calendars_file: path, events_file: path, title: string] {
   let run = ^todo --config (todoman-config $state) new -- $title | complete
   if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
   touch ($state | path join changed)
-  write-tasks (task-lists $calendars_file) $state
+  # Said, so a retry does not add it twice.
+  try { write-tasks (task-lists $calendars_file) $state } catch {|e| error make --unspanned { msg: $"added, but the tasks file was not written: ($e.msg)" } }
 }

@@ -102,6 +102,10 @@ pkgs.runCommand "quick-key-calendar-sync"
     done
     grep -lq '^SUMMARY:-Call the plumber' state/vdirs/personal/*.ics || fail "add writes it to the first list"
     [ ! -e state/__pycache__ ] || fail "todoman leaves no bytecode beside its config"
+    mkdir state/tasks.json.tmp
+    ! quick-key-calendar-sync add ${./calendars.yaml} state/events.json -- "Fix the tap" 2> err && grep -q "added, but the tasks file was not written" err \
+      && grep -lq '^SUMMARY:Fix the tap' state/vdirs/personal/*.ics || fail "an add whose tasks file fails to write says it added, so a retry does not add it twice"
+    rmdir state/tasks.json.tmp
 
     # The file says when the lists last synced, and how the last sync went, whatever wrote it since.
     jq -c '.updated = "2026-01-01T00:00" | .error = "personal: could not sync"' state/tasks.json > state/old.json && mv state/old.json state/tasks.json
