@@ -147,6 +147,10 @@ ShellRoot {
           && Statuses.builtin.powerProfile.glyph() === "" && Statuses.value(Statuses.builtin.powerProfile, Statuses.builtin.powerProfile.fields()).detail === ""
       },
       {
+        name: "without layouts to switch between, the keyboard layout status shows nothing, so a bar hides it",
+        until: () => KeyboardLayout.names.length < 2 && Statuses.of("keyboardLayout").glyph === "" && Statuses.of("keyboardLayout").text === ""
+      },
+      {
         name: "without an adapter, the bluetooth status is not ready, so one appearing after startup is its first state, not a change to pop up",
         until: () => !Bluez.present && !Statuses.of("bluetooth").ready
       },

@@ -113,11 +113,12 @@ Singleton {
       change: () => Power.present && Power.pluggedIn,
       ready: () => Power.present
     },
+    // The layout's label; with one layout nothing, as it can never switch.
     keyboardLayout: {
       names: ["layout"],
-      glyph: () => Glyphs.keyboard,
+      glyph: () => KeyboardLayout.names.length > 1 ? Glyphs.keyboard : "",
       brief: true,
-      fields: () => ({ layout: KeyboardLayout.label || KeyboardLayout.name }),
+      fields: () => KeyboardLayout.names.length > 1 ? { layout: KeyboardLayout.label || KeyboardLayout.name } : {},
       format: "{layout}",
       popupWidth: () => Math.max(3, ...Array.from(Config.keyboardLayout.labels).map(label => label.length)),
       ready: () => KeyboardLayout.names.length > 0
