@@ -2,7 +2,6 @@
 .plugins.uptime = {
   type: "command",
   read: "awk '{ printf \"up %dd %dh\\n\", $1 / 86400, $1 % 86400 / 3600 }' /proc/uptime",
-  every: 60,
   glyph: "󰘚"
 }
 | .menu.header.center = ["uptime"]

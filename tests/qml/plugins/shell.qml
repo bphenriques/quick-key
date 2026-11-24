@@ -11,8 +11,6 @@ ShellRoot {
 
   // Every text the watcher has shown, in order.
   property var watched: []
-  // The ticker's value a second into the case that waits with the menu closed.
-  property string ticked: ""
   // How often the plugin whose watch repeats its line changed state.
   property int repeats: 0
   // The minute the timed task was last written as due.
@@ -124,18 +122,6 @@ ShellRoot {
         name: "static items light by value, dim unless enabled, and give the status its label and icon",
         until: () => JSON.stringify((Plugins.get("layouts")?.items ?? []).map(item => [item.id, item.active, item.enabled])) === '[["a",false,true],["b",true,true],["c",false,false]]'
           && Plugins.get("layouts").text === "B" && Plugins.get("layouts").glyph === "I"
-      },
-      {
-        name: "a read with every waits while the menu is closed",
-        until: () => {
-          if (suite.waited === 1000) root.ticked = Plugins.get("ticker")?.text ?? "";
-          return suite.waited >= 3000 && Plugins.get("ticker")?.text === root.ticked;
-        }
-      },
-      {
-        name: "a read with every reads again while the menu is open",
-        start: () => Panels.open(root),
-        until: () => Number(Plugins.get("ticker")?.text) >= Number(root.ticked) + 2
       },
       {
         name: "tasks list by due, undated last, done ones in place until the menu opens, a late one in warning with an alarm, a priority as its glyph and a list's colour as a swatch; the status counts the late ones when there are any, else the open ones due by today, and names the most urgent as a field",

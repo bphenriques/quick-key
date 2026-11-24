@@ -6,8 +6,6 @@ QtObject {
   property string watch
   property string read
   property string file
-  // Seconds between runs of `read` while the menu is open; 0 runs it only as the menu opens.
-  property int every: 0
   // The look of each value the source gives, by value: any state line field (glyph, text, detail, active, tone, phase, a plugin's own such as stage), the line's own winning; a value without one shows as text.
   property var show: ({})
   // Its items when they never change, each { id, label, icon, detail }; the source's `value` names the one in use.

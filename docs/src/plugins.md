@@ -38,7 +38,7 @@ A plugin's state comes from one source:
 
 - `watch`: a command that runs for as long as it lasts, each line the new state. It must flush each line (`stdbuf -oL`, `--line-buffered`), and is restarted when it exits.
 - `file`: a file holding the state, read on every change.
-- `read`: a command whose last line is the state, run as the menu opens, every `every` seconds while it stays open, and once `activate` ends. `qs -c quick-key ipc call <name> refresh` runs it now.
+- `read`: a command whose last line is the state, run as the menu opens and once `activate` ends. `qs -c quick-key ipc call <name> refresh` runs it now.
 
 ## The state line
 

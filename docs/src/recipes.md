@@ -89,7 +89,6 @@ menu.entries = [
 plugins.load = {
   type = "command";
   read = ''printf '{"detail": "%s"}' "$(cut -d' ' -f1 /proc/loadavg)"'';
-  every = 2;   # seconds, only while the menu is open
 };
 menu.entries = [
   { key = "p"; desc = "Processes..."; status = "load"; cmd = "foot btop"; }
@@ -184,7 +183,6 @@ plugins.weather = {
   type = "command";
   # wttr.in's symbol for the sky, then the temperature: {"value": "m", "text": "+13°C"}
   read = ''curl -sf 'https://wttr.in/Lisbon?format=%x+%t' | jq -Rc 'split(" ") | {value: .[0], text: .[1]}' '';
-  every = 900;
   glyph = "<cloud>";
   show = { "o".glyph = "<sun>"; "m".glyph = "<sun behind cloud>"; "/".glyph = "<rain>"; "//".glyph = "<showers>"; "*".glyph = "<snow>"; };
 };
@@ -193,7 +191,7 @@ menu.header.center = [ "weather" ];
 
 ![The weather in the bar's centre, its glyph the sky's](images/weather.png)
 
-Read as the menu opens and every 15 minutes while it stays open. `show` picks the glyph by the sky, and its other [symbols](https://github.com/chubin/wttr.in/blob/master/internal/renderer/oneline/constants.go) take `glyph`; with no network, `glyph` shows alone until the next read. Leave the place out (`wttr.in/?format=...`) for wttr.in to guess it from your address.
+Read as the menu opens. `show` picks the glyph by the sky, and its other [symbols](https://github.com/chubin/wttr.in/blob/master/internal/renderer/oneline/constants.go) take `glyph`; with no network, `glyph` shows alone until the next read. Leave the place out (`wttr.in/?format=...`) for wttr.in to guess it from your address.
 
 ### An external monitor's brightness
 
@@ -243,7 +241,6 @@ A plugin in a bar shows its glyph, lit while active; a click calls its `activate
 plugins.uptime = {
   type = "command";
   read = ''awk '{ printf "up %dd %dh\n", $1 / 86400, $1 % 86400 / 3600 }' /proc/uptime'';
-  every = 60;
   glyph = "<glyph>";
 };
 menu.header.center = [ "uptime" ];

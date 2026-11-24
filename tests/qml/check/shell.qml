@@ -50,7 +50,6 @@ ShellRoot {
     ["a setting the shell does not declare", { audio: { stepp: 1 } }, "audio.stepp is not a setting"],
     ["a value of another kind", { audio: { step: "5" } }, "audio.step takes a number"],
     ["a plugin with two sources", { plugins: { x: { type: "command", watch: "a", read: "b" } } }, "more than one of watch, read and file"],
-    ["every without read", { plugins: { x: { type: "command", every: 5 } } }, "sets every without read"],
     ["a plugin with a built-in name", { plugins: { sink: { type: "command" } } }, "takes a built-in name"],
     ["a plugin named after the menu's IPC target", { plugins: { menu: { type: "command" } } }, "plugins.menu takes a built-in name"],
     ["a plugin named after the inputs' kept drafts", { plugins: { drafts: { type: "ask", ask: "true" } } }, "plugins.drafts takes a built-in name"],

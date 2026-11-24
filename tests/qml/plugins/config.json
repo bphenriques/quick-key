@@ -93,11 +93,6 @@
         }
       ]
     },
-    "ticker": {
-      "type": "command",
-      "read": "n=$(cat \"$XDG_RUNTIME_DIR/tick\" 2>/dev/null || echo 0); echo $((n + 1)) | tee \"$XDG_RUNTIME_DIR/tick\"",
-      "every": 1
-    },
     "tasks": {
       "file": "tasks",
       "done": "sh \"$XDG_CONFIG_HOME/quick-key/tasks.sh\" done",

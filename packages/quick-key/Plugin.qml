@@ -138,13 +138,6 @@ Scope {
     }
   }
 
-  Timer {
-    interval: root.settings.every * 1000
-    running: root.settings.every > 0 && root.settings.read !== "" && Plugins.menuOpen
-    repeat: true
-    onTriggered: source.refresh()
-  }
-
   CommandState {
     id: source
     watch: root.settings.watch

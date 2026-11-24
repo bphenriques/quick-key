@@ -3,14 +3,10 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs
-import qs.ui
 
 // Loads the plugins Config.plugins names; one that fails to load is logged and left out.
 Singleton {
   id: root
-
-  // Whether a keyboard surface (the menu, a plugin's panel) is open, as a plugin's `every` reads while one is.
-  readonly property bool menuOpen: Panels.top !== null
 
   function get(name) {
     return internal.loaded[name] ?? null;
