@@ -33,10 +33,10 @@ ListView {
   // No turn is current: a ListView keeps its current item built wherever it is, and makes the first current again as its count changes.
   onCountChanged: currentIndex = -1
 
-  // On the view itself, not its content, which a list laid out upward places out of sight while empty.
+  // On the view itself, not its content, which a list laid out upward places out of sight while empty; at the bottom, where turns appear.
   Label {
     parent: root
-    anchors.top: parent.top
+    anchors.bottom: parent.bottom
     visible: root.count === 0
     width: root.width
     wrapMode: Text.Wrap

@@ -68,7 +68,7 @@ ShellRoot {
     return null;
   }
 
-  // A turn as the menu's island draws it, and a prompt.
+  // A turn as the menu's island draws it, a prompt, and a conversation without turns.
   FloatingWindow {
     implicitWidth: 300
     implicitHeight: 200
@@ -84,6 +84,13 @@ ShellRoot {
     Prompt {
       id: retry
       width: 300
+    }
+
+    Thread {
+      id: unstarted
+      width: 300
+      height: 200
+      emptyText: "New conversation"
     }
   }
 
@@ -266,6 +273,13 @@ ShellRoot {
         name: "a prompt put back for a retry is selected, so typing replaces it and Return sends it whole",
         start: () => retry.set("fail now", true),
         until: () => retry.text === "fail now" && root.within(retry, child => child.selectedText !== undefined)?.selectedText === "fail now"
+      },
+      {
+        name: "a conversation without turns says so at the bottom, where its turns appear",
+        until: () => {
+          const empty = root.within(unstarted, child => child.text === "New conversation");
+          return !!empty && empty.visible && empty.y > 0 && empty.y + empty.height === unstarted.height;
+        }
       },
       {
         name: "a failed answer shows in alert where the menu shows it, and stays out of the panel's prompt",
