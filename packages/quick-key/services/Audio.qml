@@ -82,7 +82,7 @@ Singleton {
     id: internal
     // A node's properties arrive once it is tracked; virtual ones have no device.
     readonly property var nodes: Pipewire.nodes.values.filter(node => !node.isStream && node.audio)
-    // Playback streams; an app's carries its name, which WirePlumber's own loopbacks lack.
+    // Playback streams; an app's carries its name, which loopbacks and filters lack.
     readonly property var streams: Pipewire.nodes.values.filter(node => node.isStream && node.isSink && node.audio)
     property int picked: -1
     readonly property var devices: nodes.filter(node => node.properties["device.id"]).map(node => root.describe(node))

@@ -17,6 +17,7 @@ Settled with the owner up to v0.27.0-beta.5 (2026-11-24). A review round reads t
 - **Kept as they are:** Ask's `lines`, `placeholder`, `idle` and `promptGlyph`; `C-r` history; the default `notify`'s replace tag; `PluginSettings` ranges.
 - **A notification's actions stay in fuzzel (`makoctl menu`)**, not a quick-key level: a level needs a source of notifications and their actions, the server just removed. Fuzzel's look is the dotfiles' to match. Delete needs no guard: it goes to the trash, sits last, and fuzzel needs it picked; rule 6's Shift is for what ends the session.
 - **The do-not-disturb pop-up is its glyph alone.** The pop-up adds text only where a toggle's glyph does not change (keep awake); the bell is struck or not. A plugin's text would show in the bar too. No card is sent on a toggle.
+- **A level never dims, an empty one says why.** Audio output's Apps stays reachable with no app playing and lists "No app playing sound", as Bluetooth off and Music with no player do; only actions dim. A paused app stays listed, so its volume can be set before it resumes. Loopbacks and filters are not apps (no `application.name`).
 - **Status values are lowercase** ("off", "no song playing"), as values beside a label.
 - **The minimalism round's outcome:** `menu.keysHint`, an entry's `legend`, the quieter defaults (no year, no single-layout status, no medium priority glyph), a key path closing the menu it opened.
 
