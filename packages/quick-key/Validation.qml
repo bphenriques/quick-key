@@ -228,6 +228,7 @@ Singleton {
       const given = Config.pluginSettings(defaults, plugin);
       found.push(...given.unknown.map(key => at + "." + key + " is not a setting"));
       found.push(...given.mistyped.map(problem => at + "." + problem));
+      if (Config.kind(plugin.legend) === "list" && legendProblem(plugin.legend)) found.push(at + "." + legendProblem(plugin.legend));
       defaults.destroy();
       // Its own checks on what it declares, so every problem shows at once, not one build at a time.
       const object = settings.createObject(null, given.values);
@@ -295,6 +296,13 @@ Singleton {
     return found;
   }
 
+  // A `legend` naming what is no key as `?` names one (Ctrl+Up, Page_Down, Ctrl+ for a hold), else "": what a level lists there follows its state, so no more is known here.
+  function legendProblem(names) {
+    const key = new RegExp("^(?=.)((Ctrl|Alt|Shift|Super)\\+)*(" + Object.keys(MenuKeys.named).join("|") + "|\\S)?$");
+    const wrong = Array.from(names).filter(name => typeof name !== "string" || !key.test(name));
+    return wrong.length ? "legend names no key as ? names them (Ctrl+Up, Page_Down): " + wrong.join(", ") : "";
+  }
+
   // Each field an entry takes, its comment what it does (the docs' reference), and what it asks: `kind`, the kinds of value it takes; `level`, a level's (submenu, list or view); `needs`, one of these set; `bar`, only in a bar; `names`, a table it names one of, else a plugin; `excludes`, fields it cannot sit beside; `range`, `whole` and `choices`, as a setting's rule; `invalid`, what else is wrong with its value, else "".
   readonly property var fields: Object.assign(Object.create(null), {
       // Its key, or a pair of keys sharing a row (["Down", "Up"]); a bar entry needs none.
@@ -335,7 +343,9 @@ Singleton {
       // The most items of its list a bar shows; past it, +N.
       limit: { kind: "number", bar: true, needs: ["list"], range: [1, 9] },
       // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, format, after }.
-      input: { kind: "map", level: true }
+      input: { kind: "map", level: true },
+      // Keys of its level's `?` list to show in its bar too, after the bar's own: ["Ctrl+Up"].
+      legend: { kind: "list", level: true, invalid: names => legendProblem(names) }
     })
 
   // What each set field asks of the rest, as `fields` says.

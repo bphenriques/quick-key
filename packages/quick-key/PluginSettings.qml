@@ -20,6 +20,8 @@ QtObject {
   property string glyph
   // What a click on it in a bar, or `<name> activate` over IPC, runs.
   property string activate
+  // Keys its panel lists on `?` to show in its bar too, after the bar's own: ["Page_Up", "Page_Down"].
+  property var legend: []
 
   // What else is wrong with these settings, each named after plugins.<name> by Validation; bounds are data, a readonly `ranges` ({ name: [least, most] }) and `choices` ({ name: [values] }) of its own, which Validation checks and the reference lists.
   function problems() {

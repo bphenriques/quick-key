@@ -486,6 +486,20 @@ ShellRoot {
         }
       },
       {
+        name: "a level's legend shows the keys of its ? list it names in its bar, after its own, in its order and once; one ? lists not now shows nowhere",
+        until: () => {
+          menu.hide();
+          const shown = () => menu.legend.map(key => MenuKeys.label(key.key, true) + " " + (key.what ?? key.desc));
+          menu.push(root.calendarLevel);
+          const own = shown();
+          menu.stack = [];
+          menu.push({ kind: "entry", entry: Object.assign({ legend: ["Ctrl+Down", "Escape", "Ctrl+Up", "Ctrl+"] }, root.calendarLevel.entry) });
+          const chosen = shown();
+          menu.hide();
+          return chosen.join() === own.concat(["C-↑↓ Move a year", "ESC Clear, else back"]).join();
+        }
+      },
+      {
         name: "an input's key gives it the keys, its text reaches its command, and its after runs, given nothing, once the command succeeds",
         start: () => {
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"", after: "echo \"done $#\" > \"$XDG_RUNTIME_DIR/followed\"" } } });

@@ -75,11 +75,12 @@ Scope {
   readonly property bool slashFilters: !!level?.entry?.list && !find(items, "/")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
   readonly property var hints: held === "Help" ? help : holds[held] ?? []
-  // Only keys the state changes; fixed ones are listed on `?`.
+  // Only keys the state changes; fixed ones are listed on `?`, and show here too as its entry's `legend` names them.
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
     // At the top, the key listing the rest, which every surface with such a list shows so.
     .concat(level === null && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
+    .concat(MenuKeys.pick(help, level?.entry?.legend))
   readonly property var legend: filtering ? filter.legend : levelLegend
   readonly property string error: viewModel ? viewModel.error : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
 

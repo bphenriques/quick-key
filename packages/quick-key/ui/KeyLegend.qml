@@ -7,7 +7,7 @@ import QtQuick.Layouts
 RowLayout {
   id: root
 
-  // [{ key, what, clickable }], a key being a name or a pair of names (["Left", "Right"]).
+  // [{ key, what, clickable }], a key being a name or a pair of names (["Left", "Right"]); a `?` entry's desc, lowercased, stands in for what.
   property var keys: []
   // Each entry's, as a row's; 0 to sit on a line of text.
   property real verticalPadding: Metrics.itemPaddingY
@@ -38,7 +38,7 @@ RowLayout {
 
       Label {
         tone: "dim"
-        text: entry.hint.what ?? ""
+        text: entry.hint.what ?? (entry.hint.desc ?? "").replace(/^./, first => first.toLowerCase())
       }
     }
   }

@@ -19,6 +19,11 @@ function matches(key, name) {
   return names(key).includes(name);
 }
 
+// The entries whose key (or pair) `chosen` names, in its order, each once: a level's `legend` from its `?` list.
+function pick(entries, chosen) {
+  return Array.from(chosen ?? []).map(name => entries.find(entry => matches(entry.key, name))).filter((entry, i, all) => entry && all.indexOf(entry) === i);
+}
+
 // A key Emacs-style: C- Ctrl, M- Alt, s- Super, Shift as the capital (S- otherwise), arrows as symbols; a pair shares its prefix.
 function label(key, paired = false) {
   const parts = (paired ? names(key) : names(key).slice(0, 1)).map(shortName);
