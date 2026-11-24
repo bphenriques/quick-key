@@ -41,6 +41,7 @@ Singleton {
         select: () => root.toggle(device)
       })).sort((a, b) => a.desc.localeCompare(b.desc))
     },
+    // The power profiles its daemon offers, the one in use lit; a digit switches to one.
     powerProfiles: {
       icon: Glyphs.powerProfiles.balanced,
       empty: () => Words.noPowerProfiles,

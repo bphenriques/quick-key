@@ -371,8 +371,9 @@ Singleton {
       }
 
       property JsonObject battery: JsonObject {
-        // Percent of charge at which, on battery, the battery status warns, then alerts, and `warn` runs.
+        // Percent of charge at which, on battery, the battery status warns and `warn` runs.
         property int low: 20
+        // Percent of charge at which, on battery, the battery status alerts and `warn` runs again.
         property int critical: 5
         // Given a title and a line (Battery low, 18% left), as the charge falls to low or critical, once each; empty, no warnings.
         property string warn: "notify-send --app-name=Battery --icon=battery-caution"

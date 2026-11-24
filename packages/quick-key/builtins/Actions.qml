@@ -18,17 +18,21 @@ Singleton {
     streamMute: { icon: () => Glyphs.volumeOff, state: "streamMuted", available: () => Audio.stream !== null, run: () => Audio.toggleMute(Audio.stream) },
     wifi: { icon: () => Network.wifiEnabled ? Glyphs.wifi : Glyphs.disconnected, state: "wifi", available: () => Network.wifiPresent && !Network.wifiBlocked, run: () => Network.toggleWifi() },
     bluetooth: { icon: () => Bluez.enabled ? Glyphs.bluetooth : Glyphs.bluetoothOff, state: "bluetooth", available: () => Bluez.present, run: () => Bluez.toggle() },
+    // Plays or pauses the player the music status shows.
     playPause: { icon: () => Glyphs.playPause, available: () => Music.canPlay, run: () => Music.togglePlaying() },
+    // The previous track, then the next.
     track: { pair: true, icon: () => Glyphs.track, available: () => Music.canSkip, run: forward => Music.skip(forward) },
     repeat: { icon: () => Glyphs.repeat, state: "repeat", available: () => Music.canRepeat, run: () => Music.toggleRepeat() },
     shuffle: { icon: () => Glyphs.shuffle, state: "shuffle", available: () => Music.canShuffle, run: () => Music.toggleShuffle() },
     keepAwake: { icon: () => Glyphs.keepAwake, state: "keepAwake", available: () => true, run: () => KeepAwake.toggle() },
+    // Steps to the next power profile, the one in use beside it.
     powerProfile: {
       icon: () => Glyphs.powerProfiles[Power.profile] ?? Glyphs.powerProfiles.balanced,
       detail: () => Power.profile ? Words.powerProfiles[Power.profile].toLowerCase() : "",
       available: () => Power.profilesPresent,
       run: () => Power.nextProfile()
     },
+    // Switches to the next keyboard layout; with one, it dims.
     keyboardLayout: { icon: () => KeyboardLayout.names.length > 1 ? Glyphs.keyboard : "", available: () => KeyboardLayout.names.length > 1, run: () => KeyboardLayout.next() }
   })
 }

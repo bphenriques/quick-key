@@ -76,6 +76,7 @@ Singleton {
       change: () => [Bluez.enabled, Bluez.connected.map(device => device.address)],
       ready: () => Bluez.present
     },
+    // The backlight's level; nothing while the output it lights is off.
     brightness: {
       names: ["level"],
       // Unlit, no level to report, not even in its glyph: the row dims for that, "off" would read as the screen being off, and a level changing unseen is no change to pop up.
@@ -86,6 +87,7 @@ Singleton {
       adjust: "brightness",
       ready: () => Brightness.present
     },
+    // When the next event in calendar.file is; `updated` is how old the events are.
     calendar: {
       names: ["title", "when", "updated"],
       glyph: () => Glyphs.calendar,
