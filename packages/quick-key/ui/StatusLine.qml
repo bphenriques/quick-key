@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs
 
 // Icon, an optional title, text elided to fit and a detail on the right; with a title, the text is a value beside it, right-aligned.
+// Squeezed, the title keeps its width and the value and the detail shorten to `least`, so nothing leaves the card: each label fills, as a layout fixes one that does not fill at its full width.
 RowLayout {
   id: root
 
@@ -53,11 +54,11 @@ RowLayout {
   Label {
     id: titleLabel
     visible: root.titled && root.labelShown
-    // Filling but no wider than itself, unless no value is beside it, when it pushes the detail to the right: a layout fixes an item that does not fill at its full width, so squeezed it would leave the card.
+    // With no value beside it, as wide as the row, pushing the detail to the right.
     Layout.fillWidth: true
     // Rounded up: a layout rounds sizes down, and a fraction short would elide the label.
     Layout.maximumWidth: root.packed || root.text !== "" ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
-    Layout.minimumWidth: Math.min(implicitWidth, 2 * Metrics.cell)
+    Layout.minimumWidth: Math.ceil(implicitWidth)
     elide: Text.ElideRight
     tone: root.tone
     text: root.title
@@ -93,6 +94,8 @@ RowLayout {
   Label {
     id: detailLabel
     visible: root.detail !== ""
+    Layout.fillWidth: true
+    Layout.maximumWidth: Math.ceil(implicitWidth)
     Layout.minimumWidth: root.least(detailLabel, 4)
     elide: Text.ElideRight
     horizontalAlignment: Text.AlignRight

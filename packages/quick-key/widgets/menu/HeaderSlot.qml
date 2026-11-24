@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 
-// A third of a bar; sides get at least their items' width so the clock is never cut, the centre shortens its text.
+// A third of a bar; crowded, the sides and the centre shorten their text together, each item to its least (see StatusLine).
 Item {
   id: slot
 
