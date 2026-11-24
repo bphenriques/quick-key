@@ -31,6 +31,7 @@ ShellRoot {
     ["a hash without a space is text", () => bare("#not one"), "<p>#not one</p>"],
     ["emphasis is bold, italic by either mark, or struck; underscores inside a word stay", () => bare("**b** *i* _u_ ~~s~~ snake_case_name"), "<p><b>b</b> <i>i</i> <i>u</i> <s>s</s> snake_case_name</p>"],
     ["inline code keeps its marks and links as written, and an unclosed backtick is text", () => bare("`a*b*` `[b](v)` and `open"), "<p><span>a*b*</span> <span>[b](v)</span> and `open</p>"],
+    ["emphasis spans inline code inside it", () => bare("**a `b` c** and *`d`*"), "<p><b>a <span>b</span> c</b> and <i><span>d</span></i></p>"],
     ["a fenced block is code as written: its links, emphasis and HTML stay text", () => bare("```sh\n[site](https://x) **no** <b>\n```"), "<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td><table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td>[site](https://x) **no** &lt;b&gt;</td></tr></table></td></tr></table>"],
     ["a fence still streaming in runs to the end, its blank lines kept", () => bare("```\nopen\n\nstill").includes("<td>open<br><br>still</td>"), true],
     ["a list nests by indent", () => bare("- a\n- b\n  - c"), "<ul><li>a</li><li>b<ul><li>c</li></ul></li></ul>"],

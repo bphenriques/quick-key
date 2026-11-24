@@ -156,14 +156,13 @@ Singleton {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  // Code between backticks on a faint wash; outside it, emphasis, and an image or a link by its text.
+  // Code between backticks on a faint wash, held out of emphasis by a stand-in, so emphasis can span it; an image or a link by its text.
   function inline(text) {
     const parts = text.split("`");
-    return parts.map((part, i) => {
-      if (i % 2 === 0) return emphasis(escaped(part));
-      if (i === parts.length - 1) return "`" + emphasis(escaped(part));
-      return "<span style=\"background-color:" + css(Tone.wash("normal", 0.5)) + "\">" + escaped(part) + "</span>";
-    }).join("");
+    const codes = parts.filter((part, i) => i % 2 === 1 && i < parts.length - 1);
+    const held = parts.map((part, i) => i % 2 === 0 ? escaped(part) : i === parts.length - 1 ? "`" + escaped(part) : "").join("");
+    let at = 0;
+    return emphasis(held).replace(//g, () => "<span style=\"background-color:" + css(Tone.wash("normal", 0.5)) + "\">" + escaped(codes[at++] ?? "") + "</span>");
   }
 
   function emphasis(text) {
