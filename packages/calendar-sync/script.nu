@@ -216,16 +216,14 @@ def main [calendars_file: path, events_file: path] {
   vdirsyncer-config $calendars $state | save -f $vdirsyncer
   khal-config $calendars $state | save -f $khal
 
-  # One at a time, so a failure names its calendar and keeps its last events; discover is a no-op once the pairs are known.
-  let discovered = ^vdirsyncer -c $vdirsyncer discover | complete
-  let failures = if $discovered.exit_code != 0 {
-    $calendars | each {|c| { name: $c.name, reason: (reason $discovered.stderr) } }
-  } else {
-    $calendars | each {|c|
-      let run = ^vdirsyncer -c $vdirsyncer sync $c.name | complete
-      if $run.exit_code != 0 { { name: $c.name, reason: (reason $run.stderr) } }
-    } | compact
-  }
+  # A tick or an add while this syncs asks for a sync that systemd folds into this one: sync again, once, so it reaches its server now.
+  let changed = $state | path join changed
+  rm -f $changed
+  let first = sync-calendars $vdirsyncer $calendars
+  let failures = if ($changed | path exists) {
+    rm -f $changed
+    sync-calendars $vdirsyncer $calendars
+  } else { $first }
   let read = try { let synced = synced-range; { synced: $synced, events: (events $khal $synced) } } catch { $kept }
   let now = date now | format date "%Y-%m-%dT%H:%M"
 
@@ -248,6 +246,18 @@ def main [calendars_file: path, events_file: path] {
     write-events $events_file { updated: $updated, synced: $read.synced, events: $read.events, error: $error }
     exit 1
   }
+}
+
+# One at a time, so a failure names its calendar and keeps its last events; discover is a no-op once the pairs are known.
+def sync-calendars [config: path, calendars: list]: nothing -> list {
+  let discovered = ^vdirsyncer -c $config discover | complete
+  if $discovered.exit_code != 0 {
+    return ($calendars | each {|c| { name: $c.name, reason: (reason $discovered.stderr) } })
+  }
+  $calendars | each {|c|
+    let run = ^vdirsyncer -c $config sync $c.name | complete
+    if $run.exit_code != 0 { { name: $c.name, reason: (reason $run.stderr) } }
+  } | compact
 }
 
 def failure [failures: list]: nothing -> string {
@@ -305,6 +315,7 @@ def "main tick" [how: string, calendars_file: path, events_file: path, id: int, 
     | save -f $"($file).tmp"
     mv -f $"($file).tmp" $file
   }
+  touch ($state | path join changed)
   write-tasks (task-lists $calendars_file) $state
 }
 
@@ -318,5 +329,6 @@ def "main create" [calendars_file: path, events_file: path, title: string] {
   let state = $events_file | path dirname
   let run = ^todo --config (todoman-config $state) new -- $title | complete
   if $run.exit_code != 0 { error make { msg: ($run.stderr | str trim) } }
+  touch ($state | path join changed)
   write-tasks (task-lists $calendars_file) $state
 }

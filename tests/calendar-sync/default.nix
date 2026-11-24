@@ -41,6 +41,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     diff <(others ${./personal/bills.ics}) <(others state/vdirs/personal/bills.ics) && completed state/vdirs/personal/bills.ics \
       || fail "done marks the file completed, every other line as it was, a start not before the due date included"
     ! grep -qv $'\r$' state/vdirs/personal/bills.ics || fail "done keeps a file's line endings"
+    [ -e state/changed ] || fail "a tick leaves word for a running sync to sync again"
     ! tick done "$(task | jq -r .id)" "Pay the bills" 2> err && grep -q "tasks changed, try again" err || fail "a done of a task done already fails, as its id may since name another alike"
 
     # todoman numbers a task anew once its file changes outside it, as a tick's does: an id from before may name another task.
@@ -115,7 +116,17 @@ pkgs.runCommand "quick-key-calendar-sync"
     mkdir served
     day=$(date -d tomorrow +%Y%m%d)
     printf 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//test//EN\r\nBEGIN:VEVENT\r\nUID:lunch@test\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:%sT130000\r\nDTEND:%sT140000\r\nSUMMARY:Lunch\r\nLOCATION:Rua Augusta 120\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:standup@test\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:%sT090000\r\nDTEND:%sT091500\r\nSUMMARY:Standup\r\nSTATUS:CANCELLED\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n' "$day" "$day" "$day" "$day" > served/work.ics
-    python3 -m http.server 8765 --bind 127.0.0.1 --directory served > server.log 2>&1 &
+    # Served as http.server does, but a request while `arm` exists leaves the word a tick would, as if one came mid-sync.
+    python3 -c '
+    import functools, http.server, os
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if os.path.exists("arm"):
+                os.remove("arm")
+                open("events/changed", "w").close()
+            super().do_GET()
+    http.server.ThreadingHTTPServer(("127.0.0.1", 8765), functools.partial(Handler, directory="served")).serve_forever()
+    ' > server.log 2>&1 &
     for _ in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/8765) 2>/dev/null && break; sleep 0.1; done
     printf -- '- name: work\n  url: http://127.0.0.1:8765/work.ics\n  color: "#3366ff"\n' > work.yaml
     quick-key-calendar-sync work.yaml events/events.json || efail "a sync from a calendar it reaches succeeds"
@@ -123,6 +134,11 @@ pkgs.runCommand "quick-key-calendar-sync"
     jq -e '.events[0].uid | length > 0' events/events.json > /dev/null || efail "an event has a uid, which tells apart two alike"
     jq -e '.updated and (has("error") | not) and (has("syncing") | not)' events/events.json > /dev/null || efail "a sync done says when, and no longer that it syncs"
     jq -e --arg from "$(date -d '62 days ago' +%F)" --arg to "$(date -d '365 days' +%F)" '.synced == { from: $from, to: $to }' events/events.json > /dev/null || efail "a sync says the days it covers"
+
+    gets() { grep -c 'GET /work.ics' server.log; }
+    before=$(gets); quick-key-calendar-sync work.yaml events/events.json; once=$(( $(gets) - before ))
+    touch arm; before=$(gets); quick-key-calendar-sync work.yaml events/events.json; twice=$(( $(gets) - before ))
+    [ "$once" -gt 0 ] && [ "$twice" = $((2 * once)) ] && [ ! -e events/changed ] || efail "a tick during a sync makes it sync again, once ($once, then $twice)"
 
     printf -- '- name: work\n  url: http://127.0.0.1:1/secret-token/work.ics\n  color: "#3366ff"\n' > gone.yaml
     ! quick-key-calendar-sync gone.yaml events/events.json || efail "a sync whose server is gone fails"

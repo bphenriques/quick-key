@@ -51,4 +51,4 @@ calendarSync reads its tasks with todoman, whose config it keeps beside the even
 
 Ticking a repeating task makes its next one; unticking reopens only the one ticked and leaves the next, to delete in your calendar app if unwanted. todoman writes both anew: the one ticked loses a start not before its due time, a language, categories on two lines and its times' zone, and the next one also loses its reminders, its links (`URL`, `RELATED-TO`) and an app's own properties (`X-`), its `COUNT` starting over, so a series meant to end never does. Your calendar app keeps a series whole; tick repeating tasks there.
 
-A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network.
+A tick or an add and a sync's rewrite of the file take turns, and neither waits on the network. One made while a sync runs, which that sync may have missed, makes it sync again as it ends.
