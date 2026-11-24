@@ -28,7 +28,7 @@ ShellRoot {
     ["a setting since renamed", { theme: { monochromeTray: true } }, "theme.monochromeTray is now theme.appIcons"],
     ["a setting since removed", { menu: { edge: "top" } }, "menu.edge is removed: the menu always sits at the bottom"],
     ["a setting since removed beside a misspelt one", { menu: { edge: "top" }, audio: { stepp: 1 } }, ["menu.edge is removed", "audio.stepp is not a setting"]],
-    ["an entry without an icon beside a command plugin named as a removed one", { plugins: { notifications: { type: "command", read: "true" } }, menu: { entries: [{ key: "l", desc: "Lock", cmd: "true" }] } }, "'Lock' in the top level needs an icon"],
+    ["an entry without a key beside a command plugin named as a removed one", { plugins: { notifications: { type: "command", read: "true" } }, menu: { entries: [{ desc: "Lock", icon: "x", cmd: "true" }] } }, "'Lock' in the top level needs a key"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
     ["a submenu that is no list", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: "abc" }] } }, "sets submenu to a string, not a list"],
     ["an empty row in a submenu", { menu: { entries: [{ key: "a", desc: "A", icon: "x", submenu: [null] }] } }, "holds something that is not an entry"],
@@ -74,8 +74,7 @@ ShellRoot {
     ["a pin that is an id", menu([{ key: "a", desc: "A", icon: "x", list: "sinks", pins: ["bluez_output.*"] }]), "takes each pin as { match, label }"],
     ["a pin without its label", menu([{ key: "a", desc: "A", icon: "x", list: "sinks", pins: [{ match: "bluez_output.*" }] }]), "takes each pin as { match, label }"],
     ["a digit beside a list", menu([{ key: "x", desc: "X", icon: "x", list: "tray", submenu: [{ key: "1", desc: "One", icon: "i", cmd: "true" }] }]), "binds a digit"],
-    ["a row of the top level without an icon", menu([{ key: "l", desc: "Lock", cmd: "loginctl lock-session" }]), "'Lock' in the top level needs an icon"],
-    ["a wrong entry in a level below", menu([{ key: "x", desc: "X", icon: "x", submenu: [{ key: "y", desc: "Y", cmd: "true" }] }]), "'Y' in the top level > X needs an icon"],
+    ["a wrong entry in a level below", menu([{ key: "x", desc: "X", icon: "x", submenu: [{ desc: "Y", icon: "x", cmd: "true" }] }]), "'Y' in the top level > X needs a key"],
     ["an input on an entry without a level", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", input: { desc: "Add", cmd: "true" } }]), "can only set input on a level with submenu, list or view"],
     ["an input setting a key, which Tab is for every input", menu([{ key: "x", desc: "X", icon: "x", list: "tray", input: { key: "a", desc: "Add", cmd: "true" } }]), "sets input.key, which no input takes"],
     ["an entry on Tab, which moves to the input", menu([{ key: "Tab", desc: "X", icon: "x", cmd: "true" }]), "keys reserved for the menu in the top level: Tab"],
@@ -125,6 +124,11 @@ ShellRoot {
         name: "a top-level input handing a plugin its text has nothing wrong",
         timeout: 0,
         until: () => root.names({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" } } }, [])
+      },
+      {
+        name: "a row without an icon has nothing wrong",
+        timeout: 0,
+        until: () => root.names(root.menu([{ key: "l", desc: "Lock", cmd: "true" }]), [])
       },
       {
         name: "a plugin's own settings have nothing wrong",

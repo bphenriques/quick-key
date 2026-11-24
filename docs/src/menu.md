@@ -44,7 +44,7 @@ One of:
 - `action`: a built-in action (below), or one of the plugin its level lists (the tasks' `sort`). It brings its icon, which shows its state (Wi-Fi off), and what lights it, keeps the menu open, and dims while it has nothing to act on (no player, no adapter). What can never run on this machine is not declared.
 - `submenu`, `list` or `view`: a level. `list` adds items found at runtime on digits. `pins` keeps chosen ones on their digit, dim while absent, their label naming them wherever the menu shows them; the rest follow by name, internal audio first, never by signal or recency. `view = "calendar"` shows the [calendar](calendar.md).
 
-The label is `desc`, and never changes. Every row of a level carries an icon: `icon`, or its `status`'s or `action`'s own.
+The label is `desc`, and never changes. The icon is `icon`, or its `status`'s or `action`'s own; the starter gives every row one.
 
 `status` shows live state on the right of the row, or beside the label for an action in its level (Brightness 55%). A status names its state in words only when it has no value to show, in lowercase but for a name (`off`, `muted`, `Wi-Fi off`), and never for a state its icon or tone already shows. A level's state sits on the row that changes it: power in Power's icon.
 
