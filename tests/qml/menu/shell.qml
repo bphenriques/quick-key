@@ -196,6 +196,16 @@ ShellRoot {
         }
       },
       {
+        name: "keep awake's enable turns it on whatever it was, where toggle would flip it",
+        until: () => {
+          KeepAwake.enable();
+          KeepAwake.enable();
+          const on = KeepAwake.enabled;
+          KeepAwake.toggle();
+          return on && !KeepAwake.enabled;
+        }
+      },
+      {
         name: "pick filters the level's list in place, its rows held, and a digit runs its row as at rest",
         start: () => {
           menu.push({ kind: "entry", title: "Devices", entry: { list: "devices", submenu: [{ key: "space", desc: "All...", action: "pick" }] } });

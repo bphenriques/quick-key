@@ -19,11 +19,20 @@ Singleton {
     Kept.set("keepAwake", !enabled);
   }
 
+  // On whatever it was, for a script that cannot know (an idle warning's "Keep awake").
+  function enable() {
+    Kept.set("keepAwake", true);
+  }
+
   IpcHandler {
     target: "keepAwake"
 
     function toggle(): void {
       root.toggle();
+    }
+
+    function enable(): void {
+      root.enable();
     }
   }
 }
