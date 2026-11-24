@@ -18,8 +18,8 @@ RowLayout {
   readonly property real actionsRoom: width - slotsWidth - (legend.visible ? legend.implicitWidth + actions.spacing : 0)
   readonly property real labelledWidth: Array.from(labelled.children).reduce((sum, row) => sum + row.implicitWidth, Math.max(0, menu.barActions.length - 1) * actions.spacing)
   readonly property bool compact: labelledWidth > actionsRoom
-  // What the bar needs at least, every text shortened: past its width it overflows, which only a wider menu or fewer items mends, so the log says so.
-  readonly property real needed: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.Layout.minimumWidth + spacing : 0), 0)
+  // What the bar needs at least, every text shortened, a spacing between each two items: past its width it overflows, which only a wider menu or fewer items mends, so the log says so.
+  readonly property real needed: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.Layout.minimumWidth + spacing : 0), actions.visible ? 0 : -spacing)
   readonly property bool overflows: width > 0 && needed > width + 1
   onOverflowsChanged: if (overflows) console.warn("menu: the bar needs " + Math.ceil(needed) + " px, more than its " + Math.floor(width)
     + ": widen menu.width or the level's width, or list fewer items")
