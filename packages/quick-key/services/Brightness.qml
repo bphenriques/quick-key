@@ -53,7 +53,6 @@ Singleton {
 
   CommandReader {
     shell: Config.brightness.backlight
-    atStart: true
     onRead: text => {
       const [file, maximum] = text.trim().split("\t");
       internal.file = file ?? "";

@@ -63,7 +63,6 @@ Scope {
   CommandReader {
     id: reader
     shell: root.read
-    atStart: true
     onRead: text => root.apply(root.lastLine(text))
   }
 

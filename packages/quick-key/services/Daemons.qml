@@ -22,7 +22,6 @@ Singleton {
   CommandReader {
     id: reader
     shell: Config.daemons.list
-    atStart: true
     onRead: text => internal.names = text.split("\n").map(line => line.trim().split(/\s+/)[0]).filter(name => name)
   }
 }
