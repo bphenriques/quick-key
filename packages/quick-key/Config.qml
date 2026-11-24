@@ -305,6 +305,8 @@ Singleton {
         property var input: null
         // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.
         property bool islands: false
+        // Shows the key listing the rest on the bars that have one (`? keys`, Ask's `C-? keys`); off, the key still acts.
+        property bool keysHint: true
       }
 
       property JsonObject clock: JsonObject {

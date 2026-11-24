@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs
 import qs.services
 import qs.ui
 import qs.ui.conversation
@@ -130,6 +131,17 @@ ShellRoot {
           const listed = ask.act("Ctrl+?") && ask.helping && ask.help.some(key => key.key === "Shift+Return") && ask.keys.some(key => key.key === "Ctrl+?" && key.shows());
           const kept = !ask.act("") && ask.helping;
           return listed && kept && ask.act("x") && !ask.helping && !ask.act("x");
+        }
+      },
+      {
+        name: "menu.keysHint off leaves C-? off the bar, and C-? still lists the keys",
+        until: () => {
+          const ask = Plugins.get("keyed");
+          const hint = () => ask.keys.find(key => key.key === "Ctrl+?");
+          Config.menu.keysHint = false;
+          const hidden = hint().hidden && ask.act("Ctrl+?") && ask.helping && ask.act("x");
+          Config.menu.keysHint = true;
+          return hidden && !hint().hidden;
         }
       },
       {

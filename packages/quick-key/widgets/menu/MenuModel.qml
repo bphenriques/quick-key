@@ -79,7 +79,7 @@ Scope {
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
     // At the top, the key listing the rest, which every surface with such a list shows so.
-    .concat(level === null ? [{ key: "?", what: Words.help, clickable: true }] : [])
+    .concat(level === null && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend : levelLegend
   readonly property string error: viewModel ? viewModel.error : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
 

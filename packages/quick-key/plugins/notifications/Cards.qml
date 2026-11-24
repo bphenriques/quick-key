@@ -267,7 +267,7 @@ Scope {
           clip: true
           keys: view.plugin.mode === "closed" ? [{ key: "Escape", what: view.plugin.words.letGo }]
             : view.plugin.mode === "reply" ? [{ key: "Return", what: view.plugin.words.send }, { key: "Ctrl+Shift+Return", what: Words.sendLeave }].concat((view.plugin.replying?.draft ?? "") !== "" ? [{ key: "Escape", what: Words.clear }] : [])
-            : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }, { key: "?", what: Words.help }]
+            : [{ key: "Ctrl+p", what: view.plugin.paused ? view.plugin.words.resume : view.plugin.words.pause }].concat(Config.menu.keysHint ? [{ key: "?", what: Words.help }] : [])
         }
 
         Label {

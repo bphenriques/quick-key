@@ -87,7 +87,7 @@ Scope {
       // Only what the state changes.
       KeyLegend {
         id: legend
-        keys: panel.plugin.keys.filter(entry => entry.shows()).map(entry => ({ key: entry.key, what: entry.what, clickable: true }))
+        keys: panel.plugin.keys.filter(entry => entry.shows() && !entry.hidden).map(entry => ({ key: entry.key, what: entry.what, clickable: true }))
           .concat(panel.plugin.draft ? [{ key: "Escape", what: Words.clear, clickable: true }] : [])
         onPicked: key => panel.plugin.act(key) || panel.escaped()
       }

@@ -455,6 +455,18 @@ ShellRoot {
         }
       },
       {
+        name: "menu.keysHint off leaves ? off the top level's bar, and ? still lists the keys",
+        until: () => {
+          menu.hide();
+          Config.menu.keysHint = false;
+          menu.stack = [];
+          const hidden = !menu.legend.some(key => key.key === "?") && menu.handleName("?") && menu.held === "Help";
+          menu.handleName("?");
+          Config.menu.keysHint = true;
+          return hidden && menu.held === "" && menu.legend.some(key => key.key === "?");
+        }
+      },
+      {
         name: "on a calendar level, ? lists the arrows its legend leaves to the grid",
         until: () => {
           menu.hide();

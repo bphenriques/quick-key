@@ -34,7 +34,7 @@ Plugin {
     helpScrollUp: "Scroll up",
     helpScrollDown: "Scroll down"
   })
-  // Each key once, `what` and `shows` for the legend; it runs only while it shows, `run` returning false to leave it to the prompt.
+  // Each key once, `what` and `shows` for the legend, which leaves out a `hidden` one; it runs only while it shows, `run` returning false to leave it to the prompt.
   readonly property var keys: [
     { key: "Ctrl+y", what: words.allow, shows: () => approval !== "", run: () => answerApproval(true) },
     { key: "Ctrl+n", what: words.deny, shows: () => approval !== "", run: () => answerApproval(false) },
@@ -45,7 +45,7 @@ Plugin {
     { key: "Ctrl+o", what: words.terminal, shows: () => canMove, run: () => moveToTerminal(), when: settings.open !== "" },
     { key: "Ctrl+r", what: Words.history, shows: () => recalls, run: () => recall() },
     // `?` with Ctrl, as the prompt has the keys throughout.
-    { key: "Ctrl+?", what: Words.help, shows: () => true, run: () => helping = true }
+    { key: "Ctrl+?", what: Words.help, shows: () => true, hidden: !Config.menu.keysHint, run: () => helping = true }
   ].filter(entry => entry.when !== false)
   // The keys the bar leaves out, listed in the conversation's place while `helping`; any key closes them.
   readonly property var help: [
