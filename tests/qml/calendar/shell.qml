@@ -89,6 +89,16 @@ ShellRoot {
         }
       },
       {
+        name: "after the width changes, a day's heading shows only with its first row whole under it",
+        start: () => widened.width = 400,
+        until: () => {
+          // Headings are the list's items with a section; each holds the heading that hides.
+          const headings = Array.from(widened.contentItem.children).filter(item => item.section !== undefined && item.children[0]?.visible);
+          const first = heading => widened.itemAtIndex(widened.rows.findIndex(row => row.key === heading.section));
+          return !widened.folded && headings.length > 1 && headings.every(heading => first(heading)?.visible);
+        }
+      },
+      {
         name: "Return on a focused event shows it whole, its legend then naming Return no more; Escape hides it, then leaves the event",
         until: () => {
           const returns = () => menu.viewModels.calendar.legend.some(key => key.key === "Return");
@@ -163,6 +173,14 @@ ShellRoot {
     id: narrow
     width: 150
     height: 100
+    selected: new Date(2026, 10, 12)
+  }
+
+  // Narrow, then widened as the level lays it out: its rows' times fold, then unfold.
+  CalendarEvents {
+    id: widened
+    width: 150
+    height: 260
     selected: new Date(2026, 10, 12)
   }
 

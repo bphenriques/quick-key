@@ -164,7 +164,8 @@ ListView {
     readonly property string textTone: event && event.end > Clock.date ? "normal" : "dim"
 
     width: ListView.view.width
-    visible: !root.details && root.fits(y, height)
+    // By its counted height, as its heading is: hidden, its layout never updates, so the height it last laid out could keep it hidden.
+    visible: !root.details && root.fits(y, root.rowHeight(modelData))
     enabled: !!event
     dimsWhenDisabled: false
     current: !!event && modelData.id === root.focused
