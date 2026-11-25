@@ -103,7 +103,7 @@ Scope {
             readonly property real side: Config.theme.padding + modelData.inset
             readonly property real own: content.implicitHeight + 2 * modelData.padding
             readonly property real fit: Math.max(modelData.minimumHeight, own)
-            readonly property real natural: Math.min(modelData.maximumHeight, Math.max(fit, held))
+            readonly property real natural: Math.max(fit, held)
             // The tallest it has been while its holdKey stays, once laid out, so a height it has only for a moment is not kept.
             property real held: 0
             readonly property var holdKey: modelData.holdKey

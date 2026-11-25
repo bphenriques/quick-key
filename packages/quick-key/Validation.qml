@@ -65,19 +65,7 @@ Singleton {
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
       levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null, noInput, pinsOf(json.menu?.layout).map(pin => pin.level)), input,
       json.menu?.layout == null ? [] : layoutProblems("menu.layout", json.menu.layout, json.menu.entries ?? Config.starterEntries, bar, "top-level entry"),
-      json.menu?.height == null ? [] : ["number", "map"].includes(Config.kind(json.menu.height)) ? heightProblems("menu.height", json.menu.height, part => part + " is ") : ["menu.height takes a number or a map"]);
-  }
-
-  // A body's height: a whole number of rows from 1, or { min, max } of them, min not past max; `say` words a part of it ("height.min") before its value.
-  function heightProblems(name, height, say) {
-    const rows = { range: [1], whole: true };
-    if (Config.kind(height) !== "map") return valueProblems(say(name), height, rows);
-    if (!Object.keys(height).length) return [say(name) + "an empty map, not { min, max }"];
-    const unknown = Object.keys(height).filter(field => !["min", "max"].includes(field));
-    const bounds = ["min", "max"].filter(field => height[field] != null).reduce((all, field) => all.concat(valueProblems(say(name + "." + field), height[field], rows)), []);
-    // Only bounds that are rows compare.
-    const past = !bounds.length && height.min > height.max ? [say(name + ".min") + height.min + ", past its max (" + height.max + ")"] : [];
-    return (unknown.length ? [say(name) + "a map setting " + unknown.join(", ") + ", not min or max"] : []).concat(bounds, past);
+      json.menu?.height == null ? [] : Config.kind(json.menu.height) === "number" ? valueProblems("menu.height is ", json.menu.height, fields.height) : ["menu.height takes a number"]);
   }
 
   // The islands a layout names, each at most once.
@@ -373,8 +361,8 @@ Singleton {
       icon: { kind: "string" },
       // Its level's width in pixels, over menu.width.
       width: { kind: "number", range: [1] },
-      // Its level's body in rows, over menu.height: unset, it fits; N, fixed; { min, max }, it fits between.
-      height: { kind: ["number", "map"], needs: ["submenu", "list"], excludes: ["view", "limit"], invalid: height => heightProblems("height", height, part => "sets " + part + " to ").join("; ") },
+      // The rows its level's body holds at least, over menu.height: unset, it fits what it shows.
+      height: { kind: "number", needs: ["submenu", "list"], excludes: ["view", "limit"], range: [1], whole: true },
       // Its level's entries.
       submenu: { kind: "list" },
       // Keeps the menu open once its cmd runs, or its action at the end of a key path that opened the menu.

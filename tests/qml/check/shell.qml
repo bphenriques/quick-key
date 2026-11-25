@@ -77,11 +77,8 @@ ShellRoot {
     ["no columns", { menu: { columns: 0 } }, "menu.columns is 0, not 1 to 9"],
     ["a height of no whole rows", menu([{ key: "a", desc: "A", icon: "x", submenu: [], height: 2.5 }]), "'A' in the top level sets height to 2.5, not a whole number"],
     ["a height of no rows", { menu: { height: 0 } }, "menu.height is 0, not 1 or more"],
-    ["a height as text", { menu: { height: "4" } }, "menu.height takes a number or a map"],
-    ["a height map setting more than min and max", menu([{ key: "a", desc: "A", icon: "x", submenu: [], height: { min: 2, rows: 3 } }]), "sets height to a map setting rows, not min or max"],
-    ["a height of an empty map", { menu: { height: {} } }, "menu.height is an empty map, not { min, max }"],
-    ["a height's min past its max", { menu: { height: { min: 6, max: 3 } } }, "menu.height.min is 6, past its max (3)"],
-    ["a height's fractional min past its max, named only for the fraction", { menu: { height: { min: 6.5, max: 3 } } }, "menu.height.min is 6.5, not a whole number"],
+    ["a height as text", { menu: { height: "4" } }, "menu.height takes a number"],
+    ["a height as bounds", menu([{ key: "a", desc: "A", icon: "x", submenu: [], height: { min: 2, max: 3 } }]), "sets height to a map, not a number"],
     ["a height beside a limit", { menu: { bar: { right: [{ desc: "Tray", list: "tray", limit: 3, height: 3 }] } } },
       ["'Tray' in the top level's bar cannot combine height with limit", "sets height, but its list shows in the bar, opening no level"]],
     ["a height on a view", menu([{ key: "c", desc: "Calendar", icon: "x", view: "calendar", submenu: [], height: 4 }]), "cannot combine height with view"],
@@ -190,10 +187,10 @@ ShellRoot {
           bar: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", layout: ["input", "body", "bar"] }] } } }, [])
       },
       {
-        name: "a height in rows, fixed or between, on the top level, a submenu, a list and a bar entry opening a level, has nothing wrong",
+        name: "a height in rows on the top level, a submenu, a list and a bar entry opening a level has nothing wrong",
         timeout: 0,
-        until: () => root.names({ menu: { height: { min: 4 }, entries: [{ key: "a", desc: "A", icon: "x", submenu: [], height: 5 }, { key: "b", desc: "B", icon: "x", list: "tray", height: { min: 2, max: 9 } }],
-          bar: { left: [{ key: "s", desc: "S", icon: "x", submenu: [], height: { max: 3 } }] } } }, [])
+        until: () => root.names({ menu: { height: 4, entries: [{ key: "a", desc: "A", icon: "x", submenu: [], height: 5 }, { key: "b", desc: "B", icon: "x", list: "tray", height: 2 }],
+          bar: { left: [{ key: "s", desc: "S", icon: "x", submenu: [], height: 3 }] } } }, [])
       },
       {
         name: "a row without an icon has nothing wrong",

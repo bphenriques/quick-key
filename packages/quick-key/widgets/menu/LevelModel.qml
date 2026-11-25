@@ -52,10 +52,10 @@ Scope {
   // What Return runs, filtering or at rest.
   readonly property var cursorItem: filtering ? filter.rows.find(row => row.current) ?? null : cursorRows.find(row => idOf(row) === cursor.current) ?? null
   readonly property int width: level?.width ?? Config.menu.width
-  // Its body in rows, its entry's `height` else menu.height, a view fitting: the least and the most it holds.
-  readonly property var height: level?.entry?.view ? null : level?.entry?.height ?? Config.menu.height
-  readonly property int minRows: typeof height === "number" ? height : height?.min ?? 0
-  readonly property real maxRows: typeof height === "number" ? height : height?.max ?? Infinity
+  // The rows its body holds at least, its entry's `height` else menu.height, a view fitting.
+  readonly property int minRows: level?.entry?.view ? 0 : level?.entry?.height ?? Config.menu.height ?? 0
+  // Those rows as MenuBody lays them out, a menu's numbered rows apart from its letters by its spacing, so a level of that many is as tall.
+  readonly property real minHeight: minRows * Metrics.row + (minRows && rows.length && bodyActions.length ? Config.theme.padding : 0)
   // No more columns than its width holds at about twelve characters each.
   readonly property int columns: Math.max(1, Math.min(level?.entry?.columns ?? Config.menu.columns, Math.floor(width / (12 * Metrics.cell))))
   readonly property string emptyText: level?.entry?.list && rows.length === 0 ? (filtering && filter.emptyText) || Lists.empty(level.entry.list) : ""

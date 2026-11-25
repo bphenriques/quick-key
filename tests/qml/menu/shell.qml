@@ -183,6 +183,13 @@ ShellRoot {
       menu: menu
       room: 300
     }
+
+    MenuBody {
+      id: bodyView
+      width: 300
+      menu: menu
+      level: menu.body
+    }
   }
 
   Suite {
@@ -1134,24 +1141,38 @@ ShellRoot {
         }
       },
       {
-        name: "height = 5 holds a level of two rows five rows tall, { min = 3; } at least three, menu.height a level setting none, a view fitting",
+        name: "height = 5 holds a level of two rows at least five rows tall, menu.height a level setting none, a view fitting",
         until: () => {
           menu.hide();
           const rows = [{ key: "f", desc: "F", cmd: "true" }, { key: "g", desc: "G", cmd: "true" }];
           const held = height => {
             menu.levels = [{ kind: "entry", entry: { submenu: rows, height } }];
-            return [menu.body.minRows, menu.body.maxRows].join();
+            return menu.body.minRows;
           };
-          const fixed = held(5) === "5,5";
-          const least = held({ min: 3 }) === "3,Infinity";
-          const fits = held(undefined) === "0,Infinity";
-          Config.menu.height = { min: 4, max: 6 };
-          const inherited = held(undefined) === "4,6";
+          const least = held(5) === 5;
+          const fits = held(undefined) === 0;
+          Config.menu.height = 4;
+          const inherited = held(undefined) === 4;
           menu.levels = [root.calendarLevel];
-          const view = menu.body.minRows === 0 && menu.body.maxRows === Infinity;
+          const view = menu.body.minRows === 0;
           Config.menu.height = null;
           menu.levels = [];
-          return fixed && least && fits && inherited && view;
+          return least && fits && inherited && view;
+        }
+      },
+      {
+        name: "a menu's numbered rows and letters at height 4 are as tall as its body draws them, and two rows more add two rows",
+        start: () => {
+          menu.hide();
+          const rows = ["1", "2", "a", "b"].map(key => ({ key, desc: key, icon: Glyphs.search, cmd: "true" }));
+          menu.levels = [{ kind: "entry", entry: { submenu: rows, columns: 1, height: 4 } }];
+        },
+        until: () => {
+          if (bodyView.implicitHeight !== menu.body.minHeight) return false;
+          menu.levels = [{ kind: "entry", entry: { submenu: menu.level.entry.submenu, columns: 1, height: 6 } }];
+          const more = menu.body.minHeight === bodyView.implicitHeight + 2 * Metrics.row;
+          menu.levels = [];
+          return more;
         }
       },
       {

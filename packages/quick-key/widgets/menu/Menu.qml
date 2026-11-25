@@ -105,9 +105,7 @@ Scope {
     id: bodyIsland
     name: "body"
     cut: true
-    // Its level's height in rows.
-    minimumHeight: root.menu.body.minRows * Metrics.row + 2 * padding
-    maximumHeight: root.menu.body.maxRows * Metrics.row + 2 * padding
+    minimumHeight: root.menu.body.minHeight + 2 * padding
     onClicked: root.menu.focusIsland("body")
     // As Escape does, but never closing the top level.
     onSecondaryClicked: if (root.menu.level) root.menu.stepBack()
