@@ -58,7 +58,7 @@ ColumnLayout {
     focused: root.menu.inputFocused || filter
     // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
     busy: root.model.busy && root.model.turn === null && !filter
-    key: filter ? "" : "Tab"
+    key: filter || !root.model.input ? "" : "Tab"
     glyph: filter ? Glyphs.search : Glyphs.prompt
     detail: filter ? root.menu.focused.filter.count : ""
     placeholder: filter ? Words.filterPrompt : root.model.turn ? Words.next(root.model.turn.phase) : root.model.input?.desc ?? ""
@@ -68,7 +68,7 @@ ColumnLayout {
       : root.model.plugin?.recalls ? [{ key: "Ctrl+r", what: Words.history, clickable: true }] : []
     onPicked: key => key === "Ctrl+r" ? root.model.recall() : stepBack()
     maxLines: 1
-    onTapped: root.menu.focusOn("input")
+    onTapped: if (root.model.input) root.menu.focusOn("input")
     onBack: root.menu.stepBack()
     // The level's own unsent text, as it opens or moves to another input; filtering, the filter's.
     readonly property string owner: root.model.draftKey

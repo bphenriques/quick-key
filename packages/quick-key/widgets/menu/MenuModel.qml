@@ -47,8 +47,9 @@ Scope {
   // At the body's level whichever island has the keys, so the bar holds still.
   readonly property var barSlots: level === null ? slotsOf(topBar) : body.kinds[level.kind].bar(level)
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
-  // Never for the cursor's keys alone, so a level holds still as it shows (rule 4).
-  readonly property bool barShown: barItems.length > 0 || focused.barActions.length > 0 || focused.legend.length > focused.cursorLegend.length
+  // Nothing for the input or the bar to show: each then shows empty, unless farthest from the edge (Places.shown).
+  readonly property bool inputEmpty: input.input === null && !focused.filtering
+  readonly property bool barEmpty: barItems.length === 0 && focused.barActions.length === 0 && focused.legend.length === 0
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
       Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),

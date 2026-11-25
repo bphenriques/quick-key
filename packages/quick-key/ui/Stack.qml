@@ -89,7 +89,8 @@ Scope {
           const items = Array.from({ length: islands.count }, (_, i) => islands.itemAt(i));
           return Array.from(root.islands).map(given => items.find(island => island?.modelData.name === given.name) ?? null);
         }
-        readonly property var places: Places.of(surfaces.map(island => island?.natural ?? 0), surfaces.map(island => island?.visible ?? false),
+        readonly property var shown: Places.shown(surfaces.map(island => island?.modelData.empty ?? true))
+        readonly property var places: Places.of(surfaces.map(island => island?.natural ?? 0), shown,
           surfaces.findIndex(island => island?.modelData.cut ?? false), height, overlay.edgeMargin, Config.theme.spacing / 2)
 
         Repeater {
@@ -133,7 +134,7 @@ Scope {
               radius: Config.theme.radius
               regions: parts.regions
             }
-            visible: modelData.shown
+            visible: frame.shown[frame.surfaces.indexOf(island)] ?? false
             // Centred, on whole pixels, so a layer inside (a faded conversation) is not resampled.
             x: Math.round((frame.width - width) / 2)
             y: Math.round(place.y)

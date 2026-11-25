@@ -23,6 +23,16 @@ TestCase {
     compare(places[0].height, 0);
   }
 
+  // Given which are empty, top to bottom: an empty one shows while one farther from the edge (above it) shows.
+  function test_shown() {
+    compare(Places.shown([true, false, true]), [false, true, true]);
+    compare(Places.shown([true, true, false]), [false, false, true]);
+    compare(Places.shown([false, false, true]), [true, true, true]);
+    compare(Places.shown([true, true, true]), [false, false, false]);
+    compare(Places.shown([false, false, false]), [true, true, true]);
+    compare(Places.shown([]), []);
+  }
+
   // Too tall, the body gives up what the input above it needs, which stays within the margin.
   function test_cut() {
     const places = place([30, 2000, 40], [true, true, true], 1);

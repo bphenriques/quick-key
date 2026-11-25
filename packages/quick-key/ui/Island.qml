@@ -6,7 +6,8 @@ QtObject {
   // Unique within its Stack, which keeps each island by it; what the Stack's `focus` names to give it the keys.
   property string name
   property Component content
-  property bool shown: true
+  // Nothing to show: it shows empty while an island farther from the edge shows, else stays out.
+  property bool empty: false
   // Its own width, no wider than the screen leaves; unset (-1), the Stack's.
   property real width: -1
   // Above and below the content; its sides take the theme's padding plus `inset`, so a row's content lines up across islands.

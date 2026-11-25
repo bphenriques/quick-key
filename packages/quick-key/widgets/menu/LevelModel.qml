@@ -68,8 +68,8 @@ Scope {
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(more ? [{ key: "0", what: Words.rangeOf(0, limit, unhidden), clickable: true }]
       : slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
-    // At the top and on a pinned level, the key listing the rest, which every surface with such a list shows so.
-    .concat((level === null || island !== "body") && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
+    // The key listing the rest, which every surface with such a list shows so.
+    .concat(Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
     .concat(MenuKeys.pick(menu.helpOf(root), level?.entry?.legend))
   readonly property var cursorLegend: (cursorItem && (content || filtering) ? [{ key: returnOf(cursorItem), what: cursorItem.verb || Words.pick, clickable: true }] : [])
     .concat(cursorItem?.actions?.length > 0 || cursorItem?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])

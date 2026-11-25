@@ -91,7 +91,7 @@ Scope {
   Island {
     id: inputIsland
     name: "input"
-    shown: root.menu.input.input !== null || root.menu.focused.filtering
+    empty: root.menu.inputEmpty
     holdKey: root.menu.input.visit
     padding: Config.theme.padding / 2
     // As a row's content is, so its key column lines up with the body's keys.
@@ -138,7 +138,7 @@ Scope {
   Island {
     id: barIsland
     name: "bar"
-    shown: root.menu.barShown
+    empty: root.menu.barEmpty
     split: Config.menu.splitBar
     padding: Config.theme.padding / 4
     // At least a padded line, so a level's bar without the clock is as tall as the top level's and the body holds still.
