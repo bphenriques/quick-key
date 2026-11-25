@@ -93,7 +93,7 @@ Scope {
     // Filtering, the filter takes the island, the level's input waiting under it.
     inputShown: root.menu.island.input !== null || root.menu.filtering
     inputFocused: root.menu.inputFocused || root.menu.filtering
-    input: Island {
+    input: MenuInput {
       menu: root.menu
     }
 
