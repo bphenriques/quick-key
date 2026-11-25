@@ -520,6 +520,24 @@ ShellRoot {
         }
       },
       {
+        name: "a level without a bar grows none as its cursor shows, where one with a bar names Return",
+        until: () => {
+          const plugin = Plugins.get("keyed");
+          if (!plugin) return false;
+          const was = plugin.items;
+          plugin.items = [{ id: "a" }, { id: "b" }];
+          menu.hide();
+          menu.show();
+          menu.push(root.bareLevel);
+          const bare = !menu.barShown && menu.cursorKey("Down") && !!menu.cursorItem && !menu.barShown;
+          menu.push(root.keyedLevel);
+          const named = menu.cursorKey("Down") && menu.barShown && menu.legend.some(key => key.key === "Return");
+          menu.hide();
+          plugin.items = was;
+          return bare && named;
+        }
+      },
+      {
         name: "Ctrl held lists the bar's keys, each named, a pair as one",
         start: () => menu.hold("Ctrl"),
         until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-k","Clicked"],["C-1","a-1"],["C-0","+1"]]'

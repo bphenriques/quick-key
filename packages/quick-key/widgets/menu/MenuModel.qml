@@ -65,7 +65,8 @@ Scope {
   readonly property var topBar: ({ left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") })
   readonly property var barSlots: level === null ? slotsOf(topBar) : kinds[level.kind].bar(level)
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
-  readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > 0
+  // Never for the cursor's keys alone, so a level holds still as it shows (rule 4).
+  readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > cursorLegend.length
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
       Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
