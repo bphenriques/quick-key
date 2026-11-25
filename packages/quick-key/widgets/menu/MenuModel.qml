@@ -45,18 +45,19 @@ Scope {
   readonly property var actions: items.filter(item => !item.listed)
   // A level with a list or a view is its content, its actions on its bar (rule 4); any other is a menu, its actions its rows.
   readonly property bool content: level !== null && kinds[level.kind].content(level)
-  readonly property var bodyActions: content ? [] : actions
+  readonly property var bodyActions: content ? [] : actions.map(marked)
   readonly property var barActions: content && !filtering ? actions : []
   readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed).map(marked)
-  // At rest the arrows move a cursor over a list level's rows, where its own rows leave them free (rule 7); `press` never reaches it.
-  readonly property var cursorRows: filtering || viewModel || !content ? [] : items.filter(item => item.listed && item.id !== undefined)
+  // At rest the arrows move a cursor over a list level's rows, or a menu's grid, by the pairs its own rows leave free (rule 7); `press` never reaches it.
+  readonly property var cursorRows: filtering || viewModel ? [] : content ? items.filter(item => item.listed && item.id !== undefined) : actions
   readonly property Cursor cursor: Cursor {
-    ids: root.cursorRows.map(row => row.id)
-    free: root.cursorRows.length && !root.find(root.items, "Up") && !root.find(root.items, "Down") ? ["Up", "Down"] : []
-    from: root.cursorRows.find(row => row.active)?.id
+    ids: root.cursorRows.map(root.idOf)
+    columns: root.content ? 1 : root.columns
+    free: [["Up", "Down"]].concat(root.content ? [] : [["Left", "Right"]]).filter(pair => root.cursorRows.length && !pair.some(key => root.find(root.items, key))).reduce((all, pair) => all.concat(pair), [])
+    from: root.content ? root.cursorRows.find(row => row.active)?.id : undefined
   }
   // What Return runs, filtering or at rest.
-  readonly property var cursorItem: filtering ? filter.rows.find(row => row.current) ?? null : cursorRows.find(row => row.id === cursor.current) ?? null
+  readonly property var cursorItem: filtering ? filter.rows.find(row => row.current) ?? null : cursorRows.find(row => idOf(row) === cursor.current) ?? null
   readonly property int width: level?.width ?? Config.menu.width
   // No more columns than its width holds at about twelve characters each.
   readonly property int columns: Math.max(1, Math.min(level?.entry?.columns ?? Config.menu.columns, Math.floor(width / (12 * Metrics.cell))))
@@ -214,6 +215,11 @@ Scope {
   // A hidden item shows only when filtering.
   function numbered(list, pins, items = Lists.items(list)) {
     return ordered(list, pins, Array.from(items).filter(item => !item.hidden)).slice(0, 9).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
+  }
+
+  // A listed item by its id, a row by its first key, else its label.
+  function idOf(item) {
+    return item.listed ? item.id : MenuKeys.names(item.key ?? "")[0] || item.desc;
   }
 
   function marked(item) {
@@ -441,8 +447,9 @@ Scope {
     if (event.isAutoRepeat && level !== internal.pressedOn) return true;
     if (!event.isAutoRepeat) internal.pressedOn = level;
     const name = MenuKeys.name(event);
-    const own = event.isAutoRepeat ? find(items, name) ?? (name === "Return" ? cursorItem : null) : null;
-    if (own && !own.paired) return true;
+    const own = event.isAutoRepeat ? find(items, name) : null;
+    // Held, Return acts once on the cursor's row, a pair's too.
+    if (own && !own.paired || event.isAutoRepeat && cursorItem && name === "Return") return true;
     return handleName(name) || cursorKey(name);
   }
 

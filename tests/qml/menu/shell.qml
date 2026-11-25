@@ -31,6 +31,9 @@ ShellRoot {
   readonly property var slashLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "/", desc: "Slash", action: "row" }] } })
   readonly property var calendarLevel: ({ kind: "entry", entry: { view: "calendar", list: "keyed", submenu: [{ key: "Right", desc: "Right", action: "row" }] } })
   readonly property var downLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "Down", desc: "Down", action: "row" }] } })
+  // A menu's grid of rows, two columns.
+  readonly property var gridLevel: ({ kind: "actions", title: "Grid", actions: [{ key: "f", desc: "Row", select: () => root.ran = "row" },
+    { key: "R", desc: "Capital", select: () => root.ran = "capital" }, { key: "g", desc: "Third", select: () => root.ran = "third" }] })
   readonly property var startFilter: () => menu.startFilter()
   readonly property var cursorDown: () => menu.cursorKey("Down")
 
@@ -62,21 +65,26 @@ ShellRoot {
     ["Return runs the cursor's item", keyedLevel, cursorDown, "Return", "item"],
     ["Alt+Return opens the cursor's item's own menu", keyedLevel, cursorDown, "Alt+Return", "item menu"],
     ["a level binding ↓ runs its row rather than move the cursor", downLevel, null, "Down", "row"],
-    ["Escape with a cursor goes back at once", keyedLevel, cursorDown, "Escape", "back"]
+    ["Escape with a cursor goes back at once", keyedLevel, cursorDown, "Escape", "back"],
+    ["→ on a list level moves nothing", keyedLevel, null, "Right", "nothing"],
+    ["↓ moves a cursor onto a grid's first row", gridLevel, null, "Down", "cursor f"],
+    ["→ moves the grid's cursor by one", gridLevel, cursorDown, "Right", "cursor R"],
+    ["↓ moves the grid's cursor by its columns", gridLevel, cursorDown, "Down", "cursor g"],
+    ["Return runs the grid's row as its letter would", gridLevel, cursorDown, "Return", "row"]
   ]
 
   // What the key did, told by what changed; the keyed item closes the menu, which is how a run of it shows.
   function outcome(handled, was) {
     if (ran) return ran;
     if (!menu.open) return "item";
-    if (menu.level?.kind === "actions") return "item menu";
+    if (menu.level?.kind === "actions" && menu.stack.length > was.depth) return "item menu";
     if (menu.held !== was.held) return menu.held === "Help" ? "help" : "help closed";
     if (menu.viewModels.calendar.selected.getTime() !== was.day) return "view";
     if (menu.filtering !== was.filtering) return "filter";
     if (menu.stack.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
     if (was.input) return "body";
-    if (menu.cursorItem?.id !== was.cursor) return "cursor " + (menu.cursorItem?.key ?? "none");
+    if (menu.cursor.current !== was.cursor) return "cursor " + (menu.cursorItem?.key ?? "none");
     return handled ? "taken" : "nothing";
   }
 
@@ -87,7 +95,7 @@ ShellRoot {
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused, cursor: menu.cursorItem?.id };
+    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused, cursor: menu.cursor.current };
     const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name) || menu.cursorKey(name), was);
     menu.hide();
     return did;
@@ -487,10 +495,22 @@ ShellRoot {
         name: "a key path never moves the cursor",
         until: () => {
           menu.hide();
-          const ran = menu.press("t Down");
+          const ran = menu.press("t Down") || menu.press("Down");
           const none = !menu.cursorItem;
           menu.hide();
           return !ran && none;
+        }
+      },
+      {
+        name: "at the top the arrows move over the entries as laid out, and Return opens one as its letter would",
+        until: () => {
+          menu.hide();
+          menu.show();
+          const moved = menu.cursorKey("Down") && menu.cursor.current === "a" && menu.cursorKey("Right") && menu.cursor.current === "t"
+            && menu.cursorKey("Down") && menu.cursor.current === "t" && menu.bodyActions[1].current && menu.cursorKey("Left");
+          const opened = menu.cursorKey("Return") && menu.level?.entry?.desc === "Audio" && !menu.cursorItem;
+          menu.hide();
+          return moved && opened;
         }
       },
       {
