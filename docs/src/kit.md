@@ -14,7 +14,10 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | arrows over rows, a list or a grid | `Cursor` |
 | text to type or send | `TextArea`, `Prompt` |
 | a conversation (`qs.ui.conversation`) | a `Thread` of `Exchange`s, `Bubble` and `Markdown` in each; an answer's Markdown read through `Markup` |
-| a surface, an outline | `Panel`, `Surface`, `Pill`, `Divider` |
+| a surface the keyboard opens | a `Stack` of `Island`s |
+| an outline | `Surface`, `Pill`, `Divider` |
+
+A surface is laid out in three ideas: a `Stack` places its islands against the screen's edge, each `Island` is one surface, and inside an island rows run in a column or a grid, which `Cursor` moves over.
 
 | Component | Use |
 |---|---|
@@ -41,8 +44,9 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | `ListItem` | a row with hover, click, right click and wheel, highlighted while `current` (a selected day, an event in focus); dims itself when disabled |
 | `WheelSteps` | a pointer area that turns the wheel into one step per notch |
 | `Surface`, `Pill` | a panel outlined in the theme's `border` and `borderWidth`; a capsule outlined the same, or in its `tone` for a state (recording) |
-| `PlacedRegion` | a blur or input region over an item at a place its holder gives, for an item that what holds it moves (an island on the bar); empty while the item hides |
-| `Panel` | a surface the keyboard opens, the menu or a plugin's: centred at the screen's bottom edge, its `bar` against it (with the top level's right slot on its right when `statuses`), its `body` over it and its `input` over the body (`inputOver`, a level's island) or between the body and the bar (with the keys while `inputFocused`), one open at a time, dismissed by a click anywhere else; keys its body leaves reach `keyPressed` |
+| `PlacedRegion` | a blur or input region over an item at a place its holder gives, for an item that what holds it moves (a part of a split island); empty while the item hides |
+| `Stack` | a surface the keyboard opens, the menu or a plugin's: its `islands` listed top to bottom, the last against the screen's bottom edge, centred and as wide as `width` lets the screen (`room`); the island marked `cut` gives up what the screen cannot hold past the others. One open at a time, dismissed by a click anywhere else; the island `focus` names has the keys, and keys it leaves reach `keyPressed` |
+| `Island` | one surface of a `Stack`, hidden unless `shown`: its `content`, `padding` above and below, the theme's padding plus `inset` on its sides (a row's, so key columns line up), at least `minimumHeight` tall; when `split`, a surface behind each item its content lists in `parts` instead (a bar as islands); a right click on it reaches `secondaryClicked` |
 | `Panels` | the surfaces the keyboard opens as one stack of their owners: the top one shows, `open` covers or brings one back, `back` shows what it covered, `close` hides them all; and the top level's right slot a plugin's panel's bar repeats |
 | `Tip` | names what the pointer rests on (an icon alone), or shows text cut to fit whole, above it, after a moment |
 | `Swatch` | a dot, or a bar when stretched, in a colour that is data (a calendar's), dimmed by its tone like the rest |

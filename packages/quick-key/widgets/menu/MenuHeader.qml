@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs
 import qs.ui
 
@@ -11,8 +10,8 @@ RowLayout {
   id: header
 
   required property MenuModel menu
-  // The width it is given, as Panel clamps the card: deciding from its laid-out width, which follows what it decides, loops.
-  readonly property real room: Math.min(menu.width, (QsWindow.window?.width ?? 0) - 2 * (QsWindow.window?.edgeMargin ?? 0)) - 2 * Config.theme.padding
+  // The width it is given (the Stack's room past its padding): deciding from its laid-out width, which follows what it decides, loops.
+  required property real room
   // Both sides as wide when there is a centre to keep centred and room for both at that width; crowded, each side keeps what it needs, so the shortage falls on the text that can give most.
   readonly property bool centred: centreSlot.visible && 2 * Math.max(leftSlot.wanted, rightSlot.wanted) + centreSlot.wanted + 2 * spacing <= room
   readonly property real sideMinimum: Math.max(leftSlot.contentMinimum, rightSlot.contentMinimum)
@@ -24,16 +23,21 @@ RowLayout {
   // What the bar needs at least, every text shortened, a spacing between each two items: past its width it overflows, which only a wider menu or fewer items mends, so the log says so.
   readonly property real needed: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.Layout.minimumWidth + spacing : 0), actions.visible ? 0 : -spacing)
   readonly property bool overflows: width > 0 && needed > width + 1
-  onOverflowsChanged: if (overflows) console.warn("menu: the bar needs " + Math.ceil(needed) + " px, more than its " + Math.floor(width)
-    + ": widen menu.width or the level's width, or list fewer items")
+  onOverflowsChanged: if (overflows) settle.restart()
 
-  // What each island holds with `menu.islands`: the actions, then each slot's items, which Panel draws apart.
-  readonly property var islands: [actions, leftSlot.content, centreSlot.content, rightSlot.content]
+  // Told once laid out: until the compositor sizes a new window, its islands take the window's placeholder width.
+  Timer {
+    id: settle
+    interval: 100
+    onTriggered: if (header.overflows) console.warn("menu: the bar needs " + Math.ceil(header.needed) + " px, more than its " + Math.floor(header.width)
+      + ": widen menu.width or the level's width, or list fewer items")
+  }
+
+  // What each surface holds with `menu.islands`: the actions, then each slot's items, which its island draws apart.
+  readonly property var parts: [actions, leftSlot.content, centreSlot.content, rightSlot.content]
 
   signal picked(var key)
 
-  // Never widens the menu: a bar whose icons cannot fit overflows instead (rule 4: make the menu wider).
-  Layout.minimumWidth: 0
   // As islands, wider apart by the padding each island adds on either side.
   spacing: Config.theme.spacing + (Config.menu.islands ? 2 * Config.theme.padding : 0)
 

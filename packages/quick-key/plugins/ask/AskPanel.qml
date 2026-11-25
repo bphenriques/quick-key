@@ -72,109 +72,129 @@ Scope {
     }
   }
 
-  Panel {
+  Stack {
     shown: panel.plugin.shown
     namespace: panel.plugin.name
-    inputShown: true
-    inputFocused: true
+    width: Config.menu.width
+    focus: "prompt"
     onKeyPressed: event => event.accepted = panel.handle(event)
     // Hidden, the conversation is kept.
     onDismissed: Panels.close()
 
-    barShown: true
-    statuses: true
-    bar: RowLayout {
-      // With `menu.islands`, the legend on an island of its own.
-      readonly property var islands: [legend]
+    islands: [
+      Island {
+        name: "thread"
+        cut: true
+        content: ColumnLayout {
+          // In the conversation's place and height, next to the prompt, as the menu's `?` lists its keys.
+          Item {
+            visible: panel.plugin.helping
+            Layout.fillWidth: true
+            Layout.preferredHeight: thread.Layout.preferredHeight
 
-      // Only what the state changes.
-      KeyLegend {
-        id: legend
-        keys: panel.plugin.keys.filter(entry => entry.shows() && !entry.hidden).map(entry => ({ key: entry.key, what: entry.what, clickable: true }))
-          .concat(panel.plugin.draft ? [{ key: "Escape", what: Words.clear, clickable: true }] : [], MenuKeys.pick(panel.plugin.help, panel.plugin.settings.legend))
-        onPicked: key => panel.plugin.act(key) || panel.escaped()
-      }
+            KeyList {
+              anchors.bottom: parent.bottom
+              width: parent.width
+              keys: panel.plugin.help
+            }
+          }
 
-      Item {
-        Layout.fillWidth: true
-      }
-    }
+          Thread {
+            id: thread
+            visible: !panel.plugin.helping
+            onWidthChanged: panel.threadWidth = width
+            Component.onCompleted: panel.threadWidth = width
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.round(Math.min(panel.plugin.settings.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra)
+            Layout.leftMargin: Metrics.itemPaddingX
+            Layout.rightMargin: Metrics.itemPaddingX
+            model: panel.plugin.exchanges.length
+            delegate: Turn {
+              width: thread.width
+            }
+            // Empty, it says only that it is being resumed or could not be.
+            emptyTone: panel.plugin.failure ? "alert" : "dim"
+            emptyText: panel.plugin.stage === "resuming" ? panel.plugin.words.resuming : panel.plugin.failure
 
-    body: ColumnLayout {
-      // In the conversation's place and height, next to the prompt, as the menu's `?` lists its keys.
-      Item {
-        visible: panel.plugin.helping
-        Layout.fillWidth: true
-        Layout.preferredHeight: thread.Layout.preferredHeight
+            Connections {
+              target: panel
 
-        KeyList {
-          anchors.bottom: parent.bottom
-          width: parent.width
-          keys: panel.plugin.help
+              function onPaged(down) {
+                thread.page(down);
+              }
+            }
+          }
         }
-      }
+      },
+      Island {
+        name: "prompt"
+        padding: Config.theme.padding / 2
+        // As a row's content is, so its key column lines up with the menu's keys.
+        inset: Metrics.itemPaddingX
+        content: Prompt {
+          id: prompt
+          // A prompt taller than a line takes its height from the conversation, so the panel holds still.
+          onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
+          glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
+          // Until a turn says what Return does next, as the menu's input does.
+          placeholder: panel.last ? Words.next(panel.last.phase) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
+          onBack: Panels.back()
+          onTextChanged: panel.plugin.keepDraft(text)
+          Component.onCompleted: set(panel.plugin.draft)
 
-      Thread {
-        id: thread
-        visible: !panel.plugin.helping
-        onWidthChanged: panel.threadWidth = width
-        Component.onCompleted: panel.threadWidth = width
-        Layout.fillWidth: true
-        Layout.preferredHeight: Math.round(Math.min(panel.plugin.settings.lines * Metrics.line, (Window.height || Infinity) * 0.6) - panel.inputExtra)
-        Layout.leftMargin: Metrics.itemPaddingX
-        Layout.rightMargin: Metrics.itemPaddingX
-        model: panel.plugin.exchanges.length
-        delegate: Turn {
-          width: thread.width
+          onKeyPressed: event => event.accepted = panel.handle(event)
+          onSent: background => {
+            if (!panel.plugin.send(text)) return;
+            clear();
+            if (background) Panels.close();
+          }
+
+          Connections {
+            target: panel
+
+            function onEscaped() {
+              prompt.stepBack();
+            }
+          }
+
+          Connections {
+            target: panel.plugin
+
+            // A failed prompt put back, selected so typing replaces it, or dropped with its conversation.
+            function onDraftChanged() {
+              if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft, true);
+            }
+          }
         }
-        // Empty, it says only that it is being resumed or could not be.
-        emptyTone: panel.plugin.failure ? "alert" : "dim"
-        emptyText: panel.plugin.stage === "resuming" ? panel.plugin.words.resuming : panel.plugin.failure
+      },
+      Island {
+        name: "bar"
+        split: Config.menu.islands
+        padding: Config.theme.padding / 4
+        // At least a padded line, as tall as the menu's bar.
+        minimumHeight: Metrics.line + 2 * Metrics.itemPaddingY + Config.theme.padding / 2
+        content: RowLayout {
+          // With `menu.islands`, the legend and the top level's right slot each on an island of its own.
+          readonly property var parts: [legend].concat(statuses.item ? [statuses.item] : [])
 
-        Connections {
-          target: panel
+          // Only what the state changes.
+          KeyLegend {
+            id: legend
+            keys: panel.plugin.keys.filter(entry => entry.shows() && !entry.hidden).map(entry => ({ key: entry.key, what: entry.what, clickable: true }))
+              .concat(panel.plugin.draft ? [{ key: "Escape", what: Words.clear, clickable: true }] : [], MenuKeys.pick(panel.plugin.help, panel.plugin.settings.legend))
+            onPicked: key => panel.plugin.act(key) || panel.escaped()
+          }
 
-          function onPaged(down) {
-            thread.page(down);
+          Item {
+            Layout.fillWidth: true
+          }
+
+          Loader {
+            id: statuses
+            sourceComponent: Panels.statuses
           }
         }
       }
-    }
-
-    input: Prompt {
-      id: prompt
-      // A prompt taller than a line takes its height from the conversation, so the panel holds still.
-      onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
-      glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
-      // Until a turn says what Return does next, as the menu's input does.
-      placeholder: panel.last ? Words.next(panel.last.phase) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)
-      onBack: Panels.back()
-      onTextChanged: panel.plugin.keepDraft(text)
-      Component.onCompleted: set(panel.plugin.draft)
-
-      onKeyPressed: event => event.accepted = panel.handle(event)
-      onSent: background => {
-        if (!panel.plugin.send(text)) return;
-        clear();
-        if (background) Panels.close();
-      }
-
-      Connections {
-        target: panel
-
-        function onEscaped() {
-          prompt.stepBack();
-        }
-      }
-
-      Connections {
-        target: panel.plugin
-
-        // A failed prompt put back, selected so typing replaces it, or dropped with its conversation.
-        function onDraftChanged() {
-          if (prompt.text !== panel.plugin.draft) prompt.set(panel.plugin.draft, true);
-        }
-      }
-    }
+    ]
   }
 }
