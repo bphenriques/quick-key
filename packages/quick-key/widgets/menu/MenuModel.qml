@@ -28,7 +28,7 @@ Scope {
   readonly property var layout: level === home ? homeLayout : homeLayout.filter(name => ["input", "body", "bar"].includes(name))
   // The keys of the entries the layout pins, on the level declaring it.
   readonly property var pinnedKeys: pinsOf(layout)
-  // While the menu shows in one layout, which a pinned level never shrinks within; the input's visit is a level's within it (InputModel.visit).
+  // While the menu shows the declaring level's layout, which a pinned level never shrinks within; the input's visit is a level's within it (InputModel.visit).
   readonly property string visit: inStack ? JSON.stringify(homeLayout) : ""
   readonly property var level: levels[levels.length - 1] ?? null
   // The level the body shows.
