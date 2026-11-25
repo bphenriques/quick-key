@@ -325,6 +325,8 @@ Plugin {
     visited = false;
     turn = null;
   }
+  // An answer this visit missed, another input or panel showing, is read once its input shows it.
+  onDisplayedChanged: if (displayed && visited && seen(exchanges[exchanges.length - 1])) unread = false
 
   Timer {
     interval: 1000

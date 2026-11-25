@@ -1141,7 +1141,7 @@ ShellRoot {
         }
       },
       {
-        name: "an answer finishing while a pin has the keys is notified and marked unread, and shows above the input once Escape gives the body the keys",
+        name: "an answer finishing while a pin has the keys is notified and marked unread, and shows above the input, read, once Escape gives the body the keys",
         start: () => {
           Config.menu.input = { desc: "Ask", plugin: "agent" };
           root.pinning(2);
@@ -1157,7 +1157,7 @@ ShellRoot {
           if (agent.busy) return false;
           if (!agent.unread || !Plugins.get("notified")?.text.startsWith("agent|pinned")) return false;
           menu.stepBack();
-          const shown = agent.displayed && agent.turn?.question === "pinned" && agent.turn.phase === "done";
+          const shown = agent.displayed && agent.turn?.question === "pinned" && agent.turn.phase === "done" && !agent.unread;
           Config.menu.input = null;
           return root.acted && shown && root.unpinning();
         }
@@ -1211,7 +1211,7 @@ ShellRoot {
         }
       },
       {
-        name: "an answer finishing while another agent's panel covers the menu is notified and marked unread",
+        name: "an answer finishing while another agent's panel covers the menu is notified and marked unread, and read once the menu shows it again",
         start: () => {
           Config.menu.input = { desc: "Ask", plugin: "agent" };
           menu.hide();
@@ -1231,7 +1231,7 @@ ShellRoot {
           if (agent.busy || !Plugins.get("notified")?.text.startsWith("agent|covered")) return false;
           const unread = agent.unread;
           Panels.back();
-          const read = menu.open && agent.displayed;
+          const read = menu.open && agent.displayed && !agent.unread;
           Config.menu.input = null;
           menu.hide();
           return root.acted && unread && read;
