@@ -1110,6 +1110,20 @@ ShellRoot {
         }
       },
       {
+        name: "opening an entry with a layout of its own ends the input's visit, as its levels and layout change at once",
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent) return false;
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          root.routing();
+          const asking = agent.watched;
+          menu.handleName("c");
+          const ended = menu.input.plugin === null && !agent.watched;
+          Config.menu.input = null;
+          return asking && ended && root.unpinning();
+        }
+      },
+      {
         name: "an answer finishing while a pin has the keys is notified and marked unread, and shows above the input once Escape gives the body the keys",
         start: () => {
           Config.menu.input = { desc: "Ask", plugin: "agent" };

@@ -26,23 +26,28 @@ QtObject {
     : menu.levels.slice(0, menu.levels.indexOf(menu.home) + 1).map(level => level.entry?.key ?? "").concat(menu.focused.island))
   readonly property string draft: draftOf(draftKey)
 
-  // The plugins the input showed while the menu stays on one level, whose leaving, or the menu closing, ends them all (Plugin.endVisit); the keys moving between islands end none.
-  property var visiting: []
+  // By island, the plugin its input showed while the menu stays on one level, whose leaving, or the menu closing, ends them all (Plugin.endVisit); the keys moving between islands end none.
+  property var visiting: ({})
   readonly property string visit: menu.visit && JSON.stringify(menu.levels.map(level => level.entry?.key ?? level.kind))
   onVisitChanged: {
-    for (const plugin of visiting) plugin.endVisit();
-    visiting = [];
+    for (const plugin of new Set(Object.values(visiting))) plugin.endVisit();
+    visiting = ({});
     join();
   }
   onPluginChanged: join()
 
-  // Only the one the input shows is displayed (Plugin.displayed).
+  // A plugin replaces the one its island showed, which a visit may read before its level settles; only the one the input shows is displayed (Plugin.displayed).
   function join() {
-    if (visit && plugin && !visiting.includes(plugin)) {
-      visiting = visiting.concat([plugin]);
-      plugin.startVisit();
-    }
-    for (const each of visiting) each.display(each === plugin);
+    const island = menu.focused.island;
+    const left = visiting[island];
+    const before = Object.values(visiting);
+    const now = Object.assign({}, visiting);
+    if (visit && plugin) now[island] = plugin;
+    else delete now[island];
+    visiting = now;
+    if (left && left !== plugin && !Object.values(now).includes(left)) left.endVisit();
+    if (visit && plugin && !before.includes(plugin)) plugin.startVisit();
+    for (const each of Object.values(now)) each.display(each === plugin);
   }
 
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
