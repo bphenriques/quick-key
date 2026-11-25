@@ -540,6 +540,30 @@ ShellRoot {
         }
       },
       {
+        name: "leaving the filter, the cursor stays on the row its arrows moved to, and shows none where they did not move",
+        until: () => {
+          const plugin = Plugins.get("keyed");
+          if (!plugin) return false;
+          const was = plugin.items;
+          plugin.items = Array.from({ length: 12 }, (_, i) => ({ id: "i" + i }));
+          menu.hide();
+          menu.show();
+          menu.push(root.bareLevel);
+          menu.startFilter();
+          menu.filterKey("Down");
+          menu.filterKey("Down");
+          menu.stepBack();
+          const carried = !menu.filtering && menu.cursorItem?.id === "i2" && menu.rows[2].current;
+          menu.startFilter();
+          menu.filter.search("i1");
+          menu.stepBack();
+          const none = !menu.filtering && !menu.cursorItem;
+          menu.hide();
+          plugin.items = was;
+          return carried && none;
+        }
+      },
+      {
         name: "Ctrl held lists the bar's keys, each named, a pair as one",
         start: () => menu.hold("Ctrl"),
         until: () => JSON.stringify(menu.hints.map(hint => [MenuKeys.label(hint.key, hint.paired), hint.desc])) === '[["C-x","X"],["C-↓↑","Volume"],["C-k","Clicked"],["C-1","a-1"],["C-0","+1"]]'

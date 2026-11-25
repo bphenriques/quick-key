@@ -364,6 +364,8 @@ Scope {
   }
 
   function stopFilter() {
+    // At rest, the cursor is on the row the filter's arrows moved to, if any.
+    if (filtering) cursor.point(filter.current);
     filterOn = false;
     filter.reset();
   }

@@ -124,6 +124,6 @@ A level lists up to nine items on fixed digits. While the list holds more than t
 
 `/` filters the list in place, as in a pager or a browser, unless the level binds `/` itself. The filter takes the level's input and keeps the items whose label holds every word typed, case and accents aside (`cafe` finds `Café`), hidden ones too. They show in the rows' place, as many as the level showed, so nothing moves.
 
-While filtering, digits pick from the rows shown and never type. `↑↓` move the cursor, starting where it was at rest, `PgUp` and `PgDn` a page of rows, `RET` runs its item as its digit would, and `M-RET` opens its own menu. The filter's range sits on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, and with it a level opened only to filter.
+While filtering, digits pick from the rows shown and never type. `↑↓` move the cursor, starting where it was at rest, `PgUp` and `PgDn` a page of rows, `RET` runs its item as its digit would, and `M-RET` opens its own menu. The filter's range sits on its right (`2-10 of 14`). `ESC` clears the filter, then closes it, and with it a level opened only to filter; the cursor stays on the row its arrows moved to.
 
 A level's other pickers take any free key (`.` or a letter), their labels ending in `...`.
