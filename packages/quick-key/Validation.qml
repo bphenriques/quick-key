@@ -72,11 +72,12 @@ Singleton {
   function heightProblems(name, height, say) {
     const rows = { range: [1], whole: true };
     if (Config.kind(height) !== "map") return valueProblems(say(name), height, rows);
+    if (!Object.keys(height).length) return [say(name) + "an empty map, not { min, max }"];
     const unknown = Object.keys(height).filter(field => !["min", "max"].includes(field));
-    const found = unknown.length || !Object.keys(height).length ? [say(name) + "a map setting " + (unknown.join(", ") || "nothing") + ", not min or max"] : [];
-    for (const field of ["min", "max"]) if (height[field] != null) found.push(...valueProblems(say(name + "." + field), height[field], rows));
-    if (height.min > height.max) found.push(say(name + ".min") + height.min + ", past its max (" + height.max + ")");
-    return found;
+    const bounds = ["min", "max"].filter(field => height[field] != null).reduce((all, field) => all.concat(valueProblems(say(name + "." + field), height[field], rows)), []);
+    // Only bounds that are rows compare.
+    const past = !bounds.length && height.min > height.max ? [say(name + ".min") + height.min + ", past its max (" + height.max + ")"] : [];
+    return (unknown.length ? [say(name) + "a map setting " + unknown.join(", ") + ", not min or max"] : []).concat(bounds, past);
   }
 
   // The islands a layout names, each at most once.
