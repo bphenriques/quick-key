@@ -302,7 +302,7 @@ Singleton {
     const clashes = new Map();
     const owner = binding => (binding.what === "view" ? binding.label : "'" + (binding.label ?? binding.key) + "'")
       + (binding.island === "bar" ? " on the bar" : binding.island === "body" ? "" : " on pinned " + binding.island);
-    for (const { key, held } of Keymap.overlaps(Keymap.ofLevel({ entries, pinned, bar: barEntries, view }, Views.builtin))) {
+    for (const { key, held } of Keymap.overlaps(Keymap.ofLevel({ entries, pinned, bar: barEntries, view, list }, Views.builtin))) {
       const owners = held.map(owner).join(" and ");
       if (!held.every(binding => binding.island === held[0].island && !["body", "bar"].includes(binding.island))) clashes.set(owners, (clashes.get(owners) ?? []).concat(key));
     }

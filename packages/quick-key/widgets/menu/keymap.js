@@ -129,15 +129,17 @@ function overlaps(bindings) {
 }
 
 // The keys a level of the config puts on screen at once, for the check: its rows and its view's keys, each pinned entry's rows, list digits and view keys, the bar's with Ctrl.
-// `level`: { entries, pinned: the keys its layout pins, bar: its bar's entries, view }; `views`: each view by name, its `keys` (Views.builtin).
+// `level`: { entries, pinned: the keys its layout pins, bar: its bar's entries, view, list }; `views`: each view by name, its `keys` (Views.builtin).
 function ofLevel(level, views) {
   const entries = Array.from(level.entries ?? []).filter(entry => entry && typeof entry === "object");
   const pinned = [...new Set(level.pinned ?? [])];
   const viewOf = name => Array.from(views[name]?.keys ?? []).map(entry => ({ key: entry.key, desc: undefined }));
   const pins = pinned.map(key => entries.find(entry => entry.key === key)).filter(entry => entry);
-  const rows = entry => Array.from(entry.submenu ?? []).filter(row => row && typeof row === "object")
-    .concat(entry.list ? Array.from({ length: Math.min(9, entry.limit ?? 9) }, (_, i) => ({ key: String(i + 1), desc: entry.desc })) : []);
-  const islands = [{ name: "body", focused: true, items: entries.filter(entry => !pins.includes(entry)), pins: pins.map(entry => ({ key: entry.key, desc: entry.desc })), view: viewOf(level.view) }]
+  const digits = (list, limit, desc) => list ? Array.from({ length: Math.min(9, limit ?? 9) }, (_, i) => ({ key: String(i + 1), desc })) : [];
+  const rows = entry => Array.from(entry.submenu ?? []).filter(row => row && typeof row === "object").concat(digits(entry.list, entry.limit, entry.desc));
+  // Its own list's digits only beside a pin: a row of its own on a digit is its entry's problem ("binds a digit").
+  const body = entries.filter(entry => !pins.includes(entry)).concat(pins.length ? digits(level.list, 9, level.list) : []);
+  const islands = [{ name: "body", focused: true, items: body, pins: pins.map(entry => ({ key: entry.key, desc: entry.desc })), view: viewOf(level.view) }]
     .concat(pins.map(entry => ({ name: entry.key, items: rows(entry), view: viewOf(entry.view) })));
   return rest({ islands, bar: Array.from(level.bar ?? []).filter(entry => entry && typeof entry === "object") })
     .filter(binding => ["view", "row", "pin", "bar"].includes(binding.what))

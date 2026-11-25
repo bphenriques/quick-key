@@ -68,6 +68,8 @@ ShellRoot {
       "menu: the top level puts two things on Ctrl+x: 'Cut' on pinned t and 'X' on the bar"],
     ["a view's key on a pin", menu([{ key: "c", desc: "Calendar", icon: "x", view: "calendar", layout: ["body", { level: "t" }], submenu: [{ key: "t", desc: "Tasks", icon: "x", list: "tray" }] }]),
       "menu: the top level > Calendar puts two things on t: the calendar view and 'Tasks'"],
+    ["a pinned list on a level that lists", menu([{ key: "w", desc: "Wi-Fi", icon: "x", list: "wifi", layout: ["body", { level: "e" }], submenu: [{ key: "e", desc: "Events", icon: "x", list: "tray", limit: 2 }] }]),
+      "menu: the top level > Wi-Fi puts two things on 1, 2: 'wifi' and 'Events' on pinned e"],
     ["a layout on an entry without a level", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", layout: ["body"] }]), "can only set layout on a level"],
     ["a level's bar under its old name", menu([{ key: "a", desc: "A", icon: "x", submenu: [], header: { right: [] } }]), "'A' in the top level sets header, now bar"],
     ["an entry without a key beside a command plugin named as a removed one", { plugins: { notifications: { type: "command", read: "true" } }, menu: { entries: [{ desc: "Lock", icon: "x", cmd: "true" }] } }, "'Lock' in the top level needs a key"],
