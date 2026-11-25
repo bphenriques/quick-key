@@ -22,7 +22,7 @@ Scope {
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   // The deepest open level whose entry sets a layout, null for menu.layout's: a level without one opens in its body.
-  readonly property var home: levels.filter(level => level.entry?.layout).pop() ?? null
+  readonly property var home: levels.filter(level => Config.kind(level.entry?.layout) === "list").pop() ?? null
   readonly property var layout: layoutOf(home)
   // The keys of the entries the layout pins, on the level declaring it.
   readonly property var pinned: pinsOf(layout)

@@ -1127,6 +1127,16 @@ ShellRoot {
         }
       },
       {
+        name: "a level whose layout is no list opens in the body of the layout showing",
+        until: () => {
+          menu.hide();
+          menu.levels = [{ kind: "entry", entry: { submenu: [], layout: {} } }];
+          const body = menu.home === null && menu.layout.join() === "input,body,bar";
+          menu.levels = [];
+          return body;
+        }
+      },
+      {
         name: "a pin in an entry's layout leaves that level's rows, takes the keys on its key there, never from a level under it, and shows its input",
         until: () => {
           root.routing();
