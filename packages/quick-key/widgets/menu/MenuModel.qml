@@ -92,7 +92,7 @@ Scope {
     // At the top, the key listing the rest, which every surface with such a list shows so.
     .concat(level === null && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
     .concat(MenuKeys.pick(help, level?.entry?.legend))
-  readonly property var cursorLegend: (cursorItem ? [{ key: "Return", what: cursorItem.verb || Words.pick, clickable: true }] : [])
+  readonly property var cursorLegend: (cursorItem ? [{ key: returnOf(cursorItem), what: cursorItem.verb || Words.pick, clickable: true }] : [])
     .concat(cursorItem?.actions?.length > 0 || cursorItem?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend.concat(cursorLegend, filter.query ? [{ key: "Escape", what: Words.clear, clickable: true }] : []) : levelLegend.concat(cursorLegend)
   readonly property string error: viewModel ? viewModel.error : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
@@ -224,6 +224,11 @@ Scope {
 
   function marked(item) {
     return item === cursorItem ? Object.assign({ current: true }, item) : item;
+  }
+
+  // What ends the session takes Shift (rule 6): a row on a capital runs on S-RET alone.
+  function returnOf(item) {
+    return /^[A-Z]$/.test(item.key) ? "Shift+Return" : "Return";
   }
 
   function keyChars(group) {
@@ -386,7 +391,7 @@ Scope {
     const digit = name.match(/^(Alt\+)?([1-9])$/);
     const row = digit ? filter.rows[Number(digit[2]) - 1] : filter.item;
     if (digit && digit[1] || name === "Alt+Return") openMenu(row);
-    else if (digit || name === "Return") choose(row);
+    else if (digit || name === "Return" || name === "Shift+Return") choose(row);
     else if (name === "Up" || name === "Down") filter.move(name === "Down" ? 1 : -1);
     else if (name === "Page_Up" || name === "Page_Down") filter.move((name === "Page_Down" ? 1 : -1) * filter.size);
     else return false;
@@ -449,14 +454,14 @@ Scope {
     const name = MenuKeys.name(event);
     const own = event.isAutoRepeat ? find(items, name) : null;
     // Held, Return acts once on the cursor's row, a pair's too.
-    if (own && !own.paired || event.isAutoRepeat && cursorItem && name === "Return") return true;
+    if (own && !own.paired || event.isAutoRepeat && cursorItem && name.endsWith("Return")) return true;
     return handleName(name) || cursorKey(name);
   }
 
   // After the view and the level's rows, so a level binding an arrow keeps it; `press` never reaches it, so a key path never depends on the cursor.
   function cursorKey(name) {
     if (cursor.key(name)) return true;
-    if (cursorItem && name === "Return") activate(cursorItem, cursorItem.key);
+    if (cursorItem && name === returnOf(cursorItem)) activate(cursorItem, cursorItem.key);
     else if (cursorItem && name === "Alt+Return") openMenu(cursorItem);
     else return false;
     return true;

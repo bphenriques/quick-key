@@ -31,11 +31,12 @@ ShellRoot {
   readonly property var slashLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "/", desc: "Slash", action: "row" }] } })
   readonly property var calendarLevel: ({ kind: "entry", entry: { view: "calendar", list: "keyed", submenu: [{ key: "Right", desc: "Right", action: "row" }] } })
   readonly property var downLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "Down", desc: "Down", action: "row" }] } })
-  // A menu's grid of rows, two columns.
+  // A menu's grid of rows, two columns, a capital among them (rule 6).
   readonly property var gridLevel: ({ kind: "actions", title: "Grid", actions: [{ key: "f", desc: "Row", select: () => root.ran = "row" },
     { key: "R", desc: "Capital", select: () => root.ran = "capital" }, { key: "g", desc: "Third", select: () => root.ran = "third" }] })
   readonly property var startFilter: () => menu.startFilter()
   readonly property var cursorDown: () => menu.cursorKey("Down")
+  readonly property var cursorCapital: () => menu.cursorKey("Down") && menu.cursorKey("Right")
 
   // What a key does, by precedence: the level it opens on, what is done first, the key, and what it runs.
   readonly property var keyed: [
@@ -70,7 +71,10 @@ ShellRoot {
     ["↓ moves a cursor onto a grid's first row", gridLevel, null, "Down", "cursor f"],
     ["→ moves the grid's cursor by one", gridLevel, cursorDown, "Right", "cursor R"],
     ["↓ moves the grid's cursor by its columns", gridLevel, cursorDown, "Down", "cursor g"],
-    ["Return runs the grid's row as its letter would", gridLevel, cursorDown, "Return", "row"]
+    ["Return runs the grid's row as its letter would", gridLevel, cursorDown, "Return", "row"],
+    ["Return on a capital's row does nothing", gridLevel, cursorCapital, "Return", "nothing"],
+    ["Shift+Return runs a capital's row", gridLevel, cursorCapital, "Shift+Return", "capital"],
+    ["Shift+Return on a lowercase row does nothing", gridLevel, cursorDown, "Shift+Return", "nothing"]
   ]
 
   // What the key did, told by what changed; the keyed item closes the menu, which is how a run of it shows.
@@ -213,15 +217,17 @@ ShellRoot {
         until: () => MenuKeys.label(["Ctrl+Left", "Ctrl+Right"], true) === "C-←→" && MenuKeys.label("Return") === "RET" && MenuKeys.label("Alt+k") === "M-k"
       },
       {
-        name: "keys are named as entries declare them: Shift picks the capital, a modifier alone has no name",
+        name: "keys are named as entries declare them: Shift picks the capital and names Shift+Return, a modifier alone has no name",
         until: () => JSON.stringify([
           { key: Qt.Key_A, modifiers: Qt.ShiftModifier, text: "A" },
           { key: Qt.Key_Left, modifiers: Qt.ControlModifier, text: "" },
           { key: Qt.Key_C, modifiers: Qt.ControlModifier | Qt.AltModifier, text: "\u0003" },
           { key: Qt.Key_Question, modifiers: Qt.ShiftModifier, text: "?" },
           { key: Qt.Key_Question, modifiers: Qt.ControlModifier | Qt.ShiftModifier, text: "\u001f" },
-          { key: Qt.Key_Shift, modifiers: Qt.ShiftModifier, text: "" }
-        ].map(event => MenuKeys.name(event))) === '["A","Ctrl+Left","Ctrl+Alt+c","?","Ctrl+?",""]'
+          { key: Qt.Key_Shift, modifiers: Qt.ShiftModifier, text: "" },
+          { key: Qt.Key_Return, modifiers: Qt.ShiftModifier, text: "\r" },
+          { key: Qt.Key_Enter, modifiers: Qt.NoModifier, text: "\r" }
+        ].map(event => MenuKeys.name(event))) === '["A","Ctrl+Left","Ctrl+Alt+c","?","Ctrl+?","","Shift+Return","Return"]'
       },
       {
         name: "an action brings its icon and pairing, and dims with nothing to act on",
@@ -768,7 +774,7 @@ ShellRoot {
         until: () => root.pathRan && root.pathClosed && Plugins.get("picked")?.text === "b-2"
       },
       {
-        name: "a held pair steps on the level it was pressed on, never into the one it opened, and a held letter or digit acts once",
+        name: "a held pair steps on the level it was pressed on, never into the one it opened, and a held letter or digit acts once, as Return on the cursor's row does",
         until: () => {
           const plugin = Plugins.get("devices");
           if (!plugin) return false;
@@ -793,7 +799,15 @@ ShellRoot {
           }
           menu.hide();
           plugin.actions = {};
-          return held && pressed && ran === 2 && steps === 3;
+          // Held, Return acts once on the cursor's row, S-RET on a capital's too.
+          const awake = KeepAwake.enabled;
+          menu.push({ kind: "entry", entry: { submenu: [{ key: "I", desc: "Awake", action: "keepAwake" }] } });
+          menu.cursorKey("Down");
+          for (const repeat of [false, true]) menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.ShiftModifier, text: "\r", isAutoRepeat: repeat });
+          const once = KeepAwake.enabled !== awake;
+          if (KeepAwake.enabled !== awake) KeepAwake.toggle();
+          menu.hide();
+          return held && pressed && ran === 2 && steps === 3 && once;
         }
       },
       {
