@@ -170,6 +170,13 @@ ShellRoot {
       level: menu.body
     }
 
+    MenuRow {
+      id: filledRow
+      menu: menu
+      level: menu.body
+      item: ({ key: "1", desc: "x", icon: Glyphs.search })
+    }
+
     MenuHeader {
       id: header
       y: 40
@@ -1145,6 +1152,18 @@ ShellRoot {
           Config.menu.height = null;
           menu.levels = [];
           return fixed && least && fits && inherited && view;
+        }
+      },
+      {
+        name: "a level's height counts rows as tall as a filled row draws, at the font as it changes",
+        start: () => {
+          root.acted = Metrics.row === filledRow.implicitHeight;
+          Config.theme.fontSize = 14;
+        },
+        until: () => {
+          const followed = Metrics.row === filledRow.implicitHeight && Metrics.row > 34;
+          if (followed) Config.theme.fontSize = 11;
+          return root.acted && followed;
         }
       },
       {

@@ -51,18 +51,9 @@ ColumnLayout {
   // Filtering, as tall as its rows were, so nothing moves as the filter narrows.
   ColumnLayout {
     Layout.fillWidth: true
-    Layout.preferredHeight: body.level.filtering ? body.level.filterSlots * filledRow.implicitHeight : -1
+    Layout.preferredHeight: body.level.filtering ? body.level.filterSlots * Metrics.row : -1
     visible: !body.hinting && (body.level.rows.length > 0 || body.level.filtering || body.level.emptyText !== "")
     spacing: 0
-
-    // A filled row's height, for the rows held while filtering.
-    MenuRow {
-      id: filledRow
-      visible: false
-      menu: body.menu
-      level: body.level
-      item: ({ key: "1", desc: "x", icon: Glyphs.search })
-    }
 
     Label {
       visible: body.level.emptyText !== ""

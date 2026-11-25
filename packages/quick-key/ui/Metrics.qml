@@ -13,6 +13,8 @@ Singleton {
   // A row's padding across and down.
   readonly property int itemPaddingX: 8
   readonly property int itemPaddingY: 5
+  // A row's height with its icon and label (a Label rounds its line up), what a level's height counts in.
+  readonly property real row: Math.max(Math.ceil(line), Config.theme.iconSize) + 2 * itemPaddingY
   // The gap between columns of rows (a level's, the keys a modifier reaches).
   readonly property real columnGap: Math.max(Config.theme.padding, cell)
   // A meter's thickness, and its length in a row.
