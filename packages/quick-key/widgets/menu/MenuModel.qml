@@ -60,7 +60,7 @@ Scope {
   // The bar's left: every island's actions and legend, so it holds still as the cursor moves, then what Return runs there; filtering, the filter's keys alone.
   readonly property var barActions: focused.filtering ? [] : shown.reduce((all, model) => all.concat(model.barActions.map(item => ({ item, model }))), [])
   readonly property var legend: focused.filtering ? focused.legend
-    : shown.reduce((all, model) => all.concat(model.levelLegend.filter(key => !all.some(seen => JSON.stringify(seen.key) === JSON.stringify(key.key)))), []).concat(focused.cursorLegend)
+    : shown.reduce((all, model) => all.concat(model.levelLegend.filter(key => owns(model, key.key) && !all.some(seen => JSON.stringify(seen.key) === JSON.stringify(key.key)))), []).concat(focused.cursorLegend)
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
       Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
@@ -74,6 +74,12 @@ Scope {
   // Keys no row shows, where they act: at rest, then in the input.
   readonly property var help: Keymap.help(rest.filter(binding => binding.what !== "back").concat(typing))
   readonly property var hints: held === "Help" ? help : holds[held] ?? []
+
+  // Whether a key reaches the island or the menu itself (`?`, ESC, TAB), not another island: a view's RET is its own only while it has the cursor.
+  function owns(model, key) {
+    const island = Keymap.route(rest, MenuKeys.names(key)[0])?.island ?? "";
+    return island === "" || island === model.island;
+  }
 
   // An island as the key map reads it.
   function islandOf(model) {

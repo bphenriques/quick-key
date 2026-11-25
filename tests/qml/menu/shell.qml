@@ -1088,6 +1088,23 @@ ShellRoot {
         }
       },
       {
+        name: "on a calendar pinning a list, the bar names the view's RET only while the body has the cursor, the list's once it does",
+        until: () => {
+          menu.hide();
+          if (!root.entries) root.entries = Config.menu.entries;
+          Config.menu.entries = [{ key: "c", desc: "Calendar", view: "calendar", layout: ["input", { level: "e" }, "body", "bar"], submenu: [{ key: "e", desc: "Events", list: "devices", limit: 2 }] }];
+          menu.show();
+          menu.dispatch("c");
+          const returns = () => menu.legend.filter(key => key.key === "Return").map(key => key.what).join();
+          const body = returns() === Words.events;
+          menu.dispatch("e");
+          menu.dispatch("Down");
+          const pinned = menu.focused === menu.modelOf("e") && returns() === Words.pick;
+          if (!body || !pinned) console.info("# " + returns());
+          return body && pinned && root.unpinning();
+        }
+      },
+      {
         name: "Ctrl reaches the bar from the input too, as what the text leaves",
         start: () => {
           root.acted = null;

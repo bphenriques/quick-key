@@ -27,8 +27,8 @@ function rest(at) {
   for (const island of islands)
     for (const entry of island.view ?? [])
       for (const key of names(entry.key)) if (island.focused || !cursorKeys.includes(key)) add(key, island.name, "view", { desc: entry.desc });
-  if (at.holds?.Ctrl) add("Ctrl+", "bar", "hold", { desc: words.helpBarKeys });
-  if (at.holds?.Super) add("Super+", "bar", "hold", { desc: words.helpCompositor });
+  if (at.holds?.Ctrl) add("Ctrl+", "", "hold", { desc: words.helpBarKeys });
+  if (at.holds?.Super) add("Super+", "", "hold", { desc: words.helpCompositor });
   for (const island of islands) {
     for (const item of island.items ?? []) for (const key of names(item.key)) add(key, island.name, "row", { item, label: item.desc });
     for (const pin of island.pins ?? []) add(pin.key, island.name, "pin", { label: pin.desc });
