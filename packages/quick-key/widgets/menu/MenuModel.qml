@@ -47,12 +47,16 @@ Scope {
   readonly property bool content: level !== null && kinds[level.kind].content(level)
   readonly property var bodyActions: content ? [] : actions
   readonly property var barActions: content && !filtering ? actions : []
-  // At rest, the arrows' cursor lights its row as the filter's does.
-  readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed).map(item => item.id !== undefined && item.id === internal.cursor ? Object.assign({ current: true }, item) : item)
+  readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed).map(marked)
+  // At rest the arrows move a cursor over a list level's rows, where its own rows leave them free (rule 7); `press` never reaches it.
+  readonly property var cursorRows: filtering || viewModel || !content ? [] : items.filter(item => item.listed && item.id !== undefined)
+  readonly property Cursor cursor: Cursor {
+    ids: root.cursorRows.map(row => row.id)
+    free: root.cursorRows.length && !root.find(root.items, "Up") && !root.find(root.items, "Down") ? ["Up", "Down"] : []
+    from: root.cursorRows.find(row => row.active)?.id
+  }
   // What Return runs, filtering or at rest.
-  readonly property var cursorItem: rows.find(row => row.current) ?? null
-  // A list level whose own rows leave the arrows free moves a cursor with them (`cursorKey`).
-  readonly property bool cursorFree: !!level?.entry?.list && !viewModel && !filtering && !find(items, "Up") && !find(items, "Down")
+  readonly property var cursorItem: filtering ? filter.rows.find(row => row.current) ?? null : cursorRows.find(row => row.id === cursor.current) ?? null
   readonly property int width: level?.width ?? Config.menu.width
   // No more columns than its width holds at about twelve characters each.
   readonly property int columns: Math.max(1, Math.min(level?.entry?.columns ?? Config.menu.columns, Math.floor(width / (12 * Metrics.cell))))
@@ -71,7 +75,7 @@ Scope {
     viewModel?.help ?? [],
     holds.Ctrl.length ? [{ key: "Ctrl+", desc: Words.helpBarKeys }] : [],
     holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
-    cursorFree ? [{ key: ["Up", "Down"], paired: true, desc: Words.helpMove }] : [],
+    cursor.free.length ? [{ key: cursor.free, paired: true, desc: Words.helpMove }] : [],
     rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
     slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
     island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
@@ -212,6 +216,10 @@ Scope {
     return ordered(list, pins, Array.from(items).filter(item => !item.hidden)).slice(0, 9).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
   }
 
+  function marked(item) {
+    return item === cursorItem ? Object.assign({ current: true }, item) : item;
+  }
+
   function keyChars(group) {
     return Math.max(1, ...group.map(item => MenuKeys.label(item.key, item.paired).length));
   }
@@ -289,7 +297,7 @@ Scope {
     stopFilter();
     internal.held = "";
     internal.focus = "body";
-    internal.cursor = undefined;
+    cursor.point(undefined);
   }
 
   function back() {
@@ -297,7 +305,7 @@ Scope {
     stack = stack.slice(0, -1);
     stopFilter();
     internal.focus = left?.inputFocused ? "input" : "body";
-    internal.cursor = undefined;
+    cursor.point(undefined);
     clearViews();
   }
 
@@ -305,7 +313,7 @@ Scope {
     stack = stack.concat([Object.assign({}, next, { inputFocused: inputFocused })]);
     stopFilter();
     internal.focus = "body";
-    internal.cursor = undefined;
+    cursor.point(undefined);
     clearViews();
   }
 
@@ -339,7 +347,7 @@ Scope {
   function startFilter() {
     if (!level?.entry?.list) return;
     filterSlots = Math.max(1, rows.length);
-    filter.point(internal.cursor ?? "");
+    filter.point(cursor.current ?? "");
     filterOn = true;
   }
 
@@ -440,13 +448,8 @@ Scope {
 
   // After the view and the level's rows, so a level binding an arrow keeps it; `press` never reaches it, so a key path never depends on the cursor.
   function cursorKey(name) {
-    if (!cursorFree) return false;
-    const shown = rows.filter(row => row.id !== undefined);
-    const by = name === "Down" ? 1 : name === "Up" ? -1 : 0;
-    // The first arrow moves from the item in use; with none, onto the first row or the last. It stops at the last row shown, so digits hold still.
-    const at = shown.findIndex(row => row.id === (cursorItem ?? shown.find(row => row.active))?.id);
-    if (by && shown.length > 0) internal.cursor = shown[at < 0 ? (by > 0 ? 0 : shown.length - 1) : Math.max(0, Math.min(shown.length - 1, at + by))].id;
-    else if (cursorItem && name === "Return") activate(cursorItem, cursorItem.key);
+    if (cursor.key(name)) return true;
+    if (cursorItem && name === "Return") activate(cursorItem, cursorItem.key);
     else if (cursorItem && name === "Alt+Return") openMenu(cursorItem);
     else return false;
     return true;
@@ -536,8 +539,6 @@ Scope {
     property string held: ""
     property string focus: "body"
     property var pressedOn: null
-    // The id of the row the arrows moved to at rest.
-    property var cursor: undefined
     // The entry or item whose action the last key ran.
     property var ran: null
   }
