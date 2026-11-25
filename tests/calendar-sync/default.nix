@@ -150,7 +150,7 @@ pkgs.runCommand "quick-key-calendar-sync"
     [ "$(events)" = "[\"Lunch\",\"$(date -d tomorrow +%F)T13:00\",false,\"#3366ff\",\"Rua Augusta 120\"]" ] || efail "an event reads with its local time, its calendar's colour and where, a cancelled one left out"
     jq -e '.events[0].uid | length > 0' events/events.json > /dev/null || efail "an event has a uid, which tells apart two alike"
     jq -e '.updated and (has("error") | not) and (has("syncing") | not)' events/events.json > /dev/null || efail "a sync done says when, and no longer that it syncs"
-    jq -e --arg from "$(date -d '62 days ago' +%F)" --arg to "$(date -d '365 days' +%F)" '.synced == { from: $from, to: $to }' events/events.json > /dev/null || efail "a sync says the days it covers"
+    jq -e --arg from "$(date -d "@$(( $(date +%s) - 62 * 86400 ))" +%F)" --arg to "$(date -d '365 days' +%F)" '.synced == { from: $from, to: $to }' events/events.json > /dev/null || efail "a sync says the days it covers"
 
     gets() { grep -c 'GET /work.ics' server.log; }
     before=$(gets); quick-key-calendar-sync work.yaml events/events.json; once=$(( $(gets) - before ))
