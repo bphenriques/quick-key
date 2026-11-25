@@ -82,24 +82,28 @@ Scope {
         Keys.onPressed: event => root.keyPressed(event)
         Keys.onReleased: event => root.keyReleased(event)
 
-        // Read again once every island is made: a binding that read one before it was made does not know it came.
+        // Read again once every island is made: a binding that read one before it was made does not know it came. In the islands' order, by name, however far the Repeater has moved them.
         property int made: 0
         readonly property var surfaces: {
           void made;
-          return Array.from({ length: islands.count }, (_, i) => islands.itemAt(i));
+          const items = Array.from({ length: islands.count }, (_, i) => islands.itemAt(i));
+          return Array.from(root.islands).map(given => items.find(island => island?.modelData.name === given.name) ?? null);
         }
         readonly property var places: Places.of(surfaces.map(island => island?.natural ?? 0), surfaces.map(island => island?.visible ?? false),
           surfaces.findIndex(island => island?.modelData.cut ?? false), height, overlay.edgeMargin, Config.theme.spacing / 2)
 
         Repeater {
           id: islands
-          model: root.islands
+          // By name, so an island kept across layouts keeps its content and what it holds.
+          model: ScriptModel {
+            values: Array.from(root.islands)
+            objectProp: "name"
+          }
           onItemAdded: frame.made++
 
           Item {
             id: island
             required property Island modelData
-            required property int index
             readonly property real side: Config.theme.padding + modelData.inset
             readonly property real own: content.implicitHeight + 2 * modelData.padding
             readonly property real fit: Math.max(modelData.minimumHeight, own)
@@ -119,7 +123,7 @@ Scope {
               interval: 100
               onTriggered: island.held = island.modelData.holdKey ? Math.max(island.held, island.fit) : 0
             }
-            readonly property var place: frame.places[index] ?? ({ y: 0, height: 0 })
+            readonly property var place: frame.places[frame.surfaces.indexOf(island)] ?? ({ y: 0, height: 0 })
             readonly property Region mask: Region {
               item: island.visible && !island.modelData.split ? island : null
               regions: parts.regions
