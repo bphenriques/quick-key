@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs
+import "places.js" as Places
 
 // A surface the keyboard opens (the menu, a plugin panel): its islands, listed top to bottom, stacked up from the screen's edge and centred; a click elsewhere dismisses it.
 Scope {
@@ -87,22 +88,8 @@ Scope {
           void made;
           return Array.from({ length: islands.count }, (_, i) => islands.itemAt(i));
         }
-        // Each island's height and place, bottom-up from the edge margin: the one marked `cut` no taller than the screen leaves past the others.
-        readonly property var places: {
-          const gap = Config.theme.spacing / 2;
-          const shown = surfaces.map(island => island?.visible ?? false);
-          const heights = surfaces.map((island, i) => shown[i] ? island.natural : 0);
-          const taken = heights.reduce((sum, height, i) => shown[i] ? sum + height + gap : sum, -gap);
-          const cut = surfaces.findIndex((island, i) => shown[i] && island.modelData.cut);
-          if (cut >= 0) heights[cut] = Math.min(heights[cut], height - 2 * overlay.edgeMargin - (taken - heights[cut]));
-          let below = overlay.edgeMargin;
-          const places = [];
-          for (let i = surfaces.length - 1; i >= 0; i--) {
-            places[i] = { y: height - below - heights[i], height: heights[i] };
-            if (shown[i]) below += heights[i] + gap;
-          }
-          return places;
-        }
+        readonly property var places: Places.of(surfaces.map(island => island?.natural ?? 0), surfaces.map(island => island?.visible ?? false),
+          surfaces.findIndex(island => island?.modelData.cut ?? false), height, overlay.edgeMargin, Config.theme.spacing / 2)
 
         Repeater {
           id: islands
