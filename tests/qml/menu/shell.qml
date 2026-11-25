@@ -998,14 +998,14 @@ ShellRoot {
         }
       },
       {
-        name: "the bar's actions and legend follow the island with the keys, its slots holding still",
+        name: "the bar's actions and legend follow the island with the keys, ? keys staying, its slots holding still",
         until: () => {
           root.pinning(2);
           const shown = () => Array.from(header.parts[0].children).filter(child => child.item?.desc).map(child => child.item.desc).join();
           const slots = () => JSON.stringify(menu.barSlots) + Array.from(header.parts[1].children).length;
           const [bodyActions, bodySlots, bodyLegend] = [shown(), slots(), menu.focused.legend.some(key => key.key === "?")];
           menu.handleName("t");
-          const followed = bodyActions === "" && bodyLegend && shown() === "Flip" && !menu.focused.legend.some(key => key.key === "?") && slots() === bodySlots;
+          const followed = bodyActions === "" && bodyLegend && shown() === "Flip" && Array.from(header.parts[0].children).find(child => child.keys)?.keys.some(key => key.key === "?") && slots() === bodySlots;
           return followed && root.unpinning();
         }
       },
