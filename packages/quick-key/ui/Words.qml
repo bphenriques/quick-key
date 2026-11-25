@@ -123,7 +123,7 @@ Singleton {
   readonly property string helpItemMenu: "Open an item's menu"
   readonly property string helpMove: "Move"
   readonly property string helpRun: "Run the row"
-  readonly property string helpRunShifted: "Run a row whose key takes Shift"
+  readonly property string helpRunShifted: "Run with Shift"
   readonly property string helpFilter: "Filter the list"
   readonly property string helpDay: "Move a day"
   readonly property string helpWeek: "Move a week"
