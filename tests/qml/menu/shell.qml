@@ -1122,8 +1122,10 @@ ShellRoot {
           const kept = visit !== "" && menu.input.lastVisit === visit && agent.watched;
           menu.handleName("a");
           const ended = menu.input.lastVisit !== visit && !agent.watched;
+          menu.stepBack();
+          const again = menu.input.lastVisit === visit && agent.watched && agent.displayed;
           Config.menu.input = null;
-          return kept && ended && root.unpinning();
+          return kept && ended && again && root.unpinning();
         }
       },
       {
@@ -1235,6 +1237,30 @@ ShellRoot {
           Config.menu.input = null;
           menu.hide();
           return root.acted && unread && read;
+        }
+      },
+      {
+        name: "an answer finishing while the menu is closed stays unread as it opens again, the new visit not showing it",
+        start: () => {
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          menu.hide();
+          menu.show();
+          root.acted = null;
+        },
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent || agent.busy && root.acted === null) return false;
+          if (root.acted === null) {
+            root.acted = menu.input.submit("closed", false);
+            menu.hide();
+            return false;
+          }
+          if (agent.busy || !agent.unread) return false;
+          menu.show();
+          const unread = agent.displayed && agent.unread;
+          Config.menu.input = null;
+          menu.hide();
+          return root.acted && unread;
         }
       },
       {
