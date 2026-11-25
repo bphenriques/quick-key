@@ -1043,7 +1043,7 @@ ShellRoot {
         }
       },
       {
-        name: "an island with nothing shows empty while one farther from the edge shows: a pinned level stays put over an empty input as the keys move",
+        name: "an island with nothing shows empty while one farther from the edge shows: a pinned level stays put over an empty input as the keys move, and a filter fills the input",
         until: () => {
           root.pinning(2);
           const shown = () => Places.shown(menu.layout.map(island => island === "input" ? menu.inputEmpty : island === "bar" ? menu.barEmpty : false));
@@ -1056,7 +1056,11 @@ ShellRoot {
           const empty = menu.inputEmpty;
           menu.handleName("t");
           const held = empty && !menu.inputEmpty && pinY() === under;
-          return held && root.unpinning();
+          menu.push(root.bareLevel);
+          const bare = menu.inputEmpty;
+          menu.body.startFilter();
+          const filtering = menu.body.filtering && !menu.inputEmpty;
+          return held && bare && filtering && root.unpinning();
         }
       },
       {
