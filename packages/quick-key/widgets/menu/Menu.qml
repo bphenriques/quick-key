@@ -92,7 +92,7 @@ Scope {
     id: inputIsland
     name: "input"
     empty: root.menu.inputEmpty
-    holdKey: root.menu.input.visit
+    holdKey: root.menu.input.lastVisit
     padding: Config.theme.padding / 2
     // As a row's content is, so its key column lines up with the body's keys.
     inset: Metrics.itemPaddingX

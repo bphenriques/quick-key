@@ -35,7 +35,7 @@ Scope {
   property string shortcut: settings.shortcut
   // From startVisit (InputModel) to endVisit.
   readonly property bool watched: internal.watched
-  // While watched, its input is the one the menu shows (InputModel.display), not another island's.
+  // While watched, its input is the one the menu shows on screen (InputModel.settle): not another island's, nor one under a panel.
   readonly property bool displayed: internal.displayed
   signal visitEnded
 

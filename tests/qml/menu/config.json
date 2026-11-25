@@ -31,6 +31,11 @@
       "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" m1",
       "notify": "printf '%s|%s' > \"$XDG_RUNTIME_DIR/notified\""
     },
+    "other": {
+      "type": "ask",
+      "ask": "python3 \"$XDG_CONFIG_HOME/quick-key/agent.py\" m2",
+      "notify": "true"
+    },
     "notified": {
       "type": "command",
       "file": "notified"

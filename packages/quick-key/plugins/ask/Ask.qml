@@ -172,7 +172,7 @@ Plugin {
     return !!exchange?.input && watched;
   }
 
-  // Not seen, or seen with the keys on an island showing another input: told as when the menu is closed.
+  // Not seen, or seen while another input or a panel shows instead: told as when the menu is closed.
   function missed(exchange) {
     return !seen(exchange) || !displayed;
   }

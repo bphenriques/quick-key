@@ -12,6 +12,7 @@ Scope {
   readonly property bool open: Panels.top === root
   readonly property bool inStack: Panels.owners.includes(root)
   onInStackChanged: if (!inStack) reset()
+  onOpenChanged: input.settle()
   // Levels past the top one: an entry ("entry"), an app menu ("menu") or an item menu ("actions"), each keeping the island and input it was opened from for Escape to restore.
   property var levels: []
   // How deep a shortcut or key path opened it: Escape closes there.
@@ -28,7 +29,7 @@ Scope {
   readonly property var layout: level === home ? homeLayout : homeLayout.filter(name => ["input", "body", "bar"].includes(name))
   // The keys of the entries the layout pins, on the level declaring it.
   readonly property var pinnedKeys: pinsOf(layout)
-  // While the menu shows the declaring level's layout, which a pinned level never shrinks within; the input's visit is a level's within it (InputModel.visit).
+  // While the menu shows the declaring level's layout, which a pinned level never shrinks within; the input's visit is a level's within it (InputModel.settle).
   readonly property string visit: inStack ? JSON.stringify(homeLayout) : ""
   readonly property var level: levels[levels.length - 1] ?? null
   // The level the body shows.
@@ -158,6 +159,7 @@ Scope {
     Plugins.refresh();
     Daemons.refresh();
     Panels.open(root);
+    input.settle();
   }
 
   function toggle() {
@@ -196,6 +198,7 @@ Scope {
       internal.focus = "body";
     }
     internal.island = name;
+    input.settle();
   }
 
   // A click on a row runs it, its island taking the keys.
@@ -229,6 +232,7 @@ Scope {
     internal.held = "";
     internal.focus = "body";
     internal.island = "body";
+    input.settle();
   }
 
   // The island it was opened from takes the keys again, the body if the layout no longer shows it.
@@ -240,6 +244,7 @@ Scope {
     internal.focus = left?.inputFocused ? "input" : "body";
     body.cursor.point(left?.cursor);
     body.clearViews();
+    input.settle();
   }
 
   // Opened from any island, a level shows in the body.
@@ -251,6 +256,7 @@ Scope {
     internal.focus = "body";
     body.cursor.point(undefined);
     body.clearViews();
+    input.settle();
   }
 
   function find(candidates, name) {

@@ -14,6 +14,8 @@ ShellRoot {
   // The legend's keys while an input has the keys.
   property var typingLegend: []
   property int visitStep: 0
+  // The agent's visit as it changes: "watched", "unwatched", "ended".
+  property var visitLog: []
   property int orderStep: 0
   // Whether a case pressed its key, once.
   property bool pressed: false
@@ -825,8 +827,9 @@ ShellRoot {
           if (!agent || agent.busy) return false;
           switch (root.visitStep) {
           case 0:
+            menu.hide();
             menu.show();
-            menu.levels = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", context: "Tasks" } } }];
+            menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", context: "Tasks" } } });
             root.visitStep = menu.input.submit("one", false) ? 1 : -1;
             return false;
           case 1:
@@ -834,12 +837,12 @@ ShellRoot {
             return false;
           case 2:
             if (agent.turn?.question !== "two" || !agent.turn?.text.endsWith("[Tasks]")) return false;
-            const token = menu.input.visit;
+            const token = menu.input.lastVisit;
             menu.input.expand();
             // Under the panel, the menu keeps its level and the visit.
-            const held = agent.shown && !menu.open && menu.inStack && menu.input.visit === token;
+            const held = agent.shown && !menu.open && menu.inStack && menu.input.lastVisit === token;
             Panels.back();
-            root.visitStep = held && menu.open && menu.levels.length === 1 && menu.inputFocused && menu.input.visit === token && agent.turn?.question === "two" ? 3 : -1;
+            root.visitStep = held && menu.open && menu.levels.length === 1 && menu.inputFocused && menu.input.lastVisit === token && agent.turn?.question === "two" ? 3 : -1;
             return false;
           }
           menu.hide();
@@ -1113,12 +1116,12 @@ ShellRoot {
           if (!agent) return false;
           Config.menu.input = { desc: "Ask", plugin: "agent" };
           root.pinning(2);
-          const visit = menu.input.visit;
+          const visit = menu.input.lastVisit;
           menu.handleName("t");
           menu.stepBack();
-          const kept = visit !== "" && menu.input.visit === visit && agent.watched;
+          const kept = visit !== "" && menu.input.lastVisit === visit && agent.watched;
           menu.handleName("a");
-          const ended = menu.input.visit !== visit && !agent.watched;
+          const ended = menu.input.lastVisit !== visit && !agent.watched;
           Config.menu.input = null;
           return kept && ended && root.unpinning();
         }
@@ -1157,6 +1160,81 @@ ShellRoot {
           const shown = agent.displayed && agent.turn?.question === "pinned" && agent.turn.phase === "done";
           Config.menu.input = null;
           return root.acted && shown && root.unpinning();
+        }
+      },
+      {
+        name: "opening an entry with a layout of its own from a top level asking ends the visit once, never watching again on the way",
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent) return false;
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          root.routing();
+          root.visitLog = [];
+          menu.handleName("c");
+          const log = root.visitLog.join();
+          if (log !== "unwatched,ended") console.info("# " + log);
+          Config.menu.input = null;
+          return log === "unwatched,ended" && root.unpinning();
+        }
+      },
+      {
+        name: "a level opened from a pin whose input asks ends its visit",
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent) return false;
+          root.pinning(1);
+          menu.hide();
+          Config.menu.entries = [Object.assign({}, Config.menu.entries[0], { input: { desc: "Ask", plugin: "agent" } }), Config.menu.entries[1]];
+          menu.show();
+          menu.handleName("t");
+          const asking = menu.input.plugin === agent && agent.watched;
+          menu.handleName("0");
+          const ended = menu.level?.picking && !agent.watched;
+          return asking && ended && root.unpinning();
+        }
+      },
+      {
+        name: "the keys moving to a pin and back, and Ask's panel opening over the menu and closing, end no visit",
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent) return false;
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          root.pinning(2);
+          root.visitLog = [];
+          menu.handleName("t");
+          menu.stepBack();
+          menu.input.expand();
+          Panels.back();
+          const kept = root.visitLog.length === 0 && menu.open && agent.watched && agent.displayed;
+          Config.menu.input = null;
+          return kept && root.unpinning();
+        }
+      },
+      {
+        name: "an answer finishing while another agent's panel covers the menu is notified and marked unread",
+        start: () => {
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          menu.hide();
+          menu.show();
+          root.acted = null;
+        },
+        until: () => {
+          const agent = Plugins.get("agent");
+          const other = Plugins.get("other");
+          if (!agent || !other || agent.busy && root.acted === null) return false;
+          if (root.acted === null) {
+            const sent = menu.input.submit("covered", false) && agent.displayed;
+            other.show();
+            root.acted = sent && !menu.open && menu.inStack && agent.watched && !agent.displayed;
+            return false;
+          }
+          if (agent.busy || !Plugins.get("notified")?.text.startsWith("agent|covered")) return false;
+          const unread = agent.unread;
+          Panels.back();
+          const read = menu.open && agent.displayed;
+          Config.menu.input = null;
+          menu.hide();
+          return root.acted && unread && read;
         }
       },
       {
@@ -1346,5 +1424,17 @@ ShellRoot {
 
   MenuModel {
     id: menu
+  }
+
+  Connections {
+    target: Plugins.get("agent")
+
+    function onWatchedChanged() {
+      root.visitLog = root.visitLog.concat([target.watched ? "watched" : "unwatched"]);
+    }
+
+    function onVisitEnded() {
+      root.visitLog = root.visitLog.concat(["ended"]);
+    }
   }
 }

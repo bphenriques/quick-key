@@ -26,28 +26,27 @@ QtObject {
     : menu.levels.slice(0, menu.levels.indexOf(menu.home) + 1).map(level => level.entry?.key ?? "").concat(menu.focused.island))
   readonly property string draft: draftOf(draftKey)
 
-  // By island, the plugin its input showed while the menu stays on one level, whose leaving, or the menu closing, ends them all (Plugin.endVisit); the keys moving between islands end none.
+  // By island, the plugin its input showed while the menu stays on the same levels, whose leaving, or the menu closing, ends them all (Plugin.endVisit); the keys moving between islands end none.
   property var visiting: ({})
-  readonly property string visit: menu.visit && JSON.stringify(menu.levels.map(level => level.entry?.key ?? level.kind))
-  onVisitChanged: {
-    for (const plugin of new Set(Object.values(visiting))) plugin.endVisit();
-    visiting = ({});
-    join();
-  }
-  onPluginChanged: join()
+  // The open levels' keys the visits belong to, "" out of the menu's stack.
+  property string lastVisit: ""
 
-  // A plugin replaces the one its island showed, which a visit may read before its level settles; only the one the input shows is displayed (Plugin.displayed).
-  function join() {
-    const island = menu.focused.island;
-    const left = visiting[island];
+  // Called last by each of the menu's transitions, so it reads them settled; only the input on screen is displayed (Plugin.displayed).
+  function settle() {
+    const key = menu.inStack ? JSON.stringify(menu.levels.map(level => level.entry?.key ?? level.kind)) : "";
+    if (key !== lastVisit) {
+      for (const each of new Set(Object.values(visiting).filter(Boolean))) each.endVisit();
+      visiting = ({});
+      lastVisit = key;
+    }
+    const shown = key ? plugin : null;
+    const left = visiting[menu.focused.island];
     const before = Object.values(visiting);
-    const now = Object.assign({}, visiting);
-    if (visit && plugin) now[island] = plugin;
-    else delete now[island];
-    visiting = now;
-    if (left && left !== plugin && !Object.values(now).includes(left)) left.endVisit();
-    if (visit && plugin && !before.includes(plugin)) plugin.startVisit();
-    for (const each of Object.values(now)) each.display(each === plugin);
+    visiting = Object.assign({}, visiting, { [menu.focused.island]: shown });
+    const now = Object.values(visiting).filter(Boolean);
+    if (left && !now.includes(left)) left.endVisit();
+    if (shown && !before.includes(shown)) shown.startVisit();
+    for (const each of now) each.display(each === shown && menu.open);
   }
 
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
