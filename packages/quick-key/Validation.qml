@@ -93,7 +93,7 @@ Singleton {
       const unknown = Object.keys(pin).filter(field => field !== "level");
       // With its keys, a pinned level's own row on another's key runs, so that one takes no keys from it.
       const taken = Config.kind(entry?.submenu) === "list" ? keys.filter(key => key !== pin.level && Array.from(entry.submenu).some(row => [].concat(row?.key ?? []).includes(key))) : [];
-      if (unknown.length) found.push(said + " holds a pinned level setting " + unknown.join(", ") + ", which it does not take");
+      if (unknown.length) found.push(said + " holds a pinned level setting " + unknown.join(", ") + ", which it does not take" + (typeof pin.level === "string" ? ": set it on the entry on '" + pin.level + "'" : ""));
       if (typeof pin.level !== "string") found.push(said + " holds a pinned level without a key: { level = \"t\"; } pins the " + where + " on t");
       else if (/\s/.test(pin.level)) found.push(pins + ", a key path: a pinned level takes the key of one " + where);
       else if (!entry) found.push(pins + (barred.some(part => part?.key === pin.level) ? ", a bar entry: a pinned level takes one " + where : ", which no " + where + " binds"));

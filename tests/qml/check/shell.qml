@@ -37,6 +37,8 @@ ShellRoot {
     ["a pin naming a key path", { menu: { layout: ["body", { level: "a 2" }] } }, "menu.layout pins 'a 2', a key path"],
     ["a pin naming a bar entry", { menu: { layout: ["body", { level: "c" }] } }, "menu.layout pins 'c', a bar entry"],
     ["a pin without a level", { menu: { layout: ["body", { key: "a" }] } }, ["holds a pinned level setting key", "holds a pinned level without a key"]],
+    ["a pin holding its level's setting", { menu: { layout: ["body", { level: "t", limit: 3 }], entries: [{ key: "t", desc: "T", icon: "x", list: "tray" }] } },
+      "menu.layout holds a pinned level setting limit, which it does not take: set it on the entry on 't'"],
     ["a pin of an entry without a level", { menu:{ layout: ["body", { level: "x" }], entries: [{ key: "x", desc: "X", icon: "x", cmd: "true" }] } }, "menu.layout pins 'x', which opens no level"],
     ["a pin twice", { menu: { layout: ["body", { level: "t" }, { level: "t" }], entries: [{ key: "t", desc: "T", icon: "x", list: "tray" }] } }, "menu.layout pins 't' more than once"],
     ["a pinned entry's bar, status and format", { menu: { layout: ["body", { level: "t" }], entries: [{ key: "t", desc: "T", icon: "x", list: "tray", status: "battery", format: "{level}", bar: { left: [] } }] } },
