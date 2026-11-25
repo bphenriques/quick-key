@@ -22,11 +22,19 @@ jq '
       | with_entries(select(.value != null))) }
 ' "$here/../../record-tour/scripts/events.json" > "$work/events.json"
 
-# The live config with those events, minus Wi-Fi, whose status names the network, the canned agent under a generic name, and the sizes the frames below expect.
+# The live config with those events and made-up tasks, minus Wi-Fi, whose status names the network, the canned agent under a generic name, and the sizes the frames below expect.
 mkdir -p "$work/config/quick-key"
 ln -s "${XDG_CONFIG_HOME:-$HOME/.config}/fontconfig" "$work/config/fontconfig"
-jq --arg file "$work/events.json" --arg agent "$python $here/agent.py" '
+today=$(date +%Y-%m-%d)
+printf '{"updated":"%sT09:00","tasks":[%s,%s,%s,%s]}\n' "$today" \
+  "{\"id\":\"Renew the passport\",\"done\":false,\"title\":\"Renew the passport\",\"list\":\"home\",\"due\":\"$(date -d yesterday +%Y-%m-%d)\"}" \
+  "{\"id\":\"Call the plumber\",\"done\":false,\"title\":\"Call the plumber\",\"list\":\"home\",\"due\":\"$today\"}" \
+  "{\"id\":\"Review the budget\",\"done\":false,\"title\":\"Review the budget\",\"list\":\"work\",\"due\":\"$(date -d tomorrow +%Y-%m-%d)\"}" \
+  "{\"id\":\"Book the dentist\",\"done\":false,\"title\":\"Book the dentist\",\"list\":\"home\"}" > "$work/tasks.json"
+
+jq --arg file "$work/events.json" --arg tasks "$work/tasks.json" --arg agent "$python $here/agent.py" '
   .menu.width = 960 | .theme.edgeMargin = 35
+  | if .plugins.tasks then .plugins.tasks += { file: $tasks, done: "true", reopen: "true", add: "true", sync: "true" } else . end
   | .calendar.file = $file | del(.calendar.remind) | .menu.entries |= map(select(.list != "wifi"))
   | .plugins.ask = { ask: $agent, title: "Assistant" } | if .menu.input then .menu.input.desc = "Ask Assistant..." else . end
 ' "${XDG_CONFIG_HOME:-$HOME/.config}/quick-key/config.json" > "$work/config/quick-key/config.json"
@@ -55,7 +63,7 @@ shot() {
 }
 ipc() { quickshell ipc --pid "$pid" call "$@"; }
 
-ipc menu toggle; shot menu 1008 290; ipc menu toggle; sleep 0.5
+ipc menu toggle; shot menu 1008 430; ipc menu toggle; sleep 0.5
 ipc menu toggleEntry a; shot speakers 768 309; ipc menu toggleEntry a; sleep 0.5
 ipc menu toggleEntry c; shot calendar 1008 450; ipc menu toggleEntry c; sleep 0.5
 ipc ask activate; sleep 1
