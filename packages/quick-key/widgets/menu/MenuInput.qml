@@ -15,25 +15,16 @@ ColumnLayout {
   spacing: Config.theme.spacing / 2
 
   // A click opens the plugin's panel on the whole conversation.
+  // The island holds the tallest turn of the visit (Island.holdKey), so it grows and never shrinks within it.
   ListItem {
     id: last
-    // The tallest turn of the visit, which the island keeps so it grows and never shrinks within it.
-    property real tallest: 0
     // A turn it cannot hold opens the plugin's panel by itself, once, as its answer ends: while it streams in, its size is not known.
     readonly property bool expands: visible && exchange.overflows && root.model.turn !== root.model.expandedTurn && root.model.turn?.phase !== "working"
-    // Its turn gone before the visit ends (a task added), it holds the height alone, so the prompt holds still.
-    visible: (root.model.turn !== null || tallest > 0) && !root.menu.filtering
-    enabled: root.model.turn !== null
+    visible: root.model.turn !== null && !root.menu.focused.filtering
     Layout.fillWidth: true
-    // The height held sits beyond it, outside what a hover lights, so the turn stays next to the prompt.
-    Layout.topMargin: Math.max(0, last.tallest - (enabled ? exchange.implicitHeight : 0))
     // Outset by its padding, so the turn lines up with the prompt.
     Layout.leftMargin: -Metrics.itemPaddingX
     Layout.rightMargin: -Metrics.itemPaddingX
-    readonly property string visit: root.model.visit
-    onVisitChanged: tallest = 0
-    // A turn as tall as the empty exchange changes no height.
-    onEnabledChanged: latch.restart()
     onExpandsChanged: if (expands) settle.restart()
     verticalPadding: Metrics.itemPaddingY / 2
     onActivated: root.model.expand()
@@ -45,18 +36,9 @@ ColumnLayout {
       onTriggered: if (last.expands) root.model.overflowed()
     }
 
-    // Held once laid out, so a height the text has only for a moment, before it has its width, is not kept.
-    Timer {
-      id: latch
-      interval: 100
-      onTriggered: if (last.enabled) last.tallest = Math.max(last.tallest, exchange.implicitHeight)
-    }
-
     Exchange {
       id: exchange
-      visible: last.enabled
       Layout.fillWidth: true
-      onImplicitHeightChanged: latch.restart()
       lines: 3
       maximumWidth: root.width * 0.85
       question: root.model.turn?.question ?? ""
@@ -72,13 +54,13 @@ ColumnLayout {
     id: prompt
     Layout.fillWidth: true
     // Filtering, it is the filter: its glyph, its range on the right.
-    readonly property bool filter: root.menu.filtering
+    readonly property bool filter: root.menu.focused.filtering
     focused: root.menu.inputFocused || filter
     // A turn shows its own spinner; without one (a chat running in the plugin's panel), the prompt does.
     busy: root.model.busy && root.model.turn === null && !filter
     key: filter ? "" : "Tab"
     glyph: filter ? Glyphs.search : Glyphs.prompt
-    detail: filter ? root.menu.filter.count : ""
+    detail: filter ? root.menu.focused.filter.count : ""
     placeholder: filter ? Words.filterPrompt : root.model.turn ? Words.next(root.model.turn.phase) : root.model.input?.desc ?? ""
     // Focused, Escape while it clears, else its plugin's past conversations while it can list them.
     keys: filter || !root.menu.inputFocused ? []
@@ -93,7 +75,7 @@ ColumnLayout {
     onOwnerChanged: if (!filter) set(root.model.draftOf(owner))
     onFilterChanged: set(filter ? "" : root.model.draftOf(owner))
     Component.onCompleted: set(filter ? "" : root.model.draftOf(owner))
-    onTextChanged: filter ? root.menu.filter.search(text) : root.model.keepDraft(text)
+    onTextChanged: filter ? root.menu.focused.filter.search(text) : root.model.keepDraft(text)
     sends: !filter
     onSent: background => send(background)
     // Tab and Shift+Tab give the keys back to the body.

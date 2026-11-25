@@ -306,7 +306,7 @@ Singleton {
         property int columns: 2
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
         property var input: null
-        // The top level's islands, top to bottom: `input`, `body` (once) and `bar`.
+        // The top level's islands, top to bottom: `input`, `body` (once), `bar`, and `{ level = "t"; }` pinning the top-level entry on t on an island of its own.
         property var layout: ["input", "body", "bar"]
         // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.
         property bool splitBar: false

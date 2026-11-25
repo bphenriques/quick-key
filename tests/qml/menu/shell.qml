@@ -34,6 +34,27 @@ ShellRoot {
   // A menu's grid of rows, two columns, a capital among them (rule 6).
   readonly property var gridLevel: ({ kind: "actions", title: "Grid", actions: [{ key: "f", desc: "Row", select: () => root.ran = "row" },
     { key: "R", desc: "Capital", select: () => root.ran = "capital" }, { key: "g", desc: "Third", select: () => root.ran = "third" }] })
+  // The entries config.json sets, while a case pins others.
+  property var entries: null
+
+  // A top level whose list on t, Tasks, is pinned between the input and the body, showing `limit` of its items.
+  function pinning(limit, more = []) {
+    menu.hide();
+    if (!root.entries) root.entries = Config.menu.entries;
+    Config.menu.entries = [{ key: "t", desc: "Tasks", list: "devices", limit, input: { desc: "Add a task...", cmd: "true" }, submenu: [{ key: "f", desc: "Flip", action: "flip" }] },
+      { key: "a", desc: "Audio", submenu: [] }].concat(more);
+    Config.menu.layout = ["input", { level: "t" }, "body", "bar"].concat(more.map(entry => ({ level: entry.key })));
+    menu.show();
+    return menu.modelOf("t");
+  }
+
+  function unpinning() {
+    menu.hide();
+    Config.menu.layout = ["input", "body", "bar"];
+    Config.menu.entries = root.entries;
+    return true;
+  }
+
   readonly property var startFilter: () => menu.body.startFilter()
   readonly property var cursorDown: () => menu.cursorKey("Down")
   readonly property var cursorCapital: () => menu.cursorKey("Down") && menu.cursorKey("Right")
@@ -83,12 +104,12 @@ ShellRoot {
     if (!menu.open) return "item";
     if (menu.level?.kind === "actions" && menu.levels.length > was.depth) return "item menu";
     if (menu.held !== was.held) return menu.held === "Help" ? "help" : "help closed";
-    if (menu.viewModel && menu.viewModel.selected.getTime() !== was.day) return "view";
-    if (menu.filtering !== was.filtering) return "filter";
+    if (menu.body.viewModel && menu.body.viewModel.selected.getTime() !== was.day) return "view";
+    if (menu.body.filtering !== was.filtering) return "filter";
     if (menu.levels.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
     if (was.input) return "body";
-    if (menu.cursor.current !== was.cursor) return "cursor " + (menu.cursorItem?.key ?? "none");
+    if (menu.body.cursor.current !== was.cursor) return "cursor " + (menu.body.cursorItem?.key ?? "none");
     return handled ? "taken" : "nothing";
   }
 
@@ -99,8 +120,8 @@ ShellRoot {
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.viewModel?.selected.getTime(), filtering: menu.filtering, depth: menu.levels.length, input: menu.inputFocused, cursor: menu.cursor.current };
-    const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name) || menu.cursorKey(name), was);
+    const was = { held: menu.held, day: menu.body.viewModel?.selected.getTime(), filtering: menu.body.filtering, depth: menu.levels.length, input: menu.inputFocused, cursor: menu.body.cursor.current };
+    const did = outcome(menu.body.filtering ? menu.filterKey(name) : menu.handleName(name) || menu.cursorKey(name), was);
     menu.hide();
     return did;
   }
@@ -129,6 +150,13 @@ ShellRoot {
       menu: menu
       width: 80
       item: ({ desc: "Calendar", status: "clock" })
+    }
+
+    MenuHeader {
+      id: header
+      y: 40
+      menu: menu
+      room: 300
     }
   }
 
@@ -257,7 +285,7 @@ ShellRoot {
           menu.handleName("/");
         },
         until: () => {
-          if (!root.pressed && menu.filtering && menu.filterSlots === 2 && menu.rows.length === 2) root.pressed = menu.filterKey("2");
+          if (!root.pressed && menu.body.filtering && menu.body.filterSlots === 2 && menu.body.rows.length === 2) root.pressed = menu.filterKey("2");
           return root.pressed && Plugins.get("picked")?.text === "b-2";
         }
       },
@@ -278,7 +306,7 @@ ShellRoot {
         name: "past its limit, a bar's list shows the whole list on 0, on a level of its own filtering from the start",
         start: () => menu.handleKey({ key: Qt.Key_0, modifiers: Qt.ControlModifier, text: "" }),
         until: () => {
-          if (root.pressed && menu.level?.picking && menu.filtering && menu.filterSlots === 9 && menu.rows.length === 2) root.pressed = !menu.filterKey("2");
+          if (root.pressed && menu.level?.picking && menu.body.filtering && menu.body.filterSlots === 9 && menu.body.rows.length === 2) root.pressed = !menu.filterKey("2");
           return !root.pressed && Plugins.get("picked")?.text === "b-2";
         }
       },
@@ -289,19 +317,19 @@ ShellRoot {
           menu.show();
           menu.push({ kind: "entry", entry: { list: "devices" } });
           menu.body.startFilter();
-          const filtered = menu.filtering;
+          const filtered = menu.body.filtering;
           menu.stepBack();
-          const rest = !menu.filtering && menu.levels.length === 1;
+          const rest = !menu.body.filtering && menu.levels.length === 1;
           menu.focusOn("input");
           menu.pickList("devices");
-          const picking = menu.levels.length === 2 && menu.filtering && !menu.inputFocused;
+          const picking = menu.levels.length === 2 && menu.body.filtering && !menu.inputFocused;
           menu.stepBack();
           const refocused = menu.levels.length === 1 && menu.inputFocused;
           menu.hide();
           // The suite stands in for a plugin's panel the picker opens over.
           Panels.open(root);
           Picker.pick("devices");
-          const fromPanel = menu.open && menu.levels.length === 1 && menu.filtering;
+          const fromPanel = menu.open && menu.levels.length === 1 && menu.body.filtering;
           menu.stepBack();
           const shownAgain = !menu.open && Panels.top === root;
           Panels.close();
@@ -333,18 +361,18 @@ ShellRoot {
           if (Plugins.get("many")?.items.length !== 10000) return false;
           menu.hide();
           menu.show();
-          const top = menu.bodyActions.length > 0 && menu.barActions.length === 0 && !menu.slashFilters;
+          const top = menu.body.bodyActions.length > 0 && menu.body.barActions.length === 0 && !menu.body.slashFilters;
           menu.push({ kind: "entry", entry: { list: "many", submenu: [{ key: "m", desc: "Mute", cmd: "true" }] } });
-          const content = menu.content && menu.barActions.length === 1 && menu.bodyActions.length === 0 && menu.barShown;
-          const legend = menu.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join() === "/ 1-9 of 10000";
+          const content = menu.body.content && menu.body.barActions.length === 1 && menu.body.bodyActions.length === 0 && menu.barShown;
+          const legend = menu.body.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join() === "/ 1-9 of 10000";
           const listed = menu.help.some(key => key.key === "/");
           menu.handleKey({ key: Qt.Key_Slash, modifiers: Qt.NoModifier, text: "/" });
-          const filtering = menu.filtering && menu.barActions.length === 0;
+          const filtering = menu.body.filtering && menu.body.barActions.length === 0;
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "many", submenu: [{ key: "/", desc: "Slash", cmd: "true" }] } });
-          const bound = !menu.slashFilters && menu.legend.length === 0;
+          const bound = !menu.body.slashFilters && menu.body.legend.length === 0;
           menu.push({ kind: "entry", entry: { submenu: [{ key: "m", desc: "Mute", cmd: "true" }] } });
-          const bare = !menu.content && !menu.barShown;
+          const bare = !menu.body.content && !menu.barShown;
           menu.hide();
           return top && content && legend && listed && filtering && bound && bare;
         }
@@ -388,14 +416,14 @@ ShellRoot {
           menu.hide();
           let start = Date.now();
           menu.pickList("many");
-          const opened = menu.rows.length;
+          const opened = menu.body.rows.length;
           const open = Date.now() - start;
           start = Date.now();
-          menu.filter.search("item 99");
-          const filtered = menu.rows.length;
+          menu.body.filter.search("item 99");
+          const filtered = menu.body.rows.length;
           const filter = Date.now() - start;
           start = Date.now();
-          for (let i = 0; i < 100; i++) menu.filter.move(1);
+          for (let i = 0; i < 100; i++) menu.body.filter.move(1);
           const move = (Date.now() - start) / 100;
           console.info("# 10000 items: open " + open + " ms, filter " + filter + " ms, move " + move + " ms");
           return opened === 9 && filtered === 9;
@@ -403,29 +431,29 @@ ShellRoot {
       },
       {
         name: "the filter keeps the rows whose label holds every word, case aside; a digit never types",
-        start: () => menu.filter.search("99 ITEM"),
-        until: () => menu.filter.found.length === 280 && menu.rows[0].desc === "Item 99" && menu.filter.count === "1-9 of 280" && menu.filterKey("5") && menu.filter.query === "99 ITEM"
+        start: () => menu.body.filter.search("99 ITEM"),
+        until: () => menu.body.filter.found.length === 280 && menu.body.rows[0].desc === "Item 99" && menu.body.filter.count === "1-9 of 280" && menu.filterKey("5") && menu.body.filter.query === "99 ITEM"
       },
       {
         name: "nothing matching says so, in the rows' place",
-        start: () => menu.filter.search("plumb"),
-        until: () => menu.rows.length === 0 && menu.emptyText === "Nothing matches plumb"
+        start: () => menu.body.filter.search("plumb"),
+        until: () => menu.body.rows.length === 0 && menu.body.emptyText === "Nothing matches plumb"
       },
       {
         name: "while filtering, the digits label the rows shown and move with the cursor, its row lit",
         start: () => {
-          menu.filter.search("");
-          menu.filter.move(10);
+          menu.body.filter.search("");
+          menu.body.filter.move(10);
         },
-        until: () => menu.filter.index === 10 && menu.filter.first === 2 && menu.rows[0].desc === "Item 2" && menu.rows[8].key === "9" && menu.rows[8].desc === "Item 10" && menu.rows[8].current
+        until: () => menu.body.filter.index === 10 && menu.body.filter.first === 2 && menu.body.rows[0].desc === "Item 2" && menu.body.rows[8].key === "9" && menu.body.rows[8].desc === "Item 10" && menu.body.rows[8].current
       },
       {
         name: "while filtering, PgDn and PgUp move the cursor a page of rows",
         until: () => {
-          menu.filter.search("");
+          menu.body.filter.search("");
           const named = MenuKeys.name({ key: Qt.Key_PageDown, modifiers: Qt.NoModifier, text: "" }) === "Page_Down";
-          const down = menu.filterKey("Page_Down") && menu.filter.index === 9 && menu.rows[8].current;
-          const up = menu.filterKey("Page_Up") && menu.filter.index === 0 && menu.rows[0].current;
+          const down = menu.filterKey("Page_Down") && menu.body.filter.index === 9 && menu.body.rows[8].current;
+          const up = menu.filterKey("Page_Up") && menu.body.filter.index === 0 && menu.body.rows[0].current;
           return named && down && up;
         }
       },
@@ -437,12 +465,12 @@ ShellRoot {
           menu.pickList("ordered");
         },
         until: () => {
-          if (root.orderStep === 0 && menu.filter.items.length === 3) {
-            menu.filter.move(1);
+          if (root.orderStep === 0 && menu.body.filter.items.length === 3) {
+            menu.body.filter.move(1);
             root.orderStep = 1;
             Quickshell.execDetached(["sh", "-c", `echo '{"items": [{"id": "z"}, {"id": "a"}, {"id": "b"}, {"id": "c"}]}' > "$XDG_RUNTIME_DIR/ordered"`]);
           }
-          return root.orderStep === 1 && menu.filter.items.length === 4 && menu.filter.item?.id === "b" && menu.filter.index === 2;
+          return root.orderStep === 1 && menu.body.filter.items.length === 4 && menu.body.filter.item?.id === "b" && menu.body.filter.index === 2;
         }
       },
       {
@@ -452,13 +480,13 @@ ShellRoot {
           menu.pickList("acting");
         },
         until: () => {
-          if (root.acted === null && menu.rows.length === 1) {
-            const legend = menu.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join(", ");
-            const counted = menu.filter.count;
+          if (root.acted === null && menu.body.rows.length === 1) {
+            const legend = menu.body.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join(", ");
+            const counted = menu.body.filter.count;
             menu.filterKey("Alt+1");
-            const own = menu.level.kind === "actions" && menu.items[0].key === "d" && menu.barSlots.left[0].desc === "A";
+            const own = menu.level.kind === "actions" && menu.body.items[0].key === "d" && menu.barSlots.left[0].desc === "A";
             menu.handleName("d");
-            root.acted = legend === "1 pick, ↑ move, RET open, M-RET menu" && counted === "1 of 1" && own && menu.level.picking && menu.filtering;
+            root.acted = legend === "1 pick, ↑ move, RET open, M-RET menu" && counted === "1 of 1" && own && menu.level.picking && menu.body.filtering;
           }
           return root.acted === true && Plugins.get("picked")?.text === "a d";
         }
@@ -468,7 +496,7 @@ ShellRoot {
         until: () => {
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "acting" } });
-          if (menu.rows.length !== 1) return false;
+          if (menu.body.rows.length !== 1) return false;
           menu.handleKey({ key: Qt.Key_1, modifiers: Qt.AltModifier, text: "" });
           const opened = menu.level.kind === "actions";
           menu.hide();
@@ -487,9 +515,9 @@ ShellRoot {
           menu.push(root.bareLevel);
           const listed = menu.help.some(key => key.desc === Words.helpMove);
           menu.cursorKey("Down");
-          const moved = menu.cursorItem?.id === "i3" && menu.rows[3].current && menu.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join(", ") === "/ 1-9 of 12, RET open, M-RET menu";
+          const moved = menu.body.cursorItem?.id === "i3" && menu.body.rows[3].current && menu.body.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join(", ") === "/ 1-9 of 12, RET open, M-RET menu";
           for (let i = 0; i < 20; i++) menu.cursorKey("Down");
-          const stopped = menu.cursorItem?.key === "9" && menu.rows[0].id === "i0" && menu.rows[0].key === "1";
+          const stopped = menu.body.cursorItem?.key === "9" && menu.body.rows[0].id === "i0" && menu.body.rows[0].key === "1";
           menu.push(root.downLevel);
           const bound = !menu.help.some(key => key.desc === Words.helpMove);
           menu.hide();
@@ -502,7 +530,7 @@ ShellRoot {
         until: () => {
           menu.hide();
           const ran = menu.press("t Down") || menu.press("Down");
-          const none = !menu.cursorItem;
+          const none = !menu.body.cursorItem;
           menu.hide();
           return !ran && none;
         }
@@ -512,11 +540,11 @@ ShellRoot {
         until: () => {
           menu.hide();
           menu.show();
-          const moved = menu.cursorKey("Down") && menu.cursor.current === "a" && menu.cursorKey("Right") && menu.cursor.current === "t"
-            && menu.cursorKey("Down") && menu.cursor.current === "t" && menu.bodyActions[1].current && menu.cursorKey("Left");
-          const opened = menu.cursorKey("Return") && menu.level?.entry?.desc === "Audio" && !menu.cursorItem;
+          const moved = menu.cursorKey("Down") && menu.body.cursor.current === "a" && menu.cursorKey("Right") && menu.body.cursor.current === "t"
+            && menu.cursorKey("Down") && menu.body.cursor.current === "t" && menu.body.bodyActions[1].current && menu.cursorKey("Left");
+          const opened = menu.cursorKey("Return") && menu.level?.entry?.desc === "Audio" && !menu.body.cursorItem;
           menu.stepBack();
-          const kept = menu.level === null && menu.cursor.current === "a";
+          const kept = menu.level === null && menu.body.cursor.current === "a";
           menu.hide();
           return moved && opened && kept;
         }
@@ -531,13 +559,13 @@ ShellRoot {
           menu.hide();
           menu.show();
           menu.push(root.bareLevel);
-          const bare = !menu.barShown && menu.cursorKey("Down") && !!menu.cursorItem && !menu.barShown;
+          const bare = !menu.barShown && menu.cursorKey("Down") && !!menu.body.cursorItem && !menu.barShown;
           menu.push(root.keyedLevel);
-          const named = menu.cursorKey("Down") && menu.barShown && menu.legend.some(key => key.key === "Return");
+          const named = menu.cursorKey("Down") && menu.barShown && menu.body.legend.some(key => key.key === "Return");
           menu.hide();
           menu.show();
-          const before = menu.legend.length;
-          const still = menu.cursorKey("Down") && !!menu.cursorItem && menu.legend.length === before;
+          const before = menu.body.legend.length;
+          const still = menu.cursorKey("Down") && !!menu.body.cursorItem && menu.body.legend.length === before;
           menu.hide();
           plugin.items = was;
           return bare && named && still;
@@ -557,11 +585,11 @@ ShellRoot {
           menu.filterKey("Down");
           menu.filterKey("Down");
           menu.stepBack();
-          const carried = !menu.filtering && menu.cursorItem?.id === "i2" && menu.rows[2].current;
+          const carried = !menu.body.filtering && menu.body.cursorItem?.id === "i2" && menu.body.rows[2].current;
           menu.body.startFilter();
-          menu.filter.search("i1");
+          menu.body.filter.search("i1");
           menu.stepBack();
-          const none = !menu.filtering && !menu.cursorItem;
+          const none = !menu.body.filtering && !menu.body.cursorItem;
           menu.hide();
           plugin.items = was;
           return carried && none;
@@ -595,7 +623,7 @@ ShellRoot {
       {
         name: "a plugin's empty list says why, in its words",
         start: () => menu.push({ kind: "entry", entry: { list: "nothing" } }),
-        until: () => menu.emptyText === "Nothing found"
+        until: () => menu.body.emptyText === "Nothing found"
       },
       {
         name: "? lists the keys no row shows, and any key closes the list",
@@ -614,12 +642,12 @@ ShellRoot {
         until: () => {
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "acting" } });
-          if (menu.rows.length !== 1) return false;
+          if (menu.body.rows.length !== 1) return false;
           const listed = level => {
             menu.levels = level ? [level] : [];
             return menu.help.map(key => key.key).join();
           };
-          const hinted = () => menu.legend.some(key => key.key === "?");
+          const hinted = () => menu.body.legend.some(key => key.key === "?");
           return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && hinted() && listed({ kind: "entry", entry: { list: "acting" } }) === "Up,Down,Alt+1,/,Escape"
             && !hinted() && listed({ kind: "entry", entry: { list: "devices" } }) === "Up,Down,/,Escape"
             && listed(null).includes(",Up,Down,Left,Right,Return,") && listed(root.gridLevel) === "Up,Down,Left,Right,Return,Shift+Return,Escape"
@@ -641,9 +669,9 @@ ShellRoot {
         until: () => {
           menu.hide();
           menu.levels = [root.keyedLevel];
-          const before = menu.input.input !== null && menu.slashFilters;
+          const before = menu.input.input !== null && menu.body.slashFilters;
           Config.menu.layout = ["body", "bar"];
-          const without = menu.input.input === null && !menu.slashFilters && !menu.handleName("Tab") && !menu.inputFocused;
+          const without = menu.input.input === null && !menu.body.slashFilters && !menu.handleName("Tab") && !menu.inputFocused;
           Config.menu.layout = ["input", "body", "bar"];
           menu.levels = [];
           return before && without;
@@ -656,9 +684,9 @@ ShellRoot {
           menu.hide();
           Config.menu.layout = ["body", "bar"];
           menu.pickList("many");
-          const was = menu.filter.current;
+          const was = menu.body.filter.current;
           const taken = menu.handleKey({ key: Qt.Key_Down, modifiers: Qt.NoModifier, text: "" });
-          const moved = menu.filtering && menu.filter.current !== was;
+          const moved = menu.body.filtering && menu.body.filter.current !== was;
           menu.hide();
           Config.menu.layout = ["input", "body", "bar"];
           return taken && moved;
@@ -670,10 +698,10 @@ ShellRoot {
           menu.hide();
           Config.menu.keysHint = false;
           menu.levels = [];
-          const hidden = !menu.legend.some(key => key.key === "?") && menu.handleName("?") && menu.held === "Help";
+          const hidden = !menu.body.legend.some(key => key.key === "?") && menu.handleName("?") && menu.held === "Help";
           menu.handleName("?");
           Config.menu.keysHint = true;
-          return hidden && menu.held === "" && menu.legend.some(key => key.key === "?");
+          return hidden && menu.held === "" && menu.body.legend.some(key => key.key === "?");
         }
       },
       {
@@ -682,7 +710,7 @@ ShellRoot {
           menu.hide();
           menu.push(root.calendarLevel);
           const labels = keys => keys.map(key => MenuKeys.label(key.key, true));
-          const listed = labels(menu.help).join().startsWith("←→,↑↓,C-↑↓,") && !labels(menu.legend).includes("←→") && !labels(menu.legend).includes("C-↑↓");
+          const listed = labels(menu.help).join().startsWith("←→,↑↓,C-↑↓,") && !labels(menu.body.legend).includes("←→") && !labels(menu.body.legend).includes("C-↑↓");
           menu.hide();
           return listed;
         }
@@ -691,7 +719,7 @@ ShellRoot {
         name: "a level's legend shows the keys of its ? list it names in its bar, after its own, in its order and once; one ? lists not now shows nowhere",
         until: () => {
           menu.hide();
-          const shown = () => menu.legend.map(key => MenuKeys.label(key.key, true) + " " + (key.what ?? key.desc));
+          const shown = () => menu.body.legend.map(key => MenuKeys.label(key.key, true) + " " + (key.what ?? key.desc));
           menu.push(root.calendarLevel);
           const own = shown();
           menu.levels = [];
@@ -716,7 +744,7 @@ ShellRoot {
           menu.levels = [];
           menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", context: "Calendar" } } });
           menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
-          root.typingLegend = menu.legend.map(key => MenuKeys.label(key.key));
+          root.typingLegend = menu.body.legend.map(key => MenuKeys.label(key.key));
           menu.input.submit("typed", true);
         },
         until: () => root.typingLegend.length > 0 && !root.typingLegend.includes("ESC") && menu.levels.length === 0 && Plugins.get("agent")?.exchanges[0]?.prompt === "typed" && Plugins.get("agent")?.exchanges[0]?.reply.endsWith("[Calendar]")
@@ -802,17 +830,17 @@ ShellRoot {
           menu.hide();
           menu.levels = [{ kind: "entry", entry: { submenu: [], input: { desc: "Ask", plugin: "agent" } } }];
           const named = menu.help.some(key => key.key === "Ctrl+r");
-          return named && menu.input.recall() && menu.levels.length === 2 && menu.level.picking && menu.level.entry.list === "agent" && menu.filtering;
+          return named && menu.input.recall() && menu.levels.length === 2 && menu.level.picking && menu.level.entry.list === "agent" && menu.body.filtering;
         }
       },
       {
-        name: "a level lays its actions out in its own columns, else menu.columns",
+        name: "a level lays its actions out in its own columns, else menu.body.columns",
         until: () => {
           menu.hide();
           menu.push({ kind: "entry", entry: { submenu: [], columns: 1 } });
-          const own = menu.columns === 1;
+          const own = menu.body.columns === 1;
           menu.hide();
-          return own && menu.columns === Config.menu.columns;
+          return own && menu.body.columns === Config.menu.columns;
         }
       },
       {
@@ -913,6 +941,124 @@ ShellRoot {
           menu.toggleEntry("1");
         },
         until: () => Plugins.get("picked")?.text === "a-1"
+      },
+      {
+        name: "a key path through a pinned entry runs what it runs unpinned, closing the menu it opened",
+        start: () => {
+          root.pinning(2);
+          menu.hide();
+          root.pathRan = menu.press("t 2");
+          root.pathClosed = !menu.open;
+        },
+        until: () => root.pathRan && root.pathClosed && Plugins.get("picked")?.text === "b-2" && root.unpinning()
+      },
+      {
+        name: "a pinned entry leaves the top level's rows for its island: its key gives it the keys, where a digit runs its item; with the body's, a digit does nothing",
+        start: () => {
+          const pin = root.pinning(2);
+          const left = !menu.body.items.some(item => item.key === "t") && pin.rows.length === 2 && pin.rows[1].key === "2";
+          const body = !menu.handleName("1") && menu.focused === menu.body;
+          const focused = menu.handleName("t") && menu.focused === pin && menu.levels.length === 0 && pin.focused && !menu.body.focused;
+          root.acted = left && body && focused && menu.handleName("1");
+        },
+        until: () => root.acted && Plugins.get("picked")?.text === "a-1" && root.unpinning()
+      },
+      {
+        name: "with the body's keys a letter runs its entry, and with a pin's it does not",
+        until: () => {
+          root.pinning(2);
+          menu.handleName("t");
+          const pinned = !menu.handleName("a") && menu.levels.length === 0;
+          menu.stepBack();
+          const opened = menu.focused === menu.body && menu.handleName("a") && menu.level?.entry?.desc === "Audio";
+          return pinned && opened && root.unpinning();
+        }
+      },
+      {
+        name: "Escape leaves a pin's input for its island, its filter, then the pin for the body, then closes; the keys moving stop a filter",
+        until: () => {
+          const pin = root.pinning(2);
+          menu.handleName("t");
+          const typing = menu.handleName("Tab") && menu.inputFocused && menu.input.input.desc === "Add a task...";
+          menu.stepBack();
+          const island = !menu.inputFocused && menu.focused === pin;
+          pin.startFilter();
+          const filtering = pin.filtering;
+          menu.stepBack();
+          const filtered = filtering && !pin.filtering && menu.focused === pin;
+          menu.stepBack();
+          const body = menu.focused === menu.body && menu.open;
+          menu.stepBack();
+          const closed = !menu.open;
+          root.pinning(2);
+          menu.handleName("t");
+          pin.startFilter();
+          menu.focusIsland("body");
+          return typing && island && filtered && body && closed && !pin.filtering && root.unpinning();
+        }
+      },
+      {
+        name: "the bar's actions and legend follow the island with the keys, its slots holding still",
+        until: () => {
+          root.pinning(2);
+          const shown = () => Array.from(header.parts[0].children).filter(child => child.item?.desc).map(child => child.item.desc).join();
+          const slots = () => JSON.stringify(menu.barSlots) + Array.from(header.parts[1].children).length;
+          const [bodyActions, bodySlots, bodyLegend] = [shown(), slots(), menu.focused.legend.some(key => key.key === "?")];
+          menu.handleName("t");
+          const followed = bodyActions === "" && bodyLegend && shown() === "Flip" && !menu.focused.legend.some(key => key.key === "?") && slots() === bodySlots;
+          return followed && root.unpinning();
+        }
+      },
+      {
+        name: "the input is the focused island's, and the visit outlasts the keys moving between islands, never the menu closing",
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent) return false;
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          root.pinning(2);
+          const visit = menu.visit;
+          const asking = menu.input.input.desc === "Ask" && agent.watched;
+          menu.handleName("t");
+          const tasks = menu.input.input.desc === "Add a task..." && menu.input.draftKey === "[\"t\"]" && agent.watched && menu.visit === visit;
+          menu.stepBack();
+          const back = menu.input.input.desc === "Ask" && agent.watched;
+          menu.hide();
+          const ended = !agent.watched;
+          Config.menu.input = null;
+          return visit !== "" && asking && tasks && back && ended && root.unpinning();
+        }
+      },
+      {
+        name: "past a pin's limit 0 lists the rest in the body, from which Escape gives the keys back to the pin",
+        until: () => {
+          const pin = root.pinning(1);
+          menu.handleName("t");
+          const limited = pin.rows.length === 1 && pin.legend.some(key => key.key === "0");
+          const picked = menu.handleName("0") && menu.levels.length === 1 && menu.level.picking && menu.focused === menu.body && menu.body.filtering;
+          menu.stepBack();
+          return limited && picked && menu.levels.length === 0 && menu.focused === pin && root.unpinning();
+        }
+      },
+      {
+        name: "toggleEntry on a pinned entry gives its island the keys, and hides the menu once it has them",
+        until: () => {
+          const pin = root.pinning(2);
+          menu.hide();
+          menu.toggleEntry("t");
+          const focused = menu.open && menu.focused === pin && menu.levels.length === 0;
+          menu.toggleEntry("t");
+          return focused && !menu.open && root.unpinning();
+        }
+      },
+      {
+        name: "a pinned Wi-Fi list scans while the menu shows, and a pin leaving the layout gives the keys back to the body",
+        until: () => {
+          root.pinning(2, [{ key: "w", desc: "Wi-Fi", list: "wifi" }]);
+          const scanning = Lists.scanning;
+          menu.handleName("t");
+          Config.menu.layout = ["input", "body", "bar"];
+          return scanning && menu.focused === menu.body && root.unpinning() && !Lists.scanning;
+        }
       },
       {
         name: "a bar entry showing only a plugin's status takes a click, which activates the plugin",

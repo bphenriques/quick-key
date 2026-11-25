@@ -23,7 +23,8 @@ A body holds one thing. It is either entries, each a key and a label that does s
 Letters are actions and digits are list items.
 
 - A letter runs its entry or opens its level.
-- `ESC` is the one way back, as in a launcher. It clears what you typed, then leaves an input for its level's body, closes the filter or a focused event, then returns where you came from (the level above, or the panel or input that opened it), and at the root closes the menu. It never stops or answers anything. `DEL` only deletes. A level opened on its own, by a shortcut or a key path, is a root.
+- One island has the keys: the body, or a pin once its key at the top level or a click gives them to it. Its letters, digits and arrows act, its actions and legend take the bar's left, and the input is its own; the others dim their keys and show no cursor. `Ctrl` reaches the bar wherever the keys are. What a pin opens (an item's own menu, `0`) opens in the body, and stepping back gives the pin the keys again.
+- `ESC` is the one way back, as in a launcher. It clears what you typed, then leaves an input for its island, closes the filter or a focused event, gives a pin's keys back to the body, then returns where you came from (the level above, or the panel or input that opened it), and at the root closes the menu. It never stops or answers anything. `DEL` only deletes. A level opened on its own, by a shortcut or a key path, is a root.
 - Digits pick from a level's list; `Alt+digit` opens an item's own menu (a tray app's).
 - On a level whose entries leave the arrows free, they move a cursor. On a list, `↑↓` move over the rows shown, the first from the item in use. On a menu's rows, `↓↑` move a row and `←→` one, as laid out, the first onto the first row or the last; each pair moves only where the level binds neither of its keys. The cursor stops at the edges. `RET` runs its row as its key would (on a pair, nothing, as a click), `S-RET` a row whose key takes Shift, and `M-RET` an item's own menu. A list's legend names what `RET` does; on a menu's rows `?` does, so the bar holds still. Back on a level, `ESC` finds its row where it was. Digits keep their items, and a key path never moves the cursor.
 - `Ctrl` reaches the bar: a bar entry with `key = "c"` runs on `C-c`, a list in it on `C-1` to `C-9`, and `C-M-1` opens an item's own menu there. Holding `Ctrl` for a second lists the bar's keys in place of the body, as icons alone cannot say what they run.
@@ -33,9 +34,9 @@ Letters are actions and digits are list items.
 - Hints show keys Emacs-style: `C-` Ctrl, `M-` Alt, `s-` Super, Shift as the capital letter, symbols for the arrows, `DEL` for Backspace and `ESC` for Escape (`C-←→`, `s-k`).
 - Holding `Super` for a second lists each bar entry's `shortcut`, the compositor key bound to it.
 - `?` lists the keys no row shows, where they act: each hold while it lists something, the arrows where they move a cursor, `RET` on a menu's rows and `S-RET` where one takes Shift, `M-1` while an item has its own menu, `ESC` and, on a level with an input, `TAB` and `C-S-RET`. Any key closes it. The top level's bar shows `? keys`, as every surface with such a list shows its key there; `menu.keysHint` off leaves these out, the keys still acting. A level's `legend` names those of its keys to show in its bar too (`[ "Ctrl+Up" ]`), as which matter is yours to say.
-- `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut.
+- `menu toggleEntry <key>` over IPC opens a top-level entry, in the body or the bar, for a compositor shortcut; a pin it gives the keys, closing the menu if it has them.
 - `keepAwake toggle` over IPC switches keep awake without the menu, and `keepAwake enable` turns it on, for a script.
-- `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A key that closes the menu ends the path. A path that opened the menu closes it after the action it ends on, unless that entry sets `keepOpen = true`. A digit is the same item only while pinned. `menu keys` prints every path as Markdown.
+- `menu press "<path>"` runs a key path from the top level as typing it would (`"a 2"`, `"Ctrl+x"`, keys named as entries declare them), so a binding reaches anything the menu does. A key that closes the menu ends the path. A path that opened the menu closes it after the action it ends on, unless that entry sets `keepOpen = true`. A digit is the same item only while pinned. A path runs the same through a pinned entry (`t 2`). `menu keys` prints every path as Markdown.
 
 ## What an entry does
 
@@ -57,6 +58,8 @@ A level is as wide as its entry's `width`, else `menu.width`, and lays its actio
 
 The menu sits at the bottom of the screen, centred. `menu.layout` lists its islands top to bottom, the last against the edge: by default the input, the body, then the bar (`[ "input" "body" "bar" ]`). `[ "body" "input" "bar" ]` puts the input between the body and the bar. Every layout has the body, once; leave out `input` and no level has an input or a filter (a picker still lists, its arrows moving, with no query to type), leave out `bar` and no level shows its bar, though its keys still act. A plugin's panel sits where the menu does. Nothing else moves: every level keeps the bottom edge.
 
+`{ level = "t"; }` pins the top-level entry on `t` on an island of its own, its row leaving the body: `[ "input" { level = "t"; } "body" "bar" ]` keeps your tasks above every level. A pin is as wide as its entry's `width`, else `menu.width`, and never shrinks while the menu shows. A pinned list shows up to its `limit` items on digits, past it `0` listing them all in the body. Its `status`, `format` and `bar` would show nowhere, so the check refuses them.
+
 ## Bars
 
 `menu.bar.left`, `center` and `right` are the top level's bar, like waybar's modules. An entry's `bar` is its level's, with the same slots, and a level with nothing for its bar is its body alone. A bar holds content (a song, its modes), never a title. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). A crowded bar shortens its text, whole on hover, then shows actions by their glyphs alone; it never widens the menu, so one that still cannot fit runs past it, and the log says how wide it needs the menu.
@@ -74,11 +77,11 @@ Dates and times are said one way everywhere, in `clock.locale`: a time as the lo
 
 ## Input
 
-An entry's `input` gives its level a line of text on the input island, a bar entry's too. `menu.input` gives the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask..."; plugin = "assistant"; }`).
+An entry's `input` gives its level a line of text on the input island, a bar entry's and a pin's too. `menu.input` gives the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask..."; plugin = "assistant"; }`). The island shows the input of the island with the keys.
 
 An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then gives the keys back to the body, as `TAB` does. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right. Empty, it shows its `desc`, which ends in `...`, as what waits on you does.
 
-The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). What a plugin makes of it shows on the input island until done (a task until listed), and the island never shrinks within the visit. The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
+The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). What a plugin makes of it shows on the input island until done (a task until listed), and the island never shrinks within the visit: until the menu closes. The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
 
 ```nix
 { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; input = { desc = "Add a task..."; }; }
@@ -86,7 +89,7 @@ The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level l
 
 `context` is what a plugin is told beside each message, on a line of its own; the conversation shows the text as typed. Word it as where the text comes from, not as an order, since a reply to the agent's question carries it too. `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
 
-Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows above the prompt: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
+Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows above the prompt: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). Until the menu closes, the next send continues the conversation, from any input giving Ask its text, each with its own `context`.
 
 An answer the island cannot hold (past three lines, a table, an approval) opens the whole conversation in Ask, and `ESC` there comes back. A click on the turn opens it too, where `C-C` copies the answer. A failure shows in alert, what you sent faded and given back, selected: `RET` retries it, typing replaces it. `C-S-RET` leaves the answer to a notification.
 

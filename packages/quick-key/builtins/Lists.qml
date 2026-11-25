@@ -9,8 +9,8 @@ import qs.ui
 Singleton {
   id: root
 
-  // Wi-Fi scans while the level on top lists its networks, so those coming into range show.
-  readonly property bool scanning: Panels.top?.level?.entry?.list === "wifi"
+  // Wi-Fi scans while an island of the surface on top lists its networks, so those coming into range show.
+  readonly property bool scanning: Array.from(Panels.top?.lists ?? []).includes("wifi")
   onScanningChanged: Network.scan(scanning)
 
   // Each: items() as { id, desc, select, closes, detail, meter, adjust(up) for the wheel, ... }, the icon a pin shows while absent, why it is empty, extra keys.

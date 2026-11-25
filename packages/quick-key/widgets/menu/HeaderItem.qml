@@ -19,9 +19,9 @@ ListItem {
   visible: !item.status || !status.blank
   enabled: runs && item.enabled !== false
   dimsWhenDisabled: runs
-  onActivated: menu.activate(root.item, root.item.key)
+  onActivated: menu.activate(root.item, root.item.key, menu.body)
   onSecondaryActivated: menu.openMenu(root.item)
-  onScrolled: up => menu.act(root.item, up)
+  onScrolled: up => menu.act(root.item, up, menu.body)
 
   MenuStatus {
     id: status

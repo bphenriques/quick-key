@@ -1,5 +1,4 @@
 import QtQuick
-import qs
 import qs.services
 
 // A level's input and what it starts (docs/src/menu.md#input); the menu keeps which part has the keys.
@@ -8,10 +7,10 @@ QtObject {
 
   required property MenuModel menu
 
-  // { desc, cmd, plugin, context, after }: an entry's `input`, or `menu.input` at the top level; none where the layout shows no input.
-  readonly property var input: !menu.layout.includes("input") ? null : menu.level === null ? Config.menu.input ?? null : menu.level.entry?.input ?? null
-  // Without a `cmd`: its own plugin, else the one the level lists.
-  readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.level?.entry?.list ?? "") : null
+  // { desc, cmd, plugin, context, after }: the focused island's (LevelModel.input); none where the layout shows no input.
+  readonly property var input: menu.layout.includes("input") ? menu.focused.input : null
+  // Without a `cmd`: its own plugin, else the one its level lists.
+  readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.focused.level?.entry?.list ?? "") : null
   readonly property bool busy: plugin?.busy ?? false
   readonly property var turn: plugin?.turn ?? null
   // The text last sent, which a failed turn gives back to the input.
@@ -22,17 +21,24 @@ QtObject {
   readonly property KeptValue keptDrafts: KeptValue {
     key: "drafts"
   }
-  // The keys of the levels down to its own, which a change to the input's label leaves be; "" without an input.
-  readonly property string draftKey: input ? JSON.stringify(menu.levels.map(level => level.entry?.key ?? "")) : ""
+  // The keys of the levels down to its own, a pin's as its level's, which a change to the input's label leaves be; "" without an input.
+  readonly property string draftKey: !input ? "" : JSON.stringify(menu.focused === menu.body ? menu.levels.map(level => level.entry?.key ?? "") : [menu.focused.island])
   readonly property string draft: draftOf(draftKey)
 
-  // The plugin a visit is with, while the menu, in Panels' stack, shows its input: a change of the plugin or the input, or the menu leaving the stack, ends it (Plugin.endVisit).
-  readonly property string visit: menu.inStack && plugin ? plugin.name + "\n" + JSON.stringify(input) : ""
-  property var visiting: null
+  // The plugins the input showed in the menu's visit, which ends them all (Plugin.endVisit); the keys moving between islands end none.
+  property var visiting: []
+  readonly property string visit: menu.visit
   onVisitChanged: {
-    if (visiting) visiting.endVisit();
-    visiting = visit ? plugin : null;
-    if (visiting) visiting.startVisit();
+    for (const plugin of visiting) plugin.endVisit();
+    visiting = [];
+    join();
+  }
+  onPluginChanged: join()
+
+  function join() {
+    if (!visit || !plugin || visiting.includes(plugin)) return;
+    visiting = visiting.concat([plugin]);
+    plugin.startVisit();
   }
 
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.

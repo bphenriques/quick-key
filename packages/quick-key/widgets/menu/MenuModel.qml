@@ -12,7 +12,7 @@ Scope {
   readonly property bool open: Panels.top === root
   readonly property bool inStack: Panels.owners.includes(root)
   onInStackChanged: if (!inStack) reset()
-  // Levels past the top one: an entry ("entry"), an app menu ("menu") or an item menu ("actions"), each keeping inputFocused for Escape to restore.
+  // Levels past the top one: an entry ("entry"), an app menu ("menu") or an item menu ("actions"), each keeping the island and input it was opened from for Escape to restore.
   property var levels: []
   // How deep a shortcut or key path opened it: Escape closes there.
   property int base: 0
@@ -21,60 +21,81 @@ Scope {
   readonly property bool inputFocused: internal.focus === "input"
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
-  // The islands by name, top to bottom, each once (Validation names what else is wrong).
-  readonly property var layout: Array.from(Config.menu.layout).filter((name, index, all) => all.indexOf(name) === index)
+  // The islands by name, top to bottom, each once, a pin by its key (Validation names what else is wrong).
+  readonly property var layout: Array.from(Config.menu.layout).map(part => typeof part === "string" ? part : pinnable(part?.level) ? part.level : "")
+    .filter((name, index, all) => name && all.indexOf(name) === index)
+  // The keys of the top-level entries the layout pins.
+  readonly property var pinned: layout.filter(name => !["input", "body", "bar"].includes(name))
+  // While the menu shows in one layout: what never shrinks within it (a pin, the input) and the plugins its input showed keep it until it ends.
+  readonly property string visit: inStack ? JSON.stringify(layout) : ""
   readonly property var level: levels[levels.length - 1] ?? null
-  // The level the body shows, whose state the views and keys read through the menu.
+  // The level the body shows.
   readonly property LevelModel body: LevelModel {
     menu: root
     level: root.level
   }
-  readonly property var viewModel: body.viewModel
-  readonly property var view: body.view
+  // The island with the keys: the body, or a pin; one leaving the layout gives them back to the body.
+  readonly property LevelModel focused: modelOf(internal.island) ?? body
+  // What the shown islands list, for a list that works while shown (Lists.scanning).
+  readonly property var lists: [body].concat(Array.from(pins.instances)).map(model => model.level?.entry?.list ?? "")
   readonly property InputModel input: InputModel {
     menu: root
   }
-  readonly property bool filtering: body.filtering
-  readonly property int filterSlots: body.filterSlots
-  readonly property ListFilter filter: body.filter
-  readonly property var items: body.items
-  readonly property bool content: body.content
-  readonly property var bodyActions: body.bodyActions
-  readonly property var barActions: body.barActions
-  readonly property var rows: body.rows
-  readonly property Cursor cursor: body.cursor
-  readonly property var cursorItem: body.cursorItem
-  readonly property int width: body.width
-  readonly property int columns: body.columns
-  readonly property string emptyText: body.emptyText
   readonly property var topBar: ({ left: Config.barSlot("left"), center: Config.barSlot("center"), right: Config.barSlot("right") })
+  // At the body's level whichever island has the keys, so the bar holds still.
   readonly property var barSlots: level === null ? slotsOf(topBar) : body.kinds[level.kind].bar(level)
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
   // Never for the cursor's keys alone, so a level holds still as it shows (rule 4).
-  readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > body.cursorLegend.length
+  readonly property bool barShown: barItems.length > 0 || focused.barActions.length > 0 || focused.legend.length > focused.cursorLegend.length
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
       Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
       Super: barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item)))
     })
-  // Keys no row shows, listed on `?` where they act.
-  readonly property var help: [].concat(
-    viewModel?.help ?? [],
-    holds.Ctrl.length ? [{ key: "Ctrl+", desc: Words.helpBarKeys }] : [],
-    holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
-    cursor.free.length ? [{ key: cursor.free, paired: true, desc: Words.helpMove }] : [],
-    cursor.free.length && !content ? [{ key: "Return", desc: Words.helpRun }] : [],
-    cursor.free.length && body.cursorRows.some(row => body.returnOf(row) !== "Return") ? [{ key: "Shift+Return", desc: Words.helpRunShifted }] : [],
-    rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
-    slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
-    input.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
-    input.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
-    [{ key: "Escape", desc: Words.helpEscape }]
-  )
-  readonly property bool slashFilters: body.slashFilters
+  readonly property var help: helpOf(focused)
   readonly property var hints: held === "Help" ? help : holds[held] ?? []
-  readonly property var legend: body.legend
-  readonly property string error: body.error
+
+  // Keys no row of an island shows, listed on `?` where they act.
+  function helpOf(model) {
+    return [].concat(
+      model.viewModel?.help ?? [],
+      holds.Ctrl.length ? [{ key: "Ctrl+", desc: Words.helpBarKeys }] : [],
+      holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
+      model.cursor.free.length ? [{ key: model.cursor.free, paired: true, desc: Words.helpMove }] : [],
+      model.cursor.free.length && !model.content ? [{ key: "Return", desc: Words.helpRun }] : [],
+      model.cursor.free.length && model.cursorRows.some(row => model.returnOf(row) !== "Return") ? [{ key: "Shift+Return", desc: Words.helpRunShifted }] : [],
+      model.rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
+      model.slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
+      model.input && layout.includes("input") ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
+      model.focused && input.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
+      [{ key: "Escape", desc: Words.helpEscape }]
+    );
+  }
+
+  // A pin names a top-level entry with a level by its key.
+  function pinnable(key) {
+    return entries.some(entry => entry.key === key && (entry.submenu || entry.list || entry.view));
+  }
+
+  // An island's level by its name: the body's, or a pin's.
+  function modelOf(name) {
+    return name === "body" ? body : Array.from(pins.instances).find(model => model.island === name) ?? null;
+  }
+
+  // A pin's level, kept by its key while the layout pins it; a reload gives it its entry anew.
+  Variants {
+    id: pins
+    model: root.pinned
+
+    LevelModel {
+      required property string modelData
+      readonly property var entry: root.entries.find(entry => entry.key === modelData) ?? ({})
+      menu: root
+      island: modelData
+      level: ({ kind: "entry", entry: entry, width: entry.width })
+      limit: entry.limit ?? 9
+    }
+  }
 
   function slotsOf(bar) {
     return { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) };
@@ -114,11 +135,6 @@ Scope {
     return Math.max(1, ...group.map(item => MenuKeys.label(item.key, item.paired).length));
   }
 
-  // Actions flow across, so a column is every nth one.
-  function columnChars(index, columns) {
-    return keyChars(bodyActions.filter((_, i) => i % columns === index % columns));
-  }
-
   function show() {
     // Sources without change events are read as the menu opens.
     Compositor.refresh();
@@ -133,24 +149,40 @@ Scope {
     else show();
   }
 
-  // By its key, in the body or the bar, as a compositor shortcut opens it.
+  // By its key, in the body, the bar or a pin, as a compositor shortcut opens it; a pin takes the keys.
   function toggleEntry(key) {
     const item = find(body.itemsOf(null).concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
-    if (!item) return;
+    if (!item && !pinned.includes(key)) return;
     // A bar list's item has no entry to toggle: it runs.
-    if (item.entry && level?.entry === item.entry) {
+    if (item ? item.entry && level?.entry === item.entry : open && focused.island === key) {
       hide();
       return;
     }
     levels = [];
     if (!open) show();
-    activate(item, key);
+    focusIsland(item ? "body" : key);
+    if (item) activate(item, key, body);
     base = levels.length;
   }
 
-  // "body" or "input" (the level input).
+  // "body" or "input": the input, or the island it shows the input of.
   function focusOn(where) {
     internal.focus = where;
+  }
+
+  // The island by its name takes the keys from the input and the island that had them, whose filter stops.
+  function focusIsland(name) {
+    if (name !== focused.island) {
+      focused.stopFilter();
+      internal.focus = "body";
+    }
+    internal.island = name;
+  }
+
+  // A click on a row runs it, its island taking the keys.
+  function click(item, from) {
+    focusIsland(from.island);
+    activate(item, undefined, from);
   }
 
   function hold(modifier) {
@@ -165,26 +197,34 @@ Scope {
   function reset() {
     levels = [];
     base = 0;
-    body.stopFilter();
+    for (const model of [body].concat(Array.from(pins.instances))) {
+      model.stopFilter();
+      model.cursor.point(undefined);
+    }
     internal.held = "";
     internal.focus = "body";
-    cursor.point(undefined);
+    internal.island = "body";
   }
 
+  // The island it was opened from takes the keys again, the body if the layout no longer shows it.
   function back() {
     const left = level;
     levels = levels.slice(0, -1);
     body.stopFilter();
+    internal.island = modelOf(left?.island) ? left.island : "body";
     internal.focus = left?.inputFocused ? "input" : "body";
-    cursor.point(left?.cursor);
+    body.cursor.point(left?.cursor);
     body.clearViews();
   }
 
+  // Opened from any island, a level shows in the body.
   function push(next) {
-    levels = levels.concat([Object.assign({}, next, { inputFocused: inputFocused, cursor: cursor.current })]);
+    levels = levels.concat([Object.assign({}, next, { inputFocused: inputFocused, island: focused.island, cursor: body.cursor.current })]);
+    focused.stopFilter();
     body.stopFilter();
+    internal.island = "body";
     internal.focus = "body";
-    cursor.point(undefined);
+    body.cursor.point(undefined);
     body.clearViews();
   }
 
@@ -192,14 +232,14 @@ Scope {
     return candidates.find(item => MenuKeys.matches(item.key, name));
   }
 
-  // A click on a pair runs nothing; an action keeps the menu open by default.
-  function run(entry, name) {
-    const action = body.actionOf(entry);
+  // A click on a pair runs nothing; an action keeps the menu open by default. `from` is the island whose level it acts on.
+  function run(entry, name, from = focused) {
+    const action = from.actionOf(entry);
     if (action) {
       const second = MenuKeys.names(entry.key).indexOf(name);
       if (action.pair && second < 0) return;
       // Read before hide(), which leaves the level.
-      const list = body.levelList;
+      const list = from.levelList;
       if (entry.keepOpen === false || action.closes) hide();
       internal.ran = entry;
       action.run(second === 1, list, root);
@@ -225,17 +265,19 @@ Scope {
     body.filterSlots = 9;
   }
 
-  // Escape once the input is cleared: an input gives the keys back to its body first, as a card's reply does.
+  // Escape once the input is cleared: an input gives the keys back to its island first, as a card's reply does, and a pin to the body.
   function stepBack() {
-    if (filtering && !level.picking) return body.stopFilter();
+    if (focused.filtering && !focused.level.picking) return focused.stopFilter();
     if (inputFocused) return focusOn("body");
-    if (viewModel && viewModel.stepBack()) return;
+    if (focused.viewModel && focused.viewModel.stepBack()) return;
+    if (focused !== body) return focusIsland("body");
     if (levels.length <= base) Panels.back();
     else back();
   }
 
   // A digit picks a shown row and never types; with Alt, or Alt+Return, its own menu.
   function filterKey(name) {
+    const filter = focused.filter;
     const digit = name.match(/^(Alt\+)?([1-9])$/);
     const row = digit ? filter.rows[Number(digit[2]) - 1] : filter.item;
     if (digit && digit[1] || name === "Alt+Return") openMenu(row);
@@ -248,7 +290,7 @@ Scope {
 
   function choose(item) {
     if (!item) return;
-    filter.point(item.id);
+    focused.filter.point(item.id);
     activate(item, item.key);
   }
 
@@ -258,7 +300,7 @@ Scope {
     return !!(item.select || Plugins.get(item.status ?? "") || entry && (entry.cmd || entry.action || entry.submenu || entry.list || entry.view));
   }
 
-  function activate(item, name) {
+  function activate(item, name, from = focused) {
     if (item.enabled === false) return;
     // A tray app that only offers a menu does nothing when activated (Quickshell's onlyMenu).
     if (item.app?.onlyMenu) return openMenu(item);
@@ -274,22 +316,22 @@ Scope {
       if (next) next.reset();
       push({ kind: "entry", entry: item.entry, width: item.entry.width });
     } else {
-      run(item.entry, name);
+      run(item.entry, name, from);
     }
   }
 
-  // Alt with its digit, or a right click.
+  // Alt with its digit, or a right click; in the body, as wide as what it shows.
   function openMenu(item) {
-    if (item?.actions?.length > 0) push({ kind: "actions", title: item.desc, icon: item.icon ?? "", actions: item.actions, width: width });
-    else if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, image: item.image ?? "", handle: item.app.menu, width: width });
+    if (item?.actions?.length > 0) push({ kind: "actions", title: item.desc, icon: item.icon ?? "", actions: item.actions, width: body.width });
+    else if (item?.app?.hasMenu) push({ kind: "menu", title: item.desc, image: item.image ?? "", handle: item.app.menu, width: body.width });
   }
 
   // The wheel, up as a pair's second key (more): a listed item adjusts itself, a pair steps, a row opening a level steps the pair its status adjusts.
-  function act(item, up) {
+  function act(item, up, from = focused) {
     if (item.adjust) return item.adjust(up);
     const adjust = Statuses.of(item.status ?? "").adjust;
     const pair = item.entry?.submenu ? Array.from(item.entry.submenu).find(entry => adjust && entry.action === adjust) : item.paired ? item.entry : null;
-    if (pair && body.available(pair)) run(pair, MenuKeys.names(pair.key)[up ? 1 : 0]);
+    if (pair && from.available(pair)) run(pair, MenuKeys.names(pair.key)[up ? 1 : 0], from);
   }
 
   // Escape and Tab are kept free by Validation.
@@ -300,55 +342,60 @@ Scope {
     if (event.isAutoRepeat && level !== internal.pressedOn) return true;
     if (!event.isAutoRepeat) internal.pressedOn = level;
     const name = MenuKeys.name(event);
-    const own = event.isAutoRepeat ? find(items, name) : null;
+    const own = event.isAutoRepeat ? find(focused.items, name) : null;
     // Held, Return acts once on the cursor's row, a pair's too.
-    if (own && !own.paired || event.isAutoRepeat && cursorItem && name.endsWith("Return")) return true;
-    return filtering && filterKey(name) || handleName(name) || cursorKey(name);
+    if (own && !own.paired || event.isAutoRepeat && focused.cursorItem && name.endsWith("Return")) return true;
+    return focused.filtering && filterKey(name) || handleName(name) || cursorKey(name);
   }
 
   // After the view and the level's rows, so a level binding an arrow keeps it; `press` never reaches it, so a key path never depends on the cursor.
   function cursorKey(name) {
-    if (cursor.key(name)) return true;
-    if (cursorItem && name === body.returnOf(cursorItem)) activate(cursorItem, cursorItem.key);
-    else if (cursorItem && name === "Alt+Return") openMenu(cursorItem);
+    const item = focused.cursorItem;
+    if (focused.cursor.key(name)) return true;
+    if (item && name === focused.returnOf(item)) activate(item, item.key);
+    else if (item && name === "Alt+Return") openMenu(item);
     else return false;
     return true;
   }
 
+  // The focused island's keys; at the top level a pin's key focuses it, and the bar's keys take Ctrl wherever the keys are.
   function handleName(name) {
     if (!name) return false;
     const [, ctrl, alt, key] = name.match(/^(Ctrl\+)?(Alt\+)?(.*)$/);
-    const own = find(items, name);
-    const target = alt && /^[0-9]$/.test(key) ? find(ctrl ? barItems : rows, key) : null;
+    const own = find(focused.items, name);
+    const target = alt && /^[0-9]$/.test(key) ? find(ctrl ? barItems : focused.rows, key) : null;
     const barred = ctrl && !alt ? find(barItems, key) : null;
     // Any key closes the help, which only lists keys.
     if (held === "Help") internal.held = "";
     else if (name === "?") internal.held = "Help";
     else if (name === "Escape") stepBack();
-    else if (viewModel && viewModel.handleKey(name)) return true;
+    else if (focused.viewModel && focused.viewModel.handleKey(name)) return true;
     else if (input.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
-    else if (name === "/" && slashFilters) body.startFilter();
+    else if (level === null && pinned.includes(name)) focusIsland(name);
+    else if (name === "0" && focused.more) pickList(focused.level.entry.list);
+    else if (name === "/" && focused.slashFilters) focused.startFilter();
     else if (target) openMenu(target);
-    else if (barred) activate(barred, key);
+    else if (barred) activate(barred, key, body);
     else return false;
     return true;
   }
 
-  // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would: what a binding reaches.
+  // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would, the same through a pin: what a binding reaches.
   function press(path) {
     const closed = !open;
     levels = [];
+    focusIsland("body");
     if (!open) show();
     for (const [i, name] of path.trim().split(/\s+/).entries()) {
       // A key that closed the menu ends the path, so none past it opens a level on the closed menu.
       if (i > 0 && !inStack) return false;
       internal.ran = null;
-      if (!(filtering ? filterKey(name) : handleName(name))) return false;
+      if (!(focused.filtering ? filterKey(name) : handleName(name))) return false;
     }
     base = levels.length;
     // Opened for the path, the menu closes after the action it ends on, unless that opened a picker or another surface.
-    if (closed && internal.ran && !internal.ran.keepOpen && open && !filtering) hide();
+    if (closed && internal.ran && !internal.ran.keepOpen && open && !focused.filtering) hide();
     return true;
   }
 
@@ -393,6 +440,8 @@ Scope {
     id: internal
     property string held: ""
     property string focus: "body"
+    // The island with the keys, by name.
+    property string island: "body"
     property var pressedOn: null
     // The entry or item whose action the last key ran.
     property var ran: null

@@ -101,7 +101,23 @@ Scope {
             required property Island modelData
             required property int index
             readonly property real side: Config.theme.padding + modelData.inset
-            readonly property real natural: Math.max(modelData.minimumHeight, content.implicitHeight + 2 * modelData.padding)
+            readonly property real fit: Math.max(modelData.minimumHeight, content.implicitHeight + 2 * modelData.padding)
+            readonly property real natural: Math.max(fit, held)
+            // The tallest it has been while its holdKey stays, once laid out, so a height it has only for a moment is not kept.
+            property real held: 0
+            readonly property var holdKey: modelData.holdKey
+            onHoldKeyChanged: {
+              held = 0;
+              hold.restart();
+            }
+            onFitChanged: if (modelData.holdKey) hold.restart()
+            Component.onCompleted: if (modelData.holdKey) hold.restart()
+
+            Timer {
+              id: hold
+              interval: 100
+              onTriggered: island.held = island.modelData.holdKey ? Math.max(island.held, island.fit) : 0
+            }
             readonly property var place: frame.places[index] ?? ({ y: 0, height: 0 })
             readonly property Region mask: Region {
               item: island.visible && !island.modelData.split ? island : null
@@ -116,7 +132,7 @@ Scope {
             // Centred, on whole pixels, so a layer inside (a faded conversation) is not resampled.
             x: Math.round((frame.width - width) / 2)
             y: Math.round(place.y)
-            width: root.room
+            width: modelData.width < 0 ? root.room : Math.min(modelData.width, overlay.width - 2 * overlay.edgeMargin)
             height: place.height
             clip: natural > height
 
@@ -158,13 +174,15 @@ Scope {
 
             MouseArea {
               anchors.fill: parent
-              acceptedButtons: Qt.RightButton
-              onClicked: island.modelData.secondaryClicked()
+              acceptedButtons: Qt.LeftButton | Qt.RightButton
+              onClicked: mouse => mouse.button === Qt.RightButton ? island.modelData.secondaryClicked() : island.modelData.clicked()
             }
 
             Loader {
               id: content
               anchors.verticalCenter: parent.verticalCenter
+              // Held taller than it is, against the screen's edge.
+              anchors.verticalCenterOffset: Math.max(0, island.height - island.fit) / 2
               anchors.left: parent.left
               anchors.right: parent.right
               anchors.leftMargin: island.side

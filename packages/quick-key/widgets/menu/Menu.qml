@@ -11,9 +11,8 @@ Scope {
   id: root
 
   readonly property MenuModel menu: MenuModel {}
-  readonly property bool hinting: menu.hints.length > 0
   // menu.layout's islands, top to bottom.
-  readonly property var islands: menu.layout.map(name => ({ input: inputIsland, body: bodyIsland, bar: barIsland })[name]).filter(island => island)
+  readonly property var islands: menu.layout.map(name => ({ input: inputIsland, body: bodyIsland, bar: barIsland })[name] ?? Array.from(pins.instances).find(pin => pin.name === name)).filter(island => island)
 
   function modifier(event) {
     if (event.key === Qt.Key_Control) return "Ctrl";
@@ -69,8 +68,8 @@ Scope {
     id: stack
     shown: root.menu.open
     namespace: "menu"
-    width: root.menu.width
-    focus: root.menu.inputFocused || root.menu.filtering ? "input" : "body"
+    width: root.menu.body.width
+    focus: root.menu.inputFocused || root.menu.focused.filtering ? "input" : "body"
     onDismissed: root.menu.hide()
     onKeyPressed: event => {
       if (root.modifier(event) && !event.isAutoRepeat) {
@@ -88,11 +87,12 @@ Scope {
     islands: root.islands
   }
 
-  // Filtering, the filter takes the input, the level's input waiting under it.
+  // The focused island's input; filtering, the filter takes it, the input waiting under it. It never shrinks within the menu's visit.
   Island {
     id: inputIsland
     name: "input"
-    shown: root.menu.input.input !== null || root.menu.filtering
+    shown: root.menu.input.input !== null || root.menu.focused.filtering
+    holdKey: root.menu.visit
     padding: Config.theme.padding / 2
     // As a row's content is, so its key column lines up with the body's keys.
     inset: Metrics.itemPaddingX
@@ -105,131 +105,31 @@ Scope {
     id: bodyIsland
     name: "body"
     cut: true
+    onClicked: root.menu.focusIsland("body")
     // As Escape does, but never closing the top level.
     onSecondaryClicked: if (root.menu.level) root.menu.stepBack()
-    content: ColumnLayout {
-      id: body
-      // Its height before a held modifier listed its keys, which it keeps while they show, so the panel holds still.
-      property real restHeight: 0
-      onImplicitHeightChanged: if (!root.hinting) restHeight = implicitHeight
-      spacing: Config.theme.padding
+    content: MenuBody {
+      menu: root.menu
+      level: root.menu.body
+    }
+  }
 
-      // Fewer keys than rows leave the body's far side empty rather than shrink it, the keys next to the bar, below it.
-      Item {
-        visible: root.hinting && body.restHeight > hints.implicitHeight + body.spacing
-        Layout.preferredHeight: body.restHeight - hints.implicitHeight - body.spacing
-      }
+  // Each pinned level, drawn as the body draws its own, as wide as its entry; never shrinking while the menu shows.
+  Variants {
+    id: pins
+    model: root.menu.pinned
 
-      // The keys a held modifier reaches, in the body's own columns; each still runs on a click.
-      GridLayout {
-        id: hints
-        Layout.fillWidth: true
-        visible: root.hinting
-        columns: root.menu.columns
-        columnSpacing: Metrics.columnGap
-        rowSpacing: 0
-
-        Repeater {
-          model: root.menu.hints.length
-
-          MenuRow {
-            required property int index
-            item: root.menu.hints[index] ?? ({})
-            menu: root.menu
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            chars: root.menu.keyChars(root.menu.hints)
-          }
-        }
-      }
-
-      // Filtering, as tall as its rows were, so nothing moves as the filter narrows.
-      ColumnLayout {
-        Layout.fillWidth: true
-        Layout.preferredHeight: root.menu.filtering ? root.menu.filterSlots * filledRow.implicitHeight : -1
-        visible: !root.hinting && (root.menu.rows.length > 0 || root.menu.filtering || root.menu.emptyText !== "")
-        spacing: 0
-
-        // A filled row's height, for the rows held while filtering.
-        MenuRow {
-          id: filledRow
-          visible: false
-          menu: root.menu
-          item: ({ key: "1", desc: "x", icon: Glyphs.search })
-        }
-
-        Label {
-          visible: root.menu.emptyText !== ""
-          Layout.leftMargin: Metrics.itemPaddingX
-          Layout.topMargin: root.menu.filtering ? Metrics.itemPaddingY : 0
-          tone: "dim"
-          text: root.menu.emptyText
-        }
-
-        Repeater {
-          model: root.menu.rows.length
-
-          MenuRow {
-            required property int index
-            item: root.menu.rows[index] ?? ({})
-            menu: root.menu
-            Layout.fillWidth: true
-            // As wide as the first column of actions too, so a list's labels start with theirs.
-            chars: Math.max(root.menu.keyChars(root.menu.rows), root.menu.bodyActions.length ? root.menu.columnChars(0, actionsGrid.columns) : 1)
-          }
-        }
-
-        Item {
-          visible: root.menu.filtering
-          Layout.fillHeight: true
-        }
-      }
-
-      // A level's view (Views) with its model, built only while shown, as it is most of what an opening builds.
-      Loader {
-        readonly property var view: root.menu.view
-        Layout.fillWidth: true
-        visible: !root.hinting && item !== null
-        onViewChanged: setSource(view ? view.source : "", { model: root.menu.viewModel })
-      }
-
-      // Hidden when empty, since an empty GridLayout keeps its last height.
-      GridLayout {
-        id: actionsGrid
-        Layout.fillWidth: true
-        visible: !root.hinting && root.menu.bodyActions.length > 0
-        columns: root.menu.columns
-        columnSpacing: Metrics.columnGap
-        rowSpacing: 0
-
-        Repeater {
-          model: root.menu.bodyActions.length
-
-          // At the top, values line up in equal columns; in a level, the last column hugs its rows against the right edge.
-          MenuRow {
-            required property int index
-            item: root.menu.bodyActions[index] ?? ({})
-            hugs: root.menu.level !== null && index % actionsGrid.columns === actionsGrid.columns - 1
-            menu: root.menu
-            // Hugging, it fills no further than itself; not filling at all would fix it at its full width, past the card.
-            Layout.fillWidth: true
-            Layout.preferredWidth: hugs ? -1 : 1
-            Layout.maximumWidth: hugs ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
-            readonly property int columnChars: root.menu.columnChars(index, actionsGrid.columns)
-            chars: index % actionsGrid.columns === 0 && root.menu.rows.length ? Math.max(columnChars, root.menu.keyChars(root.menu.rows)) : columnChars
-          }
-        }
-      }
-
-      Label {
-        Layout.fillWidth: true
-        Layout.leftMargin: Metrics.itemPaddingX
-        Layout.rightMargin: Metrics.itemPaddingX
-        visible: !root.hinting && root.menu.error !== ""
-        // Alert, not warning: the warning hue sits too close to calendar colours to read as a fault.
-        tone: "alert"
-        wrapMode: Text.Wrap
-        text: root.menu.error
+    Island {
+      id: pin
+      required property string modelData
+      readonly property LevelModel level: root.menu.modelOf(modelData)
+      name: modelData
+      width: level?.width ?? -1
+      holdKey: root.menu.visit
+      onClicked: root.menu.focusIsland(modelData)
+      content: MenuBody {
+        menu: root.menu
+        level: pin.level
       }
     }
   }
@@ -245,7 +145,7 @@ Scope {
     content: MenuHeader {
       menu: root.menu
       room: stack.room - 2 * Config.theme.padding
-      onPicked: key => root.menu.filtering ? (key === "Escape" ? root.menu.input.escaped() : root.menu.filterKey(key)) : root.menu.handleName(key) || root.menu.cursorKey(key)
+      onPicked: key => root.menu.focused.filtering ? (key === "Escape" ? root.menu.input.escaped() : root.menu.filterKey(key)) : root.menu.handleName(key) || root.menu.cursorKey(key)
     }
   }
 }

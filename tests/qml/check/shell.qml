@@ -32,7 +32,15 @@ ShellRoot {
     ["the bar split into islands under its old name", { menu: { islands: true } }, "menu.islands is now menu.splitBar"],
     ["the input's place under its old setting", { menu: { inputSide: "bar" } }, "menu.inputSide is now menu.layout"],
     ["a layout naming no island", { menu: { layout: ["input", "body", "tray"] } }, "menu.layout names 'tray', none of input, body, bar"],
-    ["a layout holding a map", { menu: { layout: ["body", { level: "t" }] } }, "menu.layout holds a map, not an island's name"],
+    ["a layout holding a number", { menu: { layout: ["body", 5] } }, "menu.layout holds a number, not an island's name or a pin"],
+    ["a pin naming no entry", { menu: { layout: ["body", { level: "z" }] } }, "menu.layout pins 'z', which no top-level entry binds"],
+    ["a pin naming a key path", { menu: { layout: ["body", { level: "a 2" }] } }, "menu.layout pins 'a 2', a key path"],
+    ["a pin naming a bar entry", { menu: { layout: ["body", { level: "c" }] } }, "menu.layout pins 'c', a bar entry"],
+    ["a pin without a level", { menu: { layout: ["body", { key: "a" }] } }, ["holds a pin setting key", "holds a pin without a level's key"]],
+    ["a pin of an entry without a level", { menu:{ layout: ["body", { level: "x" }], entries: [{ key: "x", desc: "X", icon: "x", cmd: "true" }] } }, "menu.layout pins 'x', which opens no level"],
+    ["a pin twice", { menu: { layout: ["body", { level: "t" }, { level: "t" }], entries: [{ key: "t", desc: "T", icon: "x", list: "tray" }] } }, "menu.layout pins 't' more than once"],
+    ["a pinned entry's bar, status and format", { menu: { layout: ["body", { level: "t" }], entries: [{ key: "t", desc: "T", icon: "x", list: "tray", status: "battery", format: "{level}", bar: { left: [] } }] } },
+      ["'T' in the top level is pinned, so its bar shows nowhere", "is pinned, so its status shows nowhere", "is pinned, so its format shows nowhere"]],
     ["a layout without a body", { menu: { layout: ["input", "bar"] } }, "menu.layout shows no body"],
     ["a layout with two bodies", { menu: { layout: ["body", "body", "bar"] } }, "menu.layout shows body more than once"],
     ["a layout with two inputs", { menu: { layout: ["input", "body", "input"] } }, "menu.layout shows input more than once"],
@@ -142,6 +150,12 @@ ShellRoot {
         name: "a layout in any order, or without an input or a bar, has nothing wrong",
         timeout: 0,
         until: () => root.names({ menu: { layout: ["bar", "body", "input"] } }, []) && root.names({ menu: { layout: ["body"] } }, [])
+      },
+      {
+        name: "a pinned list with a limit, and a pin of a starter entry, have nothing wrong",
+        timeout: 0,
+        until: () => root.names({ menu: { layout: ["input", { level: "t" }, "body", "bar"], entries: [{ key: "t", desc: "T", icon: "x", list: "tray", limit: 3, input: { desc: "Add", cmd: "true" } }] } }, [])
+          && root.names({ menu: { layout: [{ level: "a" }, "body"] } }, [])
       },
       {
         name: "a row without an icon has nothing wrong",

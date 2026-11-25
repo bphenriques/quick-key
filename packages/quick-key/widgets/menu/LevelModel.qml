@@ -12,6 +12,13 @@ Scope {
   required property MenuModel menu
   // A level of the menu's history, null at the top.
   required property var level
+  // The island it draws on: the body, or a pin by its key.
+  property string island: "body"
+  // The most items its list shows on digits: a pin's `limit`.
+  property int limit: 9
+  readonly property bool focused: menu.focused === root
+  // What the input shows while it has the keys: its entry's `input`, `menu.input` at the top level.
+  readonly property var input: level === null ? Config.menu.input ?? null : level.entry?.input ?? null
 
   // Made as a level first shows it, from the file Views names.
   readonly property var viewModel: viewModelOf(level?.entry?.view)
@@ -51,12 +58,15 @@ Scope {
   // The filter is typed on the input island.
   readonly property bool slashFilters: !!level?.entry?.list && !menu.find(items, "/") && menu.layout.includes("input")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
+  // Past a pin's limit, 0 lists the rest on a level of their own, as a bar's +N does.
+  readonly property bool more: limit < 9 && unhidden > limit
   // Only keys the state changes; fixed ones are listed on `?`, and show here too as its entry's `legend` names them.
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
-    .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
+    .concat(more ? [{ key: "0", what: Words.rangeOf(0, limit, unhidden), clickable: true }]
+      : slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
     // At the top, the key listing the rest, which every surface with such a list shows so.
     .concat(level === null && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
-    .concat(MenuKeys.pick(menu.help, level?.entry?.legend))
+    .concat(MenuKeys.pick(menu.helpOf(root), level?.entry?.legend))
   readonly property var cursorLegend: (cursorItem && (content || filtering) ? [{ key: returnOf(cursorItem), what: cursorItem.verb || Words.pick, clickable: true }] : [])
     .concat(cursorItem?.actions?.length > 0 || cursorItem?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend.concat(cursorLegend, filter.query ? [{ key: "Escape", what: Words.clear, clickable: true }] : []) : levelLegend.concat(cursorLegend)
@@ -123,8 +133,9 @@ Scope {
       }
     })
 
+  // A pinned entry's row leaves the top level for its island.
   function itemsOf(level) {
-    return level === null ? menu.entries.map(itemOf) : kinds[level.kind].items(level);
+    return level === null ? menu.entries.filter(entry => !menu.pinned.includes(entry.key)).map(itemOf) : kinds[level.kind].items(level);
   }
 
   function viewModelOf(name) {
@@ -151,7 +162,7 @@ Scope {
 
   // A hidden item shows only when filtering.
   function numbered(list, pins, items = Lists.items(list)) {
-    return ordered(list, pins, Array.from(items).filter(item => !item.hidden)).slice(0, 9).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
+    return ordered(list, pins, Array.from(items).filter(item => !item.hidden)).slice(0, limit).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
   }
 
   // A listed item by its id, a row by its first key, else its label.
@@ -159,8 +170,14 @@ Scope {
     return item.listed ? item.id : MenuKeys.names(item.key ?? "")[0] || item.desc;
   }
 
+  // An island without the keys shows no cursor.
   function marked(item) {
-    return item === cursorItem ? Object.assign({ current: true }, item) : item;
+    return focused && item === cursorItem ? Object.assign({ current: true }, item) : item;
+  }
+
+  // Actions flow across, so a column is every nth one.
+  function columnChars(index, columns) {
+    return menu.keyChars(bodyActions.filter((_, i) => i % columns === index % columns));
   }
 
   // What ends the session takes Shift (rule 6): a row on a capital runs on S-RET alone.
