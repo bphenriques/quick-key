@@ -229,7 +229,7 @@ Scope {
       Island {
         name: "bar"
         shown: root.menu.barShown
-        split: Config.menu.islands
+        split: Config.menu.splitBar
         padding: Config.theme.padding / 4
         // At least a padded line, so a level's bar without the clock is as tall as the top level's and the body holds still.
         minimumHeight: Metrics.line + 2 * Metrics.itemPaddingY + Config.theme.padding / 2

@@ -5,4 +5,4 @@
   glyph: "󰔛",
   activate: "for m in $(seq 25 -1 1); do echo \"$m min\" > \"$XDG_RUNTIME_DIR/focus\"; sleep 60; done; : > \"$XDG_RUNTIME_DIR/focus\"; notify-send 'Focus is over'"
 }
-| .menu.header.center = [{ key: "f", desc: "Focus", status: "focus" }]
+| .menu.bar.center = [{ key: "f", desc: "Focus", status: "focus" }]

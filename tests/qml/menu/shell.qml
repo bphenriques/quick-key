@@ -26,7 +26,7 @@ ShellRoot {
   // A level where each key reaches something else: a row, the bar, a listed item and its own menu, the input.
   readonly property var keyedLevel: ({ kind: "entry", entry: { list: "keyed", input: { desc: "Add", cmd: "true" },
     submenu: [{ key: "f", desc: "Row", action: "row" }, { key: "Ctrl+y", desc: "Body", action: "row" }],
-    header: { left: [{ key: "x", desc: "Bar", action: "bar" }, { key: "y", desc: "Shadowed", action: "bar" }, { desc: "Keyed", list: "keyed" }] } } })
+    bar: { left: [{ key: "x", desc: "Bar", action: "bar" }, { key: "y", desc: "Shadowed", action: "bar" }, { desc: "Keyed", list: "keyed" }] } } })
   readonly property var bareLevel: ({ kind: "entry", entry: { list: "keyed" } })
   readonly property var slashLevel: ({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "/", desc: "Slash", action: "row" }] } })
   readonly property var calendarLevel: ({ kind: "entry", entry: { view: "calendar", list: "keyed", submenu: [{ key: "Right", desc: "Right", action: "row" }] } })

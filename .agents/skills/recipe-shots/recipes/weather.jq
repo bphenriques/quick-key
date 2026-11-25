@@ -5,4 +5,4 @@
   glyph: "󰖐",
   show: { "o": { glyph: "󰖙" }, "m": { glyph: "󰖕" }, "/": { glyph: "󰖗" }, "//": { glyph: "󰖖" }, ".": { glyph: "󰖖" }, "*": { glyph: "󰖘" } }
 }
-| .menu.header.center = ["weather"]
+| .menu.bar.center = ["weather"]

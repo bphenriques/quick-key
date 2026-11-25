@@ -14,7 +14,7 @@ let
     in
     lib.recursiveUpdate s {
       menu.entries = lib.optionals (!lib.hasInfix "starter" text) starter.entries ++ s.menu.entries or [ ];
-      menu.header.right = starter.header.right ++ s.menu.header.right or [ ];
+      menu.bar.right = starter.bar.right ++ s.menu.bar.right or [ ];
     };
   recipes = map recipe (lib.filter (text: !lib.hasPrefix "{ inputs" text) (map lib.head blocks));
 in

@@ -169,12 +169,12 @@ Scope {
       },
       Island {
         name: "bar"
-        split: Config.menu.islands
+        split: Config.menu.splitBar
         padding: Config.theme.padding / 4
         // At least a padded line, as tall as the menu's bar.
         minimumHeight: Metrics.line + 2 * Metrics.itemPaddingY + Config.theme.padding / 2
         content: RowLayout {
-          // With `menu.islands`, the legend and the top level's right slot each on an island of its own.
+          // With `menu.splitBar`, the legend and the top level's right slot each on an island of its own.
           readonly property var parts: [legend].concat(statuses.item ? [statuses.item] : [])
 
           // Only what the state changes.

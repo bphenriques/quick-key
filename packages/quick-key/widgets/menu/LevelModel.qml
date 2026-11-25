@@ -81,7 +81,7 @@ Scope {
   readonly property var kinds: ({
       entry: {
         content: level => !!(level.entry.list || level.entry.view),
-        bar: level => root.menu.slotsOf(level.entry.header ?? {}),
+        bar: level => root.menu.slotsOf(level.entry.bar ?? {}),
         // Own rows by letter (inLevel: a value beside the label, with its meter), then the list by digit.
         items: level => Array.from(level.entry.submenu ?? [])
           .map(entry => Object.assign(root.itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true }))

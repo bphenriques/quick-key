@@ -13,13 +13,13 @@ A dot under a day marks each colour of its events, up to four; with more, the la
 The `calendar` status shows when the next event is, timed ones first, so a daily all-day event does not hold it; one under way says when it ends (`to 12:00`). Its fields are `title`, `when` and `updated`: how old the events are, or `syncing...` while a sync runs. A Sync button in the level's bar shows only its icon, spinning while the sync runs, `updated` on hover; past `calendar.staleAfter` it turns warning with `updated` beside it:
 
 ```nix
-header.right = [ { key = "s"; desc = "Sync"; icon = "󰓦"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
+bar.right = [ { key = "s"; desc = "Sync"; icon = "󰓦"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
 ```
 
-Once something writes `calendar.file`, put `"calendar"` in the top bar beside the clock, so the next event shows without opening the month. Setting `menu.header.left` replaces the starter's clock, so it names that too:
+Once something writes `calendar.file`, put `"calendar"` in the top bar beside the clock, so the next event shows without opening the month. Setting `menu.bar.left` replaces the starter's clock, so it names that too:
 
 ```nix
-menu.header.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } "calendar" ];
+menu.bar.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } "calendar" ];
 ```
 
 ## Events

@@ -33,13 +33,13 @@ RowLayout {
       + ": widen menu.width or the level's width, or list fewer items")
   }
 
-  // What each surface holds with `menu.islands`: the actions, then each slot's items, which its island draws apart.
+  // What each surface holds with `menu.splitBar`: the actions, then each slot's items, which its island draws apart.
   readonly property var parts: [actions, leftSlot.content, centreSlot.content, rightSlot.content]
 
   signal picked(var key)
 
   // As islands, wider apart by the padding each island adds on either side.
-  spacing: Config.theme.spacing + (Config.menu.islands ? 2 * Config.theme.padding : 0)
+  spacing: Config.theme.spacing + (Config.menu.splitBar ? 2 * Config.theme.padding : 0)
 
   // As their rows draw them, so an action keeps its icon, state and value on the bar; filtering, the filter's keys alone.
   RowLayout {

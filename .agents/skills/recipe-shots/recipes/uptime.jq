@@ -4,4 +4,4 @@
   read: "awk '{ printf \"up %dd %dh\\n\", $1 / 86400, $1 % 86400 / 3600 }' /proc/uptime",
   glyph: "󰘚"
 }
-| .menu.header.center = ["uptime"]
+| .menu.bar.center = ["uptime"]

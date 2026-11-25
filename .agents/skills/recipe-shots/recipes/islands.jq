@@ -5,5 +5,5 @@
   glyph: "󰘚"
 }
 | .plugins.weather = { type: "command", read: "curl -sf 'https://wttr.in/Lisbon?format=%t'", glyph: "󰖕" }
-| .menu.header.center = ["weather", "uptime"]
-| .menu.islands = true
+| .menu.bar.center = ["weather", "uptime"]
+| .menu.splitBar = true

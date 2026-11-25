@@ -63,7 +63,7 @@
             "submenu": []
           }
         ],
-        "header": {
+        "bar": {
           "left": [
             {
               "key": "v",
@@ -92,7 +92,7 @@
         ]
       }
     ],
-    "header": {
+    "bar": {
       "left": [
         {
           "key": "x",

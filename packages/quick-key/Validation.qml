@@ -53,14 +53,14 @@ Singleton {
     const values = moved.concat(settingProblems(json), colourProblems(json.theme ?? {}), operatorProblems(json));
     const plugins = Object.keys(json.plugins ?? {});
     // The top level's bar as it will be, the starter's slots included.
-    const header = Object.assign({}, json.menu?.header);
-    for (const slot of ["left", "center", "right"]) header[slot] = header[slot] ?? Config.starterHeader[slot];
+    const bar = Object.assign({}, json.menu?.bar);
+    for (const slot of ["left", "center", "right"]) bar[slot] = bar[slot] ?? Config.starterBar[slot];
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
     return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), patternProblems(json.music?.titleMatch ?? ""),
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
-      levelProblems("the top level", json.menu?.entries ?? [], header, plugins, null), input);
+      levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null), input);
   }
 
   // What a number takes beyond being one: 0 or more, an opacity at most 1, and these their own [least, most]: sizes past which no screen lays the shell out, so a typo fails here rather than on screen.
@@ -241,21 +241,21 @@ Singleton {
   }
 
   // A level's shape, its keys in its body and its bar, then each entry and the level under it.
-  function levelProblems(path, given, header, plugins, list) {
+  function levelProblems(path, given, bar, plugins, list) {
     if (Config.kind(given) !== "list") return ["menu: " + path + " takes a list of entries"];
     const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
     const slots = ["left", "center", "right"];
-    const bar = slots.reduce((parts, slot) => parts.concat(Config.kind(header?.[slot]) === "list" ? Array.from(header[slot]) : []), []);
-    const barEntries = bar.filter(part => Config.kind(part) === "map");
+    const parts = slots.reduce((found, slot) => found.concat(Config.kind(bar?.[slot]) === "list" ? Array.from(bar[slot]) : []), []);
+    const barEntries = parts.filter(part => Config.kind(part) === "map");
     // Key names only: one of another kind is its entry's own problem.
     const keys = entries.reduce((keys, entry) => keys.concat(entry.key ?? []), []).filter(key => typeof key === "string");
     const barKeys = barEntries.reduce((keys, entry) => keys.concat(entry.key ?? []), []).filter(key => typeof key === "string");
     const found = [];
-    for (const slot of Object.keys(header ?? {})) {
+    for (const slot of Object.keys(bar ?? {})) {
       if (!slots.includes(slot)) found.push("menu: " + path + "'s bar sets " + slot + ", none of left, center, right");
-      else if (header[slot] != null && Config.kind(header[slot]) !== "list") found.push((path === "the top level" ? "menu.header." : "menu: " + path + "'s header.") + slot + " takes a list");
+      else if (bar[slot] != null && Config.kind(bar[slot]) !== "list") found.push((path === "the top level" ? "menu.bar." : "menu: " + path + "'s bar.") + slot + " takes a list");
     }
-    if (entries.length < given.length || bar.some(part => Config.kind(part) !== "map" && typeof part !== "string")) found.push("menu: " + path + " holds something that is not an entry");
+    if (entries.length < given.length || parts.some(part => Config.kind(part) !== "map" && typeof part !== "string")) found.push("menu: " + path + " holds something that is not an entry");
     const wrong = (which, why) => {
       if (which.length) found.push("menu: " + why + " in " + path + ": " + [...new Set(which)].join(", "));
     };
@@ -271,12 +271,12 @@ Singleton {
     wrong(barKeys.filter(key => /^[^\sA-Za-z0-9]$/.test(key)), "bar keys on a symbol, which Ctrl gives no name");
     wrong(barKeys.filter(key => /^[0-9]$/.test(key)), "bar keys on a digit, reserved for its lists");
     wrong(barKeys.filter(key => keys.includes("Ctrl+" + key)), "bar keys its body binds with Ctrl too");
-    for (const name of bar.filter(part => typeof part === "string"))
+    for (const name of parts.filter(part => typeof part === "string"))
       if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin");
     for (const [entry, inBar] of entries.map(entry => [entry, false]).concat(barEntries.map(entry => [entry, true]))) {
       found.push(...entryProblems(entry, plugins, inBar, list).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
       // A submenu of another kind is its entry's own problem (fields).
-      if (entry.submenu || entry.header) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.header, plugins, entry.list));
+      if (entry.submenu || entry.bar) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.bar, plugins, entry.list));
     }
     return found;
   }
@@ -337,8 +337,8 @@ Singleton {
       status: { kind: "string", names: Statuses.builtin },
       // Its status's fields to show ("{song}"), what follows a | kept whole on the right.
       format: { kind: "string", needs: ["status"] },
-      // Its level's bar: left, center and right, as menu.header.
-      header: { kind: "map", level: true },
+      // Its level's bar: left, center and right, as menu.bar.
+      bar: { kind: "map", level: true },
       // Its compositor key (Mod+N), only a label: shown while Super is held.
       shortcut: { kind: "string", bar: true },
       // The most items of its list a bar shows; past it, +N.
@@ -347,6 +347,11 @@ Singleton {
       input: { kind: "map", level: true },
       // Keys of its level's `?` list to show in its bar too, after the bar's own: ["Ctrl+Up"].
       legend: { kind: "list", level: true, invalid: names => legendProblem(names) }
+    })
+
+  // Fields renamed, as Config.renamed names settings: an entry still setting one is told what to write instead.
+  readonly property var renamedFields: Object.assign(Object.create(null), {
+      header: "now bar"
     })
 
   // What each set field asks of the rest, as `fields` says.
@@ -377,7 +382,7 @@ Singleton {
   // In a bar an entry needs no key, and may only show its status; past what `fields` says, what spans fields.
   function entryProblems(entry, plugins, inBar, list) {
     const found = [];
-    const unknown = Object.keys(entry).filter(key => !(key in fields));
+    const unknown = Object.keys(entry).filter(key => !(key in fields) && !(key in renamedFields));
     const keys = [].concat(entry.key ?? []);
     const rows = Config.kind(entry.submenu) === "list" ? Array.from(entry.submenu).filter(row => Config.kind(row) === "map") : [];
     if (Config.kind(entry.key) === "list" && !keys.every(key => typeof key === "string")) found.push("sets key to no key names");
@@ -385,6 +390,7 @@ Singleton {
     const level = entry.submenu != null || entry.list != null || entry.view != null;
     const does = [entry.cmd != null, entry.action != null, level].filter(set => set).length;
     if (unknown.length) found.push("sets " + unknown.join(", ") + ", which no entry takes");
+    found.push(...Object.keys(entry).filter(key => key in renamedFields).map(key => "sets " + key + ", " + renamedFields[key]));
     const status = Statuses.builtin[entry.status];
     const named = status && typeof entry.format === "string" ? (entry.format.match(/\{\w+\}/g) ?? []).filter(name => !status.names.includes(name.slice(1, -1))) : [];
     if (named.length) found.push("formats " + named.join(", ") + ", which " + entry.status + " has not (" + (status.names.map(name => "{" + name + "}").join(", ") || "none") + ")");

@@ -14,7 +14,7 @@ What you choose while logged in is kept over a reload or a restart: keep awake, 
 
 The defaults are a suggested setup, not a ceiling. Sizes given in pixels that you leave unset follow `theme.fontSize` (`theme.iconSize`, `menu.width`), so a larger font keeps the proportions; what you set, an entry's `width` included (the starter's too), stays in pixels as given. The check bounds each value, and the layout keeps every surface within its screen (no margin past a quarter of it, no menu taller, no more columns than its width holds), so no setting breaks the menu or its keys.
 
-`menu.islands` draws each bar slot on its own island; the gaps take width, so a crowded bar needs a wider menu.
+`menu.splitBar` draws each bar slot on its own island; the gaps take width, so a crowded bar needs a wider menu.
 
 ## Checking
 

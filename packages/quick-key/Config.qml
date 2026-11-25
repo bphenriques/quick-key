@@ -87,7 +87,9 @@ Singleton {
       "theme.meterLength": "removed: a fixed size of the kit",
       "theme.itemPaddingX": "removed: a fixed size of the kit",
       "theme.itemPaddingY": "removed: a fixed size of the kit",
-      "theme.listSpacing": "removed: a fixed size of the kit"
+      "theme.listSpacing": "removed: a fixed size of the kit",
+      "menu.header": "now menu.bar",
+      "menu.islands": "now menu.splitBar"
     })
 
   // A plugin's setting as given, a map over its default map, as the core's groups take part of theirs.
@@ -156,10 +158,10 @@ Singleton {
 
   // Not bound as the adapter's defaults: menu.json loading after config.json would then replace the user's entries.
   readonly property var starterEntries: starter.entries
-  readonly property var starterHeader: starter.header
+  readonly property var starterBar: starter.bar
 
-  function headerSlot(slot) {
-    return adapter.menu.header[slot] ?? starter.header[slot] ?? [];
+  function barSlot(slot) {
+    return adapter.menu.bar[slot] ?? starter.bar[slot] ?? [];
   }
 
   FileView {
@@ -169,7 +171,7 @@ Singleton {
       property JsonObject menu: JsonObject {
         id: starter
         property var entries: []
-        property JsonObject header: JsonObject {
+        property JsonObject bar: JsonObject {
           property var left: []
           property var center: []
           property var right: []
@@ -293,7 +295,7 @@ Singleton {
         // The top level's entries; unset (null), the starter menu in menu.json, which setting entries replaces whole.
         property var entries: null
         // The top level's bar, like waybar's modules-left, -center and -right: entries, and statuses and plugins by name; a slot unset (null) is the starter's.
-        property JsonObject header: JsonObject {
+        property JsonObject bar: JsonObject {
           property var left: null
           property var center: null
           property var right: null
@@ -305,7 +307,7 @@ Singleton {
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
         property var input: null
         // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.
-        property bool islands: false
+        property bool splitBar: false
         // Shows the key listing the rest on the bars that have one (`? keys`, Ask's `C-? keys`); off, the key still acts.
         property bool keysHint: true
       }

@@ -14,12 +14,12 @@ in
 {
   programs.quick-key.settings.menu = {
     entries = starter.entries;
-    header.right = starter.header.right;
+    bar.right = starter.bar.right;
   };
 }
 ```
 
-A recipe's entries and bar items then join them from any module, in the order `lib.mkOrder` gives. Without Nix, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json) to `~/.config/quick-key/config.json` and add each recipe's entries to its `menu.entries`, its bar items to `menu.header`.
+A recipe's entries and bar items then join them from any module, in the order `lib.mkOrder` gives. Without Nix, copy [`menu.json`](https://github.com/bphenriques/quick-key/blob/main/packages/quick-key/menu.json) to `~/.config/quick-key/config.json` and add each recipe's entries to its `menu.entries`, its bar items to `menu.bar`.
 
 ## The menu
 
@@ -168,7 +168,7 @@ plugins.backup = {
   show.running = { text = "Backing up"; phase = "working"; };
   show.failed = { text = "Backup failed"; phase = "error"; };
 };
-menu.header.right = [ "backup" ];
+menu.bar.right = [ "backup" ];
 ```
 
 The script writes `running` to the file as it starts, then empties it, or writes `failed`; the shell reads it on every change, with nothing running in between. The bar shows the text only while the file holds a state, and `error` turns it alert ([The state line](plugins.md#the-state-line)).
@@ -183,7 +183,7 @@ plugins.vpn = {
   show.down = { glyph = "<glyph>"; text = "off"; };
   activate = ''tailscale status --json | jq -e '.BackendState == "Running"' > /dev/null && tailscale down || tailscale up'';
 };
-menu.header.right = [ "vpn" ];
+menu.bar.right = [ "vpn" ];
 ```
 
 A click on it in the bar toggles it. For a key, give it one: `{ key = "v"; desc = "VPN"; status = "vpn"; }` in a bar runs it on `C-v`. A NetworkManager or WireGuard connection is the same shape: `read` from `nmcli -g GENERAL.STATE connection show wg0`, toggle with `nmcli connection up` and `down`.
@@ -198,7 +198,7 @@ plugins.weather = {
   glyph = "<cloud>";
   show = { "o".glyph = "<sun>"; "m".glyph = "<sun behind cloud>"; "/".glyph = "<rain>"; "//".glyph = "<showers>"; ".".glyph = "<showers>"; "*".glyph = "<snow>"; };
 };
-menu.header.center = [ "weather" ];
+menu.bar.center = [ "weather" ];
 ```
 
 ![The weather in the bar's centre, its glyph the sky's](images/weather.png)
@@ -229,7 +229,7 @@ plugins.focus = {
   glyph = "<glyph>";
   activate = ''for m in $(seq 25 -1 1); do echo "$m min" > "$XDG_RUNTIME_DIR/focus"; sleep 60; done; : > "$XDG_RUNTIME_DIR/focus"; notify-send "Focus is over"'';
 };
-menu.header.center = [ { key = "f"; desc = "Focus"; status = "focus"; } ];
+menu.bar.center = [ { key = "f"; desc = "Focus"; status = "focus"; } ];
 ```
 
 ![The timer counting down in the bar](images/focus.png)
@@ -242,7 +242,7 @@ menu.header.center = [ { key = "f"; desc = "Focus"; status = "focus"; } ];
 
 ```nix
 plugins.dunst = { };
-menu.header.right = [ "dunst" ];
+menu.bar.right = [ "dunst" ];
 ```
 
 A plugin in a bar shows its glyph, lit while active; a click calls its `activate`. Any `command` plugin works the same. For a key, give it one: `{ key = "d"; desc = "Do not disturb"; status = "dunst"; }` in a bar runs it on `C-d`.
@@ -255,7 +255,7 @@ plugins.uptime = {
   read = ''awk '{ printf "up %dd %dh\n", $1 / 86400, $1 % 86400 / 3600 }' /proc/uptime'';
   glyph = "<glyph>";
 };
-menu.header.center = [ "uptime" ];
+menu.bar.center = [ "uptime" ];
 ```
 
 ![The uptime in the bar's centre](images/uptime.png)
@@ -265,7 +265,7 @@ The last line a command prints is the text beside the glyph. For text a script w
 ### A bar as islands
 
 ```nix
-menu.islands = true;
+menu.splitBar = true;
 ```
 
 ![The menu's bar split into islands over the body](images/islands.png)

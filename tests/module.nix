@@ -52,7 +52,7 @@ let
       programs.quick-key.settings = {
         theme.name = "matugen";
         plugins.mine.colour = "blue";
-        menu.header.left = [ "mine" ];
+        menu.bar.left = [ "mine" ];
       };
     }
   );

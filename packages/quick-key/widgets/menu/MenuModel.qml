@@ -45,7 +45,7 @@ Scope {
   readonly property int width: body.width
   readonly property int columns: body.columns
   readonly property string emptyText: body.emptyText
-  readonly property var topBar: ({ left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") })
+  readonly property var topBar: ({ left: Config.barSlot("left"), center: Config.barSlot("center"), right: Config.barSlot("right") })
   readonly property var barSlots: level === null ? slotsOf(topBar) : body.kinds[level.kind].bar(level)
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
   // Never for the cursor's keys alone, so a level holds still as it shows (rule 4).
@@ -355,9 +355,9 @@ Scope {
     const lines = [];
     const path = (prefix, key) => MenuKeys.names(key).map(name => "`" + (prefix + " " + name).trim() + "`").join(" ");
     // A bar's entries, on Ctrl in the level they sit on.
-    const bar = (header, prefix, depth) => {
+    const bar = (slots, prefix, depth) => {
       for (const slot of ["left", "center", "right"]) {
-        for (const part of Array.from(header?.[slot] ?? [])) {
+        for (const part of Array.from(slots?.[slot] ?? [])) {
           if (typeof part === "string" || !part.key) continue;
           const keys = MenuKeys.names(part.key).map(name => "`" + (prefix + " Ctrl+" + name).trim() + "`").join(" ");
           lines.push("  ".repeat(depth) + "- " + keys + " " + (part.desc ?? part.status ?? ""));
@@ -371,7 +371,7 @@ Scope {
         for (const [i, pin] of Array.from(entry.pins ?? []).entries()) lines.push("  ".repeat(depth + 1) + "- `" + at + " " + (i + 1) + "` " + pin.label);
         if (entry.list) lines.push("  ".repeat(depth + 1) + "- `" + at + " 1-9` " + entry.list);
         walk(entry.submenu, at, depth + 1);
-        bar(entry.header, at, depth + 1);
+        bar(entry.bar, at, depth + 1);
       }
     };
     walk(entries, "", 0);
