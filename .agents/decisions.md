@@ -42,6 +42,9 @@ Found in the beta.7 round, real but rare or low impact; reopen on a sighting in 
 - The pop-up's tone ignores a plugin's `phase` (Osd.qml:72); folding it into `Statuses.of` would add pop-ups on error.
 - `themes.<name>` colours typed `str` in the module (warns at runtime, where `settings.theme` fails the build); a misspelt colour name in a theme file is ignored silently.
 - Calendar steps cost more CPU with hundreds of events (854: 42 ms a day step, 88 ms a month); key repeat slows itself and nothing lags after release.
+- A list level with no entries, bar or legend grows a bar when the cursor shows its `RET` hint (rule 4); no starter level is like that.
+- A task titled with a bare number can share its id with one of two same-titled tasks todoman numbers so.
+- Text-only rows start their label in the icon column, as an app menu's rows do.
 - `times()` in CalendarEvents decides in a view; CalendarMonth's Repeater takes the array (no visible effect).
 - A bar tip cut at the screen's edge when the menu spans the screen.
 - Suite's timeout counts polls, not time; no positive control for the "never runs" cases; no guard on two `.js` libraries of one name.
