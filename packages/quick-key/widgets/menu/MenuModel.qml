@@ -95,7 +95,7 @@ Scope {
     // At the top, the key listing the rest, which every surface with such a list shows so.
     .concat(level === null && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
     .concat(MenuKeys.pick(help, level?.entry?.legend))
-  readonly property var cursorLegend: (cursorItem ? [{ key: returnOf(cursorItem), what: cursorItem.verb || Words.pick, clickable: true }] : [])
+  readonly property var cursorLegend: (cursorItem && (content || filtering) ? [{ key: returnOf(cursorItem), what: cursorItem.verb || Words.pick, clickable: true }] : [])
     .concat(cursorItem?.actions?.length > 0 || cursorItem?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
   readonly property var legend: filtering ? filter.legend.concat(cursorLegend, filter.query ? [{ key: "Escape", what: Words.clear, clickable: true }] : []) : levelLegend.concat(cursorLegend)
   readonly property string error: viewModel ? viewModel.error : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)

@@ -522,7 +522,7 @@ ShellRoot {
         }
       },
       {
-        name: "a level without a bar grows none as its cursor shows, where one with a bar names Return",
+        name: "a level without a bar grows none as its cursor shows, where one with a bar names Return, and the top level's bar holds still",
         until: () => {
           const plugin = Plugins.get("keyed");
           if (!plugin) return false;
@@ -535,8 +535,12 @@ ShellRoot {
           menu.push(root.keyedLevel);
           const named = menu.cursorKey("Down") && menu.barShown && menu.legend.some(key => key.key === "Return");
           menu.hide();
+          menu.show();
+          const before = menu.legend.length;
+          const still = menu.cursorKey("Down") && !!menu.cursorItem && menu.legend.length === before;
+          menu.hide();
           plugin.items = was;
-          return bare && named;
+          return bare && named && still;
         }
       },
       {
