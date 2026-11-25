@@ -81,11 +81,11 @@ ShellRoot {
   function outcome(handled, was) {
     if (ran) return ran;
     if (!menu.open) return "item";
-    if (menu.level?.kind === "actions" && menu.stack.length > was.depth) return "item menu";
+    if (menu.level?.kind === "actions" && menu.levels.length > was.depth) return "item menu";
     if (menu.held !== was.held) return menu.held === "Help" ? "help" : "help closed";
     if (menu.viewModel && menu.viewModel.selected.getTime() !== was.day) return "view";
     if (menu.filtering !== was.filtering) return "filter";
-    if (menu.stack.length < was.depth) return "back";
+    if (menu.levels.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
     if (was.input) return "body";
     if (menu.cursor.current !== was.cursor) return "cursor " + (menu.cursorItem?.key ?? "none");
@@ -99,7 +99,7 @@ ShellRoot {
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.viewModel?.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused, cursor: menu.cursor.current };
+    const was = { held: menu.held, day: menu.viewModel?.selected.getTime(), filtering: menu.filtering, depth: menu.levels.length, input: menu.inputFocused, cursor: menu.cursor.current };
     const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name) || menu.cursorKey(name), was);
     menu.hide();
     return did;
@@ -291,17 +291,17 @@ ShellRoot {
           menu.body.startFilter();
           const filtered = menu.filtering;
           menu.stepBack();
-          const rest = !menu.filtering && menu.stack.length === 1;
+          const rest = !menu.filtering && menu.levels.length === 1;
           menu.focusOn("input");
           menu.pickList("devices");
-          const picking = menu.stack.length === 2 && menu.filtering && !menu.inputFocused;
+          const picking = menu.levels.length === 2 && menu.filtering && !menu.inputFocused;
           menu.stepBack();
-          const refocused = menu.stack.length === 1 && menu.inputFocused;
+          const refocused = menu.levels.length === 1 && menu.inputFocused;
           menu.hide();
           // The suite stands in for a plugin's panel the picker opens over.
           Panels.open(root);
           Picker.pick("devices");
-          const fromPanel = menu.open && menu.stack.length === 1 && menu.filtering;
+          const fromPanel = menu.open && menu.levels.length === 1 && menu.filtering;
           menu.stepBack();
           const shownAgain = !menu.open && Panels.top === root;
           Panels.close();
@@ -315,9 +315,9 @@ ShellRoot {
           menu.hide();
           menu.show();
           menu.handleKey({ key: Qt.Key_A, modifiers: Qt.NoModifier, text: "a" });
-          const backspace = !menu.handleKey({ key: Qt.Key_Backspace, modifiers: Qt.NoModifier, text: "\b" }) && menu.stack.length === 1;
+          const backspace = !menu.handleKey({ key: Qt.Key_Backspace, modifiers: Qt.NoModifier, text: "\b" }) && menu.levels.length === 1;
           menu.handleKey(escape);
-          const up = menu.open && menu.stack.length === 0;
+          const up = menu.open && menu.levels.length === 0;
           menu.handleKey(escape);
           const closed = !menu.open;
           menu.press("a");
@@ -616,7 +616,7 @@ ShellRoot {
           menu.push({ kind: "entry", entry: { list: "acting" } });
           if (menu.rows.length !== 1) return false;
           const listed = level => {
-            menu.stack = level ? [level] : [];
+            menu.levels = level ? [level] : [];
             return menu.help.map(key => key.key).join();
           };
           const hinted = () => menu.legend.some(key => key.key === "?");
@@ -631,7 +631,7 @@ ShellRoot {
         until: () => {
           menu.hide();
           Config.menu.keysHint = false;
-          menu.stack = [];
+          menu.levels = [];
           const hidden = !menu.legend.some(key => key.key === "?") && menu.handleName("?") && menu.held === "Help";
           menu.handleName("?");
           Config.menu.keysHint = true;
@@ -656,7 +656,7 @@ ShellRoot {
           const shown = () => menu.legend.map(key => MenuKeys.label(key.key, true) + " " + (key.what ?? key.desc));
           menu.push(root.calendarLevel);
           const own = shown();
-          menu.stack = [];
+          menu.levels = [];
           menu.push({ kind: "entry", entry: Object.assign({ legend: ["Ctrl+Down", "Escape", "Ctrl+Up", "Ctrl+"] }, root.calendarLevel.entry) });
           const chosen = shown();
           menu.hide();
@@ -668,41 +668,41 @@ ShellRoot {
         start: () => {
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "printf '%s\\n' > \"$XDG_RUNTIME_DIR/picked\"", after: "echo \"done $#\" > \"$XDG_RUNTIME_DIR/followed\"" } } });
           menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
-          menu.island.submit("  typed  ", false);
+          menu.input.submit("  typed  ", false);
         },
         until: () => menu.inputFocused && Plugins.get("picked")?.text === "typed" && Plugins.get("followed")?.text === "done 0"
       },
       {
         name: "an input naming a plugin gives it its text, its context beside it and the text shown as typed, the level's legend staying as it was; in the background the menu closes",
         start: () => {
-          menu.stack = [];
+          menu.levels = [];
           menu.push({ kind: "entry", entry: { view: "calendar", input: { desc: "Add an event", plugin: "agent", context: "Calendar" } } });
           menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
           root.typingLegend = menu.legend.map(key => MenuKeys.label(key.key));
-          menu.island.submit("typed", true);
+          menu.input.submit("typed", true);
         },
-        until: () => root.typingLegend.length > 0 && !root.typingLegend.includes("ESC") && menu.stack.length === 0 && Plugins.get("agent")?.exchanges[0]?.prompt === "typed" && Plugins.get("agent")?.exchanges[0]?.reply.endsWith("[Calendar]")
+        until: () => root.typingLegend.length > 0 && !root.typingLegend.includes("ESC") && menu.levels.length === 0 && Plugins.get("agent")?.exchanges[0]?.prompt === "typed" && Plugins.get("agent")?.exchanges[0]?.reply.endsWith("[Calendar]")
       },
       {
         name: "an input whose plugin did not load takes nothing, so the menu stays and the input keeps its text",
         until: () => {
-          menu.stack = [];
+          menu.levels = [];
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "gone" } } });
-          return menu.island.submit("kept", true) === false && menu.stack.length === 1;
+          return menu.input.submit("kept", true) === false && menu.levels.length === 1;
         }
       },
       {
         name: "an input on a list whose plugin takes no text keeps its text, and the menu stays",
         until: () => {
-          menu.stack = [];
+          menu.levels = [];
           menu.push({ kind: "entry", entry: { list: "devices", input: { desc: "Add" } } });
-          return Plugins.get("devices") !== null && menu.island.submit("kept", true) === false && menu.stack.length === 1;
+          return Plugins.get("devices") !== null && menu.input.submit("kept", true) === false && menu.levels.length === 1;
         }
       },
       {
         name: "in the body Tab moves to the input, and Shift+Tab is left to Qt",
         until: () => {
-          menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "true" } } }];
+          menu.levels = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "true" } } }];
           menu.focusOn("body");
           const backtab = menu.handleKey({ key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, text: "" });
           const tab = menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
@@ -717,20 +717,20 @@ ShellRoot {
           switch (root.visitStep) {
           case 0:
             menu.show();
-            menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", context: "Tasks" } } }];
-            root.visitStep = menu.island.submit("one", false) ? 1 : -1;
+            menu.levels = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", plugin: "agent", context: "Tasks" } } }];
+            root.visitStep = menu.input.submit("one", false) ? 1 : -1;
             return false;
           case 1:
-            root.visitStep = agent.turn?.question === "one" && agent.turn?.text.endsWith("[Tasks]") && menu.island.submit("two", false) ? 2 : -1;
+            root.visitStep = agent.turn?.question === "one" && agent.turn?.text.endsWith("[Tasks]") && menu.input.submit("two", false) ? 2 : -1;
             return false;
           case 2:
             if (agent.turn?.question !== "two" || !agent.turn?.text.endsWith("[Tasks]")) return false;
-            const token = menu.island.visit;
-            menu.island.expand();
+            const token = menu.input.visit;
+            menu.input.expand();
             // Under the panel, the menu keeps its level and the visit.
-            const held = agent.shown && !menu.open && menu.inStack && menu.island.visit === token;
+            const held = agent.shown && !menu.open && menu.inStack && menu.input.visit === token;
             Panels.back();
-            root.visitStep = held && menu.open && menu.stack.length === 1 && menu.inputFocused && menu.island.visit === token && agent.turn?.question === "two" ? 3 : -1;
+            root.visitStep = held && menu.open && menu.levels.length === 1 && menu.inputFocused && menu.input.visit === token && agent.turn?.question === "two" ? 3 : -1;
             return false;
           }
           menu.hide();
@@ -741,30 +741,30 @@ ShellRoot {
         name: "each input keeps its own unsent text",
         until: () => {
           const first = { kind: "entry", entry: { submenu: [], input: { desc: "First", cmd: "true" } } };
-          menu.stack = [first];
-          menu.island.keepDraft("one");
+          menu.levels = [first];
+          menu.input.keepDraft("one");
           menu.push({ kind: "entry", entry: { submenu: [], input: { desc: "Second", cmd: "true" } } });
-          const second = menu.island.draft;
-          menu.stack = [first];
-          return second === "" && menu.island.draft === "one";
+          const second = menu.input.draft;
+          menu.levels = [first];
+          return second === "" && menu.input.draft === "one";
         }
       },
       {
         name: "an input keeps its unsent text as its label changes",
         until: () => {
-          menu.stack = [{ kind: "entry", entry: { key: "d", submenu: [], input: { desc: "Before", cmd: "true" } } }];
-          menu.island.keepDraft("kept");
-          menu.stack = [{ kind: "entry", entry: { key: "d", submenu: [], input: { desc: "After", cmd: "true" } } }];
-          return menu.island.draft === "kept";
+          menu.levels = [{ kind: "entry", entry: { key: "d", submenu: [], input: { desc: "Before", cmd: "true" } } }];
+          menu.input.keepDraft("kept");
+          menu.levels = [{ kind: "entry", entry: { key: "d", submenu: [], input: { desc: "After", cmd: "true" } } }];
+          return menu.input.draft === "kept";
         }
       },
       {
         name: "C-r in an input to a plugin that recalls lists its conversations on a level over it, filtering, and ? names it",
         until: () => {
           menu.hide();
-          menu.stack = [{ kind: "entry", entry: { submenu: [], input: { desc: "Ask", plugin: "agent" } } }];
+          menu.levels = [{ kind: "entry", entry: { submenu: [], input: { desc: "Ask", plugin: "agent" } } }];
           const named = menu.help.some(key => key.key === "Ctrl+r");
-          return named && menu.island.recall() && menu.stack.length === 2 && menu.level.picking && menu.level.entry.list === "agent" && menu.filtering;
+          return named && menu.input.recall() && menu.levels.length === 2 && menu.level.picking && menu.level.entry.list === "agent" && menu.filtering;
         }
       },
       {
@@ -792,7 +792,7 @@ ShellRoot {
         name: "a key path ends at a key that closes the menu, leaving no level for its next opening",
         until: () => {
           menu.hide();
-          return !menu.press("a Ctrl+v a") && !menu.open && menu.stack.length === 0;
+          return !menu.press("a Ctrl+v a") && !menu.open && menu.levels.length === 0;
         }
       },
       {
@@ -806,9 +806,9 @@ ShellRoot {
           menu.press("t f");
           const closed = !menu.open;
           menu.press("t k");
-          const kept = menu.open && menu.stack.length === 1;
+          const kept = menu.open && menu.levels.length === 1;
           menu.press("t f");
-          const stayed = menu.open && menu.stack.length === 1;
+          const stayed = menu.open && menu.levels.length === 1;
           menu.hide();
           plugin.actions = {};
           return ran === 3 && closed && kept && stayed;
@@ -836,9 +836,9 @@ ShellRoot {
           menu.show();
           menu.handleKey(key(Qt.Key_A, "a", false));
           menu.handleKey(key(Qt.Key_A, "a", true));
-          const held = menu.stack.length === 1;
+          const held = menu.levels.length === 1;
           menu.handleKey(key(Qt.Key_A, "a", false));
-          const pressed = menu.stack.length === 2;
+          const pressed = menu.levels.length === 2;
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "f", desc: "Flip", action: "flip" }, { key: "9", desc: "Nine", action: "flip" },
             { key: ["Left", "Right"], desc: "Step", action: "step" }] } });

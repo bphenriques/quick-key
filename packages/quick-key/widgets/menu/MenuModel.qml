@@ -10,10 +10,10 @@ Scope {
 
   // Under a plugin panel it keeps its levels and visit; leaving the stack resets them.
   readonly property bool open: Panels.top === root
-  readonly property bool inStack: Panels.stack.includes(root)
+  readonly property bool inStack: Panels.owners.includes(root)
   onInStackChanged: if (!inStack) reset()
   // Levels past the top one: an entry ("entry"), an app menu ("menu") or an item menu ("actions"), each keeping inputFocused for Escape to restore.
-  property var stack: []
+  property var levels: []
   // How deep a shortcut or key path opened it: Escape closes there.
   property int base: 0
   // "Ctrl" or "Super" held a second (so a chord does not flash them), or "Help" after `?`.
@@ -21,7 +21,7 @@ Scope {
   readonly property bool inputFocused: internal.focus === "input"
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
-  readonly property var level: stack[stack.length - 1] ?? null
+  readonly property var level: levels[levels.length - 1] ?? null
   // The level the body shows, whose state the views and keys read through the menu.
   readonly property LevelModel body: LevelModel {
     menu: root
@@ -29,7 +29,7 @@ Scope {
   }
   readonly property var viewModel: body.viewModel
   readonly property var view: body.view
-  readonly property InputModel island: InputModel {
+  readonly property InputModel input: InputModel {
     menu: root
   }
   readonly property bool filtering: body.filtering
@@ -65,8 +65,8 @@ Scope {
     cursor.free.length && body.cursorRows.some(row => body.returnOf(row) !== "Return") ? [{ key: "Shift+Return", desc: Words.helpRunShifted }] : [],
     rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
     slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
-    island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
-    island.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
+    input.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
+    input.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
     [{ key: "Escape", desc: Words.helpEscape }]
   )
   readonly property bool slashFilters: body.slashFilters
@@ -140,10 +140,10 @@ Scope {
       hide();
       return;
     }
-    stack = [];
+    levels = [];
     if (!open) show();
     activate(item, key);
-    base = stack.length;
+    base = levels.length;
   }
 
   // "body" or "input" (the level input).
@@ -161,7 +161,7 @@ Scope {
   }
 
   function reset() {
-    stack = [];
+    levels = [];
     base = 0;
     body.stopFilter();
     internal.held = "";
@@ -171,7 +171,7 @@ Scope {
 
   function back() {
     const left = level;
-    stack = stack.slice(0, -1);
+    levels = levels.slice(0, -1);
     body.stopFilter();
     internal.focus = left?.inputFocused ? "input" : "body";
     cursor.point(left?.cursor);
@@ -179,7 +179,7 @@ Scope {
   }
 
   function push(next) {
-    stack = stack.concat([Object.assign({}, next, { inputFocused: inputFocused, cursor: cursor.current })]);
+    levels = levels.concat([Object.assign({}, next, { inputFocused: inputFocused, cursor: cursor.current })]);
     body.stopFilter();
     internal.focus = "body";
     cursor.point(undefined);
@@ -219,7 +219,7 @@ Scope {
     if (over) Panels.remove(root);
     if (!open) show();
     push({ kind: "entry", entry: { list: list }, picking: true, width: Config.menu.width });
-    if (over) base = stack.length;
+    if (over) base = levels.length;
     body.filterSlots = 9;
   }
 
@@ -228,7 +228,7 @@ Scope {
     if (filtering && !level.picking) return body.stopFilter();
     if (inputFocused) return focusOn("body");
     if (viewModel && viewModel.stepBack()) return;
-    if (stack.length <= base) Panels.back();
+    if (levels.length <= base) Panels.back();
     else back();
   }
 
@@ -324,7 +324,7 @@ Scope {
     else if (name === "?") internal.held = "Help";
     else if (name === "Escape") stepBack();
     else if (viewModel && viewModel.handleKey(name)) return true;
-    else if (island.input && name === "Tab") internal.focus = "input";
+    else if (input.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
     else if (name === "/" && slashFilters) body.startFilter();
     else if (target) openMenu(target);
@@ -336,7 +336,7 @@ Scope {
   // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would: what a binding reaches.
   function press(path) {
     const closed = !open;
-    stack = [];
+    levels = [];
     if (!open) show();
     for (const [i, name] of path.trim().split(/\s+/).entries()) {
       // A key that closed the menu ends the path, so none past it opens a level on the closed menu.
@@ -344,7 +344,7 @@ Scope {
       internal.ran = null;
       if (!(filtering ? filterKey(name) : handleName(name))) return false;
     }
-    base = stack.length;
+    base = levels.length;
     // Opened for the path, the menu closes after the action it ends on, unless that opened a picker or another surface.
     if (closed && internal.ran && !internal.ran.keepOpen && open && !filtering) hide();
     return true;

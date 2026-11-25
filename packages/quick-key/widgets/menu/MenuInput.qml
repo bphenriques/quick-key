@@ -11,7 +11,7 @@ ColumnLayout {
   id: root
 
   required property MenuModel menu
-  readonly property InputModel model: menu.island
+  readonly property InputModel model: menu.input
   spacing: Config.theme.spacing / 2
 
   // A click opens the plugin's panel on the whole conversation.

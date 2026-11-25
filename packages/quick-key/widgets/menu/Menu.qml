@@ -87,7 +87,7 @@ Scope {
       // Filtering, the filter takes the input, the level's input waiting under it.
       Island {
         name: "input"
-        shown: root.menu.island.input !== null || root.menu.filtering
+        shown: root.menu.input.input !== null || root.menu.filtering
         padding: Config.theme.padding / 2
         // As a row's content is, so its key column lines up with the body's keys.
         inset: Metrics.itemPaddingX
@@ -236,7 +236,7 @@ Scope {
         content: MenuHeader {
           menu: root.menu
           room: stack.room - 2 * Config.theme.padding
-          onPicked: key => root.menu.filtering ? (key === "Escape" ? root.menu.island.escaped() : root.menu.filterKey(key)) : root.menu.handleName(key) || root.menu.cursorKey(key)
+          onPicked: key => root.menu.filtering ? (key === "Escape" ? root.menu.input.escaped() : root.menu.filterKey(key)) : root.menu.handleName(key) || root.menu.cursorKey(key)
         }
       }
     ]

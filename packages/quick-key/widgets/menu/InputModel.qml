@@ -23,7 +23,7 @@ QtObject {
     key: "drafts"
   }
   // The keys of the levels down to its own, which a change to the input's label leaves be; "" without an input.
-  readonly property string draftKey: input ? JSON.stringify(menu.stack.map(level => level.entry?.key ?? "")) : ""
+  readonly property string draftKey: input ? JSON.stringify(menu.levels.map(level => level.entry?.key ?? "")) : ""
   readonly property string draft: draftOf(draftKey)
 
   // The plugin a visit is with, while the menu, in Panels' stack, shows its input: a change of the plugin or the input, or the menu leaving the stack, ends it (Plugin.endVisit).

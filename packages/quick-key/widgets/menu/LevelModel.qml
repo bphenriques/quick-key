@@ -89,7 +89,7 @@ Scope {
       },
       menu: {
         content: () => false,
-        bar: () => ({ left: [root.menu.appOf(root.menu.stack.filter(level => level.kind === "menu"))], center: [], right: [] }),
+        bar: () => ({ left: [root.menu.appOf(root.menu.levels.filter(level => level.kind === "menu"))], center: [], right: [] }),
         items: level => {
           const children = Array.from(menuOpener.children.values).filter(child => !child.isSeparator && child.enabled);
           const labels = children.map(child => child.text.replace(/_/g, ""));
