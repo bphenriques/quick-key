@@ -68,6 +68,8 @@ ShellRoot {
       "menu: the top level puts two things on Ctrl+x: 'Cut' on pinned t and 'X' on the bar"],
     ["a view's key on a pin", menu([{ key: "c", desc: "Calendar", icon: "x", view: "calendar", layout: ["body", { level: "t" }], submenu: [{ key: "t", desc: "Tasks", icon: "x", list: "tray" }] }]),
       "menu: the top level > Calendar puts two things on t: the calendar view and 'Tasks'"],
+    ["a row on a key its level's view takes", menu([{ key: "c", desc: "Calendar", icon: "x", view: "calendar", submenu: [{ key: "t", desc: "Tea", icon: "x", cmd: "true" }, { key: "Right", desc: "Next", icon: "x", cmd: "true" }] }]),
+      ["menu: the top level > Calendar puts two things on t: the calendar view and 'Tea'", "menu: the top level > Calendar puts two things on Right: the calendar view and 'Next'"]],
     ["a pinned list on a level that lists", menu([{ key: "w", desc: "Wi-Fi", icon: "x", list: "wifi", layout: ["body", { level: "e" }], submenu: [{ key: "e", desc: "Events", icon: "x", list: "tray", limit: 2 }] }]),
       "menu: the top level > Wi-Fi puts two things on 1, 2: 'wifi' and 'Events' on pinned e"],
     ["a layout on an entry without a level", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", layout: ["body"] }]), "can only set layout on a level"],
