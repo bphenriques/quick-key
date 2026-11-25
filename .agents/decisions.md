@@ -39,6 +39,7 @@ Settled with the owner up to v0.27.0-beta.5 (2026-11-24). A review round reads t
 
 Found in the beta.7 round, real but rare or low impact; reopen on a sighting in daily use.
 
+- Hover taking the cursor (N6): dropped, as Qt re-delivers a hover under a still pointer and it stole the row `ESC` had restored; a form that moves only on pointer motion needs a position compare, two highlights meanwhile.
 - The pop-up's tone ignores a plugin's `phase` (Osd.qml:72); folding it into `Statuses.of` would add pop-ups on error.
 - `themes.<name>` colours typed `str` in the module (warns at runtime, where `settings.theme` fails the build); a misspelt colour name in a theme file is ignored silently.
 - Calendar steps cost more CPU with hundreds of events (854: 42 ms a day step, 88 ms a month); key repeat slows itself and nothing lags after release.
