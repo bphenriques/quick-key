@@ -508,15 +508,17 @@ ShellRoot {
         }
       },
       {
-        name: "at the top the arrows move over the entries as laid out, and Return opens one as its letter would",
+        name: "at the top the arrows move over the entries as laid out, Return opens one as its letter would, and Escape back keeps its row",
         until: () => {
           menu.hide();
           menu.show();
           const moved = menu.cursorKey("Down") && menu.cursor.current === "a" && menu.cursorKey("Right") && menu.cursor.current === "t"
             && menu.cursorKey("Down") && menu.cursor.current === "t" && menu.bodyActions[1].current && menu.cursorKey("Left");
           const opened = menu.cursorKey("Return") && menu.level?.entry?.desc === "Audio" && !menu.cursorItem;
+          menu.stepBack();
+          const kept = menu.level === null && menu.cursor.current === "a";
           menu.hide();
-          return moved && opened;
+          return moved && opened && kept;
         }
       },
       {

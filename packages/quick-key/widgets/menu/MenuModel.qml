@@ -317,12 +317,12 @@ Scope {
     stack = stack.slice(0, -1);
     stopFilter();
     internal.focus = left?.inputFocused ? "input" : "body";
-    cursor.point(undefined);
+    cursor.point(left?.cursor);
     clearViews();
   }
 
   function push(next) {
-    stack = stack.concat([Object.assign({}, next, { inputFocused: inputFocused })]);
+    stack = stack.concat([Object.assign({}, next, { inputFocused: inputFocused, cursor: cursor.current })]);
     stopFilter();
     internal.focus = "body";
     cursor.point(undefined);
