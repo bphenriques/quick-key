@@ -48,7 +48,8 @@ Scope {
   // No more columns than its width holds at about twelve characters each.
   readonly property int columns: Math.max(1, Math.min(level?.entry?.columns ?? Config.menu.columns, Math.floor(width / (12 * Metrics.cell))))
   readonly property string emptyText: level?.entry?.list && rows.length === 0 ? (filtering && filter.emptyText) || Lists.empty(level.entry.list) : ""
-  readonly property bool slashFilters: !!level?.entry?.list && !menu.find(items, "/")
+  // The filter is typed on the input island.
+  readonly property bool slashFilters: !!level?.entry?.list && !menu.find(items, "/") && menu.layout.includes("input")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
   // Only keys the state changes; fixed ones are listed on `?`, and show here too as its entry's `legend` names them.
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])

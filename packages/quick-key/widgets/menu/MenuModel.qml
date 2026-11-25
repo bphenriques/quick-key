@@ -21,6 +21,8 @@ Scope {
   readonly property bool inputFocused: internal.focus === "input"
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
+  // The islands by name, top to bottom, each once (Validation names what else is wrong).
+  readonly property var layout: Array.from(Config.menu.layout).filter((name, index, all) => all.indexOf(name) === index)
   readonly property var level: levels[levels.length - 1] ?? null
   // The level the body shows, whose state the views and keys read through the menu.
   readonly property LevelModel body: LevelModel {

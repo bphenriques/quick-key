@@ -1,6 +1,6 @@
 # Menu
 
-The menu is a list of levels. Each is a body, with an optional bar between it and the screen's edge.
+The menu is a list of levels, each drawn in the body. Beside it sit an optional bar and input, on islands stacked up from the screen's edge.
 
 A body holds one thing. It is either entries, each a key and a label that does something or opens a level, or a level's content: a list, or a view such as the calendar. A content level's own entries and its legend sit on its bar's left, so a list that grows never moves them. When they do not all fit, each shows only its key and glyph, its label as its tip. The bar also holds what you glance at.
 
@@ -55,7 +55,7 @@ The label is `desc`, and never changes. The icon is `icon`, or its `status`'s or
 
 A level is as wide as its entry's `width`, else `menu.width`, and lays its actions out in its entry's `columns`, else `menu.columns` (`columns = 1` for a level of three, so none sits alone). Neither is measured from what it shows, so it holds still. Entries flow across, so order decides neighbours. At the top the columns are equal, so values line up; in a level the last hugs its rows against the right edge. It is never wider than the screen, whatever it asks; short of room, text shortens, short values last and icons never. Make the menu wider before adding columns or truncating.
 
-The menu sits at the bottom of the screen, centred, its bar against the edge. Everything stacks up from there: the bar, the body, then the level's input. A plugin's panel sits where the menu does. Nothing else moves: the bar never sits apart from the body, and every level keeps the bottom edge.
+The menu sits at the bottom of the screen, centred. `menu.layout` lists its islands top to bottom, the last against the edge: by default the input, the body, then the bar (`[ "input" "body" "bar" ]`). `[ "body" "input" "bar" ]` puts the input between the body and the bar. Every layout has the body, once; leave out `input` and no level has an input or a filter, leave out `bar` and no level shows its bar, though its keys still act. A plugin's panel sits where the menu does. Nothing else moves: every level keeps the bottom edge.
 
 ## Bars
 
@@ -74,7 +74,7 @@ Dates and times are said one way everywhere, in `clock.locale`: a time as the lo
 
 ## Input
 
-An entry's `input` floats a line of text over its level's body, a bar entry's too. `menu.input` does over the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask..."; plugin = "assistant"; }`).
+An entry's `input` gives its level a line of text on the input island, a bar entry's too. `menu.input` gives the top level's, a catch-all for what belongs to no level (`menu.input = { desc = "Ask..."; plugin = "assistant"; }`).
 
 An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then gives the keys back to the body, as `TAB` does. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right. Empty, it shows its `desc`, which ends in `...`, as what waits on you does.
 
@@ -86,7 +86,7 @@ The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level l
 
 `context` is what a plugin is told beside each message, on a line of its own; the conversation shows the text as typed. Word it as where the text comes from, not as an order, since a reply to the agent's question carries it too. `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
 
-Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows over the body: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
+Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows above the prompt: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation; leaving or closing ends it.
 
 An answer the island cannot hold (past three lines, a table, an approval) opens the whole conversation in Ask, and `ESC` there comes back. A click on the turn opens it too, where `C-C` copies the answer. A failure shows in alert, what you sent faded and given back, selected: `RET` retries it, typing replaces it. `C-S-RET` leaves the answer to a notification.
 

@@ -627,6 +627,29 @@ ShellRoot {
         }
       },
       {
+        name: "menu.layout lists the islands top to bottom, each once: [ body input bar ] puts the input between the body and the bar",
+        until: () => {
+          const before = menu.layout.join();
+          Config.menu.layout = ["body", "input", "input", "bar"];
+          const after = menu.layout.join();
+          Config.menu.layout = ["input", "body", "bar"];
+          return before === "input,body,bar" && after === "body,input,bar";
+        }
+      },
+      {
+        name: "a layout without an input shows no level's input and filters nothing",
+        until: () => {
+          menu.hide();
+          menu.levels = [root.keyedLevel];
+          const before = menu.input.input !== null && menu.slashFilters;
+          Config.menu.layout = ["body", "bar"];
+          const without = menu.input.input === null && !menu.slashFilters && !menu.handleName("Tab") && !menu.inputFocused;
+          Config.menu.layout = ["input", "body", "bar"];
+          menu.levels = [];
+          return before && without;
+        }
+      },
+      {
         name: "menu.keysHint off leaves ? off the top level's bar, and ? still lists the keys",
         until: () => {
           menu.hide();

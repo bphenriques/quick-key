@@ -77,7 +77,7 @@ Singleton {
       "glyphs.link": "removed: an answer's links stay in its text",
       "glyphs.close": "removed with the notifications plugin",
       "glyphs.urgent": "removed with the notifications plugin",
-      "menu.inputSide": "removed: a level's input always sits past its body",
+      "menu.inputSide": "now menu.layout: [\"body\", \"input\", \"bar\"] puts the input between the body and the bar",
       "popups.position": "removed: the pop-up always sits at the right edge",
       "menu.margin": "removed: every surface sits theme.edgeMargin from the edge",
       "popups.margin": "removed: every surface sits theme.edgeMargin from the edge",
@@ -306,6 +306,8 @@ Singleton {
         property int columns: 2
         // The top level's input, as an entry's `input`: the catch-all line to a plugin or a command.
         property var input: null
+        // The top level's islands, top to bottom: `input`, `body` (once) and `bar`.
+        property var layout: ["input", "body", "bar"]
         // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.
         property bool splitBar: false
         // Shows the key listing the rest on the bars that have one (`? keys`, Ask's `C-? keys`); off, the key still acts.

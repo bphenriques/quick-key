@@ -60,7 +60,23 @@ Singleton {
     return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), patternProblems(json.music?.titleMatch ?? ""),
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
-      levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null), input);
+      levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null), input, layoutProblems(json.menu ?? {}));
+  }
+
+  // The islands a layout names, each at most once.
+  readonly property var islands: ["input", "body", "bar"]
+
+  // A layout draws its levels in its one body; menu.input shows only where it has an input.
+  function layoutProblems(menu) {
+    if (menu.layout == null) return [];
+    const layout = Array.from(menu.layout);
+    const count = name => layout.filter(island => island === name).length;
+    const found = layout.filter(island => !islands.includes(island))
+      .map(island => typeof island === "string" ? "menu.layout names '" + island + "', none of " + islands.join(", ") : "menu.layout holds a " + Config.kind(island) + ", not an island's name");
+    if (!count("body")) found.push("menu.layout shows no body, where levels draw");
+    found.push(...islands.filter(name => count(name) > 1).map(name => "menu.layout shows " + name + " more than once"));
+    if (menu.input != null && !count("input")) found.push("menu.input is set, but menu.layout shows no input");
+    return found;
   }
 
   // What a number takes beyond being one: 0 or more, an opacity at most 1, and these their own [least, most]: sizes past which no screen lays the shell out, so a typo fails here rather than on screen.

@@ -30,6 +30,14 @@ ShellRoot {
     ["a setting since removed beside a misspelt one", { menu: { edge: "top" }, audio: { stepp: 1 } }, ["menu.edge is removed", "audio.stepp is not a setting"]],
     ["the top level's bar under its old name", { menu: { header: { left: [] } } }, "menu.header is now menu.bar"],
     ["the bar split into islands under its old name", { menu: { islands: true } }, "menu.islands is now menu.splitBar"],
+    ["the input's place under its old setting", { menu: { inputSide: "bar" } }, "menu.inputSide is now menu.layout"],
+    ["a layout naming no island", { menu: { layout: ["input", "body", "tray"] } }, "menu.layout names 'tray', none of input, body, bar"],
+    ["a layout holding a map", { menu: { layout: ["body", { level: "t" }] } }, "menu.layout holds a map, not an island's name"],
+    ["a layout without a body", { menu: { layout: ["input", "bar"] } }, "menu.layout shows no body"],
+    ["a layout with two bodies", { menu: { layout: ["body", "body", "bar"] } }, "menu.layout shows body more than once"],
+    ["a layout with two inputs", { menu: { layout: ["input", "body", "input"] } }, "menu.layout shows input more than once"],
+    ["a layout with two bars", { menu: { layout: ["bar", "body", "bar"] } }, "menu.layout shows bar more than once"],
+    ["a top-level input on a layout without one", { plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" }, layout: ["body", "bar"] } }, "menu.input is set, but menu.layout shows no input"],
     ["a level's bar under its old name", menu([{ key: "a", desc: "A", icon: "x", submenu: [], header: { right: [] } }]), "'A' in the top level sets header, now bar"],
     ["an entry without a key beside a command plugin named as a removed one", { plugins: { notifications: { type: "command", read: "true" } }, menu: { entries: [{ desc: "Lock", icon: "x", cmd: "true" }] } }, "'Lock' in the top level needs a key"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
@@ -128,6 +136,11 @@ ShellRoot {
         name: "a top-level input handing a plugin its text has nothing wrong",
         timeout: 0,
         until: () => root.names({ plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" } } }, [])
+      },
+      {
+        name: "a layout in any order, or without an input or a bar, has nothing wrong",
+        timeout: 0,
+        until: () => root.names({ menu: { layout: ["bar", "body", "input"] } }, []) && root.names({ menu: { layout: ["body"] } }, [])
       },
       {
         name: "a row without an icon has nothing wrong",

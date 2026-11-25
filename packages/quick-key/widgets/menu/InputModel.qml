@@ -8,8 +8,8 @@ QtObject {
 
   required property MenuModel menu
 
-  // { desc, cmd, plugin, context, after }: an entry's `input`, or `menu.input` at the top level.
-  readonly property var input: menu.level === null ? Config.menu.input ?? null : menu.level.entry?.input ?? null
+  // { desc, cmd, plugin, context, after }: an entry's `input`, or `menu.input` at the top level; none where the layout shows no input.
+  readonly property var input: !menu.layout.includes("input") ? null : menu.level === null ? Config.menu.input ?? null : menu.level.entry?.input ?? null
   // Without a `cmd`: its own plugin, else the one the level lists.
   readonly property var plugin: input && !input.cmd ? Plugins.get(input.plugin ?? menu.level?.entry?.list ?? "") : null
   readonly property bool busy: plugin?.busy ?? false
