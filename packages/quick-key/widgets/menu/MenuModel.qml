@@ -22,51 +22,34 @@ Scope {
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   readonly property var level: stack[stack.length - 1] ?? null
-  // A model per view in Views, made from the file it names.
-  readonly property var viewModels: Object.keys(Views.builtin)
-    .reduce((models, name) => Object.assign(models, { [name]: Qt.createComponent(Views.builtin[name].model).createObject(root) }), {})
-  readonly property var viewModel: viewModels[level?.entry?.view] ?? null
-  readonly property var view: viewModel ? Views.builtin[level.entry.view] : null
+  // The level the body shows, whose state the views and keys read through the menu.
+  readonly property LevelModel body: LevelModel {
+    menu: root
+    level: root.level
+  }
+  readonly property var viewModel: body.viewModel
+  readonly property var view: body.view
   readonly property InputModel island: InputModel {
     menu: root
   }
-  // A level opened to pick (Picker, a bar +N) always filters.
-  property bool filterOn: false
-  readonly property bool filtering: (filterOn || !!level?.picking) && !!level?.entry?.list
-  // Rows held while filtering, so the body keeps its height.
-  property int filterSlots: 9
-  readonly property ListFilter filter: ListFilter {
-    size: root.filterSlots
-    items: root.filtering ? root.ordered(root.level.entry.list, root.level.entry.pins, root.levelList).filter(item => item.id !== undefined) : []
-  }
-  // Read once for every entry that acts on it.
-  readonly property var levelList: Lists.items(level?.entry?.list)
-  readonly property var items: itemsOf(level)
-  readonly property var actions: items.filter(item => !item.listed)
-  // A level with a list or a view is its content, its actions on its bar (rule 4); any other is a menu, its actions its rows.
-  readonly property bool content: level !== null && kinds[level.kind].content(level)
-  readonly property var bodyActions: content ? [] : actions.map(marked)
-  readonly property var barActions: content && !filtering ? actions : []
-  readonly property var rows: filtering ? filter.rows : items.filter(item => item.listed).map(marked)
-  // At rest the arrows move a cursor over a list level's rows, or a menu's grid, by the pairs its own rows leave free (rule 7); `press` never reaches it.
-  readonly property var cursorRows: filtering || viewModel ? [] : content ? items.filter(item => item.listed && item.id !== undefined) : actions
-  readonly property Cursor cursor: Cursor {
-    ids: root.cursorRows.map(root.idOf)
-    columns: root.content ? 1 : root.columns
-    free: [["Up", "Down"]].concat(root.content ? [] : [["Left", "Right"]]).filter(pair => root.cursorRows.length && !pair.some(key => root.find(root.items, key))).reduce((all, pair) => all.concat(pair), [])
-    from: root.content ? root.cursorRows.find(row => row.active)?.id : undefined
-  }
-  // What Return runs, filtering or at rest.
-  readonly property var cursorItem: filtering ? filter.rows.find(row => row.current) ?? null : cursorRows.find(row => idOf(row) === cursor.current) ?? null
-  readonly property int width: level?.width ?? Config.menu.width
-  // No more columns than its width holds at about twelve characters each.
-  readonly property int columns: Math.max(1, Math.min(level?.entry?.columns ?? Config.menu.columns, Math.floor(width / (12 * Metrics.cell))))
-  readonly property string emptyText: level?.entry?.list && rows.length === 0 ? (filtering && filter.emptyText) || Lists.empty(level.entry.list) : ""
+  readonly property bool filtering: body.filtering
+  readonly property int filterSlots: body.filterSlots
+  readonly property ListFilter filter: body.filter
+  readonly property var items: body.items
+  readonly property bool content: body.content
+  readonly property var bodyActions: body.bodyActions
+  readonly property var barActions: body.barActions
+  readonly property var rows: body.rows
+  readonly property Cursor cursor: body.cursor
+  readonly property var cursorItem: body.cursorItem
+  readonly property int width: body.width
+  readonly property int columns: body.columns
+  readonly property string emptyText: body.emptyText
   readonly property var topBar: ({ left: Config.headerSlot("left"), center: Config.headerSlot("center"), right: Config.headerSlot("right") })
-  readonly property var barSlots: level === null ? slotsOf(topBar) : kinds[level.kind].bar(level)
+  readonly property var barSlots: level === null ? slotsOf(topBar) : body.kinds[level.kind].bar(level)
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
   // Never for the cursor's keys alone, so a level holds still as it shows (rule 4).
-  readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > cursorLegend.length
+  readonly property bool barShown: barItems.length > 0 || barActions.length > 0 || legend.length > body.cursorLegend.length
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
       Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
@@ -79,105 +62,27 @@ Scope {
     holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
     cursor.free.length ? [{ key: cursor.free, paired: true, desc: Words.helpMove }] : [],
     cursor.free.length && !content ? [{ key: "Return", desc: Words.helpRun }] : [],
-    cursor.free.length && cursorRows.some(row => returnOf(row) !== "Return") ? [{ key: "Shift+Return", desc: Words.helpRunShifted }] : [],
+    cursor.free.length && body.cursorRows.some(row => body.returnOf(row) !== "Return") ? [{ key: "Shift+Return", desc: Words.helpRunShifted }] : [],
     rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
     slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
     island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
     island.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
     [{ key: "Escape", desc: Words.helpEscape }]
   )
-  readonly property bool slashFilters: !!level?.entry?.list && !find(items, "/")
-  readonly property int unhidden: levelList.filter(item => !item.hidden).length
+  readonly property bool slashFilters: body.slashFilters
   readonly property var hints: held === "Help" ? help : holds[held] ?? []
-  // Only keys the state changes; fixed ones are listed on `?`, and show here too as its entry's `legend` names them.
-  readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
-    .concat(slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
-    // At the top, the key listing the rest, which every surface with such a list shows so.
-    .concat(level === null && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
-    .concat(MenuKeys.pick(help, level?.entry?.legend))
-  readonly property var cursorLegend: (cursorItem && (content || filtering) ? [{ key: returnOf(cursorItem), what: cursorItem.verb || Words.pick, clickable: true }] : [])
-    .concat(cursorItem?.actions?.length > 0 || cursorItem?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
-  readonly property var legend: filtering ? filter.legend.concat(cursorLegend, filter.query ? [{ key: "Escape", what: Words.clear, clickable: true }] : []) : levelLegend.concat(cursorLegend)
-  readonly property string error: viewModel ? viewModel.error : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
-
-  function itemOf(entry) {
-    const action = actionOf(entry);
-    return {
-      key: entry.key ?? "",
-      desc: entry.desc,
-      status: entry.status ?? "",
-      format: entry.format ?? "",
-      icon: entry.icon ?? (action ? action.icon() : ""),
-      detail: action?.detail ? action.detail(levelList) : "",
-      enabled: available(entry),
-      paired: isPair(entry),
-      active: isOn(entry.activeWhen ?? action?.state),
-      entry: entry
-    };
-  }
-
-  // Each kind of level: its items, whether it is content (actions on its bar), and its bar; a new kind is one more here.
-  readonly property var kinds: ({
-      entry: {
-        content: level => !!(level.entry.list || level.entry.view),
-        bar: level => root.slotsOf(level.entry.header ?? {}),
-        // Own rows by letter (inLevel: a value beside the label, with its meter), then the list by digit.
-        items: level => Array.from(level.entry.submenu ?? [])
-          .map(entry => Object.assign(root.itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true }))
-          .concat(root.numbered(level.entry.list, level.entry.pins))
-      },
-      menu: {
-        content: () => false,
-        bar: () => ({ left: [root.appOf(root.stack.filter(level => level.kind === "menu"))], center: [], right: [] }),
-        items: level => {
-          const children = Array.from(menuOpener.children.values).filter(child => !child.isSeparator && child.enabled);
-          const labels = children.map(child => child.text.replace(/_/g, ""));
-          const keys = MenuKeys.assign(labels);
-          return children.map((child, i) => ({
-            key: keys[i],
-            desc: labels[i],
-            glyphs: child.checkState === Qt.Checked ? [Glyphs.check] : child.hasChildren ? [Glyphs.submenu] : [],
-            select: child.hasChildren ? () => root.push({ kind: "menu", title: labels[i], handle: child, width: level.width }) : () => {
-              // Before hide(), which releases the menu this entry belongs to.
-              child.triggered();
-              root.hide();
-            }
-          }));
-        }
-      },
-      actions: {
-        content: () => false,
-        bar: level => ({ left: [{ key: "", desc: level.title, icon: level.icon, named: true }], center: [], right: [] }),
-        items: level => Array.from(level.actions).map(action => ({
-            key: action.key,
-            desc: action.desc,
-            icon: action.icon,
-            closes: action.closes,
-            select: () => {
-              if (!action.closes) root.back();
-              action.select();
-            }
-          }))
-      }
-    })
-
-  function itemsOf(level) {
-    return level === null ? entries.map(itemOf) : kinds[level.kind].items(level);
-  }
+  readonly property var legend: body.legend
+  readonly property string error: body.error
 
   function slotsOf(bar) {
     return { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) };
-  }
-
-  function clearViews() {
-    for (const model of Object.values(viewModels)) model.clearFocus();
   }
 
   // A name is a status or plugin to show, an entry with a list each of its items; `uid` is what the view follows an item by.
   function barOf(slot) {
     return Array.from(slot ?? []).reduce((items, part) => items.concat(typeof part === "string" ? [{ key: "", desc: part, status: part, uid: part }]
       : part.list ? barList(part).map(item => Object.assign({}, item, { uid: part.list + ":" + (item.id ?? "more") }))
-      : [Object.assign(itemOf(part), { uid: part.key || part.desc })]), []);
+      : [Object.assign(body.itemOf(part), { uid: part.key || part.desc })]), []);
   }
 
   function shortcutOf(item) {
@@ -197,41 +102,10 @@ Scope {
   // `limit` items on digits, then 0 for the rest, filtered on a level of its own.
   function barList(entry) {
     const all = Lists.items(entry.list);
-    const shown = numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
+    const shown = body.numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
     const onBar = shown.map(item => item.id);
     const more = all.filter(item => !item.hidden && !onBar.includes(item.id)).length;
     return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list) }) : shown;
-  }
-
-  // Pins keep their digit, dimmed while what they match is absent.
-  function ordered(list, pins, items) {
-    const rest = Array.from(items);
-    const pinned = Array.from(pins ?? []).map(pin => {
-      const index = rest.findIndex(item => MenuKeys.glob(pin.match, item.id));
-      if (index < 0) return { desc: pin.label, icon: pin.icon ?? Lists.builtin[list]?.icon ?? Glyphs.tray, enabled: false };
-      const item = rest.splice(index, 1)[0];
-      return Object.assign({}, item, { desc: pin.label, icon: pin.icon ?? item.icon });
-    });
-    return pinned.concat(rest);
-  }
-
-  // A hidden item shows only when filtering.
-  function numbered(list, pins, items = Lists.items(list)) {
-    return ordered(list, pins, Array.from(items).filter(item => !item.hidden)).slice(0, 9).map((item, i) => Object.assign({}, item, { key: String(i + 1), listed: true }));
-  }
-
-  // A listed item by its id, a row by its first key, else its label.
-  function idOf(item) {
-    return item.listed ? item.id : MenuKeys.names(item.key ?? "")[0] || item.desc;
-  }
-
-  function marked(item) {
-    return item === cursorItem ? Object.assign({ current: true }, item) : item;
-  }
-
-  // What ends the session takes Shift (rule 6): a row on a capital runs on S-RET alone.
-  function returnOf(item) {
-    return /^[A-Z]$/.test(item.key) ? "Shift+Return" : "Return";
   }
 
   function keyChars(group) {
@@ -241,25 +115,6 @@ Scope {
   // Actions flow across, so a column is every nth one.
   function columnChars(index, columns) {
     return keyChars(bodyActions.filter((_, i) => i % columns === index % columns));
-  }
-
-  // A command can always run; an action when it has something to act on.
-  function available(entry) {
-    return entry.action ? actionOf(entry)?.available(levelList) ?? false : true;
-  }
-
-  function actionOf(entry) {
-    return Actions.builtin[entry.action] ?? Plugins.get(level?.entry?.list ?? "")?.actions?.[entry.action];
-  }
-
-  // One row running one command or action per key (Down and Up).
-  function isPair(entry) {
-    return MenuKeys.isPair(entry) || !!actionOf(entry)?.pair;
-  }
-
-  function isOn(state) {
-    const read = States.builtin[state];
-    return read ? read() : Plugins.get(state)?.active ?? false;
   }
 
   function show() {
@@ -278,7 +133,7 @@ Scope {
 
   // By its key, in the body or the bar, as a compositor shortcut opens it.
   function toggleEntry(key) {
-    const item = find(itemsOf(null).concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
+    const item = find(body.itemsOf(null).concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
     if (!item) return;
     // A bar list's item has no entry to toggle: it runs.
     if (item.entry && level?.entry === item.entry) {
@@ -308,7 +163,7 @@ Scope {
   function reset() {
     stack = [];
     base = 0;
-    stopFilter();
+    body.stopFilter();
     internal.held = "";
     internal.focus = "body";
     cursor.point(undefined);
@@ -317,18 +172,18 @@ Scope {
   function back() {
     const left = level;
     stack = stack.slice(0, -1);
-    stopFilter();
+    body.stopFilter();
     internal.focus = left?.inputFocused ? "input" : "body";
     cursor.point(left?.cursor);
-    clearViews();
+    body.clearViews();
   }
 
   function push(next) {
     stack = stack.concat([Object.assign({}, next, { inputFocused: inputFocused, cursor: cursor.current })]);
-    stopFilter();
+    body.stopFilter();
     internal.focus = "body";
     cursor.point(undefined);
-    clearViews();
+    body.clearViews();
   }
 
   function find(candidates, name) {
@@ -337,12 +192,12 @@ Scope {
 
   // A click on a pair runs nothing; an action keeps the menu open by default.
   function run(entry, name) {
-    const action = actionOf(entry);
+    const action = body.actionOf(entry);
     if (action) {
       const second = MenuKeys.names(entry.key).indexOf(name);
       if (action.pair && second < 0) return;
       // Read before hide(), which leaves the level.
-      const list = levelList;
+      const list = body.levelList;
       if (entry.keepOpen === false || action.closes) hide();
       internal.ran = entry;
       action.run(second === 1, list, root);
@@ -358,20 +213,6 @@ Scope {
     Commands.run(cmd);
   }
 
-  function startFilter() {
-    if (!level?.entry?.list) return;
-    filterSlots = Math.max(1, rows.length);
-    filter.point(cursor.current ?? "");
-    filterOn = true;
-  }
-
-  function stopFilter() {
-    // At rest, the cursor is on the row the filter's arrows moved to, if any.
-    if (filtering) cursor.point(filter.current);
-    filterOn = false;
-    filter.reset();
-  }
-
   // Over a plugin panel it is the only level, so Escape shows the panel again.
   function pickList(list) {
     const over = !open;
@@ -379,12 +220,12 @@ Scope {
     if (!open) show();
     push({ kind: "entry", entry: { list: list }, picking: true, width: Config.menu.width });
     if (over) base = stack.length;
-    filterSlots = 9;
+    body.filterSlots = 9;
   }
 
   // Escape once the input is cleared: an input gives the keys back to its body first, as a card's reply does.
   function stepBack() {
-    if (filtering && !level.picking) return stopFilter();
+    if (filtering && !level.picking) return body.stopFilter();
     if (inputFocused) return focusOn("body");
     if (viewModel && viewModel.stepBack()) return;
     if (stack.length <= base) Panels.back();
@@ -427,7 +268,7 @@ Scope {
       internal.ran = item;
       Plugins.get(item.status)?.activate();
     } else if (item.entry.submenu || item.entry.list || item.entry.view) {
-      const next = viewModels[item.entry.view];
+      const next = body.viewModelOf(item.entry.view);
       if (next) next.reset();
       push({ kind: "entry", entry: item.entry, width: item.entry.width });
     } else {
@@ -446,7 +287,7 @@ Scope {
     if (item.adjust) return item.adjust(up);
     const adjust = Statuses.of(item.status ?? "").adjust;
     const pair = item.entry?.submenu ? Array.from(item.entry.submenu).find(entry => adjust && entry.action === adjust) : item.paired ? item.entry : null;
-    if (pair && available(pair)) run(pair, MenuKeys.names(pair.key)[up ? 1 : 0]);
+    if (pair && body.available(pair)) run(pair, MenuKeys.names(pair.key)[up ? 1 : 0]);
   }
 
   // Escape and Tab are kept free by Validation.
@@ -466,7 +307,7 @@ Scope {
   // After the view and the level's rows, so a level binding an arrow keeps it; `press` never reaches it, so a key path never depends on the cursor.
   function cursorKey(name) {
     if (cursor.key(name)) return true;
-    if (cursorItem && name === returnOf(cursorItem)) activate(cursorItem, cursorItem.key);
+    if (cursorItem && name === body.returnOf(cursorItem)) activate(cursorItem, cursorItem.key);
     else if (cursorItem && name === "Alt+Return") openMenu(cursorItem);
     else return false;
     return true;
@@ -485,7 +326,7 @@ Scope {
     else if (viewModel && viewModel.handleKey(name)) return true;
     else if (island.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
-    else if (name === "/" && slashFilters) startFilter();
+    else if (name === "/" && slashFilters) body.startFilter();
     else if (target) openMenu(target);
     else if (barred) activate(barred, key);
     else return false;
@@ -544,11 +385,6 @@ Scope {
     function onRequested(list) {
       root.pickList(list);
     }
-  }
-
-  QsMenuOpener {
-    id: menuOpener
-    menu: root.level?.handle ?? null
   }
 
   QtObject {

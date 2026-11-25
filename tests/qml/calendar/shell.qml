@@ -3,7 +3,6 @@ import Quickshell
 import Quickshell.Io
 import qs
 import qs.services
-import qs.widgets.menu
 import qs.widgets.menu.calendar
 
 // The calendar's dates and the events it shows on them; the events are events.json's, around 12 November 2026.
@@ -61,14 +60,14 @@ ShellRoot {
         until: () => {
           const now = Clock.date.getTime();
           const today = Clock.dayKey(Clock.date);
-          menu.viewModels.calendar.select(new Date());
-          menu.viewModels.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
-          const ahead = menu.viewModels.calendar.unfolded;
-          menu.viewModels.calendar.focus({ id: "over", key: today, day: new Date(), event: { allDay: false, end: new Date(now - 60000) } });
-          menu.viewModels.calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
-          const kept = menu.viewModels.calendar.unfolded;
-          menu.viewModels.calendar.stepBack();
-          return !ahead && kept && !menu.viewModels.calendar.unfolded;
+          calendar.select(new Date());
+          calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
+          const ahead = calendar.unfolded;
+          calendar.focus({ id: "over", key: today, day: new Date(), event: { allDay: false, end: new Date(now - 60000) } });
+          calendar.focus({ id: "next", key: today, day: new Date(), event: { allDay: false, end: new Date(now + 3600000) } });
+          const kept = calendar.unfolded;
+          calendar.stepBack();
+          return !ahead && kept && !calendar.unfolded;
         }
       },
       {
@@ -101,14 +100,14 @@ ShellRoot {
       {
         name: "Return on a focused event shows it whole, its legend then naming Return no more; Escape hides it, then leaves the event",
         until: () => {
-          const returns = () => menu.viewModels.calendar.legend.some(key => key.key === "Return");
-          menu.viewModels.calendar.select(new Date(2026, 10, 12));
-          menu.viewModels.calendar.handleKey("Return");
-          const focused = menu.viewModels.calendar.focused !== "" && !menu.viewModels.calendar.details && returns();
-          menu.viewModels.calendar.handleKey("Return");
-          const shown = menu.viewModels.calendar.details && !returns();
-          return focused && shown && menu.viewModels.calendar.stepBack() && !menu.viewModels.calendar.details && menu.viewModels.calendar.focused !== ""
-            && menu.viewModels.calendar.stepBack() && menu.viewModels.calendar.focused === "" && !menu.viewModels.calendar.stepBack();
+          const returns = () => calendar.legend.some(key => key.key === "Return");
+          calendar.select(new Date(2026, 10, 12));
+          calendar.handleKey("Return");
+          const focused = calendar.focused !== "" && !calendar.details && returns();
+          calendar.handleKey("Return");
+          const shown = calendar.details && !returns();
+          return focused && shown && calendar.stepBack() && !calendar.details && calendar.focused !== ""
+            && calendar.stepBack() && calendar.focused === "" && !calendar.stepBack();
         }
       },
       {
@@ -130,9 +129,9 @@ ShellRoot {
         name: "two events alike on one day are told apart by uid, so Down steps from one to the other",
         until: () => {
           const pair = Calendar.timeline.filter(row => row.event.title === "Standup");
-          menu.viewModels.calendar.focus(pair[0]);
-          menu.viewModels.calendar.handleKey("Down");
-          return pair.length === 2 && pair[0].id !== pair[1].id && menu.viewModels.calendar.focused === pair[1].id;
+          calendar.focus(pair[0]);
+          calendar.handleKey("Down");
+          return pair.length === 2 && pair[0].id !== pair[1].id && calendar.focused === pair[1].id;
         }
       },
       {
@@ -184,7 +183,7 @@ ShellRoot {
     selected: new Date(2026, 10, 12)
   }
 
-  MenuModel {
-    id: menu
+  CalendarModel {
+    id: calendar
   }
 }

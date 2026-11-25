@@ -34,7 +34,7 @@ ShellRoot {
   // A menu's grid of rows, two columns, a capital among them (rule 6).
   readonly property var gridLevel: ({ kind: "actions", title: "Grid", actions: [{ key: "f", desc: "Row", select: () => root.ran = "row" },
     { key: "R", desc: "Capital", select: () => root.ran = "capital" }, { key: "g", desc: "Third", select: () => root.ran = "third" }] })
-  readonly property var startFilter: () => menu.startFilter()
+  readonly property var startFilter: () => menu.body.startFilter()
   readonly property var cursorDown: () => menu.cursorKey("Down")
   readonly property var cursorCapital: () => menu.cursorKey("Down") && menu.cursorKey("Right")
 
@@ -83,7 +83,7 @@ ShellRoot {
     if (!menu.open) return "item";
     if (menu.level?.kind === "actions" && menu.stack.length > was.depth) return "item menu";
     if (menu.held !== was.held) return menu.held === "Help" ? "help" : "help closed";
-    if (menu.viewModels.calendar.selected.getTime() !== was.day) return "view";
+    if (menu.viewModel && menu.viewModel.selected.getTime() !== was.day) return "view";
     if (menu.filtering !== was.filtering) return "filter";
     if (menu.stack.length < was.depth) return "back";
     if (menu.inputFocused) return "input";
@@ -99,7 +99,7 @@ ShellRoot {
     menu.push(level);
     if (before) before();
     ran = "";
-    const was = { held: menu.held, day: menu.viewModels.calendar.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused, cursor: menu.cursor.current };
+    const was = { held: menu.held, day: menu.viewModel?.selected.getTime(), filtering: menu.filtering, depth: menu.stack.length, input: menu.inputFocused, cursor: menu.cursor.current };
     const did = outcome(menu.filtering ? menu.filterKey(name) : menu.handleName(name) || menu.cursorKey(name), was);
     menu.hide();
     return did;
@@ -209,7 +209,7 @@ ShellRoot {
       },
       {
         name: "pinned items keep their digits, dimmed while absent; the rest follow",
-        until: () => JSON.stringify(menu.numbered("devices", [{ match: "b-*", label: "Bee" }, { match: "z-*", label: "Zed" }])
+        until: () => JSON.stringify(menu.body.numbered("devices", [{ match: "b-*", label: "Bee" }, { match: "z-*", label: "Zed" }])
           .map(item => [item.key, item.desc, item.enabled !== false])) === '[["1","Bee",true],["2","Zed",false],["3","a-1",true]]'
       },
       {
@@ -232,7 +232,7 @@ ShellRoot {
       {
         name: "an action brings its icon and pairing, and dims with nothing to act on",
         until: () => {
-          const [play, track, awake] = menu.itemsOf({ kind: "entry", entry: { submenu: [
+          const [play, track, awake] = menu.body.itemsOf({ kind: "entry", entry: { submenu: [
             { key: "p", desc: "Play", action: "playPause" },
             { key: ["Left", "Right"], desc: "Track", action: "track", icon: "T" },
             { key: "k", desc: "Keep awake", action: "keepAwake" }
@@ -288,7 +288,7 @@ ShellRoot {
           menu.hide();
           menu.show();
           menu.push({ kind: "entry", entry: { list: "devices" } });
-          menu.startFilter();
+          menu.body.startFilter();
           const filtered = menu.filtering;
           menu.stepBack();
           const rest = !menu.filtering && menu.stack.length === 1;
@@ -358,7 +358,7 @@ ShellRoot {
           plugin.actions = { flip: { icon: () => Glyphs.search, detail: () => "on", available: () => true, run: () => ran++ } };
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "f", desc: "Flip", action: "flip" }, { key: "g", desc: "Gone", action: "gone" }] } });
-          const [flip, gone] = menu.actions;
+          const [flip, gone] = menu.body.actions;
           menu.handleName("f");
           menu.hide();
           plugin.actions = {};
@@ -374,8 +374,8 @@ ShellRoot {
           plugin.actions = { step: { pair: true, icon: () => "", available: () => true, run: up => steps.push(up) } };
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: ["Left", "Right"], desc: "Step", action: "step" }] } });
-          menu.act(menu.actions[0], true);
-          menu.act(menu.actions[0], false);
+          menu.act(menu.body.actions[0], true);
+          menu.act(menu.body.actions[0], false);
           menu.hide();
           plugin.actions = {};
           return JSON.stringify(steps) === "[true,false]";
@@ -553,12 +553,12 @@ ShellRoot {
           menu.hide();
           menu.show();
           menu.push(root.bareLevel);
-          menu.startFilter();
+          menu.body.startFilter();
           menu.filterKey("Down");
           menu.filterKey("Down");
           menu.stepBack();
           const carried = !menu.filtering && menu.cursorItem?.id === "i2" && menu.rows[2].current;
-          menu.startFilter();
+          menu.body.startFilter();
           menu.filter.search("i1");
           menu.stepBack();
           const none = !menu.filtering && !menu.cursorItem;

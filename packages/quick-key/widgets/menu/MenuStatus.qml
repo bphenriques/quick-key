@@ -3,7 +3,7 @@ import qs
 import qs.ui
 import qs.builtins
 
-// A menu item (MenuModel.itemOf, or a listed one): its status by name, or its icon and label without one, drawn as a listed item; on a row its label stays and the status follows as a value, in a bar the status alone.
+// A menu item (LevelModel.itemOf, or a listed one): its status by name, or its icon and label without one, drawn as a listed item; on a row its label stays and the status follows as a value, in a bar the status alone.
 StatusLine {
   id: root
 
