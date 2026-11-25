@@ -152,6 +152,13 @@ ShellRoot {
       item: ({ desc: "Calendar", status: "clock" })
     }
 
+    MenuRow {
+      id: pinRow
+      y: 70
+      menu: menu
+      level: menu.body
+    }
+
     MenuHeader {
       id: header
       y: 40
@@ -1026,6 +1033,20 @@ ShellRoot {
           const ended = !agent.watched;
           Config.menu.input = null;
           return visit !== "" && asking && tasks && back && ended && root.unpinning();
+        }
+      },
+      {
+        name: "a right click on a pin's row gives the pin the keys, so stepping back from the item's menu returns to it",
+        until: () => {
+          const pin = root.pinning(2);
+          pinRow.level = pin;
+          pinRow.item = { key: "1", desc: "A", actions: [{ key: "d", desc: "Delete", select: () => {} }] };
+          pinRow.secondaryActivated();
+          const opened = menu.level?.kind === "actions" && menu.focused === menu.body;
+          menu.stepBack();
+          const back = menu.levels.length === 0 && menu.focused === pin;
+          pinRow.level = menu.body;
+          return opened && back && root.unpinning();
         }
       },
       {

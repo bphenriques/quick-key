@@ -184,6 +184,13 @@ Scope {
     focusIsland(from.island);
     activate(item, undefined, from);
   }
+
+  // A right click opens its own menu, its island taking the keys first, so stepping back returns to it.
+  function secondaryClick(item, from) {
+    focusIsland(from.island);
+    openMenu(item);
+  }
+
   function hold(modifier) {
     internal.held = modifier;
   }

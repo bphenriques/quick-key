@@ -21,7 +21,7 @@ ListItem {
   enabled: row.item.enabled !== false
   current: !!row.item.current
   onActivated: menu.click(row.item, row.level)
-  onSecondaryActivated: menu.openMenu(row.item)
+  onSecondaryActivated: menu.secondaryClick(row.item, row.level)
   onScrolled: up => menu.act(row.item, up, row.level)
 
   KeyHint {
