@@ -128,7 +128,7 @@ ShellRoot {
           && Plugins.get("layouts").text === "B" && Plugins.get("layouts").glyph === "I"
       },
       {
-        name: "tasks list by due, undated last, done ones in place until the menu opens, a late one in warning with an alarm, a priority as its glyph and a list's colour as a swatch; the status counts the late ones when there are any, else the open ones due by today, and names the most urgent as a field",
+        name: "tasks list by due, undated last, done ones in place until the menu opens, a late one in warning with an alarm, a priority as its glyph and a list's colour as a swatch; the status counts the late ones when there are any, else the open ones due by today, and names the most urgent as a field; idle, it is not busy",
         start: () => root.tasks("write"),
         until: () => {
           const tasks = Plugins.get("tasks");
@@ -142,7 +142,7 @@ ShellRoot {
             && tasks.tone === "warning" && item("e").done && item("e").icon === Glyphs.checkboxChecked
             && ["a", "e", "f", "c", "d"].map(id => item(id).tone).join() === "warning,,,," && item("e").glyphs.length === 0
             && JSON.stringify(item("a").glyphs) === JSON.stringify([Glyphs.late]) && item("b").glyphs[0] === Glyphs.priorities.high
-            && item("a").swatch === "#4285f4" && item("d").swatch === "";
+            && item("a").swatch === "#4285f4" && item("d").swatch === "" && tasks.busy === false;
         }
       },
       {

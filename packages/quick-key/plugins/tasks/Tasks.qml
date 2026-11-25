@@ -98,7 +98,7 @@ Plugin {
   }
 
   // A tick stays shown while its task has a command queued or running.
-  function busy(id) {
+  function ticking(id) {
     return queue.some(job => ticks(job, id)) || toggler.running && ticks(toggler.job, id);
   }
 
@@ -120,7 +120,7 @@ Plugin {
 
   // The file has a tick once it says the same with no command of its task left: it needs showing on its own no longer.
   function landed() {
-    pending = kept((id, done) => busy(id) || Array.from(state.tasks ?? []).find(task => task.id === id)?.done !== done);
+    pending = kept((id, done) => ticking(id) || Array.from(state.tasks ?? []).find(task => task.id === id)?.done !== done);
   }
 
   // An added task needs showing on its own no longer once the file holds its title.
@@ -176,7 +176,7 @@ Plugin {
   Timer {
     id: settle
     interval: 5000
-    onTriggered: root.pending = root.kept(id => root.busy(id))
+    onTriggered: root.pending = root.kept(id => root.ticking(id))
   }
 
   // Each tick and add written in turn; the sync after the last takes them to the server.
