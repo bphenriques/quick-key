@@ -81,7 +81,7 @@ An entry's `input` gives its level a line of text on the input island, a bar ent
 
 An input takes letters only while focused, so keys hold still. `TAB` moves the keys from the body to the input on every level, and `TAB` or `S-TAB` back; a click focuses it too. `RET` sends and keeps it focused, `C-S-RET` sends and closes the menu, and `ESC` clears it, then gives the keys back to the body, as `TAB` does. Unsent text stays until sent or cleared, closing the menu too. Focused, its keys show on its right. Empty, it shows its `desc`, which ends in `...`, as what waits on you does.
 
-The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). What a plugin makes of it shows on the input island until done (a task until listed), and the island never shrinks within the visit: until the menu closes. The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
+The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level lists (tasks adds it as a task). What a plugin makes of it shows on the input island until done (a task until listed), and the island never shrinks within the visit. The config says where text goes; how the write is done (order, retries, reporting) is the command's, never a new field.
 
 ```nix
 { key = "k"; desc = "Tasks"; status = "tasks"; list = "tasks"; input = { desc = "Add a task..."; }; }
@@ -89,7 +89,7 @@ The text goes to `cmd` as `$1`, else to `plugin`, else to the plugin the level l
 
 `context` is what a plugin is told beside each message, on a line of its own; the conversation shows the text as typed. Word it as where the text comes from, not as an order, since a reply to the agent's question carries it too. `after` runs, given nothing, once the write is done: `cmd` exiting 0, a task added, Ask answering. A command reports its own failure (`notify-send`).
 
-Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows above the prompt: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). Until the menu closes, the next send continues the conversation, from any input giving Ask its text, each with its own `context`.
+Given to [Ask](ask.md), the input's island is the working area and the body the committed one. The turn shows above the prompt: what you sent as a bubble on the right, the answer as text on the left, with a spinner while it works. Then the level redraws with what happened. The island starts at a line each and grows away from the screen's edge, never shrinking within the visit. The prompt says what `RET` does next ("Reply...", nothing while it works). While you stay on the level, the next send continues the conversation, whichever island has the keys; leaving or closing ends it.
 
 An answer the island cannot hold (past three lines, a table, an approval) opens the whole conversation in Ask, and `ESC` there comes back. A click on the turn opens it too, where `C-C` copies the answer. A failure shows in alert, what you sent faded and given back, selected: `RET` retries it, typing replaces it. `C-S-RET` leaves the answer to a notification.
 

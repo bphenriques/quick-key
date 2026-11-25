@@ -25,9 +25,9 @@ QtObject {
   readonly property string draftKey: !input ? "" : JSON.stringify(menu.focused === menu.body ? menu.levels.map(level => level.entry?.key ?? "") : [menu.focused.island])
   readonly property string draft: draftOf(draftKey)
 
-  // The plugins the input showed in the menu's visit, which ends them all (Plugin.endVisit); the keys moving between islands end none.
+  // The plugins the input showed while the menu stays on one level, whose leaving, or the menu closing, ends them all (Plugin.endVisit); the keys moving between islands end none.
   property var visiting: []
-  readonly property string visit: menu.visit
+  readonly property string visit: menu.visit && JSON.stringify(menu.levels.map(level => level.entry?.key ?? level.kind))
   onVisitChanged: {
     for (const plugin of visiting) plugin.endVisit();
     visiting = [];

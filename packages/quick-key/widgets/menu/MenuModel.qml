@@ -26,7 +26,7 @@ Scope {
     .filter((name, index, all) => name && all.indexOf(name) === index)
   // The keys of the top-level entries the layout pins.
   readonly property var pinned: layout.filter(name => !["input", "body", "bar"].includes(name))
-  // While the menu shows in one layout: what never shrinks within it (a pin, the input) and the plugins its input showed keep it until it ends.
+  // While the menu shows in one layout, which a pin never shrinks within; the input's visit is a level's within it (InputModel.visit).
   readonly property string visit: inStack ? JSON.stringify(layout) : ""
   readonly property var level: levels[levels.length - 1] ?? null
   // The level the body shows.
@@ -184,7 +184,6 @@ Scope {
     focusIsland(from.island);
     activate(item, undefined, from);
   }
-
   function hold(modifier) {
     internal.held = modifier;
   }

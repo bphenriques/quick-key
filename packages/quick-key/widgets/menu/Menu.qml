@@ -87,12 +87,12 @@ Scope {
     islands: root.islands
   }
 
-  // The focused island's input; filtering, the filter takes it, the input waiting under it. It never shrinks within the menu's visit.
+  // The focused island's input; filtering, the filter takes it, the input waiting under it. It never shrinks within its visit.
   Island {
     id: inputIsland
     name: "input"
     shown: root.menu.input.input !== null || root.menu.focused.filtering
-    holdKey: root.menu.visit
+    holdKey: root.menu.input.visit
     padding: Config.theme.padding / 2
     // As a row's content is, so its key column lines up with the body's keys.
     inset: Metrics.itemPaddingX

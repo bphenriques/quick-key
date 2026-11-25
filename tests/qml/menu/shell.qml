@@ -1029,6 +1029,23 @@ ShellRoot {
         }
       },
       {
+        name: "opening a level ends the input's visit, where the keys moving to a pin and back do not",
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent) return false;
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          root.pinning(2);
+          const visit = menu.input.visit;
+          menu.handleName("t");
+          menu.stepBack();
+          const kept = visit !== "" && menu.input.visit === visit && agent.watched;
+          menu.handleName("a");
+          const ended = menu.input.visit !== visit && !agent.watched;
+          Config.menu.input = null;
+          return kept && ended && root.unpinning();
+        }
+      },
+      {
         name: "past a pin's limit 0 lists the rest in the body, from which Escape gives the keys back to the pin",
         until: () => {
           const pin = root.pinning(1);
