@@ -21,11 +21,11 @@ Scope {
   readonly property bool inputFocused: internal.focus === "input"
 
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
-  // The islands by name, top to bottom, each once, a pin by its key (Validation names what else is wrong).
-  readonly property var layout: Array.from(Config.menu.layout).map(part => typeof part === "string" ? part : pinnable(part?.level) ? part.level : "")
-    .filter((name, index, all) => name && all.indexOf(name) === index)
-  // The keys of the top-level entries the layout pins.
-  readonly property var pinned: layout.filter(name => !["input", "body", "bar"].includes(name))
+  // The deepest open level whose entry sets a layout, null for menu.layout's: a level without one opens in its body.
+  readonly property var home: levels.filter(level => level.entry?.layout).pop() ?? null
+  readonly property var layout: layoutOf(home)
+  // The keys of the entries the layout pins, on the level declaring it.
+  readonly property var pinned: pinsOf(layout)
   // While the menu shows in one layout, which a pin never shrinks within; the input's visit is a level's within it (InputModel.visit).
   readonly property string visit: inStack ? JSON.stringify(layout) : ""
   readonly property var level: levels[levels.length - 1] ?? null
@@ -36,8 +36,10 @@ Scope {
   }
   // The island with the keys: the body, or a pin; one leaving the layout gives them back to the body.
   readonly property LevelModel focused: modelOf(internal.island) ?? body
+  // The pins' levels, which the menu draws.
+  readonly property var pins: Array.from(pinLevels.instances)
   // What the shown islands list, for a list that works while shown (Lists.scanning).
-  readonly property var lists: [body].concat(Array.from(pins.instances)).map(model => model.level?.entry?.list ?? "")
+  readonly property var lists: [body].concat(pins).map(model => model.level?.entry?.list ?? "")
   readonly property InputModel input: InputModel {
     menu: root
   }
@@ -72,24 +74,35 @@ Scope {
     );
   }
 
-  // A pin names a top-level entry with a level by its key.
-  function pinnable(key) {
-    return entries.some(entry => entry.key === key && (entry.submenu || entry.list || entry.view));
+  // A level's entries: the top's, or an entry's submenu.
+  function entriesAt(at) {
+    return at ? Array.from(at.entry.submenu ?? []) : entries;
+  }
+
+  // The islands by name, top to bottom, each once, a pin by the key of an entry with a level on its own (Validation names what else is wrong).
+  function layoutOf(at) {
+    return Array.from(at ? at.entry.layout : Config.menu.layout)
+      .map(part => typeof part === "string" ? part : entriesAt(at).some(entry => entry.key === part?.level && (entry.submenu || entry.list || entry.view)) ? part.level : "")
+      .filter((name, index, all) => name && all.indexOf(name) === index);
+  }
+
+  function pinsOf(layout) {
+    return layout.filter(name => !["input", "body", "bar"].includes(name));
   }
 
   // An island's level by its name: the body's, or a pin's.
   function modelOf(name) {
-    return name === "body" ? body : Array.from(pins.instances).find(model => model.island === name) ?? null;
+    return name === "body" ? body : Array.from(pinLevels.instances).find(model => model.island === name) ?? null;
   }
 
-  // A pin's level, kept by its key while the layout pins it; a reload gives it its entry anew.
+  // A pin's level, kept by its key while the layout pins it; a reload, or another layout pinning that key, gives it its entry anew.
   Variants {
-    id: pins
+    id: pinLevels
     model: root.pinned
 
     LevelModel {
       required property string modelData
-      readonly property var entry: root.entries.find(entry => entry.key === modelData) ?? ({})
+      readonly property var entry: root.entriesAt(root.home).find(entry => entry.key === modelData) ?? ({})
       menu: root
       island: modelData
       level: ({ kind: "entry", entry: entry, width: entry.width })
@@ -151,10 +164,13 @@ Scope {
 
   // By its key, in the body, the bar or a pin, as a compositor shortcut opens it; a pin takes the keys.
   function toggleEntry(key) {
-    const item = find(body.itemsOf(null).concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
-    if (!item && !pinned.includes(key)) return;
+    // The top level's pins, whichever layout shows.
+    const top = pinsOf(layoutOf(null));
+    const rows = entries.filter(entry => !top.includes(entry.key)).map(entry => body.itemOf(entry));
+    const item = find(rows.concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
+    if (!item && !top.includes(key)) return;
     // A bar list's item has no entry to toggle: it runs.
-    if (item ? item.entry && level?.entry === item.entry : open && focused.island === key) {
+    if (item ? item.entry && level?.entry === item.entry : open && !home && focused.island === key) {
       hide();
       return;
     }
@@ -203,7 +219,7 @@ Scope {
   function reset() {
     levels = [];
     base = 0;
-    for (const model of [body].concat(Array.from(pins.instances))) {
+    for (const model of [body].concat(pins)) {
       model.stopFilter();
       model.cursor.point(undefined);
     }
@@ -364,7 +380,7 @@ Scope {
     return true;
   }
 
-  // The focused island's keys; at the top level a pin's key focuses it, and the bar's keys take Ctrl wherever the keys are.
+  // The focused island's keys; on the level declaring the layout a pin's key focuses it, and the bar's keys take Ctrl wherever the keys are.
   function handleName(name) {
     if (!name) return false;
     const [, ctrl, alt, key] = name.match(/^(Ctrl\+)?(Alt\+)?(.*)$/);
@@ -378,7 +394,7 @@ Scope {
     else if (focused.viewModel && focused.viewModel.handleKey(name)) return true;
     else if (input.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
-    else if (level === null && pinned.includes(name)) focusIsland(name);
+    else if (level === home && pinned.includes(name)) focusIsland(name);
     else if (name === "0" && focused.more) pickList(focused.level.entry.list);
     else if (name === "/" && focused.slashFilters) focused.startFilter();
     else if (target) openMenu(target);

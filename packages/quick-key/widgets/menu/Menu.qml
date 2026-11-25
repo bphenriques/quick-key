@@ -114,22 +114,22 @@ Scope {
     }
   }
 
-  // Each pinned level, drawn as the body draws its own, as wide as its entry; never shrinking while the menu shows.
+  // Each pinned level, drawn as the body draws its own, as wide as its entry; never shrinking while its layout shows. Made from the levels, so neither outlives the other as layouts change.
   Variants {
     id: pins
-    model: root.menu.pinned
+    model: root.menu.pins
 
     Island {
       id: pin
-      required property string modelData
-      readonly property LevelModel level: root.menu.modelOf(modelData)
-      name: modelData
-      width: level?.width ?? -1
+      required property LevelModel modelData
+      // Its level goes first as a layout changes.
+      name: modelData?.island ?? ""
+      width: modelData?.width ?? -1
       holdKey: root.menu.visit
-      onClicked: root.menu.focusIsland(modelData)
+      onClicked: root.menu.focusIsland(modelData.island)
       content: MenuBody {
         menu: root.menu
-        level: pin.level
+        level: pin.modelData
       }
     }
   }

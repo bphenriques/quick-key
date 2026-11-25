@@ -133,9 +133,10 @@ Scope {
       }
     })
 
-  // A pinned entry's row leaves the top level for its island.
+  // A pinned entry's row leaves the level declaring the layout for its island.
   function itemsOf(level) {
-    return level === null ? menu.entries.filter(entry => !menu.pinned.includes(entry.key)).map(itemOf) : kinds[level.kind].items(level);
+    const items = level === null ? menu.entries.map(itemOf) : kinds[level.kind].items(level);
+    return level === menu.home ? items.filter(item => !item.entry || !menu.pinned.includes(item.entry.key)) : items;
   }
 
   function viewModelOf(name) {

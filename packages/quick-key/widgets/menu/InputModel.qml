@@ -22,7 +22,8 @@ QtObject {
     key: "drafts"
   }
   // The keys of the levels down to its own, a pin's as its level's, which a change to the input's label leaves be; "" without an input.
-  readonly property string draftKey: !input ? "" : JSON.stringify(menu.focused === menu.body ? menu.levels.map(level => level.entry?.key ?? "") : [menu.focused.island])
+  readonly property string draftKey: !input ? "" : JSON.stringify(menu.focused === menu.body ? menu.levels.map(level => level.entry?.key ?? "")
+    : menu.levels.slice(0, menu.levels.indexOf(menu.home) + 1).map(level => level.entry?.key ?? "").concat(menu.focused.island))
   readonly property string draft: draftOf(draftKey)
 
   // The plugins the input showed while the menu stays on one level, whose leaving, or the menu closing, ends them all (Plugin.endVisit); the keys moving between islands end none.

@@ -47,6 +47,18 @@ ShellRoot {
     ["a layout with two bars", { menu: { layout: ["bar", "body", "bar"] } }, "menu.layout shows bar more than once"],
     ["a top-level input on a layout without one", { plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" }, layout: ["body", "bar"] } }, "menu.input is set, but menu.layout shows no input"],
     ["a level's input on a layout without one", { menu: { layout: ["body", "bar"], entries: [{ key: "x", desc: "X", icon: "x", list: "tray", submenu: [{ key: "y", desc: "Y", icon: "x", submenu: [], input: { desc: "Add", cmd: "true" } }] }] } }, "'Y' in the top level > X sets input, but menu.layout shows no input"],
+    ["a level's input under an entry's layout without one", menu([{ key: "x", desc: "X", icon: "x", submenu: [{ key: "y", desc: "Y", icon: "x", submenu: [], input: { desc: "Add", cmd: "true" } }], layout: ["body"] }]),
+      "'Y' in the top level > X sets input, but its level's layout shows no input"],
+    ["an entry's layout naming no island, without a body, with two inputs", menu([{ key: "x", desc: "X", icon: "x", submenu: [], layout: ["input", "input", "tray"] }]),
+      ["'X' in the top level sets a layout that names 'tray'", "sets a layout that shows no body", "sets a layout that shows input more than once"]],
+    ["an entry's layout pinning what its level does not bind, a key path, a bar entry or a row without a level", menu([{ key: "x", desc: "X", icon: "x", layout: ["body", { level: "t" }, { level: "y z" }, { level: "b" }, { level: "c" }],
+      submenu: [{ key: "c", desc: "C", icon: "x", cmd: "true" }], bar: { left: [{ key: "b", desc: "B", icon: "x", cmd: "true" }] } }]),
+      ["sets a layout that pins 't', which no entry of its level binds", "pins 'y z', a key path", "pins 'b', a bar entry", "pins 'c', which opens no level"]],
+    ["an entry's pinned entry's layout", menu([{ key: "x", desc: "X", icon: "x", layout: ["body", { level: "t" }], submenu: [{ key: "t", desc: "T", icon: "x", list: "tray", layout: ["body"] }] }]),
+      "'T' in the top level > X is pinned, so its layout shows nowhere"],
+    ["a pin binding another pin's key", { menu: { layout: ["body", { level: "t" }, { level: "w" }], entries: [{ key: "t", desc: "T", icon: "x", list: "tray", submenu: [{ key: "w", desc: "W", icon: "x", cmd: "true" }] }, { key: "w", desc: "Wi-Fi", icon: "x", list: "wifi" }] } },
+      "menu.layout pins 't' and 'w', two islands binding w"],
+    ["a layout on an entry without a level", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", layout: ["body"] }]), "can only set layout on a level"],
     ["a level's bar under its old name", menu([{ key: "a", desc: "A", icon: "x", submenu: [], header: { right: [] } }]), "'A' in the top level sets header, now bar"],
     ["an entry without a key beside a command plugin named as a removed one", { plugins: { notifications: { type: "command", read: "true" } }, menu: { entries: [{ desc: "Lock", icon: "x", cmd: "true" }] } }, "'Lock' in the top level needs a key"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
@@ -156,6 +168,13 @@ ShellRoot {
         timeout: 0,
         until: () => root.names({ menu: { layout: ["input", { level: "t" }, "body", "bar"], entries: [{ key: "t", desc: "T", icon: "x", list: "tray", limit: 3, input: { desc: "Add", cmd: "true" } }] } }, [])
           && root.names({ menu: { layout: [{ level: "a" }, "body"] } }, [])
+      },
+      {
+        name: "an entry's layout, in a bar too, pinning its level's own list with an input, shows inputs past a top layout without one",
+        timeout: 0,
+        until: () => root.names({ menu: { layout: ["body", "bar"], entries: [{ key: "x", desc: "X", icon: "x", layout: ["input", { level: "t" }, "body"],
+          submenu: [{ key: "t", desc: "T", icon: "x", list: "tray", limit: 3, input: { desc: "Add", cmd: "true" } }, { key: "y", desc: "Y", icon: "x", submenu: [], input: { desc: "Add", cmd: "true" } }] }],
+          bar: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", layout: ["input", "body", "bar"] }] } } }, [])
       },
       {
         name: "a row without an icon has nothing wrong",

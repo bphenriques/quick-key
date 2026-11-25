@@ -55,47 +55,50 @@ Singleton {
     // The top level's bar as it will be, the starter's slots included.
     const bar = Object.assign({}, json.menu?.bar);
     for (const slot of ["left", "center", "right"]) bar[slot] = bar[slot] ?? Config.starterBar[slot];
-    // An input shows only on a layout's input island.
-    const inputShown = json.menu?.layout == null || Array.from(json.menu.layout).includes("input");
+    // An input shows only on a layout's input island: what hides it, else "".
+    const noInput = json.menu?.layout == null || Array.from(json.menu.layout).includes("input") ? "" : "menu.layout";
     // The top level's input is checked as an entry's would be.
-    const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
+    const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem)
+      .concat(noInput ? ["menu.input is set, but menu.layout shows no input"] : []);
     return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), patternProblems(json.music?.titleMatch ?? ""),
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
-      levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null, inputShown, pinsOf(json.menu ?? {}).map(pin => pin.level)), input, layoutProblems(json.menu ?? {}, bar));
+      levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null, noInput, pinsOf(json.menu?.layout).map(pin => pin.level)), input,
+      json.menu?.layout == null ? [] : layoutProblems("menu.layout", json.menu.layout, json.menu.entries ?? Config.starterEntries, bar, "top-level entry"));
   }
 
   // The islands a layout names, each at most once.
   readonly property var islands: ["input", "body", "bar"]
 
   // What a layout pins: each { level = "t"; }.
-  function pinsOf(menu) {
-    return menu.layout == null ? [] : Array.from(menu.layout).filter(island => Config.kind(island) === "map");
+  function pinsOf(layout) {
+    return Config.kind(layout) === "list" ? Array.from(layout).filter(island => Config.kind(island) === "map") : [];
   }
 
-  // A layout draws its levels in its one body and pins each top-level entry with a level at most once; menu.input shows only where it has an input.
-  function layoutProblems(menu, bar) {
-    if (menu.layout == null) return [];
-    const layout = Array.from(menu.layout);
+  // A layout draws its levels in its one body and pins each entry with a level of the level declaring it at most once, no pin binding another's key; `said` names it, `where` what it pins.
+  function layoutProblems(said, layout, given, bar, where) {
+    layout = Array.from(layout);
     const count = name => layout.filter(island => island === name).length;
     const found = layout.filter(island => !islands.includes(island) && Config.kind(island) !== "map")
-      .map(island => typeof island === "string" ? "menu.layout names '" + island + "', none of " + islands.join(", ") : "menu.layout holds a " + Config.kind(island) + ", not an island's name or a pin");
-    if (!count("body")) found.push("menu.layout shows no body, where levels draw");
-    found.push(...islands.filter(name => count(name) > 1).map(name => "menu.layout shows " + name + " more than once"));
-    if (menu.input != null && !count("input")) found.push("menu.input is set, but menu.layout shows no input");
-    const entries = Array.from(menu.entries ?? Config.starterEntries).filter(entry => Config.kind(entry) === "map");
+      .map(island => typeof island === "string" ? said + " names '" + island + "', none of " + islands.join(", ") : said + " holds a " + Config.kind(island) + ", not an island's name or a pin");
+    if (!count("body")) found.push(said + " shows no body, where levels draw");
+    found.push(...islands.filter(name => count(name) > 1).map(name => said + " shows " + name + " more than once"));
+    const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
     const barred = ["left", "center", "right"].reduce((all, slot) => all.concat(Config.kind(bar[slot]) === "list" ? Array.from(bar[slot]) : []), []);
-    const keys = pinsOf(menu).map(pin => pin.level);
-    for (const [i, pin] of pinsOf(menu).entries()) {
+    const keys = pinsOf(layout).map(pin => pin.level);
+    for (const [i, pin] of pinsOf(layout).entries()) {
       const entry = entries.find(entry => entry.key === pin.level);
-      const said = "menu.layout pins '" + pin.level + "'";
+      const pins = said + " pins '" + pin.level + "'";
       const unknown = Object.keys(pin).filter(field => field !== "level");
-      if (unknown.length) found.push("menu.layout holds a pin setting " + unknown.join(", ") + ", which a pin does not take");
-      if (typeof pin.level !== "string") found.push("menu.layout holds a pin without a level's key: { level = \"t\"; } pins the top-level entry on t");
-      else if (/\s/.test(pin.level)) found.push(said + ", a key path: a pin takes a top-level entry's key");
-      else if (!entry) found.push(said + (barred.some(part => part?.key === pin.level) ? ", a bar entry: a pin takes a top-level entry" : ", which no top-level entry binds"));
-      else if (entry.submenu == null && entry.list == null && entry.view == null) found.push(said + ", which opens no level");
-      else if (keys.indexOf(pin.level) < i) found.push(said + " more than once");
+      // With its keys, a pin's own row on another pin's key runs, so that pin takes no keys from it.
+      const taken = Config.kind(entry?.submenu) === "list" ? keys.filter(key => key !== pin.level && Array.from(entry.submenu).some(row => [].concat(row?.key ?? []).includes(key))) : [];
+      if (unknown.length) found.push(said + " holds a pin setting " + unknown.join(", ") + ", which a pin does not take");
+      if (typeof pin.level !== "string") found.push(said + " holds a pin without a level's key: { level = \"t\"; } pins the " + where + " on t");
+      else if (/\s/.test(pin.level)) found.push(pins + ", a key path: a pin takes the key of one " + where);
+      else if (!entry) found.push(pins + (barred.some(part => part?.key === pin.level) ? ", a bar entry: a pin takes one " + where : ", which no " + where + " binds"));
+      else if (entry.submenu == null && entry.list == null && entry.view == null) found.push(pins + ", which opens no level");
+      else if (keys.indexOf(pin.level) < i) found.push(pins + " more than once");
+      found.push(...taken.map(key => pins + " and '" + key + "', two islands binding " + key + ": with " + pin.level + "'s keys, its row on " + key + " runs"));
     }
     return found;
   }
@@ -277,8 +280,8 @@ Singleton {
     return found;
   }
 
-  // A level's shape, its keys in its body and its bar, then each entry and the level under it; `pinned`, the keys of its entries the layout pins.
-  function levelProblems(path, given, bar, plugins, list, inputShown, pinned = []) {
+  // A level's shape, its keys in its body and its bar, then each entry and the level under it; `noInput`, what layout hides its input, else ""; `pinned`, the keys of its entries the layout pins.
+  function levelProblems(path, given, bar, plugins, list, noInput, pinned = []) {
     if (Config.kind(given) !== "list") return ["menu: " + path + " takes a list of entries"];
     const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
     const slots = ["left", "center", "right"];
@@ -311,9 +314,11 @@ Singleton {
     for (const name of parts.filter(part => typeof part === "string"))
       if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin");
     for (const [entry, inBar] of entries.map(entry => [entry, false]).concat(barEntries.map(entry => [entry, true]))) {
-      found.push(...entryProblems(entry, plugins, inBar, list, inputShown, !inBar && pinned.includes(entry.key)).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
+      // Its level shows in its own layout, else in the one it opens from.
+      const hides = Config.kind(entry.layout) !== "list" ? noInput : Array.from(entry.layout).includes("input") ? "" : "its level's layout";
+      found.push(...entryProblems(entry, plugins, inBar, list, hides, !inBar && pinned.includes(entry.key)).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
       // A submenu of another kind is its entry's own problem (fields).
-      if (entry.submenu || entry.bar) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.bar, plugins, entry.list, inputShown));
+      if (entry.submenu || entry.bar) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.bar, plugins, entry.list, hides, pinsOf(entry.layout).map(pin => pin.level)));
     }
     return found;
   }
@@ -382,6 +387,8 @@ Singleton {
       limit: { kind: "number", bar: true, pinned: true, needs: ["list"], range: [1, 9] },
       // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, context, after }.
       input: { kind: "map", level: true },
+      // Its level's islands, as menu.layout, until ESC; unset, it opens in the current layout's body.
+      layout: { kind: "list", level: true },
       // Keys of its level's `?` list to show in its bar too, after the bar's own: ["Ctrl+Up"].
       legend: { kind: "list", level: true, invalid: names => legendProblem(names) }
     })
@@ -417,7 +424,7 @@ Singleton {
   }
 
   // In a bar an entry needs no key, and may only show its status; past what `fields` says, what spans fields.
-  function entryProblems(entry, plugins, inBar, list, inputShown, pinned) {
+  function entryProblems(entry, plugins, inBar, list, noInput, pinned) {
     const found = [];
     const unknown = Object.keys(entry).filter(key => !(key in fields) && !(key in renamedFields));
     const keys = [].concat(entry.key ?? []);
@@ -437,12 +444,13 @@ Singleton {
     if (entry.action != null && !action && !plugins.includes(list)) found.push("runs action '" + entry.action + "', which is neither built in nor its level's plugin's");
     found.push(...fieldProblems(entry, plugins, inBar, pinned));
     // Its island draws its level alone: no row for a status, no bar.
-    if (pinned) found.push(...["bar", "status", "format"].filter(field => entry[field] != null).map(field => "is pinned, so its " + field + " shows nowhere"));
+    if (pinned) found.push(...["bar", "layout", "status", "format"].filter(field => entry[field] != null).map(field => "is pinned, so its " + field + " shows nowhere"));
+    else if (level && Config.kind(entry.layout) === "list") found.push(...layoutProblems("sets a layout that", entry.layout, rows, Config.kind(entry.bar) === "map" ? entry.bar : {}, "entry of its level"));
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
     if (entry.input != null) found.push(...inputProblems(entry, plugins));
-    if (entry.input != null && !inputShown) found.push("sets input, but menu.layout shows no input");
+    if (entry.input != null && noInput) found.push("sets input, but " + noInput + " shows no input");
     // Only when nothing else is wrong with it, which is often why it does nothing (command for cmd).
     if (!found.length && (does > 1 || does === 0 && !(inBar && entry.status != null)))
       found.push("needs one of cmd, action, submenu, list or view" + (inBar ? ", or only a status" : ""));

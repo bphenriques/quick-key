@@ -48,6 +48,17 @@ ShellRoot {
     return menu.modelOf("t");
   }
 
+  // Tasks pinned on t, Audio opening in the body, and Calendar, on c and on Tasks' o, with a layout of its own pinning its Events on e.
+  function routing() {
+    const calendar = { key: "c", desc: "Calendar", layout: ["input", { level: "e" }, "body", "bar"], submenu: [{ key: "e", desc: "Events", list: "devices", limit: 2,
+      input: { desc: "Add an event...", cmd: "true" }, submenu: [{ key: "g", desc: "Go", cmd: "true" }] }, { key: "d", desc: "Day", submenu: [] }] };
+    root.pinning(2, []);
+    menu.hide();
+    Config.menu.entries = [Object.assign({}, Config.menu.entries[0], { submenu: [Object.assign({}, calendar, { key: "o" })] }), Config.menu.entries[1], calendar];
+    menu.show();
+    return menu.modelOf("t");
+  }
+
   function unpinning() {
     menu.hide();
     Config.menu.layout = ["input", "body", "bar"];
@@ -1096,6 +1107,39 @@ ShellRoot {
           menu.handleName("t");
           Config.menu.layout = ["input", "body", "bar"];
           return scanning && menu.focused === menu.body && root.unpinning() && !Lists.scanning;
+        }
+      },
+      {
+        name: "an entry without a layout opens in the body, the pins staying; one with a layout replaces the islands until Escape, which restores them and the island with the keys",
+        until: () => {
+          const tasks = root.routing();
+          const kept = menu.handleName("a") && menu.level?.entry?.desc === "Audio" && menu.modelOf("t") === tasks;
+          menu.stepBack();
+          menu.handleName("t");
+          const replaced = menu.handleName("o") && JSON.stringify(menu.layout) === "[\"input\",\"e\",\"body\",\"bar\"]" && !menu.modelOf("t") && menu.focused === menu.body;
+          menu.stepBack();
+          const restored = menu.levels.length === 0 && menu.layout.includes("t") && menu.focused === menu.modelOf("t");
+          menu.stepBack();
+          menu.handleName("c");
+          menu.stepBack();
+          const body = menu.layout.includes("t") && menu.focused === menu.body;
+          return kept && replaced && restored && body && root.unpinning();
+        }
+      },
+      {
+        name: "a pin in an entry's layout leaves that level's rows, takes the keys on its key there, never from a level under it, and shows its input",
+        until: () => {
+          root.routing();
+          menu.handleName("c");
+          const events = menu.modelOf("e");
+          const left = !menu.body.items.some(item => item.key === "e") && events?.rows.length === 2;
+          const focused = menu.handleName("e") && menu.focused === events && menu.input.input?.desc === "Add an event..." && menu.input.draftKey === "[\"c\",\"e\"]";
+          menu.stepBack();
+          menu.handleName("d");
+          const under = !menu.handleName("e") && menu.focused === menu.body && menu.modelOf("e") === events;
+          menu.toggleEntry("t");
+          const toggled = menu.open && menu.levels.length === 0 && menu.focused === menu.modelOf("t");
+          return left && focused && under && toggled && root.unpinning();
         }
       },
       {
