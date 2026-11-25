@@ -1,6 +1,6 @@
 # Ask
 
-A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, and opening either closes the other. Its prompt sits under the conversation with the keys, and names who it asks until a turn says what `RET` does next. Its keys sit in the bar beside the top level's statuses. An answer that comes while the panel is hidden arrives as a notification, unless the menu shows it above the input that sent it.
+A panel to ask an agent something without leaving what you are doing. It opens where the menu does, in the same frame, and opening either closes the other. Its prompt sits under the conversation with the keys, and names who it asks until a turn says what `RET` does next. Its keys sit in the bar beside the top level's statuses. An answer that comes while the panel is hidden arrives as a notification, unless the menu shows it above the input that sent it, which a pinned level taking the keys hides.
 
 `ask` is the agent: a command speaking [ACP](https://agentclientprotocol.com) on its stdio. It starts with the first turn and stays for the next, so a turn skips its start and its session's loading. After `idle` minutes without a turn it stops, and the next turn starts it again. An agent sees an ACP client as a code editor unless told otherwise, so an assistant may reach for a terminal and files: give its ACP sessions the tools and brief it has elsewhere (with Hermes, `platform_toolsets.acp` and `agent.coding_context`).
 

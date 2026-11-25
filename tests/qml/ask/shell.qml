@@ -285,6 +285,7 @@ ShellRoot {
           if (!ask) return false;
           if (root.visitStep === 0) {
             ask.startVisit();
+            ask.display(true);
             root.visitStep = ask.submit("one", "") ? 1 : 0;
           } else if (root.visitStep === 1 && ask.turn?.text === "one") {
             root.visitStep = ask.submit("two", "") && ask.busy && ask.turn?.phase === "working" && ask.turn.question === "two" ? 2 : -1;

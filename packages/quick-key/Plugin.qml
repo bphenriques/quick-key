@@ -35,14 +35,21 @@ Scope {
   property string shortcut: settings.shortcut
   // From startVisit (InputModel) to endVisit.
   readonly property bool watched: internal.watched
+  // While watched, its input is the one the menu shows (InputModel.display), not another island's.
+  readonly property bool displayed: internal.displayed
   signal visitEnded
 
   function startVisit() {
     internal.watched = true;
   }
 
+  function display(shown) {
+    internal.displayed = shown;
+  }
+
   function endVisit() {
     internal.watched = false;
+    internal.displayed = false;
     visitEnded();
   }
   // As the menu draws it (Exchange), its fields in docs/src/plugins.md; null before the first.
@@ -170,5 +177,6 @@ Scope {
   QtObject {
     id: internal
     property bool watched: false
+    property bool displayed: false
   }
 }

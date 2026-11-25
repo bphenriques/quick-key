@@ -172,6 +172,11 @@ Plugin {
     return !!exchange?.input && watched;
   }
 
+  // Not seen, or seen with the keys on an island showing another input: told as when the menu is closed.
+  function missed(exchange) {
+    return !seen(exchange) || !displayed;
+  }
+
   function describe(exchange) {
     return Exchanges.described(exchange, exchange === exchanges[exchanges.length - 1] && stage === "working", approval, activity, words.allowQuestion);
   }
@@ -223,10 +228,10 @@ Plugin {
     stage = "idle";
     approval = "";
     if (seen(last)) report();
-    else notify(last.error || Markup.plain(last.reply));
+    if (missed(last)) notify(last.error || Markup.plain(last.reply));
     if (last.reply && !last.stopped) exec(last.after);
     if (touched) exec(settings.toolRun);
-    if (!shown && !seen(last)) unread = true;
+    if (!shown && missed(last)) unread = true;
     if (last.error && !last.stopped && !seen(last) && draft === "") draft = last.prompt;
   }
 
@@ -349,8 +354,9 @@ Plugin {
     }
     onPermission: title => {
       root.approval = title;
-      if (root.seen(root.exchanges[root.exchanges.length - 1])) root.report();
-      else root.notify(root.words.allowQuestion(title));
+      const last = root.exchanges[root.exchanges.length - 1];
+      if (root.seen(last)) root.report();
+      if (root.missed(last)) root.notify(root.words.allowQuestion(title));
     }
     onHistory: (role, chunk) => Exchanges.replayed(root.recalled, role, chunk)
     onEnded: outcome => root.close(outcome)

@@ -1092,6 +1092,28 @@ ShellRoot {
         }
       },
       {
+        name: "an answer finishing while a pin has the keys is notified and marked unread, and shows above the input once Escape gives the body the keys",
+        start: () => {
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          root.pinning(2);
+          root.acted = null;
+        },
+        until: () => {
+          const agent = Plugins.get("agent");
+          if (!agent || agent.busy && root.acted === null) return false;
+          if (root.acted === null) {
+            root.acted = menu.input.submit("pinned", false) && menu.handleName("t") && agent.watched && !agent.displayed;
+            return false;
+          }
+          if (agent.busy) return false;
+          if (!agent.unread || !Plugins.get("notified")?.text.startsWith("agent|pinned")) return false;
+          menu.stepBack();
+          const shown = agent.displayed && agent.turn?.question === "pinned" && agent.turn.phase === "done";
+          Config.menu.input = null;
+          return root.acted && shown && root.unpinning();
+        }
+      },
+      {
         name: "a pinned list setting no limit shows nine items, 0 listing the rest",
         start: () => root.pinning(2, [{ key: "m", desc: "Many", list: "many" }]),
         until: () => {

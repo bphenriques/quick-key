@@ -36,10 +36,13 @@ QtObject {
   }
   onPluginChanged: join()
 
+  // Only the one the input shows is displayed (Plugin.displayed).
   function join() {
-    if (!visit || !plugin || visiting.includes(plugin)) return;
-    visiting = visiting.concat([plugin]);
-    plugin.startVisit();
+    if (visit && plugin && !visiting.includes(plugin)) {
+      visiting = visiting.concat([plugin]);
+      plugin.startVisit();
+    }
+    for (const each of visiting) each.display(each === plugin);
   }
 
   // A turn the island cannot hold opens the plugin's panel by itself, as a popup does: once, so coming back does not open it again.
