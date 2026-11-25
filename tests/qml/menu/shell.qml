@@ -178,6 +178,16 @@ ShellRoot {
       item: ({ key: "1", desc: "x", icon: Glyphs.search })
     }
 
+    // A bar's action, as the tasks' Sort, on a bar too crowded for labels.
+    MenuRow {
+      id: compactRow
+      menu: menu
+      level: menu.body
+      hugs: true
+      compact: true
+      item: ({ key: "s", desc: "Sort", icon: Glyphs.search, detail: "by due date" })
+    }
+
     MenuHeader {
       id: header
       y: 40
@@ -1300,6 +1310,18 @@ ShellRoot {
         name: "a bar status shown whole has no tip",
         start: () => cutItem.width = cutItem.implicitWidth,
         until: () => root.tipOf(cutItem) === ""
+      },
+      {
+        name: "a crowded bar shows an action by its glyph alone, its name and value in its tip",
+        until: () => {
+          const status = Array.from(compactRow.content).find(child => child instanceof MenuStatus);
+          return status.detail === "" && status.text === "" && root.tipOf(compactRow) === "Sort, by due date";
+        }
+      },
+      {
+        name: "a crowded bar keeps an action's value beside its glyph while it warns",
+        start: () => compactRow.item = Object.assign({}, compactRow.item, { tone: "warning" }),
+        until: () => Array.from(compactRow.content).find(child => child instanceof MenuStatus).detail === "by due date"
       },
       {
         name: "the keyed plugin lists one item with a menu of its own, and runs the actions the table's rows name",

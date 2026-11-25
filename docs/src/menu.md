@@ -66,7 +66,7 @@ An entry's `layout` is its level's, as `menu.layout` is the top's, until `ESC` l
 
 ## Bars
 
-`menu.bar.left`, `center` and `right` are the top level's bar, like waybar's modules. An entry's `bar` is its level's, with the same slots. A bar holds content (a song, its modes), never a title. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). A crowded bar shortens its text, whole on hover, then shows actions by their glyphs alone; it never widens the menu, so one that still cannot fit runs past it, and the log says how wide it needs the menu.
+`menu.bar.left`, `center` and `right` are the top level's bar, like waybar's modules. An entry's `bar` is its level's, with the same slots. A bar holds content (a song, its modes), never a title. A slot holds entries and, by name, statuses and plugins (a click calls a plugin's `activate`). A crowded bar shortens its text, whole on hover, then shows actions by their glyphs alone, named with their value on hover, the value staying while it warns; it never widens the menu, so one that still cannot fit runs past it, and the log says how wide it needs the menu.
 
 In a bar, an entry shows its status, else its icon, else its `desc`, dimmed, and may do nothing but show its status. With both, it shows its icon in the tone of what its `format` shows, a spinner while the status is busy, and its value on hover, beside it too while that tone warns or where the value is the point (the keyboard layout). So a Sync button stays out of the way until its sync is under way or stale ([Calendar](calendar.md)).
 
