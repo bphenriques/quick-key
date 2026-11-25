@@ -94,6 +94,7 @@ Scope {
       free: model.cursor.free,
       content: model.content,
       cursorItem: model.cursorItem,
+      returns: model.cursorItem ? model.returnOf(model.cursorItem) : "",
       shifted: model.cursorRows.some(row => model.returnOf(row) !== "Return")
     };
   }
@@ -113,9 +114,9 @@ Scope {
         model.startFilter();
       },
       itemMenu: binding => openMenu(binding.item),
-      bar: (binding, name) => activate(binding.item, name.slice("Ctrl+".length), body),
+      bar: binding => activate(binding.item, binding.name, body),
       cursor: (binding, name, model) => cross(name) || model.cursor.key(name),
-      return: (binding, name, model) => !!binding.item && model.returnOf(binding.item) === name && activate(binding.item, binding.item.key, model) !== false,
+      return: (binding, name, model) => !!binding.item && activate(binding.item, binding.item.key, model) !== false,
       choose: binding => choose(binding.item),
       move: (binding, name, model) => model.filter.move(binding.by),
       tab: binding => tab(binding.step),

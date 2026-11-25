@@ -50,7 +50,7 @@ TestCase {
   // A key path never presses the cursor's keys: they say so.
   function test_cursor_keys() {
     compare(owner.filter(binding => binding.cursor).map(binding => binding.key), ["Up", "Down", "Left", "Right", "Return", "Shift+Return"]);
-    compare(Keymap.route(owner, "Return").item, undefined);
+    compare(Keymap.route(owner, "Return").item, null);
   }
 
   function test_starter() {

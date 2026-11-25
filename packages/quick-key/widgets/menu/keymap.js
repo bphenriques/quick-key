@@ -1,8 +1,9 @@
 .pragma library
 
-// The one key map of the menu on screen, pure: a binding per key, which a key goes to wherever it comes from (a press, a key path, a legend's click), which `?` lists and the check refuses two of on one key.
-// A binding: { key, island, what, desc, label, item, cursor }; `what` names the menu's handler, `item` the row it runs, `desc` what `?` lists, `label` what holds it (the check names it), `cursor` a key of the island with the cursor, which a key path never presses.
-// An island: { name, items: its rows, pins: [{ key, desc }] entries it pins, view: its view's keys [{ key, desc }], more: `0` lists the rest, filters: `/` filters it, focused: has the cursor, and then free (the arrows its cursor takes), content, shifted, cursorItem }.
+// The menu's one key map, pure: a binding per key on screen, which a key reaches from anywhere, `?` lists and the check refuses twice.
+// A binding: { key, island, what: its handler, desc: on `?`, label: its holder, for the check, item: the row it runs, name: a bar key's own, cursor: no key path's }.
+// An island: { name, items, pins: [{ key, desc }], view: [{ key, desc, label }], more: `0`, filters: `/`, focused: has the cursor, and then
+// free: the arrows it takes, content, shifted, cursorItem, returns: the key running it }.
 
 // Keys of the island with the cursor alone: a view's too.
 const cursorKeys = ["Up", "Down", "Left", "Right", "Return", "Shift+Return", "Alt+Return"];
@@ -26,7 +27,7 @@ function rest(at) {
   add("?", "", "help");
   for (const island of islands)
     for (const entry of island.view ?? [])
-      for (const key of names(entry.key)) if (island.focused || !cursorKeys.includes(key)) add(key, island.name, "view", { desc: entry.desc });
+      for (const key of names(entry.key)) if (island.focused || !cursorKeys.includes(key)) add(key, island.name, "view", { desc: entry.desc, label: entry.label });
   if (at.holds?.Ctrl) add("Ctrl+", "", "hold", { desc: words.helpBarKeys });
   if (at.holds?.Super) add("Super+", "", "hold", { desc: words.helpCompositor });
   for (const island of islands) {
@@ -36,8 +37,8 @@ function rest(at) {
   out.push(...barred(at.bar));
   if (focused?.free?.length) {
     for (const key of focused.free) add(key, focused.name, "cursor", { desc: words.helpMove, cursor: true });
-    add("Return", focused.name, "return", { item: focused.cursorItem, desc: focused.content ? undefined : words.helpRun, cursor: true });
-    add("Shift+Return", focused.name, "return", { item: focused.cursorItem, desc: focused.shifted ? words.helpRunShifted : undefined, cursor: true });
+    add("Return", focused.name, "return", { item: focused.returns === "Return" ? focused.cursorItem : null, desc: focused.content ? undefined : words.helpRun, cursor: true });
+    add("Shift+Return", focused.name, "return", { item: focused.returns === "Shift+Return" ? focused.cursorItem : null, desc: focused.shifted ? words.helpRunShifted : undefined, cursor: true });
   }
   if (focused && hasMenu(focused.cursorItem)) add("Alt+Return", focused.name, "itemMenu", { item: focused.cursorItem, cursor: true });
   let menus = 0;
@@ -133,7 +134,7 @@ function overlaps(bindings) {
 function ofLevel(level, views) {
   const entries = Array.from(level.entries ?? []).filter(entry => entry && typeof entry === "object");
   const pinned = [...new Set(level.pinned ?? [])];
-  const viewOf = name => Array.from(views[name]?.keys ?? []).map(entry => ({ key: entry.key, desc: undefined }));
+  const viewOf = name => Array.from(views[name]?.keys ?? []).map(entry => ({ key: entry.key, label: "the " + name + " view" }));
   const pins = pinned.map(key => entries.find(entry => entry.key === key)).filter(entry => entry);
   const digits = (list, limit, desc) => list ? Array.from({ length: Math.min(9, limit ?? 9) }, (_, i) => ({ key: String(i + 1), desc })) : [];
   const rows = entry => Array.from(entry.submenu ?? []).filter(row => row && typeof row === "object").concat(digits(entry.list, entry.limit, entry.desc));
@@ -142,6 +143,5 @@ function ofLevel(level, views) {
   const islands = [{ name: "body", focused: true, items: body, pins: pins.map(entry => ({ key: entry.key, desc: entry.desc })), view: viewOf(level.view) }]
     .concat(pins.map(entry => ({ name: entry.key, items: rows(entry), view: viewOf(entry.view) })));
   return rest({ islands, bar: Array.from(level.bar ?? []).filter(entry => entry && typeof entry === "object") })
-    .filter(binding => ["view", "row", "pin", "bar"].includes(binding.what))
-    .map(binding => binding.what === "view" ? Object.assign(binding, { label: "the " + (binding.island === "body" ? level.view : pins.find(entry => entry.key === binding.island).view) + " view" }) : binding);
+    .filter(binding => ["view", "row", "pin", "bar"].includes(binding.what));
 }
