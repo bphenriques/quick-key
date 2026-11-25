@@ -78,6 +78,8 @@ Scope {
     holds.Ctrl.length ? [{ key: "Ctrl+", desc: Words.helpBarKeys }] : [],
     holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
     cursor.free.length ? [{ key: cursor.free, paired: true, desc: Words.helpMove }] : [],
+    cursor.free.length && !content ? [{ key: "Return", desc: Words.helpRun }] : [],
+    cursor.free.length && cursorRows.some(row => returnOf(row) !== "Return") ? [{ key: "Shift+Return", desc: Words.helpRunShifted }] : [],
     rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
     slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
     island.input ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],

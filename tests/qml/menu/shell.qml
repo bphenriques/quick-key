@@ -606,7 +606,7 @@ ShellRoot {
         }
       },
       {
-        name: "? lists only keys that act: a hold while it lists something, M-1 while an item has its own menu; the top level's bar shows ?",
+        name: "? lists only keys that act: a hold while it lists something, the arrows each pair a level leaves free, RET on a grid and S-RET by a capital, M-1 while an item has its own menu; the top level's bar shows ?",
         until: () => {
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "acting" } });
@@ -617,7 +617,9 @@ ShellRoot {
           };
           const hinted = () => menu.legend.some(key => key.key === "?");
           return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && hinted() && listed({ kind: "entry", entry: { list: "acting" } }) === "Up,Down,Alt+1,/,Escape"
-            && !hinted() && listed({ kind: "entry", entry: { list: "devices" } }) === "Up,Down,/,Escape";
+            && !hinted() && listed({ kind: "entry", entry: { list: "devices" } }) === "Up,Down,/,Escape"
+            && listed(null).includes(",Up,Down,Left,Right,Return,") && listed(root.gridLevel) === "Up,Down,Left,Right,Return,Shift+Return,Escape"
+            && listed({ kind: "entry", entry: { submenu: [{ key: ["Left", "Right"], desc: "Step", cmd: ["true", "true"] }] } }) === "Up,Down,Return,Escape";
         }
       },
       {
