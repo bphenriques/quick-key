@@ -21,7 +21,7 @@ QtObject {
   readonly property KeptValue keptDrafts: KeptValue {
     key: "drafts"
   }
-  // The keys of the levels down to its own, a pin's as its level's, which a change to the input's label leaves be; "" without an input.
+  // The keys of the levels down to its own, a pinned level's as its level's, which a change to the input's label leaves be; "" without an input.
   readonly property string draftKey: !input ? "" : JSON.stringify(menu.focused === menu.body ? menu.levels.map(level => level.entry?.key ?? "")
     : menu.levels.slice(0, menu.levels.indexOf(menu.home) + 1).map(level => level.entry?.key ?? "").concat(menu.focused.island))
   readonly property string draft: draftOf(draftKey)

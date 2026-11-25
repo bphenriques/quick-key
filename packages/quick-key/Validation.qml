@@ -76,12 +76,12 @@ Singleton {
     return Config.kind(layout) === "list" ? Array.from(layout).filter(island => Config.kind(island) === "map") : [];
   }
 
-  // A layout draws its levels in its one body and pins each entry with a level of the level declaring it at most once, no pin binding another's key; `said` names it, `where` what it pins.
+  // A layout draws its levels in its one body and pins each entry with a level of the level declaring it at most once, no pinned level binding another's key; `said` names it, `where` what it pins.
   function layoutProblems(said, layout, given, bar, where) {
     layout = Array.from(layout);
     const count = name => layout.filter(island => island === name).length;
     const found = layout.filter(island => !islands.includes(island) && Config.kind(island) !== "map")
-      .map(island => typeof island === "string" ? said + " names '" + island + "', none of " + islands.join(", ") : said + " holds a " + Config.kind(island) + ", not an island's name or a pin");
+      .map(island => typeof island === "string" ? said + " names '" + island + "', none of " + islands.join(", ") : said + " holds a " + Config.kind(island) + ", not an island's name or a pinned level");
     if (!count("body")) found.push(said + " shows no body, where levels draw");
     found.push(...islands.filter(name => count(name) > 1).map(name => said + " shows " + name + " more than once"));
     const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
@@ -91,12 +91,12 @@ Singleton {
       const entry = entries.find(entry => entry.key === pin.level);
       const pins = said + " pins '" + pin.level + "'";
       const unknown = Object.keys(pin).filter(field => field !== "level");
-      // With its keys, a pin's own row on another pin's key runs, so that pin takes no keys from it.
+      // With its keys, a pinned level's own row on another's key runs, so that one takes no keys from it.
       const taken = Config.kind(entry?.submenu) === "list" ? keys.filter(key => key !== pin.level && Array.from(entry.submenu).some(row => [].concat(row?.key ?? []).includes(key))) : [];
-      if (unknown.length) found.push(said + " holds a pin setting " + unknown.join(", ") + ", which a pin does not take");
-      if (typeof pin.level !== "string") found.push(said + " holds a pin without a level's key: { level = \"t\"; } pins the " + where + " on t");
-      else if (/\s/.test(pin.level)) found.push(pins + ", a key path: a pin takes the key of one " + where);
-      else if (!entry) found.push(pins + (barred.some(part => part?.key === pin.level) ? ", a bar entry: a pin takes one " + where : ", which no " + where + " binds"));
+      if (unknown.length) found.push(said + " holds a pinned level setting " + unknown.join(", ") + ", which it does not take");
+      if (typeof pin.level !== "string") found.push(said + " holds a pinned level without a key: { level = \"t\"; } pins the " + where + " on t");
+      else if (/\s/.test(pin.level)) found.push(pins + ", a key path: a pinned level takes the key of one " + where);
+      else if (!entry) found.push(pins + (barred.some(part => part?.key === pin.level) ? ", a bar entry: a pinned level takes one " + where : ", which no " + where + " binds"));
       else if (entry.submenu == null && entry.list == null && entry.view == null) found.push(pins + ", which opens no level");
       else if (keys.indexOf(pin.level) < i) found.push(pins + " more than once");
       found.push(...taken.map(key => pins + " and '" + key + "', two islands binding " + key + ": with " + pin.level + "'s keys, its row on " + key + " runs"));
@@ -386,7 +386,7 @@ Singleton {
       bar: { kind: "map", level: true },
       // Its compositor key (Mod+N), only a label: shown while Super is held.
       shortcut: { kind: "string", bar: true },
-      // The most items of its list a bar or its pin shows; past it, the rest on 0.
+      // The most items of its list a bar or its pinned level shows; past it, the rest on 0.
       limit: { kind: "number", bar: true, pinned: true, needs: ["list"], range: [1, 9] },
       // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, context, after }.
       input: { kind: "map", level: true },
@@ -449,7 +449,7 @@ Singleton {
     // Its island draws its level alone: no row for a status, no bar.
     if (pinned) found.push(...["bar", "layout", "status", "format"].filter(field => entry[field] != null).map(field => "is pinned, so its " + field + " shows nowhere"));
     else if (level && Config.kind(entry.layout) === "list") found.push(...layoutProblems("sets a layout that", entry.layout, rows, Config.kind(entry.bar) === "map" ? entry.bar : {}, "entry of its level"));
-    // A pin fits its rows, a list's being its limit; a bar shows its list, opening no level.
+    // A pinned level fits its rows, a list's being its limit; a bar shows its list, opening no level.
     if (entry.height != null && (pinned || inBar && entry.list != null)) found.push("sets height, but " + (pinned ? "is pinned, so fits its rows" : "its list shows in the bar, opening no level"));
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");

@@ -12,9 +12,9 @@ Scope {
   required property MenuModel menu
   // A level of the menu's history, null at the top.
   required property var level
-  // The island it draws on: the body, or a pin by its key.
+  // The island it draws on: the body, or a pinned level by its key.
   property string island: "body"
-  // The most items its list shows on digits: a pin's `limit`.
+  // The most items its list shows on digits: a pinned level's `limit`.
   property int limit: 9
   readonly property bool focused: menu.focused === root
   // What the input shows while it has the keys: its entry's `input`, `menu.input` at the top level.
@@ -62,13 +62,13 @@ Scope {
   // The filter is typed on the input island.
   readonly property bool slashFilters: !!level?.entry?.list && !menu.find(items, "/") && menu.layout.includes("input")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
-  // Past a pin's limit, 0 lists the rest on a level of their own, as a bar's +N does.
+  // Past a pinned list's limit, 0 lists the rest on a level of their own, as a bar's +N does.
   readonly property bool more: island !== "body" && unhidden > limit
   // Only keys the state changes; fixed ones are listed on `?`, and show here too as its entry's `legend` names them.
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(more ? [{ key: "0", what: Words.rangeOf(0, limit, unhidden), clickable: true }]
       : slashFilters && unhidden > 9 ? [{ key: "/", what: Words.shownOf(unhidden), clickable: true }] : [])
-    // At the top and on a pin, the key listing the rest, which every surface with such a list shows so.
+    // At the top and on a pinned level, the key listing the rest, which every surface with such a list shows so.
     .concat((level === null || island !== "body") && Config.menu.keysHint ? [{ key: "?", what: Words.help, clickable: true }] : [])
     .concat(MenuKeys.pick(menu.helpOf(root), level?.entry?.legend))
   readonly property var cursorLegend: (cursorItem && (content || filtering) ? [{ key: returnOf(cursorItem), what: cursorItem.verb || Words.pick, clickable: true }] : [])
@@ -140,7 +140,7 @@ Scope {
   // A pinned entry's row leaves the level declaring the layout for its island.
   function itemsOf(level) {
     const items = level === null ? menu.entries.map(itemOf) : kinds[level.kind].items(level);
-    return level === menu.home ? items.filter(item => !item.entry || !menu.pinned.includes(item.entry.key)) : items;
+    return level === menu.home ? items.filter(item => !item.entry || !menu.pinnedKeys.includes(item.entry.key)) : items;
   }
 
   function viewModelOf(name) {

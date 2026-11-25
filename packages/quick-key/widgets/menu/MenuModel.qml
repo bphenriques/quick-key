@@ -25,8 +25,8 @@ Scope {
   readonly property var home: levels.filter(level => Config.kind(level.entry?.layout) === "list").pop() ?? null
   readonly property var layout: layoutOf(home)
   // The keys of the entries the layout pins, on the level declaring it.
-  readonly property var pinned: pinsOf(layout)
-  // While the menu shows in one layout, which a pin never shrinks within; the input's visit is a level's within it (InputModel.visit).
+  readonly property var pinnedKeys: pinsOf(layout)
+  // While the menu shows in one layout, which a pinned level never shrinks within; the input's visit is a level's within it (InputModel.visit).
   readonly property string visit: inStack ? JSON.stringify(layout) : ""
   readonly property var level: levels[levels.length - 1] ?? null
   // The level the body shows.
@@ -34,12 +34,12 @@ Scope {
     menu: root
     level: root.level
   }
-  // The island with the keys: the body, or a pin; one leaving the layout gives them back to the body.
+  // The island with the keys: the body, or a pinned level; one leaving the layout gives them back to the body.
   readonly property LevelModel focused: modelOf(internal.island) ?? body
-  // The pins' levels, which the menu draws.
-  readonly property var pins: Array.from(pinLevels.instances)
+  // The pinned levels, which the menu draws.
+  readonly property var pinnedLevels: Array.from(pinnedModels.instances)
   // What the shown islands list, for a list that works while shown (Lists.scanning).
-  readonly property var lists: [body].concat(pins).map(model => model.level?.entry?.list ?? "")
+  readonly property var lists: [body].concat(pinnedLevels).map(model => model.level?.entry?.list ?? "")
   readonly property InputModel input: InputModel {
     menu: root
   }
@@ -79,7 +79,7 @@ Scope {
     return at ? Array.from(at.entry.submenu ?? []) : entries;
   }
 
-  // The islands by name, top to bottom, each once, a pin by the key of an entry with a level on its own (Validation names what else is wrong).
+  // The islands by name, top to bottom, each once, a pinned level by the key of an entry with a level on its own (Validation names what else is wrong).
   function layoutOf(at) {
     return Array.from(at ? at.entry.layout : Config.menu.layout)
       .map(part => typeof part === "string" ? part : entriesAt(at).some(entry => entry.key === part?.level && (entry.submenu || entry.list || entry.view)) ? part.level : "")
@@ -90,15 +90,15 @@ Scope {
     return layout.filter(name => !["input", "body", "bar"].includes(name));
   }
 
-  // An island's level by its name: the body's, or a pin's.
+  // An island's level by its name: the body's, or a pinned level's.
   function modelOf(name) {
-    return name === "body" ? body : Array.from(pinLevels.instances).find(model => model.island === name) ?? null;
+    return name === "body" ? body : Array.from(pinnedModels.instances).find(model => model.island === name) ?? null;
   }
 
-  // A pin's level, kept by its key while the layout pins it; a reload, or another layout pinning that key, gives it its entry anew.
+  // A pinned level, kept by its key while the layout pins it; a reload, or another layout pinning that key, gives it its entry anew.
   Variants {
-    id: pinLevels
-    model: root.pinned
+    id: pinnedModels
+    model: root.pinnedKeys
 
     LevelModel {
       required property string modelData
@@ -162,9 +162,9 @@ Scope {
     else show();
   }
 
-  // By its key, in the body, the bar or a pin, as a compositor shortcut opens it; a pin takes the keys.
+  // By its key, in the body, the bar or a pinned level, as a compositor shortcut opens it; a pinned level takes the keys.
   function toggleEntry(key) {
-    // The top level's pins, whichever layout shows.
+    // The top level's pinned levels, whichever layout shows.
     const top = pinsOf(layoutOf(null));
     const rows = entries.filter(entry => !top.includes(entry.key)).map(entry => body.itemOf(entry));
     const item = find(rows.concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
@@ -219,7 +219,7 @@ Scope {
   function reset() {
     levels = [];
     base = 0;
-    for (const model of [body].concat(pins)) {
+    for (const model of [body].concat(pinnedLevels)) {
       model.stopFilter();
       model.cursor.point(undefined);
     }
@@ -287,7 +287,7 @@ Scope {
     body.filterSlots = 9;
   }
 
-  // Escape once the input is cleared: an input gives the keys back to its island first, as a card's reply does, and a pin to the body.
+  // Escape once the input is cleared: an input gives the keys back to its island first, as a card's reply does, and a pinned level to the body.
   function stepBack() {
     if (focused.filtering && !focused.level.picking) return focused.stopFilter();
     if (inputFocused) return focusOn("body");
@@ -380,7 +380,7 @@ Scope {
     return true;
   }
 
-  // The focused island's keys; on the level declaring the layout a pin's key focuses it, and the bar's keys take Ctrl wherever the keys are.
+  // The focused island's keys; on the level declaring the layout a pinned level's key focuses it, and the bar's keys take Ctrl wherever the keys are.
   function handleName(name) {
     if (!name) return false;
     const [, ctrl, alt, key] = name.match(/^(Ctrl\+)?(Alt\+)?(.*)$/);
@@ -394,7 +394,7 @@ Scope {
     else if (focused.viewModel && focused.viewModel.handleKey(name)) return true;
     else if (input.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
-    else if (level === home && pinned.includes(name)) focusIsland(name);
+    else if (level === home && pinnedKeys.includes(name)) focusIsland(name);
     else if (name === "0" && focused.more) pickList(focused.level.entry.list);
     else if (name === "/" && focused.slashFilters) focused.startFilter();
     else if (target) openMenu(target);
@@ -403,7 +403,7 @@ Scope {
     return true;
   }
 
-  // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would, the same through a pin: what a binding reaches.
+  // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would, the same through a pinned level: what a binding reaches.
   function press(path) {
     const closed = !open;
     levels = [];

@@ -204,7 +204,7 @@ ShellRoot {
       const rule = Validation.fields[field];
       const named = rule.names && tables.find(([, , table]) => Object.keys(table.builtin).join() === Object.keys(rule.names).join());
       const takes = [].concat(rule.whole ? "integer" : rule.kind).join(" or ") + (named ? ": a [" + named[0] + "](#" + named[1] + ") or a plugin" : "");
-      const where = [rule.level ? "a level (`submenu`, `list` or `view`)" : "", rule.bar ? (rule.pinned ? "a bar or a pin" : "a bar") : "", rule.needs ? "with " + rule.needs.map(code).join(" or ") : "", rule.excludes ? "without " + rule.excludes.map(code).join(" or ") : ""].filter(part => part).join(", ");
+      const where = [rule.level ? "a level (`submenu`, `list` or `view`)" : "", rule.bar ? (rule.pinned ? "a bar or a pinned level" : "a bar") : "", rule.needs ? "with " + rule.needs.map(code).join(" or ") : "", rule.excludes ? "without " + rule.excludes.map(code).join(" or ") : ""].filter(part => part).join(", ");
       return [code(field), takes, allowed(rule), where || "any", prose(declared["fields." + field].comment)];
     });
     return "## Menu entries\n\nWhat an entry in `menu.entries`, a `submenu` or a bar takes, and the built-in names it can use ([Menu](menu.md)).\n\n### Fields\n\n" + table(["Field", "Takes", "Allowed", "On", "Description"], rows) + "\n"

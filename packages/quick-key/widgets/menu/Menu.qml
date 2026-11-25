@@ -12,7 +12,7 @@ Scope {
 
   readonly property MenuModel menu: MenuModel {}
   // menu.layout's islands, top to bottom.
-  readonly property var islands: menu.layout.map(name => ({ input: inputIsland, body: bodyIsland, bar: barIsland })[name] ?? Array.from(pins.instances).find(pin => pin.name === name)).filter(island => island)
+  readonly property var islands: menu.layout.map(name => ({ input: inputIsland, body: bodyIsland, bar: barIsland })[name] ?? Array.from(pinnedIslands.instances).find(island => island.name === name)).filter(island => island)
 
   function modifier(event) {
     if (event.key === Qt.Key_Control) return "Ctrl";
@@ -117,8 +117,8 @@ Scope {
 
   // Each pinned level, drawn as the body draws its own, as wide as its entry; never shrinking while its layout shows. Made from the levels, so neither outlives the other as layouts change.
   Variants {
-    id: pins
-    model: root.menu.pins
+    id: pinnedIslands
+    model: root.menu.pinnedLevels
 
     Island {
       id: pin
