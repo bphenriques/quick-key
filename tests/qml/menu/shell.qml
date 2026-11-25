@@ -1043,15 +1043,12 @@ ShellRoot {
         }
       },
       {
-        name: "an island with nothing shows empty while one farther from the edge shows: a pinned level stays put as a bare level opens, and an empty input under it as the keys move",
+        name: "an island with nothing shows empty while one farther from the edge shows: a pinned level stays put over an empty input as the keys move",
         until: () => {
           root.pinning(2);
           const shown = () => Places.shown(menu.layout.map(island => island === "input" ? menu.inputEmpty : island === "bar" ? menu.barEmpty : false));
-          // Each island as tall on every level, so only which show moves the pin.
+          // Each island as tall whichever has the keys, so only which show moves the pin.
           const pinY = () => Places.of([30, 60, 200, 40], shown(), menu.layout.indexOf("body"), 1000, 35, 4)[menu.layout.indexOf("t")].y;
-          const top = pinY();
-          menu.handleName("a");
-          const bare = menu.level?.entry?.desc === "Audio" && pinY() === top;
           menu.hide();
           Config.menu.layout = [{ level: "t" }, "input", "body", "bar"];
           menu.show();
@@ -1059,7 +1056,7 @@ ShellRoot {
           const empty = menu.inputEmpty;
           menu.handleName("t");
           const held = empty && !menu.inputEmpty && pinY() === under;
-          return bare && held && root.unpinning();
+          return held && root.unpinning();
         }
       },
       {
@@ -1143,12 +1140,13 @@ ShellRoot {
         }
       },
       {
-        name: "past a pin's limit 0 lists the rest in the body, from which Escape gives the keys back to the pin",
+        name: "past a pin's limit 0 lists the rest in the body, the pin stepping aside, and Escape gives the keys back to the pin",
         until: () => {
           const pin = root.pinning(1);
           menu.handleName("t");
           const limited = pin.rows.length === 1 && pin.legend.some(key => key.key === "0");
-          const picked = menu.handleName("0") && menu.levels.length === 1 && menu.level.picking && menu.focused === menu.body && menu.body.filtering;
+          const picked = menu.handleName("0") && menu.levels.length === 1 && menu.level.picking && menu.focused === menu.body && menu.body.filtering
+            && !menu.layout.includes("t") && menu.pinnedLevels.length === 0;
           menu.stepBack();
           return limited && picked && menu.levels.length === 0 && menu.focused === pin && root.unpinning();
         }
@@ -1175,11 +1173,12 @@ ShellRoot {
         }
       },
       {
-        name: "an entry without a layout opens in the body, the pins staying; one with a layout replaces the islands until Escape, which restores them and the island with the keys",
+        name: "an entry without a layout opens in the body, the pins stepping aside until Escape brings them back as they were; one with a layout replaces the islands until Escape, which restores them and the island with the keys",
         until: () => {
           const tasks = root.routing();
-          const kept = menu.handleName("a") && menu.level?.entry?.desc === "Audio" && menu.modelOf("t") === tasks;
+          const aside = menu.handleName("a") && menu.level?.entry?.desc === "Audio" && menu.layout.join() === "input,body,bar" && menu.pinnedLevels.length === 0 && !menu.modelOf("t");
           menu.stepBack();
+          const kept = menu.layout.join() === "input,t,body,bar" && menu.modelOf("t") === tasks && menu.focused === menu.body;
           menu.handleName("t");
           const replaced = menu.handleName("o") && JSON.stringify(menu.layout) === "[\"input\",\"e\",\"body\",\"bar\"]" && !menu.modelOf("t") && menu.focused === menu.body;
           menu.stepBack();
@@ -1188,7 +1187,7 @@ ShellRoot {
           menu.handleName("c");
           menu.stepBack();
           const body = menu.layout.includes("t") && menu.focused === menu.body;
-          return kept && replaced && restored && body && root.unpinning();
+          return aside && kept && replaced && restored && body && root.unpinning();
         }
       },
       {
@@ -1249,19 +1248,21 @@ ShellRoot {
         }
       },
       {
-        name: "a pin in an entry's layout leaves that level's rows, takes the keys on its key there, never from a level under it, and shows its input",
+        name: "a pin in an entry's layout shows on that level only, leaving its rows, taking the keys on its key there and showing its input; a level under it shows none, and Escape brings it back",
         until: () => {
           root.routing();
           menu.handleName("c");
           const events = menu.modelOf("e");
-          const left = !menu.body.items.some(item => item.key === "e") && events?.rows.length === 2;
+          const left = menu.layout.join() === "input,e,body,bar" && !menu.body.items.some(item => item.key === "e") && events?.rows.length === 2;
           const focused = menu.handleName("e") && menu.focused === events && menu.input.input?.desc === "Add an event..." && menu.input.draftKey === "[\"c\",\"e\"]";
           menu.stepBack();
           menu.handleName("d");
-          const under = !menu.handleName("e") && menu.focused === menu.body && menu.modelOf("e") === events;
+          const under = !menu.handleName("e") && menu.focused === menu.body && menu.layout.join() === "input,body,bar" && !menu.modelOf("e");
+          menu.stepBack();
+          const back = menu.level?.entry?.desc === "Calendar" && menu.modelOf("e") === events && menu.focused === menu.body;
           menu.toggleEntry("t");
           const toggled = menu.open && menu.levels.length === 0 && menu.focused === menu.modelOf("t");
-          return left && focused && under && toggled && root.unpinning();
+          return left && focused && under && back && toggled && root.unpinning();
         }
       },
       {

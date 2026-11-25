@@ -115,7 +115,7 @@ Scope {
     }
   }
 
-  // Each pinned level, drawn as the body draws its own, as wide as its entry; never shrinking while its layout shows. Made from the levels, so neither outlives the other as layouts change.
+  // Each pinned level showing, drawn as the body draws its own, as wide as its entry; never shrinking while its layout shows, made anew as it comes back.
   Variants {
     id: pinnedIslands
     model: root.menu.pinnedLevels

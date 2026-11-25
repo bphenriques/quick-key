@@ -23,11 +23,13 @@ Scope {
   readonly property var entries: Array.from(Config.menu.entries ?? Config.starterEntries)
   // The deepest open level whose entry sets a layout, null for menu.layout's: a level without one opens in its body.
   readonly property var home: levels.filter(level => Config.kind(level.entry?.layout) === "list").pop() ?? null
-  readonly property var layout: layoutOf(home)
+  readonly property var homeLayout: layoutOf(home)
+  // A pinned level shows on the level declaring it only, stepping aside on those opened from it.
+  readonly property var layout: level === home ? homeLayout : homeLayout.filter(name => ["input", "body", "bar"].includes(name))
   // The keys of the entries the layout pins, on the level declaring it.
   readonly property var pinnedKeys: pinsOf(layout)
   // While the menu shows in one layout, which a pinned level never shrinks within; the input's visit is a level's within it (InputModel.visit).
-  readonly property string visit: inStack ? JSON.stringify(layout) : ""
+  readonly property string visit: inStack ? JSON.stringify(homeLayout) : ""
   readonly property var level: levels[levels.length - 1] ?? null
   // The level the body shows.
   readonly property LevelModel body: LevelModel {
@@ -36,8 +38,8 @@ Scope {
   }
   // The island with the keys: the body, or a pinned level; one leaving the layout gives them back to the body.
   readonly property LevelModel focused: modelOf(internal.island) ?? body
-  // The pinned levels, which the menu draws.
-  readonly property var pinnedLevels: Array.from(pinnedModels.instances)
+  // The pinned levels showing, which the menu draws.
+  readonly property var pinnedLevels: Array.from(pinnedModels.instances).filter(model => pinnedKeys.includes(model.island))
   // What the shown islands list, for a list that works while shown (Lists.scanning).
   readonly property var lists: [body].concat(pinnedLevels).map(model => model.level?.entry?.list ?? "")
   readonly property InputModel input: InputModel {
@@ -93,13 +95,13 @@ Scope {
 
   // An island's level by its name: the body's, or a pinned level's.
   function modelOf(name) {
-    return name === "body" ? body : Array.from(pinnedModels.instances).find(model => model.island === name) ?? null;
+    return name === "body" ? body : pinnedLevels.find(model => model.island === name) ?? null;
   }
 
-  // A pinned level, kept by its key while the layout pins it; a reload, or another layout pinning that key, gives it its entry anew.
+  // A pinned level, kept by its key while the level declaring it is open, so it comes back as it was; a reload, or another layout pinning that key, gives it its entry anew.
   Variants {
     id: pinnedModels
-    model: root.pinnedKeys
+    model: root.pinsOf(root.homeLayout)
 
     LevelModel {
       required property string modelData
@@ -395,7 +397,7 @@ Scope {
     else if (focused.viewModel && focused.viewModel.handleKey(name)) return true;
     else if (input.input && name === "Tab") internal.focus = "input";
     else if (own) activate(own, name);
-    else if (level === home && pinnedKeys.includes(name)) focusIsland(name);
+    else if (pinnedKeys.includes(name)) focusIsland(name);
     else if (name === "0" && focused.more) pickList(focused.level.entry.list);
     else if (name === "/" && focused.slashFilters) focused.startFilter();
     else if (target) openMenu(target);
