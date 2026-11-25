@@ -17,7 +17,7 @@ What the core's surfaces and the plugins are built from; a plugin that needs som
 | a surface the keyboard opens | a `Stack` of `Island`s |
 | an outline | `Surface`, `Pill`, `Divider` |
 
-A surface is laid out in three ideas: a `Stack` places its islands against the screen's edge, each `Island` is one surface, and inside an island rows run in a column or a grid, which `Cursor` moves over.
+A `Stack` places its islands against the screen's edge; each `Island` is one surface, whose rows `Cursor` moves over.
 
 | Component | Use |
 |---|---|
