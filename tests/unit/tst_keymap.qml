@@ -115,8 +115,11 @@ TestCase {
     }, {}));
     compare(clash.map(overlap => overlap.key + ":" + overlap.held.map(binding => binding.island + " " + binding.label).join("+")),
       ["c:body Calendar+t Done", "Ctrl+x:body Cut+bar X", "1:t Tasks+n Notes", "2:t Tasks+n Notes"]);
-    const viewed = Keymap.overlaps(Keymap.ofLevel({ entries: [{ key: "t", desc: "Tasks", list: "tasks" }], pinned: ["t"], view: "calendar" }, { calendar }));
+    const viewed = Keymap.overlaps(Keymap.ofLevel({ entries: [{ key: "t", desc: "Tasks", list: "tasks" }], pinned: ["t"], view: "calendar" }, { calendar: { keys: calendar } }));
     compare(viewed.map(overlap => overlap.key + ":" + overlap.held.map(binding => binding.label).join("+")), ["t:the calendar view+Tasks"]);
+    // A second entry on a pinned key stays a row of the body.
+    const twice = Keymap.overlaps(Keymap.ofLevel({ entries: [{ key: "t", desc: "Tasks", list: "tasks" }, { key: "t", desc: "Tea", cmd: "true" }], pinned: ["t"] }, {}));
+    compare(twice.map(overlap => overlap.key + ":" + overlap.held.map(binding => binding.what + " " + binding.label).join("+")), ["t:row Tea+pin Tasks"]);
   }
 
   function test_owner_layout_passes() {

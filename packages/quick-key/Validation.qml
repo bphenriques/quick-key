@@ -6,6 +6,7 @@ import Quickshell
 import qs
 import qs.builtins
 import qs.ui
+import "widgets/menu/keymap.js" as Keymap
 
 // What is wrong with config.json: the shell logs it as it starts, and check.qml fails on it (docs/src/configuration.md).
 Singleton {
@@ -76,7 +77,7 @@ Singleton {
     return Config.kind(layout) === "list" ? Array.from(layout).filter(island => Config.kind(island) === "map") : [];
   }
 
-  // A layout draws its levels in its one body and pins each entry with a level of the level declaring it at most once, no pinned level binding another's key; `said` names it, `where` what it pins.
+  // A layout draws its levels in its one body and pins each entry with a level of the level declaring it at most once; `said` names it, `where` what it pins.
   function layoutProblems(said, layout, given, bar, where) {
     layout = Array.from(layout);
     const count = name => layout.filter(island => island === name).length;
@@ -91,15 +92,12 @@ Singleton {
       const entry = entries.find(entry => entry.key === pin.level);
       const pins = said + " pins '" + pin.level + "'";
       const unknown = Object.keys(pin).filter(field => field !== "level");
-      // With its keys, a pinned level's own row on another's key runs, so that one takes no keys from it.
-      const taken = Config.kind(entry?.submenu) === "list" ? keys.filter(key => key !== pin.level && Array.from(entry.submenu).some(row => [].concat(row?.key ?? []).includes(key))) : [];
       if (unknown.length) found.push(said + " holds a pinned level setting " + unknown.join(", ") + ", which it does not take" + (typeof pin.level === "string" ? ": set it on the entry on '" + pin.level + "'" : ""));
       if (typeof pin.level !== "string") found.push(said + " holds a pinned level without a key: { level = \"t\"; } pins the " + where + " on t");
       else if (/\s/.test(pin.level)) found.push(pins + ", a key path: a pinned level takes the key of one " + where);
       else if (!entry) found.push(pins + (barred.some(part => part?.key === pin.level) ? ", a bar entry: a pinned level takes one " + where : ", which no " + where + " binds"));
       else if (entry.submenu == null && entry.list == null && entry.view == null) found.push(pins + ", which opens no level");
       else if (keys.indexOf(pin.level) < i) found.push(pins + " more than once");
-      found.push(...taken.map(key => pins + " and '" + key + "', two islands binding " + key + ": with " + pin.level + "'s keys, its row on " + key + " runs"));
     }
     return found;
   }
@@ -281,8 +279,8 @@ Singleton {
     return found;
   }
 
-  // A level's shape, its keys in its body and its bar, then each entry and the level under it; `noInput`, what layout hides its input, else ""; `pinned`, the keys of its entries the layout pins.
-  function levelProblems(path, given, bar, plugins, list, noInput, pinned = []) {
+  // A level's shape, its keys in its body and its bar, then each entry and the level under it; `noInput`, what layout hides its input, else ""; `pinned`, the keys of its entries the layout pins; `view`, what it shows.
+  function levelProblems(path, given, bar, plugins, list, noInput, pinned = [], view = "") {
     if (Config.kind(given) !== "list") return ["menu: " + path + " takes a list of entries"];
     const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
     const slots = ["left", "center", "right"];
@@ -300,18 +298,24 @@ Singleton {
     const wrong = (which, why) => {
       if (which.length) found.push("menu: " + why + " in " + path + ": " + [...new Set(which)].join(", "));
     };
-    wrong(keys.filter((key, index) => keys.indexOf(key) !== index), "keys bound twice");
+    // Two things on one key on one screen (keymap.js), by who holds it; one pinned level's own are its level's to name.
+    const clashes = new Map();
+    const owner = binding => (binding.what === "view" ? binding.label : "'" + (binding.label ?? binding.key) + "'")
+      + (binding.island === "bar" ? " on the bar" : binding.island === "body" ? "" : " on pinned " + binding.island);
+    for (const { key, held } of Keymap.overlaps(Keymap.ofLevel({ entries, pinned, bar: barEntries, view }, Views.builtin))) {
+      const owners = held.map(owner).join(" and ");
+      if (!held.every(binding => binding.island === held[0].island && !["body", "bar"].includes(binding.island))) clashes.set(owners, (clashes.get(owners) ?? []).concat(key));
+    }
+    for (const [owners, keys] of clashes) found.push("menu: " + path + " puts two things on " + keys.join(", ") + ": " + owners);
     // As MenuKeys names a key event: a named key, a letter or a digit, after Ctrl+ or Alt+; one symbol, after Alt+ at most, as Ctrl gives a symbol no name.
     const named = Object.keys(MenuKeys.named).filter(name => MenuKeys.named[name].bindable !== false);
     const sendable = key => new RegExp("^((Ctrl|Alt)\\+)*(" + named.join("|") + "|[A-Za-z0-9])$").test(key) || /^(Alt\+)?[^\sA-Za-z0-9]$/.test(key);
     wrong(keys.filter(key => !sendable(key)), "keys no keyboard sends (an arrow, space, Return, BackSpace, a letter or a digit, after Ctrl+ or Alt+, or one symbol)");
     wrong(keys.filter(key => /^((Ctrl|Alt)\+)+[0-9]$/.test(key)), "keys that reach a listed item's own menu or the bar's list");
     wrong(keys.filter(key => reservedKeys.includes(key)), "keys reserved for the menu");
-    wrong(barKeys.filter((key, index) => barKeys.indexOf(key) !== index), "bar keys bound twice");
     wrong(barKeys.filter(key => key !== "+" && key.includes("+")), "bar keys with a modifier, which Ctrl already takes");
     wrong(barKeys.filter(key => /^[^\sA-Za-z0-9]$/.test(key)), "bar keys on a symbol, which Ctrl gives no name");
     wrong(barKeys.filter(key => /^[0-9]$/.test(key)), "bar keys on a digit, reserved for its lists");
-    wrong(barKeys.filter(key => keys.includes("Ctrl+" + key)), "bar keys its body binds with Ctrl too");
     for (const name of parts.filter(part => typeof part === "string"))
       if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin");
     for (const [entry, inBar] of entries.map(entry => [entry, false]).concat(barEntries.map(entry => [entry, true]))) {
@@ -319,7 +323,7 @@ Singleton {
       const hides = Config.kind(entry.layout) !== "list" ? noInput : Array.from(entry.layout).includes("input") ? "" : "its level's layout";
       found.push(...entryProblems(entry, plugins, inBar, list, hides, !inBar && pinned.includes(entry.key)).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
       // A submenu of another kind is its entry's own problem (fields).
-      if (entry.submenu || entry.bar) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.bar, plugins, entry.list, hides, pinsOf(entry.layout).map(pin => pin.level)));
+      if (entry.submenu || entry.bar) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.bar, plugins, entry.list, hides, pinsOf(entry.layout).map(pin => pin.level), entry.view));
     }
     return found;
   }
