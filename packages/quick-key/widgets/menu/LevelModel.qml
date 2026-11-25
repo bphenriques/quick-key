@@ -63,7 +63,7 @@ Scope {
   readonly property bool slashFilters: !!level?.entry?.list && !menu.find(items, "/") && menu.layout.includes("input")
   readonly property int unhidden: levelList.filter(item => !item.hidden).length
   // Past a pin's limit, 0 lists the rest on a level of their own, as a bar's +N does.
-  readonly property bool more: limit < 9 && unhidden > limit
+  readonly property bool more: island !== "body" && unhidden > limit
   // Only keys the state changes; fixed ones are listed on `?`, and show here too as its entry's `legend` names them.
   readonly property var levelLegend: (viewModel ? viewModel.legend : Lists.builtin[level?.entry?.list]?.legend ?? [])
     .concat(more ? [{ key: "0", what: Words.rangeOf(0, limit, unhidden), clickable: true }]

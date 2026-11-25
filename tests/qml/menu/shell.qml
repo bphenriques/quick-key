@@ -1092,6 +1092,14 @@ ShellRoot {
         }
       },
       {
+        name: "a pinned list setting no limit shows nine items, 0 listing the rest",
+        start: () => root.pinning(2, [{ key: "m", desc: "Many", list: "many" }]),
+        until: () => {
+          const pin = menu.modelOf("m");
+          return pin?.rows.length === 9 && pin.legend.some(key => key.key === "0") && root.unpinning();
+        }
+      },
+      {
         name: "past a pin's limit 0 lists the rest in the body, from which Escape gives the keys back to the pin",
         until: () => {
           const pin = root.pinning(1);
