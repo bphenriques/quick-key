@@ -43,7 +43,6 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         chars: body.menu.keyChars(body.menu.hints)
-        live: true
       }
     }
   }

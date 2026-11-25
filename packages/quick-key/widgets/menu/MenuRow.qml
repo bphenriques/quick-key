@@ -15,8 +15,6 @@ ListItem {
   property bool hugs: false
   // On a crowded bar: its key and glyph alone, its label and value as its tip; without a glyph, its label stays, and its value while it warns.
   property bool compact: false
-  // Its key dims while its island does not have the keys.
-  property bool live: row.level.focused
 
   enabled: row.item.enabled !== false
   current: !!row.item.current
@@ -28,7 +26,6 @@ ListItem {
     key: row.item.key ?? ""
     paired: row.item.paired ?? false
     chars: MenuKeys.gutter(row.chars)
-    live: row.live
   }
 
   MenuStatus {

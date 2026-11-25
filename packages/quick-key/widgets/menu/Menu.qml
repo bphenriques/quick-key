@@ -146,7 +146,7 @@ Scope {
     content: MenuHeader {
       menu: root.menu
       room: stack.room - 2 * Config.theme.padding
-      onPicked: key => root.menu.focused.filtering ? (key === "Escape" ? root.menu.input.escaped() : root.menu.filterKey(key)) : root.menu.handleName(key) || root.menu.cursorKey(key)
+      onPicked: key => key === "Escape" && root.menu.focused.filtering ? root.menu.input.escaped() : root.menu.dispatch(key)
     }
   }
 }

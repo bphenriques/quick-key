@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import qs
 import qs.ui
 
-// A level's bar: the actions and legend of the island with the keys, then the body's level's slots like waybar's modules-left, -center and -right; as in waybar, nothing grows the menu.
+// A level's bar: every island's actions and legend, then the body's level's slots like waybar's modules-left, -center and -right; as in waybar, nothing grows the menu.
 RowLayout {
   id: header
 
@@ -18,7 +18,7 @@ RowLayout {
   // What the slots and the legend leave the actions: with less than every label needs, all show their glyphs alone.
   readonly property real slotsWidth: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.wanted + spacing : 0), 0)
   readonly property real actionsRoom: room - slotsWidth - (legend.visible ? legend.implicitWidth + actions.spacing : 0)
-  readonly property real labelledWidth: Array.from(labelled.children).reduce((sum, row) => sum + row.implicitWidth, Math.max(0, menu.focused.barActions.length - 1) * actions.spacing)
+  readonly property real labelledWidth: Array.from(labelled.children).reduce((sum, row) => sum + row.implicitWidth, Math.max(0, menu.barActions.length - 1) * actions.spacing)
   readonly property bool compact: labelledWidth > actionsRoom
   // What the bar needs at least, every text shortened, a spacing between each two items: past its width it overflows, which only a wider menu or fewer items mends, so the log says so.
   readonly property real needed: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.Layout.minimumWidth + spacing : 0), actions.visible ? 0 : -spacing)
@@ -44,20 +44,20 @@ RowLayout {
   // As their rows draw them, so an action keeps its icon, state and value on the bar; filtering, the filter's keys alone.
   RowLayout {
     id: actions
-    visible: header.menu.focused.barActions.length > 0 || header.menu.focused.legend.length > 0
+    visible: header.menu.barActions.length > 0 || header.menu.legend.length > 0
     // Shrinks, never grows: past their glyphs alone, its rows' text gives way, as the slots' does.
     Layout.fillWidth: true
     Layout.maximumWidth: implicitWidth
     spacing: Config.theme.padding
 
     Repeater {
-      model: header.menu.focused.barActions.length
+      model: header.menu.barActions.length
 
       MenuRow {
         required property int index
-        item: header.menu.focused.barActions[index] ?? ({})
+        item: header.menu.barActions[index]?.item ?? ({})
         menu: header.menu
-        level: header.menu.focused
+        level: header.menu.barActions[index]?.model ?? header.menu.body
         hugs: true
         compact: header.compact
         Layout.fillWidth: true
@@ -68,8 +68,8 @@ RowLayout {
 
     KeyLegend {
       id: legend
-      visible: header.menu.focused.legend.length > 0
-      keys: header.menu.focused.legend
+      visible: header.menu.legend.length > 0
+      keys: header.menu.legend
       onPicked: key => header.picked(key)
     }
   }
@@ -80,13 +80,13 @@ RowLayout {
     visible: false
 
     Repeater {
-      model: header.menu.focused.barActions.length
+      model: header.menu.barActions.length
 
       MenuRow {
         required property int index
-        item: header.menu.focused.barActions[index] ?? ({})
+        item: header.menu.barActions[index]?.item ?? ({})
         menu: header.menu
-        level: header.menu.focused
+        level: header.menu.barActions[index]?.model ?? header.menu.body
         hugs: true
         chars: MenuKeys.label(item.key ?? "", item.paired ?? false).length
       }

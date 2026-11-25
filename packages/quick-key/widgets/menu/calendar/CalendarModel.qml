@@ -26,7 +26,6 @@ QtObject {
   ]
   readonly property var legend: focused ? [{ key: ["Up", "Down"], what: Words.event }].concat(details ? [] : [{ key: "Return", what: Words.details }])
     : keys.filter(entry => entry.what)
-  readonly property var help: keys.filter(entry => entry.desc)
   readonly property string error: Calendar.syncing ? "" : Calendar.error
 
   // Today, with no event in focus: how a calendar level opens.

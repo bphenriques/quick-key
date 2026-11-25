@@ -4,6 +4,7 @@ import qs
 import qs.services
 import qs.ui
 import qs.builtins
+import "keymap.js" as Keymap
 
 Scope {
   id: root
@@ -52,30 +53,75 @@ Scope {
   readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
   // Nothing for the input or the bar to show: each then shows empty, unless farthest from the edge (Places.shown).
   readonly property bool inputEmpty: input.input === null && !focused.filtering
-  readonly property bool barEmpty: barItems.length === 0 && focused.barActions.length === 0 && focused.legend.length === 0
+  readonly property bool barEmpty: barItems.length === 0 && barActions.length === 0 && legend.length === 0
+  // The level islands on screen, top to bottom.
+  readonly property var shown: layout.map(name => modelOf(name)).filter(model => model)
+  // The bar's left: every island's actions and legend, so it holds still as the cursor moves, then what Return runs there; filtering, the filter's keys alone.
+  readonly property var barActions: focused.filtering ? [] : shown.reduce((all, model) => all.concat(model.barActions.map(item => ({ item, model }))), [])
+  readonly property var legend: focused.filtering ? focused.legend
+    : shown.reduce((all, model) => all.concat(model.levelLegend.filter(key => !all.some(seen => JSON.stringify(seen.key) === JSON.stringify(key.key)))), []).concat(focused.cursorLegend)
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
       Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
       Super: barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item)))
     })
-  readonly property var help: helpOf(focused)
+  // The keys on screen, one map (keymap.js): every island's at rest, the input's while typing, the filter's while filtering, any key closing `?`'s list.
+  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: barItems, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: input.input !== null, words: Words })
+  readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, words: Words })
+  readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size })
+    : inputFocused ? typing : rest
+  // Keys no row shows, where they act: at rest, then in the input.
+  readonly property var help: Keymap.help(rest.filter(binding => binding.what !== "back").concat(typing))
   readonly property var hints: held === "Help" ? help : holds[held] ?? []
 
-  // Keys no row of an island shows, listed on `?` where they act.
-  function helpOf(model) {
-    return [].concat(
-      model.viewModel?.help ?? [],
-      holds.Ctrl.length ? [{ key: "Ctrl+", desc: Words.helpBarKeys }] : [],
-      holds.Super.length ? [{ key: "Super+", desc: Words.helpCompositor }] : [],
-      model.cursor.free.length ? [{ key: model.cursor.free, paired: true, desc: Words.helpMove }] : [],
-      model.cursor.free.length && !model.content ? [{ key: "Return", desc: Words.helpRun }] : [],
-      model.cursor.free.length && model.cursorRows.some(row => model.returnOf(row) !== "Return") ? [{ key: "Shift+Return", desc: Words.helpRunShifted }] : [],
-      model.rows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+1", desc: Words.helpItemMenu }] : [],
-      model.slashFilters ? [{ key: "/", desc: Words.helpFilter }] : [],
-      model.input && layout.includes("input") ? [{ key: "Tab", desc: Words.helpTab }, { key: "Ctrl+Shift+Return", desc: Words.helpSendLeave }] : [],
-      model.focused && input.plugin?.recalls ? [{ key: "Ctrl+r", desc: Words.helpRecall }] : [],
-      [{ key: "Escape", desc: Words.helpEscape }]
-    );
+  // An island as the key map reads it.
+  function islandOf(model) {
+    return {
+      name: model.island,
+      items: model.items,
+      pins: model === body ? pinnedKeys.map(key => ({ key })) : [],
+      view: model.viewModel?.keys ?? [],
+      more: model.more,
+      filters: model.slashFilters,
+      focused: model === focused,
+      free: model.cursor.free,
+      content: model.content,
+      cursorItem: model.cursorItem,
+      shifted: model.cursorRows.some(row => model.returnOf(row) !== "Return")
+    };
+  }
+
+  // What each kind of binding does, given it, the key's name and the island holding it; false when it did nothing.
+  readonly property var handlers: ({
+      help: () => hold("Help"),
+      closeHelp: () => hold(""),
+      back: () => stepBack(),
+      view: (binding, name, model) => model.viewModel.handleKey(name),
+      row: (binding, name, model) => activate(binding.item, name, model),
+      pin: binding => focusIsland(binding.key),
+      more: (binding, name, model) => pickList(model.level.entry.list),
+      // Typed in the input, which shows the cursor island's.
+      filter: (binding, name, model) => {
+        focusIsland(model.island);
+        model.startFilter();
+      },
+      itemMenu: binding => openMenu(binding.item),
+      bar: (binding, name) => activate(binding.item, name.slice("Ctrl+".length), body),
+      cursor: (binding, name, model) => model.cursor.key(name),
+      return: (binding, name, model) => !!binding.item && model.returnOf(binding.item) === name && activate(binding.item, binding.item.key, model) !== false,
+      choose: binding => choose(binding.item),
+      move: (binding, name, model) => model.filter.move(binding.by),
+      tab: binding => inputFocused || binding.step > 0 ? focusOn(inputFocused ? "body" : "input") : false,
+      recall: () => input.recall(),
+      send: () => false,
+      hold: () => false
+    })
+
+  // A key by its name, as typing it would; a key path's never moves or runs the cursor (`withCursor` false), so a binding never drifts from what it shows.
+  function dispatch(name, withCursor = true) {
+    const binding = Keymap.route(bindings, name);
+    if (!binding || binding.cursor && !withCursor) return false;
+    return handlers[binding.what](binding, name, modelOf(binding.island) ?? body) !== false;
   }
 
   // A level's entries: the top's, or an entry's submenu.
@@ -167,22 +213,24 @@ Scope {
     else show();
   }
 
-  // By its key, in the body, the bar or a pinned level, as a compositor shortcut opens it; a pinned level takes the keys.
+  // By its key in the top level's key map, a row, a pinned level or the bar's (without Ctrl), as a compositor shortcut opens it; a pinned level takes the cursor.
   function toggleEntry(key) {
     // The top level's pinned levels, whichever layout shows.
-    const top = pinsOf(layoutOf(null));
-    const rows = entries.filter(entry => !top.includes(entry.key)).map(entry => body.itemOf(entry));
-    const item = find(rows.concat(barOf(topBar.left), barOf(topBar.center), barOf(topBar.right)), key);
-    if (!item && !top.includes(key)) return;
+    const pins = pinsOf(layoutOf(null));
+    const rows = entries.filter(entry => !pins.includes(entry.key)).map(entry => body.itemOf(entry));
+    const top = Keymap.rest({ islands: [{ name: "body", items: rows, pins: pins.map(key => ({ key })) }], bar: barOf(topBar.left).concat(barOf(topBar.center), barOf(topBar.right)) });
+    const binding = [key, "Ctrl+" + key].map(name => Keymap.route(top, name)).find(binding => ["row", "pin", "bar"].includes(binding?.what));
+    if (!binding) return;
+    const pin = binding.what === "pin";
     // A bar list's item has no entry to toggle: it runs.
-    if (item ? item.entry && level?.entry === item.entry : open && !home && focused.island === key) {
+    if (pin ? open && !home && focused.island === key : binding.item.entry && level?.entry === binding.item.entry) {
       hide();
       return;
     }
     levels = [];
     if (!open) show();
-    focusIsland(item ? "body" : key);
-    if (item) activate(item, key, body);
+    focusIsland(pin ? key : "body");
+    if (!pin) activate(binding.item, key, body);
     base = levels.length;
   }
 
@@ -306,19 +354,6 @@ Scope {
     else back();
   }
 
-  // A digit picks a shown row and never types; with Alt, or Alt+Return, its own menu.
-  function filterKey(name) {
-    const filter = focused.filter;
-    const digit = name.match(/^(Alt\+)?([1-9])$/);
-    const row = digit ? filter.rows[Number(digit[2]) - 1] : filter.item;
-    if (digit && digit[1] || name === "Alt+Return") openMenu(row);
-    else if (digit || name === "Return" || name === "Shift+Return") choose(row);
-    else if (name === "Up" || name === "Down") filter.move(name === "Down" ? 1 : -1);
-    else if (name === "Page_Up" || name === "Page_Down") filter.move((name === "Page_Down" ? 1 : -1) * filter.size);
-    else return false;
-    return true;
-  }
-
   function choose(item) {
     if (!item) return;
     focused.filter.point(item.id);
@@ -369,47 +404,14 @@ Scope {
   function handleKey(event) {
     // A bare modifier has no name, and Super belongs to the compositor.
     if (event.modifiers & Qt.MetaModifier) return false;
-    // A held key repeats on the level it was pressed on, never into the one it opened; of the level's rows, only a pair steps on.
+    // A held key repeats on the level it was pressed on, never into the one it opened.
     if (event.isAutoRepeat && level !== internal.pressedOn) return true;
     if (!event.isAutoRepeat) internal.pressedOn = level;
     const name = MenuKeys.name(event);
-    const own = event.isAutoRepeat ? find(focused.items, name) : null;
-    // Held, Return acts once on the cursor's row, a pair's too.
-    if (own && !own.paired || event.isAutoRepeat && focused.cursorItem && name.endsWith("Return")) return true;
-    return focused.filtering && filterKey(name) || handleName(name) || cursorKey(name);
-  }
-
-  // After the view and the level's rows, so a level binding an arrow keeps it; `press` never reaches it, so a key path never depends on the cursor.
-  function cursorKey(name) {
-    const item = focused.cursorItem;
-    if (focused.cursor.key(name)) return true;
-    if (item && name === focused.returnOf(item)) activate(item, item.key);
-    else if (item && name === "Alt+Return") openMenu(item);
-    else return false;
-    return true;
-  }
-
-  // The focused island's keys; on the level declaring the layout a pinned level's key focuses it, and the bar's keys take Ctrl wherever the keys are.
-  function handleName(name) {
-    if (!name) return false;
-    const [, ctrl, alt, key] = name.match(/^(Ctrl\+)?(Alt\+)?(.*)$/);
-    const own = find(focused.items, name);
-    const target = alt && /^[0-9]$/.test(key) ? find(ctrl ? barItems : focused.rows, key) : null;
-    const barred = ctrl && !alt ? find(barItems, key) : null;
-    // Any key closes the help, which only lists keys.
-    if (held === "Help") internal.held = "";
-    else if (name === "?") internal.held = "Help";
-    else if (name === "Escape") stepBack();
-    else if (focused.viewModel && focused.viewModel.handleKey(name)) return true;
-    else if (input.input && name === "Tab") internal.focus = "input";
-    else if (own) activate(own, name);
-    else if (pinnedKeys.includes(name)) focusIsland(name);
-    else if (name === "0" && focused.more) pickList(focused.level.entry.list);
-    else if (name === "/" && focused.slashFilters) focused.startFilter();
-    else if (target) openMenu(target);
-    else if (barred) activate(barred, key, body);
-    else return false;
-    return true;
+    // Held, a row acts once, as Return does on the cursor's; a pair steps on.
+    const item = event.isAutoRepeat ? Keymap.route(bindings, name)?.item : null;
+    if (item && !item.paired) return true;
+    return dispatch(name);
   }
 
   // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would, the same through a pinned level: what a binding reaches.
@@ -422,7 +424,7 @@ Scope {
       // A key that closed the menu ends the path, so none past it opens a level on the closed menu.
       if (i > 0 && !inStack) return false;
       internal.ran = null;
-      if (!(focused.filtering ? filterKey(name) : handleName(name))) return false;
+      if (!dispatch(name, false)) return false;
     }
     base = levels.length;
     // Opened for the path, the menu closes after the action it ends on, unless that opened a picker or another surface.

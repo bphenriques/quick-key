@@ -78,16 +78,10 @@ ColumnLayout {
     onTextChanged: filter ? root.menu.focused.filter.search(text) : root.model.keepDraft(text)
     sends: !filter
     onSent: background => send(background)
-    // Tab and Shift+Tab give the keys back to the body.
+    // The key map's while it has the keys: what leaves it, or the filter's; Escape is its own, clearing first.
     onKeyPressed: event => {
       const name = MenuKeys.name(event);
-      if (prompt.filter) {
-        if (!root.menu.filterKey(name)) return;
-      } else if (name === "Ctrl+r") {
-        if (!root.model.recall()) return;
-      } else if (name === "Tab" || name === "Backtab") root.menu.focusOn("body");
-      else return;
-      event.accepted = true;
+      if (prompt.focused && name !== "Escape" && root.menu.dispatch(name)) event.accepted = true;
     }
 
     function send(background) {
