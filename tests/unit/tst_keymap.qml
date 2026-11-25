@@ -99,8 +99,8 @@ TestCase {
   function test_help() {
     const listed = bindings => Keymap.help(bindings).map(entry => [].concat(entry.key).join() + " " + entry.desc);
     compare(listed(viewLevel), ["Left,Right Day", "Up,Down Week", "Ctrl+Up,Ctrl+Down Year", "Escape Back"]);
-    compare(listed(owner), ["Ctrl+ Bar", "Up,Down,Left,Right Move", "Return Run", "/ Filter", "Tab Tab", "Escape Back"]);
-    compare(Keymap.help(owner)[1].paired, true);
+    compare(listed(owner), ["Ctrl+ Bar", "t Tasks", "Up,Down,Left,Right Move", "Return Run", "/ Filter", "Tab Tab", "Escape Back"]);
+    compare(Keymap.help(owner)[2].paired, true);
     compare(listed(Keymap.typing({ tab: true, words })), ["Tab Tab", "Ctrl+Shift+Return Send", "Escape Back"]);
   }
 

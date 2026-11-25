@@ -31,7 +31,7 @@ function rest(at) {
   if (at.holds?.Super) add("Super+", "", "hold", { desc: words.helpCompositor });
   for (const island of islands) {
     for (const item of island.items ?? []) for (const key of names(item.key)) add(key, island.name, "row", { item, label: item.desc });
-    for (const pin of island.pins ?? []) add(pin.key, island.name, "pin", { label: pin.desc });
+    for (const pin of island.pins ?? []) add(pin.key, island.name, "pin", { label: pin.desc, desc: pin.desc });
   }
   out.push(...barred(at.bar));
   if (focused?.free?.length) {

@@ -1134,11 +1134,11 @@ ShellRoot {
         }
       },
       {
-        name: "? lists the keys no row shows on every island: the pinned list's / beside the body's arrows",
+        name: "? lists the keys no row shows on every island: the pinned list's / beside the body's arrows, and the key of each pinned level",
         until: () => {
           root.pinning(2);
           const listed = menu.help.map(key => [].concat(key.key).join()).join(" ");
-          return listed.includes("/") && listed.includes("Up,Down,Left,Right") && root.unpinning();
+          return listed.includes("/") && menu.help.some(key => key.key === "t" && key.desc === "Tasks") && listed.includes("Up,Down,Left,Right") && root.unpinning();
         }
       },
       {

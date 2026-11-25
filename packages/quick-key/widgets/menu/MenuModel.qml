@@ -86,7 +86,7 @@ Scope {
     return {
       name: model.island,
       items: model.items,
-      pins: model === body ? pinnedKeys.map(key => ({ key })) : [],
+      pins: model === body ? pinnedLevels.map(pin => ({ key: pin.island, desc: pin.level.entry.desc })) : [],
       view: model.viewModel?.keys ?? [],
       more: model.more,
       filters: model.slashFilters,
