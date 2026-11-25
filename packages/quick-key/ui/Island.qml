@@ -3,7 +3,7 @@ import qs
 
 // One surface of a Stack: its content on a Surface, or on one behind each item the content lists in `parts` while `split`.
 QtObject {
-  // What the Stack's `focus` names to give it the keys.
+  // Unique within its Stack, which keeps each island by it; what the Stack's `focus` names to give it the keys.
   property string name
   property Component content
   property bool shown: true
