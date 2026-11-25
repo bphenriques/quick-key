@@ -33,7 +33,7 @@ function rest(at) {
     for (const item of island.items ?? []) for (const key of names(item.key)) add(key, island.name, "row", { item, label: item.desc });
     for (const pin of island.pins ?? []) add(pin.key, island.name, "pin", { label: pin.desc });
   }
-  for (const item of at.bar ?? []) for (const key of names(item.key)) add("Ctrl+" + key, "bar", "bar", { item, label: item.desc });
+  out.push(...barred(at.bar));
   if (focused?.free?.length) {
     for (const key of focused.free) add(key, focused.name, "cursor", { desc: words.helpMove, cursor: true });
     add("Return", focused.name, "return", { item: focused.cursorItem, desc: focused.content ? undefined : words.helpRun, cursor: true });
@@ -43,7 +43,6 @@ function rest(at) {
   let menus = 0;
   for (const island of islands)
     for (const item of island.items ?? []) if (/^[0-9]$/.test(item.key) && hasMenu(item)) add("Alt+" + item.key, island.name, "itemMenu", { item, desc: menus++ ? undefined : words.helpItemMenu });
-  for (const item of at.bar ?? []) if (/^[0-9]$/.test(item.key) && hasMenu(item)) add("Ctrl+Alt+" + item.key, "bar", "itemMenu", { item });
   for (const island of islands) {
     if (island.more) add("0", island.name, "more");
     if (island.filters) add("/", island.name, "filter", { desc: words.helpFilter });
@@ -56,7 +55,17 @@ function rest(at) {
   return out;
 }
 
-// Filtering: the digits pick the rows shown and never type, the arrows move the filter's cursor, Return picks its row. `at`: { island, rows, item, size }.
+// The bar's keys, with Ctrl wherever the keys are: its entries, and a listed item's own menu with Alt too.
+function barred(bar) {
+  const out = [];
+  for (const item of bar ?? []) {
+    for (const name of names(item.key)) out.push({ key: "Ctrl+" + name, island: "bar", what: "bar", item, name, label: item.desc });
+    if (/^[0-9]$/.test(item.key) && hasMenu(item)) out.push({ key: "Ctrl+Alt+" + item.key, island: "bar", what: "itemMenu", item });
+  }
+  return out;
+}
+
+// Filtering: the digits pick the rows shown and never type, the arrows move the filter's cursor, Return picks its row. `at`: { island, rows, item, size, bar }.
 function filtering(at) {
   const out = [];
   const add = (key, what, more) => out.push(Object.assign({ key, island: at.island, what }, more));
@@ -68,18 +77,24 @@ function filtering(at) {
   add("Shift+Return", "choose", { item: at.item });
   add("Alt+Return", "itemMenu", { item: at.item });
   for (const [key, by] of [["Up", -1], ["Down", 1], ["Page_Up", -at.size], ["Page_Down", at.size]]) add(key, "move", { by });
+  out.push(...barred(at.bar));
   add("Escape", "back");
   return out;
 }
 
-// Typing: every key is the input's but what leaves it; Return and C-S-RET are the input's own, listed on `?`. `at`: { tab: an input to type in, recalls, words }.
+// Typing: every key is the input's but what leaves it and the bar's; Return and C-S-RET are the input's own, listed on `?`. `at`: { tab: an input to type in, recalls, bar, words }.
 function typing(at) {
   const words = at.words ?? {};
   const out = [];
-  if (at.tab) out.push({ key: "Tab", island: "", what: "tab", step: 1, desc: words.helpTab }, { key: "Backtab", island: "", what: "tab", step: -1 },
-    { key: "Ctrl+Shift+Return", island: "", what: "send", desc: words.helpSendLeave });
-  if (at.tab && at.recalls) out.push({ key: "Ctrl+r", island: "", what: "recall", desc: words.helpRecall });
-  out.push({ key: "Escape", island: "", what: "back", desc: words.helpEscape });
+  const add = (key, what, more) => out.push(Object.assign({ key, island: "", what }, more));
+  if (at.tab) {
+    add("Tab", "tab", { step: 1, desc: words.helpTab });
+    add("Backtab", "tab", { step: -1 });
+    add("Ctrl+Shift+Return", "send", { desc: words.helpSendLeave });
+  }
+  if (at.tab && at.recalls) add("Ctrl+r", "recall", { desc: words.helpRecall });
+  out.push(...barred(at.bar));
+  add("Escape", "back", { desc: words.helpEscape });
   return out;
 }
 

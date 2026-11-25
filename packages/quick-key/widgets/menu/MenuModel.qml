@@ -68,8 +68,8 @@ Scope {
     })
   // The keys on screen, one map (keymap.js): every island's at rest, the input's while typing, the filter's while filtering, any key closing `?`'s list.
   readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: barItems, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
-  readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, words: Words })
-  readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size })
+  readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, bar: barItems, words: Words })
+  readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size, bar: barItems })
     : inputFocused ? typing : rest
   // Keys no row shows, where they act: at rest, then in the input.
   readonly property var help: Keymap.help(rest.filter(binding => binding.what !== "back").concat(typing))

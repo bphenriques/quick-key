@@ -1088,6 +1088,26 @@ ShellRoot {
         }
       },
       {
+        name: "Ctrl reaches the bar from the input too, as what the text leaves",
+        start: () => {
+          root.acted = null;
+          Quickshell.execDetached(["sh", "-c", "echo none > \"$XDG_RUNTIME_DIR/picked\""]);
+        },
+        until: () => {
+          if (root.acted === null) {
+            if (Plugins.get("picked")?.text !== "none") return false;
+            Config.menu.input = { desc: "Ask", cmd: "true" };
+            menu.hide();
+            menu.show();
+            menu.focusOn("input");
+            root.acted = menu.inputFocused && menu.handleKey({ key: Qt.Key_X, modifiers: Qt.ControlModifier, text: "" });
+            Config.menu.input = null;
+            return false;
+          }
+          return root.acted && Plugins.get("picked")?.text === "bar";
+        }
+      },
+      {
         name: "/ from the body filters the pinned list, which takes the cursor, as its filter is typed in the input",
         until: () => {
           const pin = root.pinning(2);

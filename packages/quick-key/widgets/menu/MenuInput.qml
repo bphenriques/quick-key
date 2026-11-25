@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs
 import qs.ui
 import qs.ui.conversation
+import "keymap.js" as Keymap
 
 // The menu input island (InputModel): the last turn (Exchange) over the line to send; filtering, the line is the filter.
 ColumnLayout {
@@ -78,10 +79,10 @@ ColumnLayout {
     onTextChanged: filter ? root.menu.focused.filter.search(text) : root.model.keepDraft(text)
     sends: !filter
     onSent: background => send(background)
-    // The key map's while it has the keys: what leaves it, or the filter's; Escape is its own, clearing first.
+    // The key map's while it has the keys: what leaves it, or the filter's; Escape is its own, clearing first, and the bar's reach the menu only as what the text leaves, so a bar on c never takes copy.
     onKeyPressed: event => {
       const name = MenuKeys.name(event);
-      if (prompt.focused && name !== "Escape" && root.menu.dispatch(name)) event.accepted = true;
+      if (prompt.focused && name !== "Escape" && Keymap.route(root.menu.bindings, name)?.island !== "bar" && root.menu.dispatch(name)) event.accepted = true;
     }
 
     function send(background) {

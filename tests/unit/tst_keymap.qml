@@ -88,6 +88,9 @@ TestCase {
     compare(to(typing, "a"), "");
     compare(to(typing, "Backtab"), ":tab");
     compare(to(typing, "Ctrl+r"), ":recall");
+    // Ctrl reaches the bar wherever the keys are: typing, or filtering.
+    compare(to(Keymap.typing({ tab: true, bar: [{ key: "x", desc: "X" }] }), "Ctrl+x"), "bar:bar");
+    compare(to(Keymap.filtering({ island: "t", rows: [], size: 9, bar: [{ key: "x", desc: "X" }] }), "Ctrl+x"), "bar:bar");
     compare(to(Keymap.helping(), "x"), ":closeHelp");
     compare(to(Keymap.helping(), ""), "");
   }
