@@ -55,12 +55,14 @@ Singleton {
     // The top level's bar as it will be, the starter's slots included.
     const bar = Object.assign({}, json.menu?.bar);
     for (const slot of ["left", "center", "right"]) bar[slot] = bar[slot] ?? Config.starterBar[slot];
+    // An input shows only on a layout's input island.
+    const inputShown = json.menu?.layout == null || Array.from(json.menu.layout).includes("input");
     // The top level's input is checked as an entry's would be.
     const input = json.menu?.input == null ? [] : inputProblems({ submenu: [], input: json.menu.input }, plugins).map(problem => "menu.input " + problem);
     return values.concat(pluginProblems(json.plugins ?? {}), glyphProblems(json.glyphs ?? {}), patternProblems(json.music?.titleMatch ?? ""),
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
-      levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null), input, layoutProblems(json.menu ?? {}));
+      levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null, inputShown), input, layoutProblems(json.menu ?? {}));
   }
 
   // The islands a layout names, each at most once.
@@ -257,7 +259,7 @@ Singleton {
   }
 
   // A level's shape, its keys in its body and its bar, then each entry and the level under it.
-  function levelProblems(path, given, bar, plugins, list) {
+  function levelProblems(path, given, bar, plugins, list, inputShown) {
     if (Config.kind(given) !== "list") return ["menu: " + path + " takes a list of entries"];
     const entries = Array.from(given).filter(entry => Config.kind(entry) === "map");
     const slots = ["left", "center", "right"];
@@ -290,9 +292,9 @@ Singleton {
     for (const name of parts.filter(part => typeof part === "string"))
       if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin");
     for (const [entry, inBar] of entries.map(entry => [entry, false]).concat(barEntries.map(entry => [entry, true]))) {
-      found.push(...entryProblems(entry, plugins, inBar, list).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
+      found.push(...entryProblems(entry, plugins, inBar, list, inputShown).map(problem => "menu: '" + (entry.desc ?? entry.key) + "' in " + path + (inBar ? "'s bar " : " ") + problem));
       // A submenu of another kind is its entry's own problem (fields).
-      if (entry.submenu || entry.bar) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.bar, plugins, entry.list));
+      if (entry.submenu || entry.bar) found.push(...levelProblems(path + " > " + entry.desc, Config.kind(entry.submenu) === "list" ? entry.submenu : [], entry.bar, plugins, entry.list, inputShown));
     }
     return found;
   }
@@ -396,7 +398,7 @@ Singleton {
   }
 
   // In a bar an entry needs no key, and may only show its status; past what `fields` says, what spans fields.
-  function entryProblems(entry, plugins, inBar, list) {
+  function entryProblems(entry, plugins, inBar, list, inputShown) {
     const found = [];
     const unknown = Object.keys(entry).filter(key => !(key in fields) && !(key in renamedFields));
     const keys = [].concat(entry.key ?? []);
@@ -419,6 +421,7 @@ Singleton {
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
     if (entry.input != null) found.push(...inputProblems(entry, plugins));
+    if (entry.input != null && !inputShown) found.push("sets input, but menu.layout shows no input");
     // Only when nothing else is wrong with it, which is often why it does nothing (command for cmd).
     if (!found.length && (does > 1 || does === 0 && !(inBar && entry.status != null)))
       found.push("needs one of cmd, action, submenu, list or view" + (inBar ? ", or only a status" : ""));

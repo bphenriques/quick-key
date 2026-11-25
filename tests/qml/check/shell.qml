@@ -38,6 +38,7 @@ ShellRoot {
     ["a layout with two inputs", { menu: { layout: ["input", "body", "input"] } }, "menu.layout shows input more than once"],
     ["a layout with two bars", { menu: { layout: ["bar", "body", "bar"] } }, "menu.layout shows bar more than once"],
     ["a top-level input on a layout without one", { plugins: { agent: { type: "ask", ask: "true" } }, menu: { input: { desc: "Ask", plugin: "agent" }, layout: ["body", "bar"] } }, "menu.input is set, but menu.layout shows no input"],
+    ["a level's input on a layout without one", { menu: { layout: ["body", "bar"], entries: [{ key: "x", desc: "X", icon: "x", list: "tray", submenu: [{ key: "y", desc: "Y", icon: "x", submenu: [], input: { desc: "Add", cmd: "true" } }] }] } }, "'Y' in the top level > X sets input, but menu.layout shows no input"],
     ["a level's bar under its old name", menu([{ key: "a", desc: "A", icon: "x", submenu: [], header: { right: [] } }]), "'A' in the top level sets header, now bar"],
     ["an entry without a key beside a command plugin named as a removed one", { plugins: { notifications: { type: "command", read: "true" } }, menu: { entries: [{ desc: "Lock", icon: "x", cmd: "true" }] } }, "'Lock' in the top level needs a key"],
     ["a list setting given as text", { popups: { show: "battery" } }, "popups.show takes a list"],
