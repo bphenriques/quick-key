@@ -650,6 +650,21 @@ ShellRoot {
         }
       },
       {
+        name: "a picker on a layout without an input still takes its arrows, as the filter's",
+        until: () => {
+          if (Plugins.get("many")?.items.length !== 10000) return false;
+          menu.hide();
+          Config.menu.layout = ["body", "bar"];
+          menu.pickList("many");
+          const was = menu.filter.current;
+          const taken = menu.handleKey({ key: Qt.Key_Down, modifiers: Qt.NoModifier, text: "" });
+          const moved = menu.filtering && menu.filter.current !== was;
+          menu.hide();
+          Config.menu.layout = ["input", "body", "bar"];
+          return taken && moved;
+        }
+      },
+      {
         name: "menu.keysHint off leaves ? off the top level's bar, and ? still lists the keys",
         until: () => {
           menu.hide();

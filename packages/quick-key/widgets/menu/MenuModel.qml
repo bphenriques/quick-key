@@ -303,7 +303,7 @@ Scope {
     const own = event.isAutoRepeat ? find(items, name) : null;
     // Held, Return acts once on the cursor's row, a pair's too.
     if (own && !own.paired || event.isAutoRepeat && cursorItem && name.endsWith("Return")) return true;
-    return handleName(name) || cursorKey(name);
+    return filtering && filterKey(name) || handleName(name) || cursorKey(name);
   }
 
   // After the view and the level's rows, so a level binding an arrow keeps it; `press` never reaches it, so a key path never depends on the cursor.
