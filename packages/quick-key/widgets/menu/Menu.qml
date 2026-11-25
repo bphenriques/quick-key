@@ -57,6 +57,15 @@ Scope {
     }
   }
 
+  // A filled row, never shown: the height a level's body counts in.
+  MenuRow {
+    id: filledRow
+    visible: false
+    menu: root.menu
+    level: root.menu.body
+    item: ({ key: "1", desc: "x", icon: Glyphs.search })
+  }
+
   Timer {
     id: held
     property string modifier
@@ -105,6 +114,9 @@ Scope {
     id: bodyIsland
     name: "body"
     cut: true
+    // Its level's height in rows, each as tall as a filled row.
+    minimumHeight: root.menu.body.minRows * filledRow.implicitHeight + 2 * padding
+    maximumHeight: root.menu.body.maxRows * filledRow.implicitHeight + 2 * padding
     onClicked: root.menu.focusIsland("body")
     // As Escape does, but never closing the top level.
     onSecondaryClicked: if (root.menu.level) root.menu.stepBack()

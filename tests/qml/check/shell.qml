@@ -75,6 +75,18 @@ ShellRoot {
     ["a colour that is no colour", { theme: { alert: "rgba(255,0,0,0.5)" } }, "theme.alert: 'rgba(255,0,0,0.5)' is no colour"],
     ["an opacity past 1", { theme: { surfaceOpacity: 2 } }, "theme.surfaceOpacity is 2, not 0 to 1"],
     ["no columns", { menu: { columns: 0 } }, "menu.columns is 0, not 1 to 9"],
+    ["a height of no whole rows", menu([{ key: "a", desc: "A", icon: "x", submenu: [], height: 2.5 }]), "'A' in the top level sets height to 2.5, not a whole number"],
+    ["a height of no rows", { menu: { height: 0 } }, "menu.height is 0, not 1 or more"],
+    ["a height as text", { menu: { height: "4" } }, "menu.height takes a number or a map"],
+    ["a height map setting more than min and max", menu([{ key: "a", desc: "A", icon: "x", submenu: [], height: { min: 2, rows: 3 } }]), "sets height to a map setting rows, not min or max"],
+    ["a height map setting nothing", { menu: { height: {} } }, "menu.height is a map setting nothing, not min or max"],
+    ["a height's min past its max", { menu: { height: { min: 6, max: 3 } } }, "menu.height.min is 6, past its max (3)"],
+    ["a height beside a limit", { menu: { bar: { right: [{ desc: "Tray", list: "tray", limit: 3, height: 3 }] } } },
+      ["'Tray' in the top level's bar cannot combine height with limit", "sets height, but its list shows in the bar, opening no level"]],
+    ["a height on a view", menu([{ key: "c", desc: "Calendar", icon: "x", view: "calendar", submenu: [], height: 4 }]), "cannot combine height with view"],
+    ["a height on an entry with no rows", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", height: 4 }]), "can only set height with submenu or list"],
+    ["a height on a bar entry's list", { menu: { bar: { right: [{ desc: "Tray", list: "tray", height: 3 }] } } }, "sets height, but its list shows in the bar, opening no level"],
+    ["a pinned entry's height", { menu: { layout: ["body", { level: "t" }], entries: [{ key: "t", desc: "T", icon: "x", submenu: [], height: 3 }] } }, "'T' in the top level sets height, but is pinned, so fits its rows"],
     ["battery thresholds the wrong way round", { battery: { low: 5, critical: 50 } }, "battery.critical is 50, not below battery.low"],
     ["a bar slot that is no list", { menu: { bar: { left: "battery" } } }, "menu.bar.left takes a list"],
     ["a level's bar slot that is no list", menu([{ key: "a", desc: "A", icon: "x", submenu: [], bar: { right: "battery" } }]), "menu: the top level > A's bar.right takes a list"],
@@ -175,6 +187,12 @@ ShellRoot {
         until: () => root.names({ menu: { layout: ["body", "bar"], entries: [{ key: "x", desc: "X", icon: "x", layout: ["input", { level: "t" }, "body"],
           submenu: [{ key: "t", desc: "T", icon: "x", list: "tray", limit: 3, input: { desc: "Add", cmd: "true" } }, { key: "y", desc: "Y", icon: "x", submenu: [], input: { desc: "Add", cmd: "true" } }] }],
           bar: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", layout: ["input", "body", "bar"] }] } } }, [])
+      },
+      {
+        name: "a height in rows, fixed or between, on the top level, a submenu, a list and a bar entry opening a level, has nothing wrong",
+        timeout: 0,
+        until: () => root.names({ menu: { height: { min: 4 }, entries: [{ key: "a", desc: "A", icon: "x", submenu: [], height: 5 }, { key: "b", desc: "B", icon: "x", list: "tray", height: { min: 2, max: 9 } }],
+          bar: { left: [{ key: "s", desc: "S", icon: "x", submenu: [], height: { max: 3 } }] } } }, [])
       },
       {
         name: "a row without an icon has nothing wrong",

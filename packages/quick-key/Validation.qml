@@ -64,7 +64,19 @@ Singleton {
       // A pop-up draws a status or a plugin; anything else would sit armed on nothing.
       (json.popups?.show ?? []).filter(name => !(name in Statuses.builtin) && !plugins.includes(name)).map(name => "popups.show: '" + name + "' is neither a status nor a plugin"),
       levelProblems("the top level", json.menu?.entries ?? [], bar, plugins, null, noInput, pinsOf(json.menu?.layout).map(pin => pin.level)), input,
-      json.menu?.layout == null ? [] : layoutProblems("menu.layout", json.menu.layout, json.menu.entries ?? Config.starterEntries, bar, "top-level entry"));
+      json.menu?.layout == null ? [] : layoutProblems("menu.layout", json.menu.layout, json.menu.entries ?? Config.starterEntries, bar, "top-level entry"),
+      json.menu?.height == null ? [] : ["number", "map"].includes(Config.kind(json.menu.height)) ? heightProblems("menu.height", json.menu.height, part => part + " is ") : ["menu.height takes a number or a map"]);
+  }
+
+  // A body's height: a whole number of rows from 1, or { min, max } of them, min not past max; `say` words a part of it ("height.min") before its value.
+  function heightProblems(name, height, say) {
+    const rows = { range: [1], whole: true };
+    if (Config.kind(height) !== "map") return valueProblems(say(name), height, rows);
+    const unknown = Object.keys(height).filter(field => !["min", "max"].includes(field));
+    const found = unknown.length || !Object.keys(height).length ? [say(name) + "a map setting " + (unknown.join(", ") || "nothing") + ", not min or max"] : [];
+    for (const field of ["min", "max"]) if (height[field] != null) found.push(...valueProblems(say(name + "." + field), height[field], rows));
+    if (height.min > height.max) found.push(say(name + ".min") + height.min + ", past its max (" + height.max + ")");
+    return found;
   }
 
   // The islands a layout names, each at most once.
@@ -360,6 +372,8 @@ Singleton {
       icon: { kind: "string" },
       // Its level's width in pixels, over menu.width.
       width: { kind: "number", range: [1] },
+      // Its level's body in rows, over menu.height: unset, it fits; N, fixed; { min, max }, it fits between.
+      height: { kind: ["number", "map"], needs: ["submenu", "list"], excludes: ["view", "limit"], invalid: height => heightProblems("height", height, part => "sets " + part + " to ").join("; ") },
       // Its level's entries.
       submenu: { kind: "list" },
       // Keeps the menu open once its cmd runs, or its action at the end of a key path that opened the menu.
@@ -446,6 +460,8 @@ Singleton {
     // Its island draws its level alone: no row for a status, no bar.
     if (pinned) found.push(...["bar", "layout", "status", "format"].filter(field => entry[field] != null).map(field => "is pinned, so its " + field + " shows nowhere"));
     else if (level && Config.kind(entry.layout) === "list") found.push(...layoutProblems("sets a layout that", entry.layout, rows, Config.kind(entry.bar) === "map" ? entry.bar : {}, "entry of its level"));
+    // A pin fits its rows, a list's being its limit; a bar shows its list, opening no level.
+    if (entry.height != null && (pinned || inBar && entry.list != null)) found.push("sets height, but " + (pinned ? "is pinned, so fits its rows" : "its list shows in the bar, opening no level"));
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");

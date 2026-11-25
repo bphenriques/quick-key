@@ -101,8 +101,9 @@ Scope {
             required property Island modelData
             required property int index
             readonly property real side: Config.theme.padding + modelData.inset
-            readonly property real fit: Math.max(modelData.minimumHeight, content.implicitHeight + 2 * modelData.padding)
-            readonly property real natural: Math.max(fit, held)
+            readonly property real own: content.implicitHeight + 2 * modelData.padding
+            readonly property real fit: Math.max(modelData.minimumHeight, own)
+            readonly property real natural: Math.min(modelData.maximumHeight, Math.max(fit, held))
             // The tallest it has been while its holdKey stays, once laid out, so a height it has only for a moment is not kept.
             property real held: 0
             readonly property var holdKey: modelData.holdKey
@@ -134,7 +135,7 @@ Scope {
             y: Math.round(place.y)
             width: modelData.width < 0 ? root.room : Math.min(modelData.width, overlay.width - 2 * overlay.edgeMargin)
             height: place.height
-            clip: natural > height
+            clip: own > height
 
             Surface {
               anchors.fill: parent
@@ -181,8 +182,8 @@ Scope {
             Loader {
               id: content
               anchors.verticalCenter: parent.verticalCenter
-              // Held taller than it is, against the screen's edge.
-              anchors.verticalCenterOffset: Math.max(0, island.height - island.fit) / 2
+              // Held or kept taller than it is, against the screen's edge.
+              anchors.verticalCenterOffset: Math.max(0, island.height - island.own) / 2
               anchors.left: parent.left
               anchors.right: parent.right
               anchors.leftMargin: island.side

@@ -308,6 +308,8 @@ Singleton {
         property var input: null
         // The top level's islands, top to bottom: `input`, `body` (once), `bar`, and `{ level = "t"; }` pinning the top-level entry on t on an island of its own.
         property var layout: ["input", "body", "bar"]
+        // A level's body in rows, unless its entry sets `height` or shows a view: unset (null), it fits; N, fixed; { min, max }, it fits between.
+        property var height: null
         // Draws the bar's actions and slots apart, each on an island of its own, rather than on one bar.
         property bool splitBar: false
         // Shows the key listing the rest on the bars that have one (`? keys`, Ask's `C-? keys`); off, the key still acts.
