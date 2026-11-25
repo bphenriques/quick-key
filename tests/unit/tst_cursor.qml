@@ -43,6 +43,20 @@ TestCase {
     compare(Steps.next(3, 1, 0, "Up", ["Up", "Down"]), 0);
   }
 
+  // Past the first or last row by ↑↓, where the island beside may take it; never by ←→, nor from none.
+  function test_edge() {
+    verify(Steps.atEdge(5, 2, 0, "Up"));
+    verify(Steps.atEdge(5, 2, 1, "Up"));
+    verify(!Steps.atEdge(5, 2, 2, "Up"));
+    verify(Steps.atEdge(5, 2, 4, "Down"));
+    // Above the short last row, nothing lies below.
+    verify(Steps.atEdge(5, 2, 3, "Down"));
+    verify(!Steps.atEdge(5, 2, 2, "Down"));
+    verify(!Steps.atEdge(5, 2, 0, "Left"));
+    verify(!Steps.atEdge(5, 2, -1, "Up"));
+    verify(Steps.atEdge(2, 1, 1, "Down"));
+  }
+
   function test_taken() {
     compare(step(0, "Right", ["Up", "Down"]), -1);
     compare(step(0, "Return"), -1);

@@ -22,6 +22,11 @@ QtObject {
     return next >= 0;
   }
 
+  // Whether ↑ or ↓ would leave its rows.
+  function atEdge(name) {
+    return Steps.atEdge(ids.length, columns, ids.indexOf(current), name);
+  }
+
   // Onto a row, or none (undefined).
   function point(id) {
     internal.at = id;

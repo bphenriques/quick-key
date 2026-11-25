@@ -8,3 +8,9 @@ function next(count, columns, at, name, free) {
   if (at < 0) return by > 0 ? 0 : count - 1;
   return at + by >= 0 && at + by < count ? at + by : at;
 }
+
+// Whether ↑ or ↓ from `at` would leave the rows, where `next` holds the cursor: there the island beside may take it.
+function atEdge(count, columns, at, name) {
+  const by = { Down: columns, Up: -columns }[name];
+  return by !== undefined && at >= 0 && (at + by < 0 || at + by >= count);
+}

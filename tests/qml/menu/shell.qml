@@ -822,6 +822,18 @@ ShellRoot {
         }
       },
       {
+        name: "↑ past the body's first row lands on the pinned level's last row, ↓ past its last back on the body's first; nothing lies above it, and ←→ never cross",
+        until: () => {
+          const pin = root.pinning(2);
+          const key = code => menu.handleKey({ key: code, modifiers: Qt.NoModifier, text: "" });
+          const onBody = key(Qt.Key_Down) && menu.body.cursor.current === "a" && key(Qt.Key_Left) && menu.focused === menu.body;
+          const up = key(Qt.Key_Up) && menu.focused === pin && pin.cursor.current === "b-2" && pin.rows[1].current;
+          const top = key(Qt.Key_Up) && key(Qt.Key_Up) && menu.focused === pin && pin.cursor.current === "a-1";
+          const down = key(Qt.Key_Down) && key(Qt.Key_Down) && menu.focused === menu.body && menu.body.cursor.current === "a" && !pin.rows.some(row => row.current);
+          return onBody && up && top && down && root.unpinning();
+        }
+      },
+      {
         name: "TAB visits the input of the island with the cursor, then each other on screen top to bottom, then the rows it left; S-TAB the reverse",
         until: () => {
           Config.menu.input = { desc: "Ask", plugin: "agent" };

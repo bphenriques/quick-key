@@ -108,7 +108,7 @@ Scope {
       },
       itemMenu: binding => openMenu(binding.item),
       bar: (binding, name) => activate(binding.item, name.slice("Ctrl+".length), body),
-      cursor: (binding, name, model) => model.cursor.key(name),
+      cursor: (binding, name, model) => cross(name) || model.cursor.key(name),
       return: (binding, name, model) => !!binding.item && model.returnOf(binding.item) === name && activate(binding.item, binding.item.key, model) !== false,
       choose: binding => choose(binding.item),
       move: (binding, name, model) => model.filter.move(binding.by),
@@ -239,6 +239,15 @@ Scope {
   function focusOn(where) {
     if (where === "input" && !inputFocused) internal.tabFrom = focused.island;
     internal.focus = where;
+  }
+
+  // ↑↓ past the cursor's first or last row cross onto the nearest row of the island above or below, where it leaves that arrow free too: never into an input or a view, which leave none.
+  function cross(name) {
+    const next = shown[shown.indexOf(focused) + (name === "Down" ? 1 : -1)];
+    if (!next?.cursor.free.includes(name) || !focused.cursor.atEdge(name)) return false;
+    focusIsland(next.island);
+    next.cursor.point(next.cursor.ids[name === "Down" ? 0 : next.cursor.ids.length - 1]);
+    return true;
   }
 
   // TAB's round: the input of the island whose rows it left, then each other input on screen top to bottom, then those rows; S-TAB (step -1) the reverse.
