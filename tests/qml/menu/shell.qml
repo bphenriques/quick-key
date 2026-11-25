@@ -811,13 +811,30 @@ ShellRoot {
         }
       },
       {
-        name: "in the body Tab moves to the input, and Shift+Tab is left to Qt",
+        name: "in the body Tab and Shift+Tab both move to a level's one input, and back",
         until: () => {
           menu.levels = [{ kind: "entry", entry: { submenu: [], input: { desc: "Add", cmd: "true" } } }];
           menu.focusOn("body");
-          const backtab = menu.handleKey({ key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, text: "" });
-          const tab = menu.handleKey({ key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" });
-          return !backtab && tab && menu.inputFocused;
+          const tab = { key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" };
+          const backtab = { key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, text: "" };
+          const back = menu.handleKey(backtab) && menu.inputFocused && menu.handleKey(backtab) && !menu.inputFocused;
+          return back && menu.handleKey(tab) && menu.inputFocused && menu.handleKey(tab) && !menu.inputFocused;
+        }
+      },
+      {
+        name: "TAB visits the input of the island with the cursor, then each other on screen top to bottom, then the rows it left; S-TAB the reverse",
+        until: () => {
+          Config.menu.input = { desc: "Ask", plugin: "agent" };
+          const pin = root.pinning(2);
+          const tab = { key: Qt.Key_Tab, modifiers: Qt.NoModifier, text: "\t" };
+          const backtab = { key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, text: "" };
+          const at = () => menu.inputFocused ? menu.input.input?.desc : menu.focused === menu.body ? "body" : menu.focused.island;
+          const steps = [tab, tab, tab, backtab, backtab, backtab].map(key => menu.handleKey(key) && at());
+          menu.dispatch("t");
+          const fromPin = [tab, tab, tab].map(key => menu.handleKey(key) && at());
+          Config.menu.input = null;
+          if (steps.join() !== "Ask,Add a task...,body,Add a task...,Ask,body" || fromPin.join() !== "Add a task...,Ask,t") console.info("# " + steps.join() + " / " + fromPin.join());
+          return steps.join() === "Ask,Add a task...,body,Add a task...,Ask,body" && fromPin.join() === "Add a task...,Ask,t" && pin.focused && root.unpinning();
         }
       },
       {

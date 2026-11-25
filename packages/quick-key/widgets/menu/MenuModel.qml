@@ -54,8 +54,9 @@ Scope {
   // Nothing for the input or the bar to show: each then shows empty, unless farthest from the edge (Places.shown).
   readonly property bool inputEmpty: input.input === null && !focused.filtering
   readonly property bool barEmpty: barItems.length === 0 && barActions.length === 0 && legend.length === 0
-  // The level islands on screen, top to bottom.
+  // The level islands on screen, top to bottom, and those with an input it shows.
   readonly property var shown: layout.map(name => modelOf(name)).filter(model => model)
+  readonly property var inputs: layout.includes("input") ? shown.filter(model => model.input).map(model => model.island) : []
   // The bar's left: every island's actions and legend, so it holds still as the cursor moves, then what Return runs there; filtering, the filter's keys alone.
   readonly property var barActions: focused.filtering ? [] : shown.reduce((all, model) => all.concat(model.barActions.map(item => ({ item, model }))), [])
   readonly property var legend: focused.filtering ? focused.legend
@@ -66,7 +67,7 @@ Scope {
       Super: barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item)))
     })
   // The keys on screen, one map (keymap.js): every island's at rest, the input's while typing, the filter's while filtering, any key closing `?`'s list.
-  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: barItems, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: input.input !== null, words: Words })
+  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: barItems, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
   readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, words: Words })
   readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size })
     : inputFocused ? typing : rest
@@ -111,7 +112,7 @@ Scope {
       return: (binding, name, model) => !!binding.item && model.returnOf(binding.item) === name && activate(binding.item, binding.item.key, model) !== false,
       choose: binding => choose(binding.item),
       move: (binding, name, model) => model.filter.move(binding.by),
-      tab: binding => inputFocused || binding.step > 0 ? focusOn(inputFocused ? "body" : "input") : false,
+      tab: binding => tab(binding.step),
       recall: () => input.recall(),
       send: () => false,
       hold: () => false
@@ -236,7 +237,18 @@ Scope {
 
   // "body" or "input": the input, or the island it shows the input of.
   function focusOn(where) {
+    if (where === "input" && !inputFocused) internal.tabFrom = focused.island;
     internal.focus = where;
+  }
+
+  // TAB's round: the input of the island whose rows it left, then each other input on screen top to bottom, then those rows; S-TAB (step -1) the reverse.
+  function tab(step) {
+    const from = inputFocused && modelOf(internal.tabFrom) ? internal.tabFrom : focused.island;
+    const stops = [""].concat(inputs.filter(name => name === from), inputs.filter(name => name !== from));
+    const next = stops[(stops.indexOf(inputFocused ? focused.island : "") + step + stops.length) % stops.length];
+    focusIsland(next || from);
+    internal.focus = next ? "input" : "body";
+    internal.tabFrom = from;
   }
 
   // The island by its name takes the keys from the input and the island that had them, whose filter stops.
@@ -473,9 +485,11 @@ Scope {
     id: internal
     property string held: ""
     property string focus: "body"
-    // The island with the keys, by name.
+    // The island with the cursor, by name.
     property string island: "body"
     property var pressedOn: null
+    // The island whose rows TAB left, which it comes back to.
+    property string tabFrom: "body"
     // The entry or item whose action the last key ran.
     property var ran: null
   }
