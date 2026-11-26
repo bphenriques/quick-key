@@ -18,9 +18,9 @@ Singleton {
   readonly property string error: store.error
   // Each event once per day it falls on, in order: { id, key, day, event }, `id` the same across reads of the file.
   readonly property var timeline: store.timeline
-  // The next event not over yet, timed ones first: an all-day one (a daily habit) would otherwise hold it every day.
-  readonly property var next: store.events.find(event => !event.allDay && event.end > Clock.date)
-    ?? store.events.find(event => event.end > Clock.date) ?? null
+  // The next event not over yet, and how many timed ones start later today besides it, as calendar.js decides.
+  readonly property var next: Lib.next(store.events, Clock.date)
+  readonly property int more: Lib.more(store.events, next, Clock.date)
 
   // The events on a day, all-day first, then by start.
   function eventsOn(day) {

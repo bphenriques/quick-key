@@ -66,6 +66,17 @@ function rows(timeline, key, ids) {
   return all.filter(row => row === first || !ids.includes(row.id)).map(row => row === first ? folded : row);
 }
 
+// The next event not over yet, timed ones first: an all-day one (a daily habit) would otherwise hold it every day.
+function next(events, now) {
+  return events.find(event => !event.allDay && event.end > now) ?? events.find(event => event.end > now) ?? null;
+}
+
+// How many timed events start later today besides `next`; today's all-day ones have started by then.
+function more(events, next, now) {
+  const today = Dates.dayKey(now);
+  return events.filter(event => event !== next && !event.allDay && event.start > now && Dates.dayKey(event.start) === today).length;
+}
+
 // Each timed event once, `before` minutes ahead: those to remind at `now`, and every one fired by id (`reminded`) still to come.
 function due(events, reminded, now, before) {
   const until = new Date(now.getTime() + before * 60000);

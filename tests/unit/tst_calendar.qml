@@ -73,6 +73,37 @@ TestCase {
     compare(Calendar.firstOn(rows, today, new Date(2026, 10, 26, 9, 0)), 1);
   }
 
+  // Timed events first, so a daily all-day one does not hold `next`; `more` counts the timed events starting later today besides it.
+  function test_next() {
+    const day = { title: "Habit", start: new Date(2026, 10, 25), end: new Date(2026, 10, 26), allDay: true };
+    const event = (title, start, end) => ({ title, start, end, allDay: false });
+    const standup = event("Standup", at(13, 0), at(14, 30));
+    const review = event("Review", at(15, 0), at(16, 0));
+    const coffee = event("Coffee", at(17, 0), at(17, 15));
+    const gym = event("Gym", new Date(2026, 10, 26, 9, 0), new Date(2026, 10, 26, 10, 0));
+    const swim = event("Swim", new Date(2026, 10, 26, 11, 0), new Date(2026, 10, 26, 12, 0));
+    // None after.
+    compare(Calendar.next([day, coffee], now).title, "Coffee");
+    compare(Calendar.more([day, coffee], coffee, now), 0);
+    // Two after, tomorrow's not counted.
+    const events = [day, review, coffee, event("Dinner", at(20, 0), at(21, 0)), gym];
+    compare(Calendar.next(events, now).title, "Review");
+    compare(Calendar.more(events, review, now), 2);
+    // One under way is next, those starting later today after it.
+    const busy = [day, standup, review, coffee, gym, swim];
+    compare(Calendar.next(busy, now).title, "Standup");
+    compare(Calendar.more(busy, standup, now), 2);
+    // Late in the day, tomorrow's events are not today's to count.
+    const late = new Date(2026, 10, 25, 23, 0);
+    compare(Calendar.next(busy, late).title, "Gym");
+    compare(Calendar.more(busy, gym, late), 0);
+    compare(Calendar.more(busy, gym, new Date(2026, 10, 26, 0, 0)), 1);
+    // With no timed event left, the all-day one is next, and none follow.
+    compare(Calendar.next([day, standup], at(15, 0)).title, "Habit");
+    compare(Calendar.more([day, standup], day, at(15, 0)), 0);
+    compare(Calendar.next([], now), null);
+  }
+
   // Each timed event once, ahead by `before` minutes; one reminded before a restart is not again, and one past is forgotten.
   function test_due() {
     const events = [

@@ -87,9 +87,9 @@ Singleton {
       adjust: "brightness",
       ready: () => Brightness.ready
     },
-    // When the next event in calendar.file is; `updated` is how old the events are.
+    // When the next event in calendar.file is; `more` is how many more start today (`+2`), `updated` how old the events are.
     calendar: {
-      names: ["title", "when", "updated"],
+      names: ["title", "when", "more", "updated"],
       glyph: () => Glyphs.calendar,
       fields: () => root.calendar(),
       phase: () => Calendar.syncing ? "working" : Calendar.error ? "error" : "idle",
@@ -191,6 +191,6 @@ Singleton {
     // An all-day event under way is today's, a timed one says when it ends.
     const when = next.allDay ? Clock.day(next.start < Clock.date ? Clock.date : next.start)
       : next.start <= Clock.date ? Words.until(Clock.when(next.end, true)) : Clock.when(next.start, true);
-    return { title: next.title, when, updated };
+    return { title: next.title, when, more: Calendar.more ? "+" + Calendar.more : "", updated };
   }
 }
