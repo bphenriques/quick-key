@@ -60,6 +60,19 @@ Found in the beta.7 round, real but rare or low impact; reopen on a sighting in 
 - Qt's `textinput` warning, twice per close; silencing the category could hide real ones.
 - KeyList's rows (Ask's keys) wash on hover though a click does nothing.
 
+From the review before a week of use (2026-11-26, beta.18; navigation, design and config each 8/10):
+
+- `TAB` while filtering types a tab into the query (A4).
+- `0` from the body steps back to the body, not the pin, which menu.md implies (A5).
+- Holding Ctrl listed no bar keys under wtype in the preview (A6); unconfirmed on a real keyboard.
+- Which island has the cursor shows only in the input's placeholder and the bar (A8).
+- Bluetooth says off twice, glyph and text (B4); an empty bar under `keysHint = false` (B5, the far-end rule); English day names beside a localised date (B7).
+- README's pitch and a tour at its top (B6): after the week.
+- `desc`/`label` and `icon`/`glyph` name one thing twice (C4): renaming churns every config.
+- `input.plugin` may name a plugin that takes no text (C10): the check cannot know.
+- Null-default settings show kind "any" in the reference: a declared kind needs a table.
+- The owner's Tasks `c` (Done, persisted) sits one modifier from `C-c` Calendar and acts unseen at the top (A7): the owner's config, not the shell's.
+
 ## Open
 
 - Ask's cost: about 17% of the shell's lines and 25% of commits since 2026-11-13 (80 of 346 since 11-20). Its shape is settled; if the churn stays above the core's after the bug-log weeks, consider moving it out as a user plugin (needs rule 12 amended).
