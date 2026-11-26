@@ -122,7 +122,9 @@ Singleton {
       "audio.step": [1],
       "audio.max": [1, 150],
       "brightness.step": [1],
-      "clock.firstDayOfWeek": [-1, 6]
+      "clock.firstDayOfWeek": [-1, 6],
+      "battery.low": [0, 100],
+      "battery.critical": [0, 100]
     })
 
   // Numbers that are counts or point sizes, which a fraction would be cut from.
@@ -385,7 +387,7 @@ Singleton {
       pins: { kind: "list", needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits"
         : Array.from(pins).every(pin => Config.kind(pin) === "map" && typeof pin.match === "string" && typeof pin.label === "string") ? "" : "takes each pin as { match, label }, two strings" },
       // Tray items its list leaves out, by their id (blueman's is "blueman"); only with list "tray".
-      hide: { kind: "list", invalid: ids => Array.from(ids).every(id => typeof id === "string") ? "" : "takes each item's id as a string" },
+      hide: { kind: "list", needs: ["list"], invalid: ids => Array.from(ids).every(id => typeof id === "string") ? "" : "takes each item's id as a string" },
       // Its level shows this view in place of a menu.
       view: { kind: "string", excludes: ["list"], choices: Object.keys(Views.builtin) },
       // Live state on the right of its row.
@@ -397,7 +399,7 @@ Singleton {
       // Its compositor key (Mod+N), only a label: shown while Super is held.
       shortcut: { kind: "string", bar: true },
       // The most items of its list a bar shows (without a key) or its pinned level; past it, the rest on 0.
-      limit: { kind: "number", bar: true, pinned: true, needs: ["list"], range: [1, 9] },
+      limit: { kind: "number", bar: true, pinned: true, needs: ["list"], range: [1, 9], whole: true },
       // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, context, after }.
       input: { kind: "map", level: true },
       // Its level's islands, as menu.layout, until ESC; unset, it opens in the current layout's body.
@@ -464,7 +466,7 @@ Singleton {
     const unseen = inBar && entry.list != null && !keys.length ? ["submenu", "input", "width", "height", "columns", "legend", "layout", "bar"].filter(field => entry[field] != null) : [];
     if (unseen.length) found.push("sets " + unseen.join(", ") + ", but its list shows in the bar, opening no level");
     if (entry.limit != null && inBar && entry.list != null && keys.length) found.push("sets limit, but its key opens its level, which lists every item");
-    if (entry.hide != null && entry.list !== "tray") found.push("can only set hide with list 'tray'");
+    if (entry.hide != null && entry.list != null && entry.list !== "tray") found.push("can only set hide with list 'tray'");
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");
