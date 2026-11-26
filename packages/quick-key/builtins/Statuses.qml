@@ -85,7 +85,7 @@ Singleton {
       format: "|{level}",
       meter: () => Brightness.lit ? Brightness.percentage / 100 : -1,
       adjust: "brightness",
-      ready: () => Brightness.present
+      ready: () => Brightness.ready
     },
     // When the next event in calendar.file is; `updated` is how old the events are.
     calendar: {

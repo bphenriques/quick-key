@@ -14,6 +14,8 @@ Singleton {
   // Each output twice, by connector name and by make, model and serial: those connected, and those on. Read at start and on refresh().
   readonly property var connected: internal.connected
   readonly property var enabled: internal.enabled
+  // The outputs have been read once: before, none reads as none on.
+  readonly property bool read: internal.read
   readonly property var layouts: impl.layouts
   readonly property int layoutIndex: impl.layoutIndex
   // The output keys and pop-ups go to, by connector name; "" without a backend, Wayland placing them.
@@ -23,6 +25,7 @@ Singleton {
     impl.outputs((connected, enabled) => {
       internal.connected = connected;
       internal.enabled = enabled;
+      internal.read = true;
     });
   }
 
@@ -45,5 +48,6 @@ Singleton {
     id: internal
     property var connected: []
     property var enabled: []
+    property bool read: false
   }
 }

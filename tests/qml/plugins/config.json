@@ -160,5 +160,9 @@
   },
   "daemons": {
     "list": "echo org.freedesktop.UPower.PowerProfiles"
+  },
+  "brightness": {
+    "backlight": "printf '%s\\t100\\n' \"$XDG_RUNTIME_DIR/backlight\"",
+    "set": "true"
   }
 }

@@ -20,6 +20,11 @@ ShellRoot {
   // Whether task a showed done, at each change after a burst of presses; null outside it.
   property var burst: null
 
+  // Brightness's level and whether it is lit as its status turned ready, where the pop-up (Osd, which needs a session) settles.
+  property string brightnessAtReady: ""
+  readonly property bool brightnessReady: Statuses.of("brightness").ready
+  onBrightnessReadyChanged: if (brightnessReady) brightnessAtReady = JSON.stringify([Brightness.percentage, Brightness.lit])
+
   CommandProcess {
     id: complainer
     command: ["sh", "-c", "echo bad >&2; exit 3"]
@@ -36,6 +41,15 @@ ShellRoot {
       {
         name: "without niri, the outputs are read as the shell starts, before the menu first opens, so brightness can pop up",
         until: () => Compositor.enabled.length > 0
+      },
+      {
+        name: "brightness is not ready on its maximum alone, before its level is read",
+        until: () => Brightness.present && Compositor.read && !Statuses.of("brightness").ready
+      },
+      {
+        name: "brightness turns ready with its level read and its panel lit, so the pop-up takes its look at start as state, not a change",
+        start: () => Quickshell.execDetached(["sh", "-c", "echo 40 > \"$XDG_RUNTIME_DIR/backlight\""]),
+        until: () => root.brightnessAtReady === "[40,true]"
       },
       {
         name: "a watch that ends takes its work with it, and leaves its result to be seen, as Rex has it",

@@ -10,6 +10,8 @@ Singleton {
   id: root
 
   readonly property bool present: internal.maximum > 0
+  // Its maximum, its level and the outputs have each been read, arriving in no set order: before, its look is not yet state.
+  readonly property bool ready: present && internal.loaded && Compositor.read
   // The backlight directory's name, which is how logind addresses it.
   readonly property string name: internal.file.replace(/\/brightness$/, "").split("/").pop()
   // The panel it dims is on, as of the last time the outputs were read (Compositor).
@@ -30,6 +32,7 @@ Singleton {
     property string file: ""
     property int maximum: 0
     property int current: 0
+    property bool loaded: false
     // The level asked for while a write is under way, else -1.
     property int wanted: -1
   }
@@ -65,6 +68,9 @@ Singleton {
     watchChanges: true
     printErrors: false
     onFileChanged: reload()
-    onLoaded: internal.current = parseInt(text()) || 0
+    onLoaded: {
+      internal.current = parseInt(text()) || 0;
+      internal.loaded = true;
+    }
   }
 }
