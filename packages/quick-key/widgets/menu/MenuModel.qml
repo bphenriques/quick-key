@@ -47,28 +47,23 @@ Scope {
   readonly property InputModel input: InputModel {
     menu: root
   }
-  readonly property var topBar: ({ left: Config.barSlot("left"), center: Config.barSlot("center"), right: Config.barSlot("right") })
-  // At the body's level whichever island has the keys, so the bar holds still.
-  readonly property var barSlots: level === null ? slotsOf(topBar) : body.kinds[level.kind].bar(level)
-  readonly property var barItems: barSlots.left.concat(barSlots.center, barSlots.right)
-  // Nothing for the input or the bar to show: each then shows empty, unless farthest from the edge (Places.shown).
+  readonly property BarModel bar: BarModel {
+    menu: root
+  }
+  // Nothing for the input to show: it then shows empty, unless farthest from the edge (Places.shown).
   readonly property bool inputEmpty: input.input === null && !focused.filtering
-  readonly property bool barEmpty: barItems.length === 0 && barActions.length === 0 && legend.length === 0
   // The level islands on screen, top to bottom, and those with an input it shows.
   readonly property var shown: layout.map(name => modelOf(name)).filter(model => model)
   readonly property var inputs: layout.includes("input") ? shown.filter(model => model.input).map(model => model.island) : []
-  // The bar's left: the cursor island's actions and legend, then what Return runs there, so the other islands' keys act unlisted (`?` lists them); filtering, the filter's keys alone.
-  readonly property var barActions: focused.barActions.map(item => ({ item, model: focused }))
-  readonly property var legend: focused.filtering ? focused.legend : focused.levelLegend.filter(key => owns(focused, key.key)).concat(focused.cursorLegend)
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
-      Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
-      Super: barItems.filter(item => shortcutOf(item)).map(item => hint(item, shortcutOf(item)))
+      Ctrl: bar.items.filter(item => item.key).map(item => bar.hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
+      Super: bar.items.filter(item => bar.shortcutOf(item)).map(item => bar.hint(item, bar.shortcutOf(item)))
     })
   // The keys on screen, one map (keymap.js): every island's at rest, the input's while typing, the filter's while filtering, any key closing `?`'s list.
-  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: barItems, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
-  readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, bar: barItems, words: Words })
-  readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size, bar: barItems })
+  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: bar.items, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
+  readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, bar: bar.items, words: Words })
+  readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size, bar: bar.items })
     : inputFocused ? typing : rest
   // Keys no row shows, where they act: at rest, then in the input.
   readonly property var help: Keymap.help(rest.filter(binding => binding.what !== "back").concat(typing))
@@ -165,40 +160,6 @@ Scope {
     }
   }
 
-  function slotsOf(bar) {
-    return { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) };
-  }
-
-  // A name is a status or plugin to show, an entry with a list and no key each of its items; `uid` is what the view follows an item by.
-  function barOf(slot) {
-    return Array.from(slot ?? []).reduce((items, part) => items.concat(typeof part === "string" ? [{ key: "", desc: part, status: part, uid: part }]
-      : part.list && !part.key ? barList(part).map(item => Object.assign({}, item, { uid: part.list + ":" + (item.id ?? "more") }))
-      : [Object.assign(body.itemOf(part), { uid: part.key || part.desc })]), []);
-  }
-
-  function shortcutOf(item) {
-    return item.entry ? item.entry.shortcut ?? "" : Plugins.get(item.status)?.shortcut ?? "";
-  }
-
-  function hint(item, key) {
-    const glyph = Statuses.of(item.status).glyph;
-    return Object.assign({}, item, { key, status: "", format: "", paired: typeof key !== "string", icon: item.icon || (item.image ? "" : glyph) });
-  }
-
-  // The app and the submenus opened since: blueman › Plugins.
-  function appOf(menus) {
-    return { key: "", desc: menus.map(menu => menu.title).join(" › "), image: menus[0]?.image ?? "", named: true };
-  }
-
-  // `limit` items on digits, then 0 for the rest, filtered on a level of its own.
-  function barList(entry) {
-    const all = Lists.items(entry.list, entry.hide);
-    const shown = body.numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
-    const onBar = shown.map(item => item.id);
-    const more = all.filter(item => !item.hidden && !onBar.includes(item.id)).length;
-    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list, entry.hide) }) : shown;
-  }
-
   function keyChars(group) {
     return Math.max(1, ...group.map(item => MenuKeys.label(item.key, item.paired).length));
   }
@@ -223,7 +184,7 @@ Scope {
     // The top level's pinned levels, whichever layout shows.
     const pins = pinsOf(layoutOf(null));
     const rows = entries.filter(entry => !pins.includes(entry.key)).map(entry => body.itemOf(entry));
-    const top = Keymap.rest({ islands: [{ name: "body", items: rows, pins: pins.map(key => ({ key })) }], bar: barOf(topBar.left).concat(barOf(topBar.center), barOf(topBar.right)) });
+    const top = Keymap.rest({ islands: [{ name: "body", items: rows, pins: pins.map(key => ({ key })) }], bar: bar.itemsOf(bar.slotsOf(bar.top)) });
     const binding = [key, "Ctrl+" + key].map(name => Keymap.route(top, name)).find(binding => ["row", "pin", "bar"].includes(binding?.what));
     if (!binding) return;
     const pin = binding.what === "pin";
@@ -482,7 +443,7 @@ Scope {
       }
     };
     walk(entries, "", 0);
-    bar(topBar, "", 0);
+    bar(root.bar.top, "", 0);
     return lines.join("\n");
   }
 

@@ -27,7 +27,7 @@ Scope {
       implicitWidth: Layout.preferredWidth
       menu: root.menu
       alignment: Qt.AlignRight
-      items: root.menu.barOf(root.menu.topBar.right)
+      items: root.menu.bar.barOf(root.menu.bar.top.right)
     }
   }
 
@@ -138,7 +138,7 @@ Scope {
   Island {
     id: barIsland
     name: "bar"
-    empty: root.menu.barEmpty
+    empty: root.menu.bar.empty
     split: Config.menu.splitBar
     padding: Config.theme.padding / 4
     // At least a padded line, so a level's bar without the clock is as tall as the top level's and the body holds still.

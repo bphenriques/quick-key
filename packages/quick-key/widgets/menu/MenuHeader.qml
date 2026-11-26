@@ -18,7 +18,7 @@ RowLayout {
   // What the slots and the legend leave the actions: with less than every label needs, all show their glyphs alone.
   readonly property real slotsWidth: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.wanted + spacing : 0), 0)
   readonly property real actionsRoom: room - slotsWidth - (legend.visible ? legend.implicitWidth + actions.spacing : 0)
-  readonly property real labelledWidth: Array.from(labelled.children).reduce((sum, row) => sum + row.implicitWidth, Math.max(0, menu.barActions.length - 1) * actions.spacing)
+  readonly property real labelledWidth: Array.from(labelled.children).reduce((sum, row) => sum + row.implicitWidth, Math.max(0, menu.bar.actions.length - 1) * actions.spacing)
   readonly property bool compact: labelledWidth > actionsRoom
   // What the bar needs at least, every text shortened, a spacing between each two items: past its width it overflows, which only a wider menu or fewer items mends, so the log says so.
   readonly property real needed: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.Layout.minimumWidth + spacing : 0), actions.visible ? 0 : -spacing)
@@ -44,20 +44,20 @@ RowLayout {
   // As their rows draw them, so an action keeps its icon, state and value on the bar; filtering, the filter's keys alone.
   RowLayout {
     id: actions
-    visible: header.menu.barActions.length > 0 || header.menu.legend.length > 0
+    visible: header.menu.bar.actions.length > 0 || header.menu.bar.legend.length > 0
     // Shrinks, never grows: past their glyphs alone, its rows' text gives way, as the slots' does.
     Layout.fillWidth: true
     Layout.maximumWidth: implicitWidth
     spacing: Config.theme.padding
 
     Repeater {
-      model: header.menu.barActions.length
+      model: header.menu.bar.actions.length
 
       MenuRow {
         required property int index
-        item: header.menu.barActions[index]?.item ?? ({})
+        item: header.menu.bar.actions[index]?.item ?? ({})
         menu: header.menu
-        level: header.menu.barActions[index]?.model ?? header.menu.body
+        level: header.menu.bar.actions[index]?.model ?? header.menu.body
         hugs: true
         compact: header.compact
         Layout.fillWidth: true
@@ -68,8 +68,8 @@ RowLayout {
 
     KeyLegend {
       id: legend
-      visible: header.menu.legend.length > 0
-      keys: header.menu.legend
+      visible: header.menu.bar.legend.length > 0
+      keys: header.menu.bar.legend
       onPicked: key => header.picked(key)
     }
   }
@@ -80,13 +80,13 @@ RowLayout {
     visible: false
 
     Repeater {
-      model: header.menu.barActions.length
+      model: header.menu.bar.actions.length
 
       MenuRow {
         required property int index
-        item: header.menu.barActions[index]?.item ?? ({})
+        item: header.menu.bar.actions[index]?.item ?? ({})
         menu: header.menu
-        level: header.menu.barActions[index]?.model ?? header.menu.body
+        level: header.menu.bar.actions[index]?.model ?? header.menu.body
         hugs: true
         chars: MenuKeys.label(item.key ?? "", item.paired ?? false).length
       }
@@ -98,14 +98,14 @@ RowLayout {
     menu: header.menu
     centred: header.centred
     sideMinimum: header.centred ? header.sideMinimum : contentMinimum
-    items: header.menu.barSlots.left
+    items: header.menu.bar.slots.left
   }
 
   HeaderSlot {
     id: centreSlot
     menu: header.menu
     alignment: Qt.AlignHCenter
-    items: header.menu.barSlots.center
+    items: header.menu.bar.slots.center
   }
 
   HeaderSlot {
@@ -114,6 +114,6 @@ RowLayout {
     centred: header.centred
     sideMinimum: header.centred ? header.sideMinimum : contentMinimum
     alignment: Qt.AlignRight
-    items: header.menu.barSlots.right
+    items: header.menu.bar.slots.right
   }
 }

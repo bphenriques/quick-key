@@ -96,7 +96,7 @@ Scope {
   readonly property var kinds: ({
       entry: {
         content: level => !!(level.entry.list || level.entry.view),
-        bar: level => root.menu.slotsOf(level.entry.bar ?? {}),
+        bar: level => root.menu.bar.slotsOf(level.entry.bar ?? {}),
         // Own rows by letter (inLevel: a value beside the label, with its meter), then the list by digit.
         items: level => Array.from(level.entry.submenu ?? [])
           .map(entry => Object.assign(root.itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true }))
@@ -104,7 +104,7 @@ Scope {
       },
       menu: {
         content: () => false,
-        bar: () => ({ left: [root.menu.appOf(root.menu.levels.filter(level => level.kind === "menu"))], center: [], right: [] }),
+        bar: () => ({ left: [root.menu.bar.appOf(root.menu.levels.filter(level => level.kind === "menu"))], center: [], right: [] }),
         items: level => {
           const children = Array.from(menuOpener.children.values).filter(child => !child.isSeparator && child.enabled);
           const labels = children.map(child => child.text.replace(/_/g, ""));

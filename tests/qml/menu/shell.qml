@@ -280,7 +280,7 @@ ShellRoot {
       },
       {
         name: "a bar list's +N counts only what the bar leaves out and its picker shows, never a hidden item",
-        until: () => Lists.items("hides").length === 2 && menu.barOf([{ desc: "H", list: "hides", limit: 1 }]).length === 1
+        until: () => Lists.items("hides").length === 2 && menu.bar.barOf([{ desc: "H", list: "hides", limit: 1 }]).length === 1
       },
       {
         name: "pinned items keep their digits, dimmed while absent; the rest follow",
@@ -347,7 +347,7 @@ ShellRoot {
         until: () => {
           if (root.acted === null) {
             if (Lists.items("devices").length !== 2) return false;
-            root.acted = JSON.stringify([menu.barSlots.left.map(item => [item.key, item.desc, item.status]), menu.barSlots.right.map(item => item.desc)]);
+            root.acted = JSON.stringify([menu.bar.slots.left.map(item => [item.key, item.desc, item.status]), menu.bar.slots.right.map(item => item.desc)]);
             menu.handleKey({ key: Qt.Key_B, modifiers: Qt.ControlModifier, text: "" });
           }
           const opened = root.acted === '[[["b","Fruits","clicked"]],["a-1","b-2"]]' && menu.level?.entry?.desc === "Fruits" && menu.body.rows.length === 2;
@@ -430,7 +430,7 @@ ShellRoot {
           menu.show();
           const top = menu.body.bodyActions.length > 0 && menu.body.barActions.length === 0 && !menu.body.slashFilters;
           menu.push({ kind: "entry", entry: { list: "many", submenu: [{ key: "m", desc: "Mute", cmd: "true" }] } });
-          const content = menu.body.content && menu.body.barActions.length === 1 && menu.body.bodyActions.length === 0 && !menu.barEmpty;
+          const content = menu.body.content && menu.body.barActions.length === 1 && menu.body.bodyActions.length === 0 && !menu.bar.empty;
           const legend = menu.body.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join() === "/ 1-9 of 10000,? keys";
           const listed = menu.help.some(key => key.key === "/");
           menu.handleKey({ key: Qt.Key_Slash, modifiers: Qt.NoModifier, text: "/" });
@@ -551,7 +551,7 @@ ShellRoot {
             const legend = menu.body.legend.map(key => MenuKeys.label(key.key) + " " + key.what).join(", ");
             const counted = menu.body.filter.count;
             menu.dispatch("Alt+1");
-            const own = menu.level.kind === "actions" && menu.body.items[0].key === "d" && menu.barSlots.left[0].desc === "A";
+            const own = menu.level.kind === "actions" && menu.body.items[0].key === "d" && menu.bar.slots.left[0].desc === "A";
             menu.dispatch("d");
             root.acted = legend === "1 pick, ↑ move, RET open, M-RET menu" && counted === "1 of 1" && own && menu.level.picking && menu.body.filtering;
           }
@@ -641,7 +641,7 @@ ShellRoot {
           menu.push(root.bareLevel);
           const bare = menu.body.legend.map(key => key.key).join() === "?" && menu.dispatch("Down") && !!menu.body.cursorItem && menu.body.legend.map(key => key.key).join() === "?,Return";
           menu.push(root.keyedLevel);
-          const named = menu.dispatch("Down") && !menu.barEmpty && menu.body.legend.some(key => key.key === "Return");
+          const named = menu.dispatch("Down") && !menu.bar.empty && menu.body.legend.some(key => key.key === "Return");
           menu.hide();
           menu.show();
           const before = menu.body.legend.length;
@@ -1130,7 +1130,7 @@ ShellRoot {
           Config.menu.entries = [{ key: "c", desc: "Calendar", view: "calendar", layout: ["input", { level: "e" }, "body", "bar"], submenu: [{ key: "e", desc: "Events", list: "devices", limit: 2 }] }];
           menu.show();
           menu.dispatch("c");
-          const returns = () => menu.legend.filter(key => key.key === "Return").map(key => key.what).join();
+          const returns = () => menu.bar.legend.filter(key => key.key === "Return").map(key => key.what).join();
           const body = returns() === Words.events;
           menu.dispatch("e");
           menu.dispatch("Down");
@@ -1209,7 +1209,7 @@ ShellRoot {
           root.pinning(1);
           const shown = () => Array.from(header.parts[0].children).filter(child => child.item?.desc).map(child => child.item.desc).join();
           const legend = () => Array.from(header.parts[0].children).find(child => child.keys)?.keys.map(key => [].concat(key.key).join("+")).join() ?? "";
-          const slots = () => JSON.stringify(menu.barSlots) + Array.from(header.parts[1].children).length;
+          const slots = () => JSON.stringify(menu.bar.slots) + Array.from(header.parts[1].children).length;
           const listed = () => menu.help.some(key => key.key === "f" && key.desc === "Flip");
           const [bodyActions, bodySlots, bodyLegend] = [shown(), slots(), legend()];
           const body = bodyActions === "" && bodyLegend === "?" && listed() && menu.dispatch("f") && flipped === 1 && menu.focused === menu.body;
@@ -1227,7 +1227,7 @@ ShellRoot {
         name: "an island with nothing shows empty while one farther from the edge shows: a pinned level stays put over an empty input as the keys move, and a filter fills the input",
         until: () => {
           root.pinning(2);
-          const shown = () => Places.shown(menu.layout.map(island => island === "input" ? menu.inputEmpty : island === "bar" ? menu.barEmpty : false));
+          const shown = () => Places.shown(menu.layout.map(island => island === "input" ? menu.inputEmpty : island === "bar" ? menu.bar.empty : false));
           // Each island as tall whichever has the keys, so only which show moves the pin.
           const pinY = () => Places.of([30, 60, 200, 40], shown(), menu.layout.indexOf("body"), 1000, 35, 4)[menu.layout.indexOf("t")].y;
           menu.hide();
@@ -1569,7 +1569,7 @@ ShellRoot {
         name: "a bar entry showing only a plugin's status takes a click, which activates the plugin",
         start: () => {
           menu.hide();
-          barItem.item = menu.barSlots.left.find(item => item.key === "k");
+          barItem.item = menu.bar.slots.left.find(item => item.key === "k");
           if (barItem.enabled) barItem.activated();
         },
         until: () => barItem.enabled && Plugins.get("picked")?.text === "clicked"
