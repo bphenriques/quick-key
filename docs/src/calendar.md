@@ -16,12 +16,12 @@ The `calendar` status shows when the next event is, timed ones first, so a daily
 bar.right = [ { key = "s"; desc = "Sync"; icon = "󰓦"; status = "calendar"; format = "{updated}"; cmd = config.programs.quick-key.calendarSync.exec.sync; } ];
 ```
 
-Once something writes `calendar.file`, put `"calendar"` in the top bar beside the clock, so the next event shows without opening the month; a format names what it shows, shortened when the bar is crowded and whole on hover. Setting `menu.bar.left` replaces the starter's clock, so it names that too:
+Once something writes `calendar.file`, put `"calendar"` in the top bar beside the clock, so the next event shows without opening the month; a format names what it shows, shortened when the bar is crowded and whole on hover, what follows its `|` staying whole. Setting `menu.bar.left` replaces the starter's clock, so it names that too:
 
 ```nix
 menu.bar.left = [
   { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; }
-  { desc = "Next"; status = "calendar"; format = "{when} {title} {more}"; }
+  { desc = "Next"; status = "calendar"; format = "{when} {title}|{more}"; }
 ];
 ```
 
