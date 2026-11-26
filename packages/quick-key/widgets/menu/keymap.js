@@ -31,7 +31,9 @@ function rest(at) {
   if (at.holds?.Ctrl) add("Ctrl+", "", "hold", { desc: words.helpBarKeys });
   if (at.holds?.Super) add("Super+", "", "hold", { desc: words.helpCompositor });
   for (const island of islands) {
-    for (const item of island.items ?? []) for (const key of names(item.key)) add(key, island.name, "row", { item, label: item.desc });
+    // A content island's actions sit on the bar only while it has the cursor: `?` lists them otherwise.
+    const unshown = item => !island.focused && island.content && !item.listed;
+    for (const item of island.items ?? []) for (const key of names(item.key)) add(key, island.name, "row", { item, label: item.desc, desc: unshown(item) ? item.desc : undefined });
     for (const pin of island.pins ?? []) add(pin.key, island.name, "pin", { label: pin.desc, desc: pin.desc });
   }
   out.push(...barred(at.bar));

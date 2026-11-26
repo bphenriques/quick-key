@@ -12,7 +12,7 @@ TestCase {
   // The owner's: Ask on top, Tasks pinned on t (Sort, Done, Sync; three items, more on 0), the top level's letters with the cursor, the bar's Ctrl keys.
   readonly property var owner: Keymap.rest({
     islands: [
-      { name: "t", items: tasks, more: true, filters: true },
+      { name: "t", items: tasks, more: true, filters: true, content: true },
       { name: "body", items: letters, pins: [{ key: "t", desc: "Tasks" }], focused: true, free: ["Up", "Down", "Left", "Right"] }
     ],
     bar: [{ key: "x", desc: "X" }, { key: "1", desc: "Tray", app: { hasMenu: true } }],
@@ -99,8 +99,9 @@ TestCase {
   function test_help() {
     const listed = bindings => Keymap.help(bindings).map(entry => [].concat(entry.key).join() + " " + entry.desc);
     compare(listed(viewLevel), ["Left,Right Day", "Up,Down Week", "Ctrl+Up,Ctrl+Down Year", "Escape Back"]);
-    compare(listed(owner), ["Ctrl+ Bar", "t Tasks", "Up,Down,Left,Right Move", "Return Run", "/ Filter", "Tab Tab", "Escape Back"]);
-    compare(Keymap.help(owner)[2].paired, true);
+    // Tasks' actions, off the bar while the body has the cursor.
+    compare(listed(owner), ["Ctrl+ Bar", "s Sort", "c Done", "y Sync", "t Tasks", "Up,Down,Left,Right Move", "Return Run", "/ Filter", "Tab Tab", "Escape Back"]);
+    compare(Keymap.help(owner)[5].paired, true);
     compare(listed(Keymap.typing({ tab: true, words })), ["Tab Tab", "Ctrl+Shift+Return Send", "Escape Back"]);
   }
 

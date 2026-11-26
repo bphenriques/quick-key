@@ -1165,16 +1165,27 @@ ShellRoot {
         }
       },
       {
-        name: "the bar's left shows every island's actions and legend, ? keys once, holding still as the cursor moves, its slots too",
+        name: "the bar's left shows the actions and legend of the island with the cursor, a pin's acting from the body as ? lists them, the slots holding still",
         until: () => {
-          root.pinning(2);
+          const plugin = Plugins.get("devices");
+          if (!plugin) return false;
+          let flipped = 0;
+          plugin.actions = { flip: { icon: () => "", available: () => true, run: () => flipped++ } };
+          root.pinning(1);
           const shown = () => Array.from(header.parts[0].children).filter(child => child.item?.desc).map(child => child.item.desc).join();
-          const legend = () => Array.from(header.parts[0].children).find(child => child.keys)?.keys.map(key => key.key).join() ?? "";
+          const legend = () => Array.from(header.parts[0].children).find(child => child.keys)?.keys.map(key => [].concat(key.key).join("+")).join() ?? "";
           const slots = () => JSON.stringify(menu.barSlots) + Array.from(header.parts[1].children).length;
+          const listed = () => menu.help.some(key => key.key === "f" && key.desc === "Flip");
           const [bodyActions, bodySlots, bodyLegend] = [shown(), slots(), legend()];
+          const body = bodyActions === "" && bodyLegend === "?" && listed() && menu.dispatch("f") && flipped === 1 && menu.focused === menu.body;
           menu.dispatch("t");
-          const held = bodyActions === "Flip" && bodyLegend.split(",").filter(key => key === "?").length === 1 && shown() === "Flip" && legend() === bodyLegend && slots() === bodySlots;
-          return held && root.unpinning();
+          const pinned = shown() === "Flip" && legend().split(",").includes("0") && legend().split(",").filter(key => key === "?").length === 1 && !listed() && slots() === bodySlots;
+          const pinnedLegend = legend();
+          menu.stepBack();
+          const back = shown() === "" && legend() === bodyLegend && slots() === bodySlots;
+          if (!body || !pinned || !back) console.info("# " + [bodyActions, bodyLegend, listed(), flipped, pinnedLegend, shown()].join(" | "));
+          plugin.actions = {};
+          return body && pinned && back && root.unpinning();
         }
       },
       {

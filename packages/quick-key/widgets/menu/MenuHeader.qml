@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import qs
 import qs.ui
 
-// A level's bar: every island's actions and legend, then the body's level's slots like waybar's modules-left, -center and -right; as in waybar, nothing grows the menu.
+// A level's bar: the actions and legend of the island with the cursor, then the body's level's slots like waybar's modules-left, -center and -right; as in waybar, nothing grows the menu.
 RowLayout {
   id: header
 

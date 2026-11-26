@@ -57,10 +57,9 @@ Scope {
   // The level islands on screen, top to bottom, and those with an input it shows.
   readonly property var shown: layout.map(name => modelOf(name)).filter(model => model)
   readonly property var inputs: layout.includes("input") ? shown.filter(model => model.input).map(model => model.island) : []
-  // The bar's left: every island's actions and legend, so it holds still as the cursor moves, then what Return runs there; filtering, the filter's keys alone.
-  readonly property var barActions: focused.filtering ? [] : shown.reduce((all, model) => all.concat(model.barActions.map(item => ({ item, model }))), [])
-  readonly property var legend: focused.filtering ? focused.legend
-    : shown.reduce((all, model) => all.concat(model.levelLegend.filter(key => owns(model, key.key) && !all.some(seen => JSON.stringify(seen.key) === JSON.stringify(key.key)))), []).concat(focused.cursorLegend)
+  // The bar's left: the cursor island's actions and legend, then what Return runs there, so the other islands' keys act unlisted (`?` lists them); filtering, the filter's keys alone.
+  readonly property var barActions: focused.barActions.map(item => ({ item, model: focused }))
+  readonly property var legend: focused.filtering ? focused.legend : focused.levelLegend.filter(key => owns(focused, key.key)).concat(focused.cursorLegend)
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
       Ctrl: barItems.filter(item => item.key).map(item => hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
