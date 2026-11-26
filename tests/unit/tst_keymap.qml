@@ -84,6 +84,24 @@ TestCase {
     compare(to(pinned, "t"), "e:view");
   }
 
+  // The cursor on the bar: the island whose bar it is keeps its actions there, off `?`; the bar takes the arrows and Return, digits and Ctrl keeping their targets.
+  function test_cursor_on_bar() {
+    const onBar = Keymap.rest({
+      islands: [
+        { name: "t", items: tasks, content: true, barShows: true, free: ["Up", "Down"] },
+        { name: "body", items: letters, free: ["Up", "Down", "Left", "Right"] },
+        { name: "bar", focused: true, free: ["Up", "Down", "Left", "Right"], cursorItem: { key: "x", desc: "X" } }
+      ],
+      bar: [{ key: "x", desc: "X" }],
+      words: words
+    });
+    compare(to(onBar, "Right"), "bar:cursor");
+    compare(Keymap.route(onBar, "Return").item.desc, "X");
+    compare(to(onBar, "2"), "t:row");
+    compare(to(onBar, "Ctrl+x"), "bar:bar");
+    verify(!Keymap.help(onBar).some(entry => entry.desc === "Sort"));
+  }
+
   function test_filter_typing_help_modes() {
     const filtering = Keymap.filtering({ island: "t", rows: [{ id: "a" }], item: { id: "a" }, size: 9 });
     compare(to(filtering, "1"), "t:choose");

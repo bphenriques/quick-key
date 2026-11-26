@@ -11,6 +11,8 @@ ListItem {
 
   required property MenuModel menu
   property var item: ({})
+  // On the menu's bar, where the cursor may stand on it; a panel's strip of statuses is not.
+  property bool menuBar: false
   readonly property var plugin: item.entry ? null : Plugins.get(item.status)
   readonly property bool runs: menu.runs(item)
 
@@ -20,7 +22,8 @@ ListItem {
   visible: Statuses.shown(item)
   enabled: runs && item.enabled !== false
   dimsWhenDisabled: runs
-  onActivated: menu.activate(root.item, root.item.key, menu.body)
+  current: menuBar && menu.bar.isCurrent(item.uid)
+  onActivated: menuBar ? menu.clickBar(root.item) : menu.activate(root.item, root.item.key, menu.body)
   onSecondaryActivated: menu.openMenu(root.item)
   onScrolled: up => menu.act(root.item, up, menu.body)
 

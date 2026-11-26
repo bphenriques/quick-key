@@ -603,17 +603,24 @@ ShellRoot {
         }
       },
       {
-        name: "at the top the arrows move over the entries as laid out, Return opens one as its letter would, and Escape back keeps its row",
+        name: "at the top the arrows move over the entries as laid out, ↓ past the last row onto the bar's first stop and ↑ back, Return opens one as its letter would, and Escape back keeps its row",
         until: () => {
           menu.hide();
           menu.show();
-          const moved = menu.dispatch("Down") && menu.body.cursor.current === "a" && menu.dispatch("Right") && menu.body.cursor.current === "t"
-            && menu.dispatch("Down") && menu.body.cursor.current === "t" && menu.body.bodyActions[1].current && menu.dispatch("Left");
+          const xOf = children => Array.from(children).find(child => child.item?.key === "x");
+          const moved = menu.dispatch("Down") && menu.body.cursor.current === "a" && menu.dispatch("Right") && menu.body.cursor.current === "t";
+          // Only the menu's bar shows the cursor, never a panel's strip of statuses.
+          barItem.item = menu.bar.items.find(item => item.key === "x");
+          const onBar = menu.dispatch("Down") && menu.cursorOnBar && menu.bar.cursorItem?.key === "x" && !menu.body.bodyActions[1].current
+            && xOf(header.parts[1].children)?.current && !barItem.current && menu.dispatch("Right") && menu.bar.cursorItem?.desc === "Volume" && menu.dispatch("Left");
+          const up = menu.dispatch("Up") && !menu.cursorOnBar && menu.body.cursor.current === "t" && menu.body.bodyActions[1].current && !xOf(header.parts[1].children)?.current
+            && menu.dispatch("Left");
+          if (!moved || !onBar || !up) console.info("# " + [moved, onBar, up, (menu.bar.stops ?? []).map(stop => stop.id)].join(" | "));
           const opened = menu.dispatch("Return") && menu.level?.entry?.desc === "Audio" && !menu.body.cursorItem;
           menu.stepBack();
           const kept = menu.level === null && menu.body.cursor.current === "a";
           menu.hide();
-          return moved && opened && kept;
+          return moved && onBar && up && opened && kept;
         }
       },
       {
@@ -649,6 +656,62 @@ ShellRoot {
           menu.hide();
           plugin.items = was;
           return bare && named && still;
+        }
+      },
+      {
+        name: "↓ past the last row enters the bar at its first item a click runs, passing what only shows and stopping on one that dims; RET on the clock opens it and ESC lands back on it, digits and Ctrl keeping their targets, ↑ leaving for the rows",
+        until: () => {
+          const plugin = Plugins.get("keyed");
+          if (!plugin) return false;
+          const was = plugin.items;
+          plugin.items = [{ id: "a", actions: [{ key: "d" }] }, { id: "b", actions: [{ key: "d" }] }];
+          menu.hide();
+          menu.show();
+          menu.push({ kind: "entry", entry: { list: "keyed", bar: { left: ["clock", { desc: "Blank", status: "nonesuch", cmd: "true" }, { key: "z", desc: "Dim", action: "nope" },
+            { key: "c", desc: "Calendar", status: "clock", view: "calendar" }] } } });
+          const menus = () => menu.body.legend.some(key => key.key === "Return" || key.key === "Alt+Return");
+          const entered = menu.dispatch("Down") && menu.dispatch("Down") && menus() && menu.dispatch("Down") && menu.cursorOnBar
+            && menu.bar.stops.map(stop => stop.item.desc).join() === "Dim,Calendar" && menu.bar.cursorItem?.desc === "Dim" && menu.bar.cursorItem.enabled === false
+            && !menus() && !menu.body.rows.some(row => row.current) && menu.help.some(key => key.desc === Words.helpMove && [].concat(key.key).includes("Right"));
+          const one = menu.bindings.find(binding => binding.key === "1");
+          const digit = one?.island === "body" && one.item.id === "a";
+          const ctrl = menu.dispatch("Ctrl+c") && menu.level?.entry?.view === "calendar";
+          menu.stepBack();
+          const ctrlBack = menu.cursorOnBar && menu.bar.cursorItem?.desc === "Dim";
+          const opened = menu.dispatch("Right") && menu.dispatch("Return") && menu.level?.entry?.view === "calendar";
+          menu.stepBack();
+          const back = menu.cursorOnBar && menu.bar.cursorItem?.desc === "Calendar" && menu.level?.entry?.list === "keyed";
+          const up = menu.dispatch("Up") && !menu.cursorOnBar && menu.body.cursorItem?.id === "b" && menu.body.rows[1].current;
+          // A click on an item gives it the cursor too, so Escape back from what it opened lands on it.
+          Array.from(header.parts[1].children).find(child => child.item?.desc === "Calendar")?.activated();
+          menu.stepBack();
+          const clicked = menu.cursorOnBar && menu.bar.cursorItem?.desc === "Calendar";
+          if (!entered || !digit || !ctrl || !ctrlBack || !opened || !back || !up || !clicked) console.info("# " + [entered, digit, ctrl, ctrlBack, opened, back, up, clicked].join(" | "));
+          menu.hide();
+          plugin.items = was;
+          return entered && digit && ctrl && ctrlBack && opened && back && up && clicked;
+        }
+      },
+      {
+        name: "on a level whose rows take ←→ the bar's cursor stays put as they step, and ? names only ↑↓ as moving it",
+        until: () => {
+          const plugin = Plugins.get("keyed");
+          if (!plugin) return false;
+          const was = [plugin.items, plugin.actions];
+          let steps = 0;
+          plugin.items = [{ id: "a" }];
+          plugin.actions = { step: { pair: true, icon: () => "", available: () => true, run: () => steps++ } };
+          menu.hide();
+          menu.show();
+          menu.push({ kind: "entry", entry: { list: "keyed", submenu: [{ key: ["Left", "Right"], desc: "Step", action: "step" }],
+            bar: { left: [{ key: "v", desc: "Vee", cmd: "true", keepOpen: true }] } } });
+          const on = menu.dispatch("Down") && menu.dispatch("Down") && menu.cursorOnBar && menu.bar.cursorItem?.desc === "Step";
+          const still = menu.dispatch("Right") && steps === 1 && menu.bar.cursorItem?.desc === "Step";
+          const moves = menu.help.filter(key => key.desc === Words.helpMove).map(key => [].concat(key.key).join()).join();
+          menu.hide();
+          plugin.items = was[0];
+          plugin.actions = was[1];
+          return on && still && moves === "Up,Down";
         }
       },
       {
@@ -1239,6 +1302,25 @@ ShellRoot {
           Config.menu.bar.right = was[2];
           Config.menu.keysHint = true;
           return onBody && onPin && root.unpinning();
+        }
+      },
+      {
+        name: "under [ body {t} bar ] ↓ past the pin's last row enters its bar, its keys alone, and Escape gives the cursor back to the pin, then to the body",
+        until: () => {
+          root.pinning(2);
+          menu.hide();
+          Config.menu.layout = ["body", { level: "t" }, "bar"];
+          menu.show();
+          const pin = menu.modelOf("t");
+          menu.dispatch("t");
+          const entered = menu.dispatch("Down") && menu.dispatch("Down") && menu.dispatch("Down") && menu.cursorOnBar && menu.focused === pin
+            && menu.bar.items.length === 0 && menu.bar.cursorItem?.desc === "Flip" && menu.bar.cursorItem.enabled === false && !pin.rows.some(row => row.current);
+          menu.stepBack();
+          const toPin = !menu.cursorOnBar && menu.focused === pin;
+          menu.stepBack();
+          const toBody = menu.focused === menu.body;
+          if (!entered || !toPin || !toBody) console.info("# " + [entered, toPin, toBody, (menu.bar.stops ?? []).map(stop => stop.id)].join(" | "));
+          return entered && toPin && toBody && root.unpinning();
         }
       },
       {

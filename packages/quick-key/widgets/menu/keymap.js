@@ -2,8 +2,8 @@
 
 // The menu's one key map, pure: a binding per key on screen, which a key reaches from anywhere, `?` lists and the check refuses twice.
 // A binding: { key, island, what: its handler, desc: on `?`, label: its holder, for the check, item: the row it runs, name: a bar key's own, cursor: no key path's }.
-// An island: { name, items, pins: [{ key, desc }], view: [{ key, desc, label }], more: `0`, filters: `/`, focused: has the cursor, and then
-// free: the arrows it takes, content, cursorItem: the row Return runs }.
+// An island (the bar too, while the cursor may stand on it): { name, items, pins: [{ key, desc }], view: [{ key, desc, label }], more: `0`, filters: `/`,
+// focused: has the cursor, barShows: its actions are on the bar (else while focused), free: the arrows it takes, content, cursorItem: the row Return runs }.
 
 // Keys of the island with the cursor alone: a view's too.
 const cursorKeys = ["Up", "Down", "Left", "Right", "Return", "Alt+Return"];
@@ -31,8 +31,8 @@ function rest(at) {
   if (at.holds?.Ctrl) add("Ctrl+", "", "hold", { desc: words.helpBarKeys });
   if (at.holds?.Super) add("Super+", "", "hold", { desc: words.helpCompositor });
   for (const island of islands) {
-    // A content island's actions sit on the bar only while it has the cursor: `?` lists them otherwise.
-    const unshown = item => !island.focused && island.content && !item.listed;
+    // A content island's actions sit on the bar only while it is the cursor's: `?` lists them otherwise.
+    const unshown = item => !(island.barShows ?? island.focused) && island.content && !item.listed;
     for (const item of island.items ?? []) for (const key of names(item.key)) add(key, island.name, "row", { item, label: item.desc, desc: unshown(item) ? item.desc : undefined });
     for (const pin of island.pins ?? []) add(pin.key, island.name, "pin", { label: pin.desc, desc: pin.desc });
   }

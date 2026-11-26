@@ -20,6 +20,8 @@ Item {
   // Set on the sides: at least what their items need, or what either side needs when there is a centre to keep centred.
   property real sideMinimum: 0
   property bool centred: false
+  // The menu's bar, whose items the cursor may stand on (HeaderItem).
+  property bool menuBar: false
 
   visible: !centre || slot.items.length > 0
   Layout.fillWidth: true
@@ -49,6 +51,7 @@ Item {
         required property var modelData
         item: modelData
         menu: slot.menu
+        menuBar: slot.menuBar
       }
     }
   }

@@ -14,7 +14,7 @@ Scope {
   readonly property bool inStack: Panels.owners.includes(root)
   onInStackChanged: if (!inStack) reset()
   onOpenChanged: input.settle()
-  // Levels past the top one: an entry ("entry"), an app menu ("menu") or an item menu ("actions"), each keeping the island and input it was opened from for Escape to restore.
+  // Levels past the top one: an entry ("entry"), an app menu ("menu") or an item menu ("actions"), each keeping the island, input and bar stop it was opened from for Escape to restore.
   property var levels: []
   // How deep a shortcut or key path opened it: Escape closes there.
   property int base: 0
@@ -40,6 +40,10 @@ Scope {
   }
   // The island with the keys: the body, or a pinned level; one leaving the layout gives them back to the body.
   readonly property LevelModel focused: modelOf(internal.island) ?? body
+  // The cursor stands on that island's bar, its keys acting as ever; an arrow past the island above, a click or Escape back from a level opened there put it there.
+  readonly property bool cursorOnBar: internal.cursorOnBar && bar.stops.length > 0
+  // What the arrows and Return act on: the bar, or the island with the cursor.
+  readonly property var cursorAt: cursorOnBar ? bar : focused
   // The pinned levels showing, which the menu draws.
   readonly property var pinnedLevels: Array.from(pinnedModels.instances).filter(model => pinnedKeys.includes(model.island))
   // What the shown islands list, for a list that works while shown (Lists.scanning).
@@ -61,7 +65,7 @@ Scope {
       Super: bar.keyed.filter(item => bar.shortcutOf(item)).map(item => bar.hint(item, bar.shortcutOf(item)))
     })
   // The keys on screen, one map (keymap.js): every island's at rest, the input's while typing, the filter's while filtering, any key closing `?`'s list.
-  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: bar.keyed, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
+  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf).concat([{ name: bar.island, focused: cursorOnBar, free: bar.cursor.free, cursorItem: bar.cursorItem }]), bar: bar.keyed, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
   readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, bar: bar.keyed, words: Words })
   readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size, bar: bar.keyed })
     : inputFocused ? typing : rest
@@ -84,7 +88,8 @@ Scope {
       view: model.viewModel?.keys ?? [],
       more: model.more,
       filters: model.slashFilters,
-      focused: model === focused,
+      focused: model.focused,
+      barShows: model === focused,
       free: model.cursor.free,
       content: model.content,
       cursorItem: model.cursorItem
@@ -107,8 +112,9 @@ Scope {
       },
       itemMenu: binding => openMenu(binding.item),
       bar: binding => activate(binding.item, binding.name, body),
-      cursor: (binding, name, model) => cross(name) || model.cursor.key(name),
-      return: (binding, name, model) => !!binding.item && activate(binding.item, binding.item.key, model) !== false,
+      // The cursor's keys, on the bar too: what Return runs acts on the island with the cursor's level.
+      cursor: (binding, name) => cross(name) || cursorAt.cursor.key(name),
+      return: binding => !!binding.item && activate(binding.item, binding.item.key, focused) !== false,
       choose: binding => choose(binding.item),
       move: (binding, name, model) => model.filter.move(binding.by),
       tab: binding => tab(binding.step),
@@ -204,13 +210,17 @@ Scope {
   function focusOn(where) {
     if (where === "input" && !inputFocused) internal.tabFrom = focused.island;
     internal.focus = where;
+    internal.cursorOnBar = false;
   }
 
-  // ↑↓ past the cursor's first or last row cross onto the nearest row of the island above or below, where it leaves that arrow free too: never into an input or a view, which leave none.
+  // ↑↓ past the cursor's first or last row cross onto the nearest row of the island above or below, or the bar's nearest stop, where it leaves that arrow free too: never into an input or a view, which leave none.
   function cross(name) {
-    const next = shown[shown.indexOf(focused) + (name === "Down" ? 1 : -1)];
-    if (!next?.cursor.free.includes(name) || !focused.cursor.atEdge(name)) return false;
-    focusIsland(next.island);
+    const places = layout.map(island => island === bar.island ? bar : modelOf(island)).filter(place => place);
+    const next = places[places.indexOf(cursorAt) + (name === "Down" ? 1 : -1)];
+    if (!next?.cursor.free.includes(name) || !cursorAt.cursor.atEdge(name)) return false;
+    // The bar is the bar of the island with the cursor, which keeps it.
+    if (next === bar) internal.cursorOnBar = true;
+    else focusIsland(next.island);
     next.cursor.point(next.cursor.ids[name === "Down" ? 0 : next.cursor.ids.length - 1]);
     return true;
   }
@@ -232,7 +242,15 @@ Scope {
       internal.focus = "body";
     }
     internal.island = name;
+    internal.cursorOnBar = false;
     input.settle();
+  }
+
+  // A click on a bar item runs it as its RET would, the cursor standing on it.
+  function clickBar(item) {
+    internal.cursorOnBar = true;
+    bar.cursor.point(String(item.uid));
+    activate(item, item.key, body);
   }
 
   // A click on a row runs it, its island taking the keys.
@@ -263,19 +281,23 @@ Scope {
       model.stopFilter();
       model.cursor.point(undefined);
     }
+    bar.cursor.point(undefined);
     internal.held = "";
     internal.focus = "body";
     internal.island = "body";
+    internal.cursorOnBar = false;
     input.settle();
   }
 
-  // The island it was opened from takes the keys again, the body if the layout no longer shows it.
+  // The island it was opened from takes the keys again, the body if the layout no longer shows it, and the cursor the bar's stop it stood on.
   function back() {
     const left = level;
     levels = levels.slice(0, -1);
     body.stopFilter();
     internal.island = modelOf(left?.island) ? left.island : "body";
     internal.focus = left?.inputFocused ? "input" : "body";
+    internal.cursorOnBar = !!left?.cursorOnBar;
+    bar.cursor.point(left?.barAt);
     body.cursor.point(left?.cursor);
     body.clearViews();
     input.settle();
@@ -283,11 +305,12 @@ Scope {
 
   // Opened from any island, a level shows in the body.
   function push(next) {
-    levels = levels.concat([Object.assign({}, next, { inputFocused: inputFocused, island: focused.island, cursor: body.cursor.current })]);
+    levels = levels.concat([Object.assign({}, next, { inputFocused: inputFocused, island: focused.island, cursor: body.cursor.current, cursorOnBar: cursorOnBar, barAt: bar.cursor.current })]);
     focused.stopFilter();
     body.stopFilter();
     internal.island = "body";
     internal.focus = "body";
+    internal.cursorOnBar = false;
     body.cursor.point(undefined);
     body.clearViews();
     input.settle();
@@ -330,10 +353,11 @@ Scope {
     body.filterSlots = 9;
   }
 
-  // Escape once the input is cleared: an input gives the keys back to its island first, as a card's reply does, and a pinned level to the body.
+  // Escape once the input is cleared: an input or the bar gives the keys back to its island first, as a card's reply does, and a pinned level to the body.
   function stepBack() {
     if (focused.filtering && !focused.level.picking) return focused.stopFilter();
     if (inputFocused) return focusOn("body");
+    if (cursorOnBar) return focusIsland(focused.island);
     if (focused.viewModel && focused.viewModel.stepBack()) return;
     if (focused !== body) return focusIsland("body");
     if (levels.length <= base) Panels.back();
@@ -461,6 +485,8 @@ Scope {
     property string focus: "body"
     // The island with the cursor, by name.
     property string island: "body"
+    // Whether the cursor stands on that island's bar.
+    property bool cursorOnBar: false
     property var pressedOn: null
     // The island whose rows TAB left, which it comes back to.
     property string tabFrom: "body"

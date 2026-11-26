@@ -96,6 +96,7 @@ RowLayout {
   HeaderSlot {
     id: leftSlot
     menu: header.menu
+    menuBar: true
     centred: header.centred
     sideMinimum: header.centred ? header.sideMinimum : contentMinimum
     items: header.menu.bar.slots.left
@@ -104,6 +105,7 @@ RowLayout {
   HeaderSlot {
     id: centreSlot
     menu: header.menu
+    menuBar: true
     alignment: Qt.AlignHCenter
     items: header.menu.bar.slots.center
   }
@@ -111,6 +113,7 @@ RowLayout {
   HeaderSlot {
     id: rightSlot
     menu: header.menu
+    menuBar: true
     centred: header.centred
     sideMinimum: header.centred ? header.sideMinimum : contentMinimum
     alignment: Qt.AlignRight
