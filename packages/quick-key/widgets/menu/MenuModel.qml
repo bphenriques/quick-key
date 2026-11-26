@@ -92,9 +92,7 @@ Scope {
       focused: model === focused,
       free: model.cursor.free,
       content: model.content,
-      cursorItem: model.cursorItem,
-      returns: model.cursorItem ? model.returnOf(model.cursorItem) : "",
-      shifted: model.cursorRows.some(row => model.returnOf(row) !== "Return")
+      cursorItem: model.cursorItem
     };
   }
 

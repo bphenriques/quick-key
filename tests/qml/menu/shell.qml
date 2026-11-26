@@ -107,9 +107,7 @@ ShellRoot {
     ["→ moves the grid's cursor by one", gridLevel, cursorDown, "Right", "cursor R"],
     ["↓ moves the grid's cursor by its columns", gridLevel, cursorDown, "Down", "cursor g"],
     ["Return runs the grid's row as its letter would", gridLevel, cursorDown, "Return", "row"],
-    ["Return on a capital's row does nothing", gridLevel, cursorCapital, "Return", "nothing"],
-    ["Shift+Return runs a capital's row", gridLevel, cursorCapital, "Shift+Return", "capital"],
-    ["Shift+Return on a lowercase row does nothing", gridLevel, cursorDown, "Shift+Return", "nothing"]
+    ["Return runs a capital's row too, the cursor being the deliberate step", gridLevel, cursorCapital, "Return", "capital"]
   ]
 
   // What the key did, told by what changed; the keyed item closes the menu, which is how a run of it shows.
@@ -290,7 +288,7 @@ ShellRoot {
         until: () => MenuKeys.label(["Ctrl+Left", "Ctrl+Right"], true) === "C-←→" && MenuKeys.label("Return") === "RET" && MenuKeys.label("Alt+k") === "M-k"
       },
       {
-        name: "keys are named as entries declare them: Shift picks the capital and names Shift+Return, a modifier alone has no name",
+        name: "keys are named as entries declare them: Shift only picks the capital, a modifier alone has no name",
         until: () => JSON.stringify([
           { key: Qt.Key_A, modifiers: Qt.ShiftModifier, text: "A" },
           { key: Qt.Key_Left, modifiers: Qt.ControlModifier, text: "" },
@@ -300,7 +298,7 @@ ShellRoot {
           { key: Qt.Key_Shift, modifiers: Qt.ShiftModifier, text: "" },
           { key: Qt.Key_Return, modifiers: Qt.ShiftModifier, text: "\r" },
           { key: Qt.Key_Enter, modifiers: Qt.NoModifier, text: "\r" }
-        ].map(event => MenuKeys.name(event))) === '["A","Ctrl+Left","Ctrl+Alt+c","?","Ctrl+?","","Shift+Return","Return"]'
+        ].map(event => MenuKeys.name(event))) === '["A","Ctrl+Left","Ctrl+Alt+c","?","Ctrl+?","","Return","Return"]'
       },
       {
         name: "an action brings its icon and pairing, and dims with nothing to act on",
@@ -595,6 +593,19 @@ ShellRoot {
         }
       },
       {
+        name: "at the top Return opens a capital's level as its letter would",
+        until: () => {
+          menu.hide();
+          if (!root.entries) root.entries = Config.menu.entries;
+          Config.menu.entries = [{ key: "a", desc: "Audio", submenu: [] }, { key: "A", desc: "Audio input", submenu: [] }];
+          menu.show();
+          const opened = menu.dispatch("Down") && menu.dispatch("Right") && menu.body.cursor.current === "A" && menu.dispatch("Return") && menu.level?.entry?.desc === "Audio input";
+          menu.hide();
+          Config.menu.entries = root.entries;
+          return opened;
+        }
+      },
+      {
         name: "a bare list level's bar shows ? keys before its cursor, naming Return once it shows, and the top level's bar holds still",
         until: () => {
           const plugin = Plugins.get("keyed");
@@ -683,7 +694,7 @@ ShellRoot {
         }
       },
       {
-        name: "? lists only keys that act: a hold while it lists something, the arrows each pair a level leaves free, RET on a grid and S-RET by a capital, M-1 while an item has its own menu; every level's bar shows ?",
+        name: "? lists only keys that act: a hold while it lists something, the arrows each pair a level leaves free, RET on a grid, M-1 while an item has its own menu; every level's bar shows ?",
         until: () => {
           menu.hide();
           menu.push({ kind: "entry", entry: { list: "acting" } });
@@ -695,7 +706,7 @@ ShellRoot {
           const hinted = () => menu.body.legend.some(key => key.key === "?");
           return listed(null).startsWith("Ctrl+,") && !listed(null).includes("Super+") && hinted() && listed({ kind: "entry", entry: { list: "acting" } }) === "Up,Down,Alt+1,/,Escape"
             && hinted() && listed({ kind: "entry", entry: { list: "devices" } }) === "Up,Down,/,Escape"
-            && listed(null).includes(",Up,Down,Left,Right,Return,") && listed(root.gridLevel) === "Up,Down,Left,Right,Return,Shift+Return,Escape"
+            && listed(null).includes(",Up,Down,Left,Right,Return,") && listed(root.gridLevel) === "Up,Down,Left,Right,Return,Escape"
             && listed({ kind: "entry", entry: { submenu: [{ key: ["Left", "Right"], desc: "Step", cmd: ["true", "true"] }] } }) === "Up,Down,Return,Escape";
         }
       },
@@ -990,11 +1001,11 @@ ShellRoot {
           }
           menu.hide();
           plugin.actions = {};
-          // Held, Return acts once on the cursor's row, S-RET on a capital's too.
+          // Held, Return acts once on the cursor's row, a capital's too.
           const awake = KeepAwake.enabled;
           menu.push({ kind: "entry", entry: { submenu: [{ key: "I", desc: "Awake", action: "keepAwake" }] } });
           menu.dispatch("Down");
-          for (const repeat of [false, true]) menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.ShiftModifier, text: "\r", isAutoRepeat: repeat });
+          for (const repeat of [false, true]) menu.handleKey({ key: Qt.Key_Return, modifiers: Qt.NoModifier, text: "\r", isAutoRepeat: repeat });
           const once = KeepAwake.enabled !== awake;
           if (KeepAwake.enabled !== awake) KeepAwake.toggle();
           menu.hide();

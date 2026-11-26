@@ -3,10 +3,10 @@
 // The menu's one key map, pure: a binding per key on screen, which a key reaches from anywhere, `?` lists and the check refuses twice.
 // A binding: { key, island, what: its handler, desc: on `?`, label: its holder, for the check, item: the row it runs, name: a bar key's own, cursor: no key path's }.
 // An island: { name, items, pins: [{ key, desc }], view: [{ key, desc, label }], more: `0`, filters: `/`, focused: has the cursor, and then
-// free: the arrows it takes, content, shifted, cursorItem, returns: the key running it }.
+// free: the arrows it takes, content, cursorItem: the row Return runs }.
 
 // Keys of the island with the cursor alone: a view's too.
-const cursorKeys = ["Up", "Down", "Left", "Right", "Return", "Shift+Return", "Alt+Return"];
+const cursorKeys = ["Up", "Down", "Left", "Right", "Return", "Alt+Return"];
 
 function names(key) {
   return (typeof key === "string" ? [key] : Array.from(key ?? [])).filter(name => typeof name === "string" && name !== "");
@@ -39,8 +39,7 @@ function rest(at) {
   out.push(...barred(at.bar));
   if (focused?.free?.length) {
     for (const key of focused.free) add(key, focused.name, "cursor", { desc: words.helpMove, cursor: true });
-    add("Return", focused.name, "return", { item: focused.returns === "Return" ? focused.cursorItem : null, desc: focused.content ? undefined : words.helpRun, cursor: true });
-    add("Shift+Return", focused.name, "return", { item: focused.returns === "Shift+Return" ? focused.cursorItem : null, desc: focused.shifted ? words.helpRunShifted : undefined, cursor: true });
+    add("Return", focused.name, "return", { item: focused.cursorItem ?? null, desc: focused.content ? undefined : words.helpRun, cursor: true });
   }
   if (focused && hasMenu(focused.cursorItem)) add("Alt+Return", focused.name, "itemMenu", { item: focused.cursorItem, cursor: true });
   let menus = 0;
@@ -77,7 +76,6 @@ function filtering(at) {
     add("Alt+" + i, "itemMenu", { item: at.rows[i - 1] });
   }
   add("Return", "choose", { item: at.item });
-  add("Shift+Return", "choose", { item: at.item });
   add("Alt+Return", "itemMenu", { item: at.item });
   for (const [key, by] of [["Up", -1], ["Down", 1], ["Page_Up", -at.size], ["Page_Down", at.size]]) add(key, "move", { by });
   out.push(...barred(at.bar));

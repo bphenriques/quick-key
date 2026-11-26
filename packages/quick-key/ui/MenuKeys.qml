@@ -8,7 +8,7 @@ import "keys.js" as Keys
 Singleton {
   id: root
 
-  // The name of a key event, Ctrl and Alt first when held (Ctrl+Left); Shift picks the capital letter, or names Shift+Return. "" for a modifier alone.
+  // The name of a key event, Ctrl and Alt first when held (Ctrl+Left); Shift only picks the capital letter. "" for a modifier alone.
   function name(event) {
     const key = keyName(event);
     if (!key) return "";
@@ -25,8 +25,7 @@ Singleton {
   function keyName(event) {
     // Shift+Tab arrives as Backtab from a keyboard, or as Tab with Shift from some virtual ones.
     if (event.key === Qt.Key_Tab && event.modifiers & Qt.ShiftModifier) return "Backtab";
-    // Shift with Return runs what a capital names (rule 6).
-    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) return event.modifiers & Qt.ShiftModifier ? "Shift+Return" : "Return";
+    if (event.key === Qt.Key_Enter) return "Return";
     // Named with Ctrl too, so a surface whose prompt has the keys lists them on C-?.
     if (event.key === Qt.Key_Question) return "?";
     const named = Object.keys(Keys.named).find(name => Keys.named[name].code === event.key);

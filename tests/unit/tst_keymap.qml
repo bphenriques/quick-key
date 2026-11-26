@@ -49,8 +49,14 @@ TestCase {
 
   // A key path never presses the cursor's keys: they say so.
   function test_cursor_keys() {
-    compare(owner.filter(binding => binding.cursor).map(binding => binding.key), ["Up", "Down", "Left", "Right", "Return", "Shift+Return"]);
+    compare(owner.filter(binding => binding.cursor).map(binding => binding.key), ["Up", "Down", "Left", "Right", "Return"]);
     compare(Keymap.route(owner, "Return").item, null);
+  }
+
+  // Return runs the cursor's row, a capital's too: Shift guards the letter alone.
+  function test_return_runs_capital() {
+    const capital = Keymap.rest({ islands: [{ name: "body", items: letters, focused: true, free: ["Up", "Down"], cursorItem: letters[1] }], words: words });
+    compare(Keymap.route(capital, "Return").item.key, "A");
   }
 
   function test_starter() {
