@@ -458,8 +458,10 @@ Singleton {
     // Its island draws its level alone: no row for a status, no bar.
     if (pinned) found.push(...["bar", "layout", "status", "format"].filter(field => entry[field] != null).map(field => "is pinned, so its " + field + " shows nowhere"));
     else if (level && Config.kind(entry.layout) === "list") found.push(...layoutProblems("sets a layout that", entry.layout, rows, Config.kind(entry.bar) === "map" ? entry.bar : {}, "entry of its level"));
-    // A pinned level fits its rows, a list's being its limit; a bar shows a list without a key, opening no level, and with one opens its level, which lists every item.
-    if (entry.height != null && (pinned || inBar && entry.list != null && !keys.length)) found.push("sets height, but " + (pinned ? "is pinned, so fits its rows" : "its list shows in the bar, opening no level"));
+    // A pinned level fits its rows, a list's being its limit; a bar shows a list without a key, opening no level (its +N picker is an entry of its own), and with one opens its level, which lists every item.
+    if (entry.height != null && pinned) found.push("sets height, but is pinned, so fits its rows");
+    const unseen = inBar && entry.list != null && !keys.length ? ["submenu", "input", "width", "height", "columns", "legend", "layout", "bar"].filter(field => entry[field] != null) : [];
+    if (unseen.length) found.push("sets " + unseen.join(", ") + ", but its list shows in the bar, opening no level");
     if (entry.limit != null && inBar && entry.list != null && keys.length) found.push("sets limit, but its key opens its level, which lists every item");
     if (entry.hide != null && entry.list !== "tray") found.push("can only set hide with list 'tray'");
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
