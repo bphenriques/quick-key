@@ -5,6 +5,7 @@ import Quickshell
 import qs
 import qs.services
 import qs.ui
+import "statuses.js" as Lib
 
 // Built-in statuses by name; a table without a prototype, so no name every object inherits (toString) is one.
 Singleton {
@@ -148,9 +149,8 @@ Singleton {
   readonly property var none: ({ glyph: "", text: "", detail: "", glyphs: [], fields: {}, fieldTones: {}, tone: "", phase: "idle", active: false,
     strong: false, brief: false, meter: -1, muted: false, popup: "", popupWidth: 0, change: null, ready: false, adjust: "" })
 
-  // A format with each {field} replaced; a field without a value leaves nothing.
   function formatted(format, fields) {
-    return format.replace(/\{(\w+)\}/g, (_, name) => fields[name] ?? "").trim();
+    return Lib.formatted(format, fields);
   }
 
   // A status by name, a built-in's or else the plugin's, in one shape, none's: what a bar, a row and the pop-up all show for it.
@@ -174,12 +174,18 @@ Singleton {
     });
   }
 
-  // A status's value over its fields, { text, detail, glyphs }: an entry's format over the status's own, `|` before the detail; with neither, its value().
   function value(status, fields, format) {
-    const shape = format || status.format;
-    if (shape == null) return status.value(fields);
-    const [text, detail] = shape.split("|");
-    return { text: formatted(text, fields), detail: formatted(detail ?? "", fields) };
+    return Lib.value(status, fields, format);
+  }
+
+  // An item's pins naming what its status shows (Wi-Fi's network, an output), else the name the status gives.
+  function pinned(item) {
+    return (id, name) => Array.from(item.entry?.pins ?? []).find(pin => MenuKeys.glob(pin.match, id))?.label ?? name;
+  }
+
+  // Whether a bar draws an item (statuses.js).
+  function shown(item) {
+    return Lib.shown(item, item.status ? of(item.status, pinned(item)) : none);
   }
 
   // The next event and when, and how old the events are: their age even after a failed sync, the line under the legend saying why.

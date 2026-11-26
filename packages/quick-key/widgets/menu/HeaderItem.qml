@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs
 import qs.services
 import qs.ui
+import qs.builtins
 
 // A bar item: an entry as its status or its icon (given both, the icon, the status lending its tone, spinner, tip and its value while it warns), a listed item (a tray app) as its image, or a status or plugin by name.
 ListItem {
@@ -16,7 +17,7 @@ ListItem {
   // Shrinks, never grows: its text gives way before its neighbours.
   Layout.fillWidth: true
   Layout.maximumWidth: implicitWidth
-  visible: !item.status || !status.blank
+  visible: Statuses.shown(item)
   enabled: runs && item.enabled !== false
   dimsWhenDisabled: runs
   onActivated: menu.activate(root.item, root.item.key, menu.body)

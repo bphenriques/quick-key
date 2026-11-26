@@ -22,11 +22,10 @@ StatusLine {
   // Its value's own tone (warning on a late task's date).
   readonly property string itemTone: item.tone ?? ""
   // Built-in or a plugin's, in one shape.
-  readonly property var shape: Statuses.of(status, (id, name) => root.pinned(id, name))
+  readonly property var shape: Statuses.of(status, Statuses.pinned(item))
   readonly property var value: format ? Statuses.value({}, shape.fields, format) : shape
   // Its work (Phase), drawn as every surface draws it: a spinner while working, its tone otherwise.
   readonly property bool statusBusy: shape.phase === "working"
-  readonly property bool blank: glyph === "" && text === "" && detail === ""
 
   glyph: item.icon || shape.glyph
   image: item.image ?? ""
@@ -54,8 +53,4 @@ StatusLine {
   valueTone: item.done ? "dim" : (status ? ownValueTone : itemTone) || (active ? "primary" : "dim")
   // Done (a ticked task): dim and struck through, though it still runs.
   struck: !!item.done
-
-  function pinned(id, name) {
-    return Array.from(item.entry?.pins ?? []).find(pin => MenuKeys.glob(pin.match, id))?.label ?? name;
-  }
 }
