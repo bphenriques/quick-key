@@ -310,7 +310,7 @@ Singleton {
     // As MenuKeys names a key event: a named key, a letter or a digit, after Ctrl+ or Alt+; one symbol, after Alt+ at most, as Ctrl gives a symbol no name.
     const named = Object.keys(MenuKeys.named).filter(name => MenuKeys.named[name].bindable !== false);
     const sendable = key => new RegExp("^((Ctrl|Alt)\\+)*(" + named.join("|") + "|[A-Za-z0-9])$").test(key) || /^(Alt\+)?[^\sA-Za-z0-9]$/.test(key);
-    wrong(keys.filter(key => !sendable(key)), "keys no keyboard sends (an arrow, space, Return, BackSpace, a letter or a digit, after Ctrl+ or Alt+, or one symbol)");
+    wrong(keys.filter(key => !sendable(key)), "keys no keyboard sends (an arrow, space, Return, BackSpace, a letter or a digit, after Ctrl+ or Alt+, or one symbol: C for Shift+c, Return for Enter, space for Space; Super is the compositor's)");
     wrong(keys.filter(key => /^((Ctrl|Alt)\+)+[0-9]$/.test(key)), "keys that reach a listed item's own menu or the bar's list");
     wrong(keys.filter(key => reservedKeys.includes(key)), "keys reserved for the menu");
     wrong(barKeys.filter(key => key !== "+" && key.includes("+")), "bar keys with a modifier, which Ctrl already takes");
@@ -320,7 +320,8 @@ Singleton {
     const lists = barEntries.filter(entry => entry.list != null && !entry.key).map(entry => "'" + (entry.desc ?? entry.list) + "'");
     if (lists.length > 1) found.push("menu: " + path + "'s bar shows " + lists.join(" and ") + " as lists without a key, whose items would share its digits: give all but one a key");
     for (const name of parts.filter(part => typeof part === "string"))
-      if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin");
+      if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin"
+        + (name in Lists.builtin ? ": it is a list, so write { desc = \"" + name[0].toUpperCase() + name.slice(1) + "\"; list = \"" + name + "\"; }" : ""));
     for (const [entry, inBar] of entries.map(entry => [entry, false]).concat(barEntries.map(entry => [entry, true]))) {
       // Its level shows in its own layout, else in the one it opens from.
       const hides = Config.kind(entry.layout) !== "list" ? noInput : Array.from(entry.layout).includes("input") ? "" : "its level's layout";
