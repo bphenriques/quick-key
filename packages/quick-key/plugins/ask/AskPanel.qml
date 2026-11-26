@@ -134,7 +134,7 @@ Scope {
         content: Prompt {
           id: prompt
           // A prompt taller than a line takes its height from the conversation, so the panel holds still.
-          onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.line
+          onImplicitHeightChanged: panel.inputExtra = implicitHeight - Metrics.prompt
           glyph: panel.plugin.settings.promptGlyph || Glyphs.prompt
           // Until a turn says what Return does next, as the menu's input does.
           placeholder: panel.last ? Words.next(panel.last.phase) : panel.plugin.settings.placeholder.replace(/\{title\}/g, panel.plugin.title)

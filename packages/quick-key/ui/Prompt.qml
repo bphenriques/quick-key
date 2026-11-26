@@ -22,6 +22,8 @@ RowLayout {
   property real slot: Math.max(Metrics.line, keyHint.implicitWidth)
   // Return sends its text (`sent`), in the background with Ctrl+Shift, Shift+Return breaking the line; off, Return reaches `keyPressed` (a filter's).
   property bool sends: true
+  // Above and below its text, so one line is `Metrics.prompt` tall and more grow by lines.
+  readonly property real margin: (Metrics.prompt - Math.ceil(Metrics.line)) / 2
 
   signal sent(bool background)
   signal keyPressed(var event)
@@ -48,6 +50,7 @@ RowLayout {
   // Its key and its glyph share one column (`slot`).
   Item {
     Layout.alignment: Qt.AlignTop
+    Layout.topMargin: root.margin
     implicitWidth: root.slot
     implicitHeight: Metrics.line
 
@@ -74,6 +77,8 @@ RowLayout {
     id: area
     Layout.fillWidth: true
     Layout.preferredHeight: implicitHeight
+    Layout.topMargin: root.margin
+    Layout.bottomMargin: root.margin
     activeFocusOnPress: root.focused
     onKeyPressed: event => {
       const send = root.sends ? MenuKeys.sends(event) : "";
@@ -98,6 +103,7 @@ RowLayout {
   // On the text's line, unpadded, so showing it never grows the prompt.
   KeyLegend {
     Layout.alignment: Qt.AlignTop
+    Layout.topMargin: root.margin
     verticalPadding: 0
     visible: root.keys.length > 0
     keys: root.keys
@@ -106,6 +112,7 @@ RowLayout {
 
   Label {
     Layout.alignment: Qt.AlignTop
+    Layout.topMargin: root.margin
     visible: root.detail !== ""
     tone: "dim"
     text: root.detail

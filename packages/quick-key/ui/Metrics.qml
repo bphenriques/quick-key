@@ -15,6 +15,8 @@ Singleton {
   readonly property int itemPaddingY: 5
   // A row's height with its icon and label (a Label rounds its line up), what a level's height counts in.
   readonly property real row: Math.max(Math.ceil(line), Config.theme.iconSize) + 2 * itemPaddingY
+  // A one-line prompt's height: a row's, less the padding its island has past a bar's (half the theme's), so an input island is as tall as the bar.
+  readonly property real prompt: Math.max(Math.ceil(line), row - Config.theme.padding / 2)
   // The gap between columns of rows (a level's, the keys a modifier reaches).
   readonly property real columnGap: Math.max(Config.theme.padding, cell)
   // A meter's thickness, and its length in a row.

@@ -21,6 +21,8 @@ ShellRoot {
   property bool pressed: false
   // What a case found as it acted, once; null until it has.
   property var acted: null
+  // A one-line prompt's height, once it matched the bar's.
+  property real promptLine: 0
   property bool pathRan: false
   property bool pathClosed: false
   // The keyed plugin's action a key ran.
@@ -200,6 +202,18 @@ ShellRoot {
       width: 300
       menu: menu
       level: menu.body
+    }
+
+    // The input island's prompt and a bar's icon, as the clock's.
+    Prompt {
+      id: linePrompt
+      width: 300
+    }
+
+    HeaderItem {
+      id: iconItem
+      menu: menu
+      item: ({ desc: "Calendar", icon: Glyphs.search })
     }
   }
 
@@ -1667,6 +1681,17 @@ ShellRoot {
           const followed = Metrics.row === filledRow.implicitHeight && Metrics.row > 34;
           if (followed) Config.theme.fontSize = 11;
           return root.acted && followed;
+        }
+      },
+      {
+        name: "a one-line prompt's island is as tall as the bar's, and three lines grow it by two",
+        until: () => {
+          // Padded as Menu pads their islands: half the theme's padding for the input, a quarter for the bar; once the bar's item is laid out at the font the case before restored.
+          if (!root.promptLine && iconItem.implicitHeight === Metrics.row && linePrompt.implicitHeight + Config.theme.padding === iconItem.implicitHeight + Config.theme.padding / 2) {
+            root.promptLine = linePrompt.implicitHeight;
+            linePrompt.text = "one\ntwo\nthree";
+          }
+          return root.promptLine > 0 && Math.abs(linePrompt.implicitHeight - root.promptLine - 2 * Math.ceil(Metrics.line)) < 1;
         }
       },
       {
