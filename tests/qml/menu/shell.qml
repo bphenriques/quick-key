@@ -1145,6 +1145,23 @@ ShellRoot {
         }
       },
       {
+        name: "an action keeps the menu open, keepOpen = false as unset",
+        until: () => {
+          const plugin = Plugins.get("devices");
+          if (!plugin) return false;
+          let ran = 0;
+          plugin.actions = { flip: { icon: () => Glyphs.search, available: () => true, run: () => ran++ } };
+          menu.hide();
+          menu.show();
+          menu.push({ kind: "entry", entry: { list: "devices", submenu: [{ key: "f", desc: "Flip", action: "flip", keepOpen: false }] } });
+          menu.dispatch("f");
+          const open = menu.open && menu.levels.length === 1;
+          menu.hide();
+          plugin.actions = {};
+          return ran === 1 && open;
+        }
+      },
+      {
         name: "a key path ending on a list pick closes the menu it opened",
         start: () => {
           menu.hide();

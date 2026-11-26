@@ -322,7 +322,7 @@ Scope {
     return candidates.find(item => MenuKeys.matches(item.key, name));
   }
 
-  // A click on a pair runs nothing; an action keeps the menu open by default. `from` is the island whose level it acts on.
+  // A click on a pair runs nothing; an action keeps the menu open unless it `closes` it. `from` is the island whose level it acts on.
   function run(entry, name, from = focused) {
     const action = from.actionOf(entry);
     if (action) {
@@ -330,7 +330,7 @@ Scope {
       if (action.pair && second < 0) return;
       // Read before hide(), which leaves the level.
       const list = from.levelList;
-      if (entry.keepOpen === false || action.closes) hide();
+      if (action.closes) hide();
       internal.ran = entry;
       action.run(second === 1, list, root);
       return;
