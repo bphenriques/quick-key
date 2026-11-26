@@ -169,10 +169,10 @@ Scope {
     return { left: barOf(bar.left), center: barOf(bar.center), right: barOf(bar.right) };
   }
 
-  // A name is a status or plugin to show, an entry with a list each of its items; `uid` is what the view follows an item by.
+  // A name is a status or plugin to show, an entry with a list and no key each of its items; `uid` is what the view follows an item by.
   function barOf(slot) {
     return Array.from(slot ?? []).reduce((items, part) => items.concat(typeof part === "string" ? [{ key: "", desc: part, status: part, uid: part }]
-      : part.list ? barList(part).map(item => Object.assign({}, item, { uid: part.list + ":" + (item.id ?? "more") }))
+      : part.list && !part.key ? barList(part).map(item => Object.assign({}, item, { uid: part.list + ":" + (item.id ?? "more") }))
       : [Object.assign(body.itemOf(part), { uid: part.key || part.desc })]), []);
   }
 

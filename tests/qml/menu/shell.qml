@@ -337,6 +337,26 @@ ShellRoot {
         }
       },
       {
+        name: "a bar entry with a list and a key is one item, opening its level on Ctrl and its key; one without a key shows each item",
+        start: () => {
+          root.acted = null;
+          menu.hide();
+          menu.push({ kind: "entry", entry: { submenu: [], bar: { left: [{ key: "b", desc: "Fruits", status: "clicked", list: "devices", submenu: [{ key: "p", desc: "Peel", cmd: "true" }] }],
+            right: [{ desc: "Devices", list: "devices" }] } } });
+        },
+        until: () => {
+          if (root.acted === null) {
+            if (Lists.items("devices").length !== 2) return false;
+            root.acted = JSON.stringify([menu.barSlots.left.map(item => [item.key, item.desc, item.status]), menu.barSlots.right.map(item => item.desc)]);
+            menu.handleKey({ key: Qt.Key_B, modifiers: Qt.ControlModifier, text: "" });
+          }
+          const opened = root.acted === '[[["b","Fruits","clicked"]],["a-1","b-2"]]' && menu.level?.entry?.desc === "Fruits" && menu.body.rows.length === 2;
+          // Cleared for the cases after, which wait on it being null.
+          if (opened) root.acted = null;
+          return opened;
+        }
+      },
+      {
         name: "Ctrl reaches the bar: its entry by its key",
         start: () => {
           menu.hide();

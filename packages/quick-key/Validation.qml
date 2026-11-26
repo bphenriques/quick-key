@@ -392,7 +392,7 @@ Singleton {
       bar: { kind: "map", level: true },
       // Its compositor key (Mod+N), only a label: shown while Super is held.
       shortcut: { kind: "string", bar: true },
-      // The most items of its list a bar or its pinned level shows; past it, the rest on 0.
+      // The most items of its list a bar shows (without a key) or its pinned level; past it, the rest on 0.
       limit: { kind: "number", bar: true, pinned: true, needs: ["list"], range: [1, 9] },
       // A line of text over its level, given to a command or a plugin: { desc, cmd or plugin, context, after }.
       input: { kind: "map", level: true },
@@ -455,8 +455,9 @@ Singleton {
     // Its island draws its level alone: no row for a status, no bar.
     if (pinned) found.push(...["bar", "layout", "status", "format"].filter(field => entry[field] != null).map(field => "is pinned, so its " + field + " shows nowhere"));
     else if (level && Config.kind(entry.layout) === "list") found.push(...layoutProblems("sets a layout that", entry.layout, rows, Config.kind(entry.bar) === "map" ? entry.bar : {}, "entry of its level"));
-    // A pinned level fits its rows, a list's being its limit; a bar shows its list, opening no level.
-    if (entry.height != null && (pinned || inBar && entry.list != null)) found.push("sets height, but " + (pinned ? "is pinned, so fits its rows" : "its list shows in the bar, opening no level"));
+    // A pinned level fits its rows, a list's being its limit; a bar shows a list without a key, opening no level, and with one opens its level, which lists every item.
+    if (entry.height != null && (pinned || inBar && entry.list != null && !keys.length)) found.push("sets height, but " + (pinned ? "is pinned, so fits its rows" : "its list shows in the bar, opening no level"));
+    if (entry.limit != null && inBar && entry.list != null && keys.length) found.push("sets limit, but its key opens its level, which lists every item");
     if (entry.hide != null && entry.list !== "tray") found.push("can only set hide with list 'tray'");
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");

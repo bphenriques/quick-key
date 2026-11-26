@@ -98,6 +98,7 @@ ShellRoot {
     ["a height on a view", menu([{ key: "c", desc: "Calendar", icon: "x", view: "calendar", submenu: [], height: 4 }]), "cannot combine height with view"],
     ["a height on an entry with no rows", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", height: 4 }]), "can only set height with submenu or list"],
     ["a height on a bar entry's list", { menu: { bar: { right: [{ desc: "Tray", list: "tray", height: 3 }] } } }, "sets height, but its list shows in the bar, opening no level"],
+    ["a limit on a bar entry's list with a key", { menu: { bar: { right: [{ key: "b", desc: "Tray", icon: "x", list: "tray", limit: 3 }] } } }, "'Tray' in the top level's bar sets limit, but its key opens its level, which lists every item"],
     ["a pinned entry's height", { menu: { layout: ["body", { level: "t" }], entries: [{ key: "t", desc: "T", icon: "x", submenu: [], height: 3 }] } }, "'T' in the top level sets height, but is pinned, so fits its rows"],
     ["battery thresholds the wrong way round", { battery: { low: 5, critical: 50 } }, "battery.critical is 50, not below battery.low"],
     ["a bar slot that is no list", { menu: { bar: { left: "battery" } } }, "menu.bar.left takes a list"],
@@ -203,10 +204,10 @@ ShellRoot {
           bar: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar", layout: ["input", "body", "bar"] }] } } }, [])
       },
       {
-        name: "a height in rows on the top level, a submenu, a list and a bar entry opening a level has nothing wrong",
+        name: "a height in rows on the top level, a submenu, a list and bar entries opening a level, a keyed list's hiding items included, has nothing wrong",
         timeout: 0,
         until: () => root.names({ menu: { height: 4, entries: [{ key: "a", desc: "A", icon: "x", submenu: [], height: 5 }, { key: "b", desc: "B", icon: "x", list: "tray", height: 2 }],
-          bar: { left: [{ key: "s", desc: "S", icon: "x", submenu: [], height: 3 }] } } }, [])
+          bar: { left: [{ key: "s", desc: "S", icon: "x", submenu: [], height: 3 }, { key: "l", desc: "L", icon: "x", list: "tray", hide: ["blueman"], height: 3 }] } } }, [])
       },
       {
         name: "the tray hiding items, in a bar and on a level, has nothing wrong",
