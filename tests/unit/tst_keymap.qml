@@ -6,7 +6,7 @@ import "keymap.js" as Keymap
 TestCase {
   name: "keymap"
 
-  readonly property var words: ({ helpMove: "Move", helpRun: "Run", helpEscape: "Back", helpTab: "Tab", helpFilter: "Filter", helpItemMenu: "Menu", helpBarKeys: "Bar", helpSendLeave: "Send", helpRecall: "Recall" })
+  readonly property var words: ({ helpMove: "Move", helpRun: "Run", helpEscape: "Back", helpTab: "Tab", helpFilter: "Filter", helpMore: "More", helpItemMenu: "Menu", helpBarKeys: "Bar", helpSendLeave: "Send", helpRecall: "Recall" })
   readonly property var letters: ["a", "A", "b", "d", "w", "m"].map(key => ({ key, desc: key }))
   readonly property var tasks: [{ key: "s", desc: "Sort" }, { key: "c", desc: "Done" }, { key: "y", desc: "Sync" }].concat([1, 2, 3].map(i => ({ key: String(i), desc: "Task " + i, listed: true })))
   // The owner's: Ask on top, Tasks pinned on t (Sort, Done, Sync; three items, more on 0), the top level's letters with the cursor, the bar's Ctrl keys.
@@ -124,7 +124,7 @@ TestCase {
     const listed = bindings => Keymap.help(bindings).map(entry => [].concat(entry.key).join() + " " + entry.desc);
     compare(listed(viewLevel), ["Left,Right Day", "Up,Down Week", "Ctrl+Up,Ctrl+Down Year", "Escape Back"]);
     // Tasks' actions, off the bar while the body has the cursor.
-    compare(listed(owner), ["Ctrl+ Bar", "s Sort", "c Done", "y Sync", "t Tasks", "Up,Down,Left,Right Move", "Return Run", "/ Filter", "Tab Tab", "Escape Back"]);
+    compare(listed(owner), ["Ctrl+ Bar", "s Sort", "c Done", "y Sync", "t Tasks", "Up,Down,Left,Right Move", "Return Run", "0 More", "/ Filter", "Tab Tab", "Escape Back"]);
     compare(Keymap.help(owner)[5].paired, true);
     compare(listed(Keymap.typing({ tab: true, words })), ["Tab Tab", "Ctrl+Shift+Return Send", "Escape Back"]);
   }

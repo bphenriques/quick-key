@@ -124,6 +124,7 @@ Singleton {
   readonly property string helpMove: "Move"
   readonly property string helpRun: "Run the row"
   readonly property string helpFilter: "Filter the list"
+  readonly property string helpMore: "Show the whole list"
   readonly property string helpDay: "Move a day"
   readonly property string helpWeek: "Move a week"
   readonly property string helpYear: "Move a year"

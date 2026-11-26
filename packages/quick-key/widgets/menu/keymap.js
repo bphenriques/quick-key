@@ -46,7 +46,7 @@ function rest(at) {
   for (const island of islands)
     for (const item of island.items ?? []) if (/^[0-9]$/.test(item.key) && hasMenu(item)) add("Alt+" + item.key, island.name, "itemMenu", { item, desc: menus++ ? undefined : words.helpItemMenu });
   for (const island of islands) {
-    if (island.more) add("0", island.name, "more");
+    if (island.more) add("0", island.name, "more", { desc: words.helpMore });
     if (island.filters) add("/", island.name, "filter", { desc: words.helpFilter });
   }
   if (at.tab) {
