@@ -19,6 +19,8 @@ QtObject {
   // Its left: the cursor island's actions and legend, then what Return runs there, so the other islands' keys act unlisted (`?` lists them); filtering, the filter's keys alone.
   readonly property var actions: menu.focused.barActions.map(item => ({ item: isCurrent(actionId(item)) ? Object.assign({ current: true }, item) : item, model: menu.focused }))
   readonly property var legend: legendOf(menu.focused)
+  // That legend with the cursor's at its widest, which the actions' room keeps whether it shows or not, so moving the cursor never folds their labels.
+  readonly property var widestLegend: legendOf(menu.focused, true)
   // Nothing to show for any island the cursor may be on, so its moving never adds or removes it: it then shows empty, unless farthest from the edge (Places.shown).
   readonly property bool empty: keyed.length === 0 && items.length === 0 && menu.shown.every(model => model.barActions.length === 0 && legendOf(model).length === 0)
 
@@ -46,8 +48,8 @@ QtObject {
     return menu.cursorOnBar && cursor.current === String(id);
   }
 
-  function legendOf(model) {
-    return model.filtering ? model.legend : model.levelLegend.filter(key => menu.owns(model, key.key)).concat(model.cursorLegend);
+  function legendOf(model, widest = false) {
+    return model.filtering ? model.legend : model.levelLegend.filter(key => menu.owns(model, key.key)).concat(widest ? model.widestCursorLegend : model.cursorLegend);
   }
 
   // The slots of an island's level's bar: the top's, an entry's `bar`, an app menu's own.

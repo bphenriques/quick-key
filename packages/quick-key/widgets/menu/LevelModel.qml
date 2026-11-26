@@ -74,6 +74,9 @@ Scope {
     .concat(MenuKeys.pick(menu.help, level?.entry?.legend))
   readonly property var cursorLegend: !focused ? [] : (cursorItem && (content || filtering) ? [{ key: "Return", what: cursorItem.verb || Words.pick, clickable: true }] : [])
     .concat(cursorItem?.actions?.length > 0 || cursorItem?.app?.hasMenu ? [{ key: "Alt+Return", what: Words.menu, clickable: true }] : [])
+  // The cursor's legend at its widest over the rows it may stand on, which the bar keeps room for wherever the cursor is (MenuHeader.compact).
+  readonly property var widestCursorLegend: !content || cursorRows.length === 0 ? [] : [{ key: "Return", what: cursorRows.map(row => row.verb || Words.pick).reduce((wide, verb) => verb.length > wide.length ? verb : wide) }]
+    .concat(cursorRows.some(row => row.actions?.length > 0 || row.app?.hasMenu) ? [{ key: "Alt+Return", what: Words.menu }] : [])
   readonly property var legend: filtering ? filter.legend.concat(cursorLegend, filter.query ? [{ key: "Escape", what: Words.clear, clickable: true }] : []) : levelLegend.concat(cursorLegend)
   readonly property string error: viewModel ? viewModel.error : Plugins.get(level?.entry?.list ?? "")?.error ?? (level ? "" : Config.broken)
 

@@ -707,6 +707,36 @@ ShellRoot {
         }
       },
       {
+        name: "a bar whose actions just fit their labels at rest keeps them as the cursor moves onto a row, its legend naming RET, or onto the bar",
+        start: () => {
+          const plugin = Plugins.get("keyed");
+          root.acted = { step: 0, seen: [], was: plugin.items };
+          plugin.items = [{ id: "a", actions: [{ key: "d" }] }, { id: "b", verb: "connect" }];
+          menu.hide();
+          menu.show();
+          menu.push({ kind: "entry", entry: { list: "keyed", submenu: [{ key: "m", desc: "Mute", cmd: "true" }, { key: "s", desc: "Speakers and headphones", cmd: "true" }],
+            bar: { left: [{ key: "v", desc: "Vee", cmd: "true", keepOpen: true }] } } });
+        },
+        // A step a poll, as the bar lays itself out between them: laid out, room for every label and no more, then ↓ onto each row and the bar.
+        until: () => {
+          const at = root.acted;
+          if (at.passed !== undefined) return at.passed;
+          if (at.step === 1) header.room += header.labelledWidth + 1 - header.actionsRoom;
+          if (at.step > 1) at.seen.push(header.compact);
+          // On a row, the legend it shows is all the room kept for it.
+          if (at.step === 3) at.seen.push(header.room - header.slotsWidth - header.actionsRoom < Array.from(header.parts[0].children).find(child => child.keys).implicitWidth);
+          if (at.step > 1 && at.step < 5) menu.dispatch("Down");
+          if (++at.step <= 5) return false;
+          at.passed = !at.seen.some(compact => compact) && menu.cursorOnBar;
+          if (!at.passed) console.info("# " + [at.seen, menu.cursorOnBar].join(" | "));
+          header.room = 300;
+          menu.hide();
+          Plugins.get("keyed").items = at.was;
+          if (at.passed) root.acted = null;
+          return at.passed;
+        }
+      },
+      {
         name: "a click on a bar item leaves the input and the filter, one cursor standing; a bar left with no stops gives the cursor back for good",
         until: () => {
           const plugin = Plugins.get("keyed");

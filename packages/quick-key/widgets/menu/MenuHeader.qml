@@ -15,9 +15,9 @@ RowLayout {
   // Both sides as wide when there is a centre to keep centred and room for both at that width; crowded, each side keeps what it needs, so the shortage falls on the text that can give most.
   readonly property bool centred: centreSlot.visible && 2 * Math.max(leftSlot.wanted, rightSlot.wanted) + centreSlot.wanted + 2 * spacing <= room
   readonly property real sideMinimum: Math.max(leftSlot.contentMinimum, rightSlot.contentMinimum)
-  // What the slots and the legend leave the actions: with less than every label needs, all show their glyphs alone.
+  // What the slots and the legend at its widest leave the actions: with less than every label needs, all show their glyphs alone, wherever the cursor is.
   readonly property real slotsWidth: [leftSlot, centreSlot, rightSlot].reduce((sum, slot) => sum + (slot.visible ? slot.wanted + spacing : 0), 0)
-  readonly property real actionsRoom: room - slotsWidth - (legend.visible ? legend.implicitWidth + actions.spacing : 0)
+  readonly property real actionsRoom: room - slotsWidth - (menu.bar.widestLegend.length > 0 ? widestLegend.implicitWidth + actions.spacing : 0)
   readonly property real labelledWidth: Array.from(labelled.children).reduce((sum, row) => sum + row.implicitWidth, Math.max(0, menu.bar.actions.length - 1) * actions.spacing)
   readonly property bool compact: labelledWidth > actionsRoom
   // What the bar needs at least, every text shortened, a spacing between each two items: past its width it overflows, which only a wider menu or fewer items mends, so the log says so.
@@ -90,6 +90,16 @@ RowLayout {
         hugs: true
         chars: MenuKeys.label(item.key ?? "", item.paired ?? false).length
       }
+    }
+  }
+
+  // The legend at its widest, never drawn: an Item hides it, as a hidden layout never sizes itself.
+  Item {
+    visible: false
+
+    KeyLegend {
+      id: widestLegend
+      keys: header.menu.bar.widestLegend
     }
   }
 

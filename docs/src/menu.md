@@ -2,7 +2,7 @@
 
 The menu is a list of levels, each drawn in the body. Beside it sit an optional bar and input, on islands stacked up from the screen's edge.
 
-A body holds one thing. It is either entries, each a key and a label that does something or opens a level, or a level's content: a list, or a view such as the calendar. A content level's own entries and its legend sit on its bar's left, so a list that grows never moves them. When they do not all fit, each shows only its key and glyph, its label as its tip. The bar also holds what you glance at.
+A body holds one thing. It is either entries, each a key and a label that does something or opens a level, or a level's content: a list, or a view such as the calendar. A content level's own entries and its legend sit on its bar's left, so a list that grows never moves them. When they do not all fit beside the legend, counting what the cursor adds to it wherever the cursor is, each shows only its key and glyph, its label as its tip, so moving the cursor never changes them. The bar also holds what you glance at.
 
 ```nix
 {
