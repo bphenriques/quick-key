@@ -693,6 +693,38 @@ ShellRoot {
         }
       },
       {
+        name: "a click on a bar item leaves the input and the filter, one cursor standing; a bar left with no stops gives the cursor back for good",
+        until: () => {
+          const plugin = Plugins.get("keyed");
+          if (!plugin) return false;
+          const was = plugin.items;
+          plugin.items = [{ id: "a", actions: [{ key: "d" }] }];
+          menu.hide();
+          menu.show();
+          menu.push({ kind: "entry", entry: { list: "keyed", bar: { left: [{ key: "c", desc: "Calendar", status: "clock", view: "calendar" }] } } });
+          const click = () => Array.from(header.parts[1].children).find(child => child.item?.desc === "Calendar")?.activated();
+          menu.body.startFilter();
+          click();
+          menu.stepBack();
+          const filter = menu.cursorOnBar && !menu.body.filtering && !menu.inputFocused;
+          menu.focusOn("input");
+          click();
+          menu.stepBack();
+          const input = menu.cursorOnBar && !menu.inputFocused;
+          menu.hide();
+          menu.show();
+          menu.push({ kind: "entry", entry: { list: "keyed", bar: { left: [{ desc: "Items", list: "keyed" }] } } });
+          const on = menu.dispatch("Down") && menu.dispatch("Down") && menu.cursorOnBar;
+          plugin.items = [];
+          plugin.items = [{ id: "a", actions: [{ key: "d" }] }];
+          const gone = !menu.cursorOnBar;
+          if (!filter || !input || !on || !gone) console.info("# " + [filter, input, on, gone].join(" | "));
+          menu.hide();
+          plugin.items = was;
+          return filter && input && on && gone;
+        }
+      },
+      {
         name: "on a level whose rows take ←→ the bar's cursor stays put as they step, and ? names only ↑↓ as moving it",
         until: () => {
           const plugin = Plugins.get("keyed");

@@ -248,6 +248,8 @@ Scope {
 
   // A click on a bar item runs it as its RET would, the cursor standing on it.
   function clickBar(item) {
+    focused.stopFilter();
+    internal.focus = "body";
     internal.cursorOnBar = true;
     bar.cursor.point(String(item.uid));
     activate(item, item.key, body);
@@ -469,6 +471,15 @@ Scope {
     walk(entries, "", 0);
     bar(root.bar.top, "", 0);
     return lines.join("\n");
+  }
+
+  // A bar left with nothing to stop on gives the cursor back, so a stop coming back later takes no keys.
+  Connections {
+    target: root.bar
+
+    function onStopsChanged() {
+      if (root.bar.stops.length === 0) internal.cursorOnBar = false;
+    }
   }
 
   Connections {
