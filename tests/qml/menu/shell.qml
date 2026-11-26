@@ -739,25 +739,27 @@ ShellRoot {
         }
       },
       {
-        name: "on a level whose rows take ←→ the bar's cursor stays put as they step, and ? names only ↑↓ as moving it",
+        name: "on a level whose rows take ←→ the bar's cursor passes their pair, which RET cannot run, stays put as they step, and ? names only ↑↓ as moving it",
         until: () => {
           const plugin = Plugins.get("keyed");
           if (!plugin) return false;
           const was = [plugin.items, plugin.actions];
           let steps = 0;
+          let mutes = 0;
           plugin.items = [{ id: "a" }];
-          plugin.actions = { step: { pair: true, icon: () => "", available: () => true, run: () => steps++ } };
+          plugin.actions = { step: { pair: true, icon: () => "", available: () => true, run: () => steps++ }, mute: { icon: () => "", available: () => true, run: () => mutes++ } };
           menu.hide();
           menu.show();
-          menu.push({ kind: "entry", entry: { list: "keyed", submenu: [{ key: ["Left", "Right"], desc: "Step", action: "step" }],
+          menu.push({ kind: "entry", entry: { list: "keyed", submenu: [{ key: ["Left", "Right"], desc: "Step", action: "step" }, { key: "m", desc: "Mute", action: "mute" }],
             bar: { left: [{ key: "v", desc: "Vee", cmd: "true", keepOpen: true }] } } });
-          const on = menu.dispatch("Down") && menu.dispatch("Down") && menu.cursorOnBar && menu.bar.cursorItem?.desc === "Step";
-          const still = menu.dispatch("Right") && steps === 1 && menu.bar.cursorItem?.desc === "Step";
+          const on = menu.dispatch("Down") && menu.dispatch("Down") && menu.cursorOnBar && menu.bar.cursorItem?.desc === "Mute";
+          const still = menu.dispatch("Right") && steps === 1 && menu.bar.cursorItem?.desc === "Mute";
+          const runs = menu.dispatch("Return") && mutes === 1;
           const moves = menu.help.filter(key => key.desc === Words.helpMove).map(key => [].concat(key.key).join()).join();
           menu.hide();
           plugin.items = was[0];
           plugin.actions = was[1];
-          return on && still && moves === "Up,Down";
+          return on && still && runs && moves === "Up,Down";
         }
       },
       {

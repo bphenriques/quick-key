@@ -24,8 +24,8 @@ QtObject {
 
   // Its name in the layout, where the cursor crosses onto it (MenuModel.cross).
   readonly property string island: "bar"
-  // Where its cursor stops, left to right: its actions, then each item it draws that a click runs, a disabled one too; what only shows is passed.
-  readonly property var stops: !menu.layout.includes("bar") ? [] : menu.focused.barActions.map(item => ({ id: actionId(item), item }))
+  // Where its cursor stops, left to right: its actions but a pair, which a click never runs, then each item it draws that a click runs, a disabled one too; what only shows is passed.
+  readonly property var stops: !menu.layout.includes("bar") ? [] : menu.focused.barActions.filter(item => !item.paired).map(item => ({ id: actionId(item), item }))
     .concat(items.filter(item => menu.runs(item) && Statuses.shown(item)).map(item => ({ id: String(item.uid), item })))
   readonly property Cursor cursor: Cursor {
     ids: root.stops.map(stop => stop.id)
