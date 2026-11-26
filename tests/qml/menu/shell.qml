@@ -1102,7 +1102,7 @@ ShellRoot {
         },
         until: () => {
           const map = menu.keyMap();
-          return root.pathRan && map.includes("- `Ctrl+x` X") && map.includes("- `Ctrl+Down` `Ctrl+Up` Volume") && map.includes("  - `a Ctrl+v` Vee") && Plugins.get("picked")?.text === "bar";
+          return root.pathRan && map.includes("- `Ctrl+x` X") && map.includes("- `Ctrl+Down` `Ctrl+Up` Volume") && map.includes("  - `a Ctrl+v` Vee") && map.includes("- `Ctrl+1` `Ctrl+0` Devices") && Plugins.get("picked")?.text === "bar";
         }
       },
       {

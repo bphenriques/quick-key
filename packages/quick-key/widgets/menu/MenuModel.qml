@@ -447,12 +447,14 @@ Scope {
   function keyMap() {
     const lines = [];
     const path = (prefix, key) => MenuKeys.names(key).map(name => "`" + (prefix + " " + name).trim() + "`").join(" ");
-    // A bar's entries, on Ctrl in the level they sit on.
+    // A bar's entries, on Ctrl in the level they sit on: a list without a key on its digits, the rest on 0.
     const bar = (slots, prefix, depth) => {
       for (const slot of ["left", "center", "right"]) {
         for (const part of Array.from(slots?.[slot] ?? [])) {
-          if (typeof part === "string" || !part.key) continue;
-          const keys = MenuKeys.names(part.key).map(name => "`" + (prefix + " Ctrl+" + name).trim() + "`").join(" ");
+          if (typeof part === "string" || !part.key && !part.list) continue;
+          const shown = Math.min(part.limit ?? 9, 9);
+          const names = part.key ? MenuKeys.names(part.key) : [shown > 1 ? "1-" + shown : "1", "0"];
+          const keys = names.map(name => "`" + (prefix + " Ctrl+" + name).trim() + "`").join(" ");
           lines.push("  ".repeat(depth) + "- " + keys + " " + (part.desc ?? part.status ?? ""));
         }
       }
