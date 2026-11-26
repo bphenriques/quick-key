@@ -15,12 +15,14 @@ Singleton {
 
   // Each: items() as { id, desc, select, closes, detail, meter, adjust(up) for the wheel, ... }, the icon a pin shows while absent, why it is empty, extra keys.
   readonly property var builtin: Object.assign(Object.create(null), {
+    // The tray's apps but those its entry hides; a digit activates one, with Alt its own menu.
     tray: {
       icon: Glyphs.tray,
       empty: () => Words.emptyTray,
       legend: [{ key: "Alt+digit", what: Words.menu }],
       items: hide => Tray.shown(hide).map(app => ({ id: app.id, desc: app.title || app.id, image: app.icon, app, closes: true, select: () => app.activate() }))
     },
+    // The known Wi-Fi networks in range, the connected one lit; a digit connects or disconnects one.
     wifi: {
       icon: Glyphs.wifi,
       empty: () => Network.wifiEnabled ? Words.emptyNetworks : Words.wifiOff,
@@ -28,6 +30,7 @@ Singleton {
         id: network.name, desc: network.name, icon: Glyphs.wifi, active: network.connected, busy: network.stateChanging, select: () => root.toggle(network)
       }))
     },
+    // The paired devices, the connected ones lit with their battery; a digit connects or disconnects one.
     bluetooth: {
       icon: Glyphs.bluetooth,
       empty: () => !Bluez.present ? Words.emptyNoAdapter : Bluez.enabled ? Words.emptyNoPaired : Words.emptyBluetoothOff,
@@ -47,11 +50,13 @@ Singleton {
       empty: () => Words.noPowerProfiles,
       items: () => Power.profiles.map(name => ({ id: name, desc: Words.powerProfiles[name], icon: Glyphs.powerProfiles[name], active: name === Power.profile, select: () => Power.setProfile(name) }))
     },
+    // The audio outputs, the default lit, each with its volume; a digit makes one the default, the wheel sets its volume.
     sinks: {
       icon: Glyphs.audioDevice("external"),
       empty: () => Words.emptyOutputs,
       items: () => root.audio(Audio.sinks, Audio.sink?.name)
     },
+    // The audio inputs, as sinks lists the outputs.
     sources: {
       icon: Glyphs.microphone,
       empty: () => Words.emptyInputs,

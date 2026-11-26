@@ -47,6 +47,7 @@ Singleton {
         glyphs: !fields.title ? [] : [Music.repeat ? Glyphs.repeat : "", Music.shuffle ? Glyphs.shuffle : ""].filter(glyph => glyph)
       })
     },
+    // The connection, a Wi-Fi network or wired, and whether it reaches the internet.
     network: {
       names: ["name", "internet", "wifi"],
       glyph: () => Network.kind === "wifi" ? Glyphs.wifiSignal(Network.strength, Network.limited) : Network.kind === "wired" ? Glyphs.ethernet : Glyphs.disconnected,
@@ -61,6 +62,7 @@ Singleton {
       // A pop-up as the connection changes, not as its signal does.
       change: () => [Network.kind, Network.ssid, Network.limited, Network.wifiEnabled]
     },
+    // The connected device and its battery, else that Bluetooth is off or nothing is connected.
     bluetooth: {
       names: ["device", "state", "battery"],
       glyph: () => !Bluez.enabled ? Glyphs.bluetoothOff : Bluez.connected.length ? Glyphs.bluetoothConnected : Glyphs.bluetooth,
@@ -98,6 +100,7 @@ Singleton {
       fieldTones: () => ({ updated: !Calendar.syncing && Clock.stale(Calendar.updated, Config.calendar.staleAfter) ? "warning" : "" }),
       format: "|{when}"
     },
+    // The date and time, as clock.format writes them.
     clock: {
       names: ["date"],
       glyph: () => Glyphs.clock,
@@ -106,6 +109,7 @@ Singleton {
       strong: true,
       format: "{date}"
     },
+    // The charge, warning at battery.low and alerting at battery.critical; nothing without a battery.
     battery: {
       names: ["level"],
       glyph: () => Power.present ? Glyphs.battery(Power.percentage, Power.pluggedIn) : "",
@@ -133,6 +137,7 @@ Singleton {
       fields: () => Power.profile ? { profile: Words.powerProfiles[Power.profile].toLowerCase() } : {},
       format: "|{profile}"
     },
+    // Its glyph alone, lit while the screen is kept awake.
     keepAwake: {
       names: [],
       glyph: () => Glyphs.keepAwake,

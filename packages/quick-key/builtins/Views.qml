@@ -7,6 +7,7 @@ import qs.ui
 // What a level's `view` shows in place of a menu, by name: its model and its view, files beside LevelModel, which makes the model as its level first shows and gives it to the view, and the keys it takes, which the key map and the check read. A model has keys (these), legend (its keys beyond the rows), error (why its source failed), handleKey(name), stepBack() (what Escape closes first, false for none), reset() as its level opens and clearFocus() as any level comes or goes.
 Singleton {
   readonly property var builtin: Object.assign(Object.create(null), {
+    // A month's grid beside the events of calendar.file from the day selected on it.
     calendar: {
       model: "calendar/CalendarModel.qml",
       source: "CalendarView.qml",
