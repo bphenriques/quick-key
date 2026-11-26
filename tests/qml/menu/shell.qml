@@ -150,6 +150,14 @@ ShellRoot {
     menu: menu
   }
 
+  // The bar's icon as the font draws it.
+  TextMetrics {
+    id: glyphInk
+    font.family: Config.theme.monospaceFont
+    font.pointSize: Config.theme.iconSize * 0.75
+    text: Glyphs.search
+  }
+
   function tipOf(item) {
     return Array.from(item.children).find(child => child instanceof Tip)?.text;
   }
@@ -1775,6 +1783,11 @@ ShellRoot {
           }
           return root.promptLine > 0 && Math.abs(linePrompt.implicitHeight - root.promptLine - 2 * Math.ceil(Metrics.line)) < 1;
         }
+      },
+      {
+        name: "a bar's glyph is as wide as its ink, which meets the item's padding as a letter does, never its icon square",
+        until: () => glyphInk.tightBoundingRect.width > 0 && glyphInk.tightBoundingRect.width !== Config.theme.iconSize
+          && Math.abs(iconItem.implicitWidth - glyphInk.tightBoundingRect.width - 2 * Metrics.itemPaddingX) < 0.5
       },
       {
         name: "a level whose layout is no list opens in the body of the layout showing",

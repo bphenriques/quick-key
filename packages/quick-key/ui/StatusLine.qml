@@ -39,6 +39,8 @@ RowLayout {
   property bool strong: false
   // Still being made: a spinner in place of its icon.
   property bool busy: false
+  // Its icon in the square, off where it stands in no column (see Icon).
+  property bool squareIcon: true
   property bool labelShown: true
   readonly property bool titled: title !== ""
   // Its value shortened to fit, so a bar item tips it whole.
@@ -48,6 +50,7 @@ RowLayout {
 
   Icon {
     busy: root.busy
+    square: root.squareIcon
     glyph: root.glyph
     source: root.image
     tone: root.tone

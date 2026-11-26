@@ -19,9 +19,12 @@ Item {
   readonly property string drawn: recolour === "tint" && !source.includes("symbolic") ? "grey" : recolour
   // Still being made: in its place the braille dots terminals turn, at their own tempo; still when animations are off.
   property bool busy: false
+  // Off where it stands in no column (a bar): a glyph as wide as its ink, so it meets the padding as a letter does, whatever cell its font gives it.
+  property bool square: true
 
   visible: busy || glyph !== "" || source !== ""
-  implicitWidth: size
+  // The glyph's, held while the dots turn in its place.
+  implicitWidth: square || source !== "" ? size : Metrics.glyphWidth(glyph, size)
   implicitHeight: size
 
   Timer {
@@ -38,7 +41,7 @@ Item {
     anchors.centerIn: parent
     visible: root.busy || root.source === ""
     tone: root.tone
-    // A point is 4/3 of a pixel, so a glyph fills the square and the dots clear a pill's border. Bindings can read the size before it is set; Qt rejects a zero point size.
+    // A point is 4/3 of a pixel, so a glyph is as tall as the square (a Mono font's is a cell wide) and the dots clear a pill's border. Bindings can read the size before it is set; Qt rejects a zero point size.
     font.pointSize: Math.max(1, root.size * (root.busy ? 0.7 : 1) * 0.75)
     text: root.busy ? "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[turning.frame] : root.glyph
   }

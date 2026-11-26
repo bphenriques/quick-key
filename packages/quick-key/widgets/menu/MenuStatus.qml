@@ -1,5 +1,4 @@
 import QtQuick
-import qs
 import qs.ui
 import qs.builtins
 
@@ -31,8 +30,7 @@ StatusLine {
   image: item.image ?? ""
   swatch: item.swatch ?? ""
   busy: item.busy ?? false
-  // In a bar an icon sits closer to its own text than to its neighbours.
-  spacing: quiet ? Config.theme.spacing / 2 : Config.theme.spacing
+  squareIcon: !quiet
   title: status && !quiet ? item.desc ?? "" : ""
   text: glyphOnly ? "" : status ? value.text : item.desc ?? ""
   detail: glyphOnly ? "" : status ? value.detail : item.detail ?? ""

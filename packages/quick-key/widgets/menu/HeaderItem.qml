@@ -43,6 +43,7 @@ ListItem {
     glyph: root.item.icon ?? ""
     tone: root.item.active ? "primary" : root.item.image ? "normal" : "dim"
     recolour: root.item.image ? Config.theme.appIcons : "colour"
+    square: false
     // An image (a tray app's) as tall as the text: it fills its square, where a glyph does not.
     size: root.item.image ? Metrics.line : Config.theme.iconSize
   }

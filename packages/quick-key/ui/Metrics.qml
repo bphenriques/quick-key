@@ -26,6 +26,18 @@ Singleton {
   readonly property int osdLength: Math.round(160 * Config.theme.fontSize / 11)
   readonly property int osdIconSize: Math.round(28 * Config.theme.fontSize / 11)
 
+  // A glyph's width as drawn at an icon's size: its ink, whatever cell its font gives it. Reading the font keeps a binding on it.
+  function glyphWidth(glyph, size) {
+    return glyphMetrics.tightBoundingRect(glyph).width * size * 0.75 / glyphMetrics.font.pointSize;
+  }
+
+  // At the icon size, in points as Icon draws a glyph.
+  FontMetrics {
+    id: glyphMetrics
+    font.family: Config.theme.monospaceFont
+    font.pointSize: Config.theme.iconSize * 0.75
+  }
+
   TextMetrics {
     id: cellMetrics
     font: fontMetrics.font
