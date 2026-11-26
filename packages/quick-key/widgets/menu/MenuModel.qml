@@ -104,7 +104,7 @@ Scope {
       view: (binding, name, model) => model.viewModel.handleKey(name),
       row: (binding, name, model) => activate(binding.item, name, model),
       pin: binding => focusIsland(binding.key),
-      more: (binding, name, model) => pickList(model.level.entry.list),
+      more: (binding, name, model) => pickList(model.level.entry.list, model.level.entry.hide),
       // Typed in the input, which shows the cursor island's.
       filter: (binding, name, model) => {
         focusIsland(model.island);
@@ -192,11 +192,11 @@ Scope {
 
   // `limit` items on digits, then 0 for the rest, filtered on a level of its own.
   function barList(entry) {
-    const all = Lists.items(entry.list);
+    const all = Lists.items(entry.list, entry.hide);
     const shown = body.numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
     const onBar = shown.map(item => item.id);
     const more = all.filter(item => !item.hidden && !onBar.includes(item.id)).length;
-    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list) }) : shown;
+    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => pickList(entry.list, entry.hide) }) : shown;
   }
 
   function keyChars(group) {
@@ -360,11 +360,11 @@ Scope {
   }
 
   // Over a plugin panel it is the only level, so Escape shows the panel again.
-  function pickList(list) {
+  function pickList(list, hide) {
     const over = !open;
     if (over) Panels.remove(root);
     if (!open) show();
-    push({ kind: "entry", entry: { list: list }, picking: true, width: Config.menu.width });
+    push({ kind: "entry", entry: { list: list, hide: hide }, picking: true, width: Config.menu.width });
     if (over) base = levels.length;
     body.filterSlots = 9;
   }

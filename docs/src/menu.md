@@ -71,7 +71,7 @@ An entry's `layout` is its level's, as `menu.layout` is the top's, until `ESC` l
 
 In a bar, an entry shows its status, else its icon, else its `desc`, dimmed, and may do nothing but show its status. With both, it shows its icon in the tone of what its `format` shows, a spinner while the status is busy, and its value on hover, beside it too while that tone warns or where the value is the point (the keyboard layout). So a Sync button stays out of the way until its sync is under way or stale ([Calendar](calendar.md)).
 
-An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all on a level of their own. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`).
+An entry with a `list` shows each item: the tray shows each app's icon, up to its `limit` (nine at most), and past that `+N` on `C-0` shows them all on a level of their own. Its `hide` leaves out the apps it names by their tray id (`[ "blueman" ]`), for one whose state the bar already shows. An app's own menu has a bar of its own: the app's icon and name, and the submenus opened since (`blueman › Plugins`).
 
 ```nix
 menu.bar.left = [ { key = "c"; desc = "Calendar"; status = "clock"; view = "calendar"; } ];

@@ -19,7 +19,7 @@ Singleton {
       icon: Glyphs.tray,
       empty: () => Words.emptyTray,
       legend: [{ key: "Alt+digit", what: Words.menu }],
-      items: () => Tray.items.map(app => ({ id: app.id, desc: app.title || app.id, image: app.icon, app, closes: true, select: () => app.activate() }))
+      items: hide => Tray.shown(hide).map(app => ({ id: app.id, desc: app.title || app.id, image: app.icon, app, closes: true, select: () => app.activate() }))
     },
     wifi: {
       icon: Glyphs.wifi,
@@ -68,10 +68,10 @@ Singleton {
   // A plugin's item's fields that take a default, each when it sets none (docs/src/plugins.md).
   readonly property var itemDefaults: ({ icon: "", detail: "", active: false, enabled: true, done: false, hidden: false, busy: false, swatch: "", tone: "", verb: "", closes: false })
 
-  // What a list holds, built-in or a plugin's, as the menu and the picker show it: each item's id is what pins match, `select` what its digit runs, `actions` its own menu.
-  function items(list) {
+  // What a list holds, built-in or a plugin's, as the menu and the picker show it: each item's id is what pins match, `select` what its digit runs, `actions` its own menu; `hide`, the ids its entry leaves out (the tray's).
+  function items(list, hide) {
     if (!list) return [];
-    if (builtin[list]) return builtin[list].items();
+    if (builtin[list]) return builtin[list].items(Array.from(hide ?? []));
     const plugin = Plugins.get(list);
     return Array.from(plugin?.items ?? []).map(item => Object.keys(itemDefaults).reduce((found, key) => Object.assign(found, { [key]: item[key] ?? itemDefaults[key] }), {
       id: item.id,

@@ -380,6 +380,8 @@ Singleton {
       // Items kept on their digits, in order, dim while absent: each { match, label, icon }, a glob on the item's id, what it is called, and an optional glyph.
       pins: { kind: "list", needs: ["list"], invalid: pins => pins.length > 9 ? "has more pins than digits"
         : Array.from(pins).every(pin => Config.kind(pin) === "map" && typeof pin.match === "string" && typeof pin.label === "string") ? "" : "takes each pin as { match, label }, two strings" },
+      // Tray items its list leaves out, by their id (blueman's is "blueman"); only with list "tray".
+      hide: { kind: "list", invalid: ids => Array.from(ids).every(id => typeof id === "string") ? "" : "takes each item's id as a string" },
       // Its level shows this view in place of a menu.
       view: { kind: "string", excludes: ["list"], choices: Object.keys(Views.builtin) },
       // Live state on the right of its row.
@@ -455,6 +457,7 @@ Singleton {
     else if (level && Config.kind(entry.layout) === "list") found.push(...layoutProblems("sets a layout that", entry.layout, rows, Config.kind(entry.bar) === "map" ? entry.bar : {}, "entry of its level"));
     // A pinned level fits its rows, a list's being its limit; a bar shows its list, opening no level.
     if (entry.height != null && (pinned || inBar && entry.list != null)) found.push("sets height, but " + (pinned ? "is pinned, so fits its rows" : "its list shows in the bar, opening no level"));
+    if (entry.hide != null && entry.list !== "tray") found.push("can only set hide with list 'tray'");
     if (entry.list != null && rows.some(row => [].concat(row.key ?? []).some(key => /^[0-9]$/.test(key)))) found.push("binds a digit, reserved for its list");
     if (Array.isArray(entry.cmd) && entry.cmd.length !== keys.length) found.push("pairs keys and commands, so needs as many of each");
     if (action?.pair && keys.length !== 2) found.push("runs '" + entry.action + "' per key of a pair, so needs two keys");

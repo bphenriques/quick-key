@@ -33,7 +33,7 @@ Scope {
     items: root.filtering ? root.ordered(root.level.entry.list, root.level.entry.pins, root.levelList).filter(item => item.id !== undefined) : []
   }
   // Read once for every entry that acts on it.
-  readonly property var levelList: Lists.items(level?.entry?.list)
+  readonly property var levelList: Lists.items(level?.entry?.list, level?.entry?.hide)
   readonly property var items: itemsOf(level)
   readonly property var actions: items.filter(item => !item.listed)
   // A level with a list or a view is its content, its actions on its bar (rule 4); any other is a menu, its actions its rows.
@@ -100,7 +100,7 @@ Scope {
         // Own rows by letter (inLevel: a value beside the label, with its meter), then the list by digit.
         items: level => Array.from(level.entry.submenu ?? [])
           .map(entry => Object.assign(root.itemOf(entry), { listed: /^[0-9]$/.test(entry.key), inLevel: true }))
-          .concat(root.numbered(level.entry.list, level.entry.pins))
+          .concat(root.numbered(level.entry.list, level.entry.pins, root.levelList))
       },
       menu: {
         content: () => false,

@@ -114,6 +114,8 @@ ShellRoot {
     ["a bar key the body binds with Ctrl", { menu: { bar: { left: [{ key: "x", desc: "X", icon: "x", cmd: "true" }] }, entries: [{ key: "Ctrl+x", desc: "Y", icon: "x", cmd: "true" }] } }, "menu: the top level puts two things on Ctrl+x: 'Y' and 'X' on the bar"],
     ["a bar key with a modifier", { menu: { bar: { left: [{ key: "Alt+x", desc: "X", icon: "x", cmd: "true" }] } } }, "bar keys with a modifier"],
     ["a limit outside a bar", menu([{ key: "x", desc: "X", icon: "x", list: "tray", limit: 3 }]), "can only set limit on a list in a bar"],
+    ["a hide on a list other than the tray", menu([{ key: "x", desc: "X", icon: "x", list: "wifi", hide: ["blueman"] }]), "can only set hide with list 'tray'"],
+    ["a hide naming an item by other than its id", { menu: { bar: { right: [{ desc: "Tray", list: "tray", hide: [3] }] } } }, "takes each item's id as a string"],
     ["a format without a status", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", format: "{a}" }]), "can only set format with status"],
     ["a bar entry with only its text, which does nothing", { menu: { bar: { left: [{ key: "x", desc: "X" }] } } }, "needs one of cmd, action, submenu, list or view, or only a status"],
     ["an entry in the body that only shows a status", menu([{ key: "x", desc: "X", status: "battery" }]), "needs one of cmd, action, submenu, list or view"],
@@ -205,6 +207,11 @@ ShellRoot {
         timeout: 0,
         until: () => root.names({ menu: { height: 4, entries: [{ key: "a", desc: "A", icon: "x", submenu: [], height: 5 }, { key: "b", desc: "B", icon: "x", list: "tray", height: 2 }],
           bar: { left: [{ key: "s", desc: "S", icon: "x", submenu: [], height: 3 }] } } }, [])
+      },
+      {
+        name: "the tray hiding items, in a bar and on a level, has nothing wrong",
+        timeout: 0,
+        until: () => root.names({ menu: { bar: { right: [{ desc: "Tray", list: "tray", limit: 5, hide: ["blueman"] }] }, entries: [{ key: "t", desc: "Tray", icon: "x", list: "tray", hide: ["blueman", "nm-applet"] }] } }, [])
       },
       {
         name: "a row without an icon has nothing wrong",
