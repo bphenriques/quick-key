@@ -426,11 +426,10 @@ Scope {
     return dispatch(name);
   }
 
-  // A key path (`a 2`, `t Ctrl+x`) run from the top level as typing it would, the same through a pinned level: what a binding reaches.
+  // A key path (`a 2`, `t Ctrl+x`) run from the top level at rest as typing it would, the same through a pinned level: what a binding reaches.
   function press(path) {
     const closed = !open;
-    levels = [];
-    focusIsland("body");
+    reset();
     if (!open) show();
     for (const [i, name] of path.trim().split(/\s+/).entries()) {
       // A key that closed the menu ends the path, so none past it opens a level on the closed menu.

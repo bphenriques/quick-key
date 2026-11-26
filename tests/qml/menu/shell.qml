@@ -1074,6 +1074,19 @@ ShellRoot {
         }
       },
       {
+        name: "a key path starts from rest whatever the open menu holds: the input focused, ? showing",
+        until: () => {
+          menu.hide();
+          menu.show();
+          menu.focusOn("input");
+          const typing = menu.press("a") && menu.level?.entry?.desc === "Audio" && !menu.inputFocused;
+          menu.hold("Help");
+          const helping = menu.press("a a") && menu.levels.length === 2 && menu.held === "";
+          menu.hide();
+          return typing && helping;
+        }
+      },
+      {
         name: "a key path ends at a key that closes the menu, leaving no level for its next opening",
         until: () => {
           menu.hide();
