@@ -57,13 +57,13 @@ Scope {
   readonly property var inputs: layout.includes("input") ? shown.filter(model => model.input).map(model => model.island) : []
   // What holding Ctrl or Super lists: the bar's keys, and its compositor shortcuts.
   readonly property var holds: ({
-      Ctrl: bar.items.filter(item => item.key).map(item => bar.hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
-      Super: bar.items.filter(item => bar.shortcutOf(item)).map(item => bar.hint(item, bar.shortcutOf(item)))
+      Ctrl: bar.keyed.filter(item => item.key).map(item => bar.hint(item, MenuKeys.names(item.key).map(name => "Ctrl+" + name))),
+      Super: bar.keyed.filter(item => bar.shortcutOf(item)).map(item => bar.hint(item, bar.shortcutOf(item)))
     })
   // The keys on screen, one map (keymap.js): every island's at rest, the input's while typing, the filter's while filtering, any key closing `?`'s list.
-  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: bar.items, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
-  readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, bar: bar.items, words: Words })
-  readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size, bar: bar.items })
+  readonly property var rest: Keymap.rest({ islands: shown.map(islandOf), bar: bar.keyed, holds: { Ctrl: holds.Ctrl.length > 0, Super: holds.Super.length > 0 }, tab: inputs.length > 0, words: Words })
+  readonly property var typing: Keymap.typing({ tab: input.input !== null, recalls: !!input.plugin?.recalls, bar: bar.keyed, words: Words })
+  readonly property var bindings: held === "Help" ? Keymap.helping() : focused.filtering ? Keymap.filtering({ island: focused.island, rows: focused.filter.rows, item: focused.filter.item, size: focused.filter.size, bar: bar.keyed })
     : inputFocused ? typing : rest
   // Keys no row shows, where they act: at rest, then in the input.
   readonly property var help: Keymap.help(rest.filter(binding => binding.what !== "back").concat(typing))

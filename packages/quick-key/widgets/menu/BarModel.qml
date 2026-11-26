@@ -10,14 +10,20 @@ QtObject {
   required property MenuModel menu
 
   readonly property var top: ({ left: Config.barSlot("left"), center: Config.barSlot("center"), right: Config.barSlot("right") })
-  // At the body's level whichever island has the keys, so the bar holds still.
-  readonly property var slots: slotsAt(menu.body)
+  // The body's level's, which Ctrl reaches wherever the cursor is: what the bar draws follows the cursor, its keys never.
+  readonly property var keyed: itemsOf(slotsAt(menu.body))
+  // The cursor island's bar, as the input is its input: its actions and legend, then its level's slots, a pinned level having none.
+  readonly property var slots: slotsAt(menu.focused)
   readonly property var items: itemsOf(slots)
   // Its left: the cursor island's actions and legend, then what Return runs there, so the other islands' keys act unlisted (`?` lists them); filtering, the filter's keys alone.
   readonly property var actions: menu.focused.barActions.map(item => ({ item, model: menu.focused }))
-  readonly property var legend: menu.focused.filtering ? menu.focused.legend : menu.focused.levelLegend.filter(key => menu.owns(menu.focused, key.key)).concat(menu.focused.cursorLegend)
-  // Nothing to show: it then shows empty, unless farthest from the edge (Places.shown).
-  readonly property bool empty: items.length === 0 && actions.length === 0 && legend.length === 0
+  readonly property var legend: legendOf(menu.focused)
+  // Nothing to show for any island the cursor may be on, so its moving never adds or removes it: it then shows empty, unless farthest from the edge (Places.shown).
+  readonly property bool empty: keyed.length === 0 && items.length === 0 && menu.shown.every(model => model.barActions.length === 0 && legendOf(model).length === 0)
+
+  function legendOf(model) {
+    return model.filtering ? model.legend : model.levelLegend.filter(key => menu.owns(model, key.key)).concat(model.cursorLegend);
+  }
 
   // The slots of an island's level's bar: the top's, an entry's `bar`, an app menu's own.
   function slotsAt(model) {

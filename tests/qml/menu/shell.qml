@@ -1200,7 +1200,7 @@ ShellRoot {
         }
       },
       {
-        name: "the bar's left shows the actions and legend of the island with the cursor, a pin's acting from the body as ? lists them, the slots holding still",
+        name: "the bar is the cursor island's: its actions and legend, then its level's slots, so a pin's is its keys alone; Ctrl still reaches the body's bar, and a pin's actions act from the body as ? lists them",
         until: () => {
           const plugin = Plugins.get("devices");
           if (!plugin) return false;
@@ -1209,18 +1209,36 @@ ShellRoot {
           root.pinning(1);
           const shown = () => Array.from(header.parts[0].children).filter(child => child.item?.desc).map(child => child.item.desc).join();
           const legend = () => Array.from(header.parts[0].children).find(child => child.keys)?.keys.map(key => [].concat(key.key).join("+")).join() ?? "";
-          const slots = () => JSON.stringify(menu.bar.slots) + Array.from(header.parts[1].children).length;
+          const slots = () => JSON.stringify(menu.bar.slots) + Array.from(header.parts[1].children).filter(child => child.item).length;
           const listed = () => menu.help.some(key => key.key === "f" && key.desc === "Flip");
-          const [bodyActions, bodySlots, bodyLegend] = [shown(), slots(), legend()];
-          const body = bodyActions === "" && bodyLegend === "?" && listed() && menu.dispatch("f") && flipped === 1 && menu.focused === menu.body;
+          const [bodyActions, bodySlots, bodyLegend, ctrl] = [shown(), slots(), legend(), menu.holds.Ctrl.length];
+          const body = bodyActions === "" && bodyLegend === "?" && listed() && menu.dispatch("f") && flipped === 1 && menu.focused === menu.body && slots().endsWith("3");
           menu.dispatch("t");
-          const pinned = shown() === "Flip" && legend().split(",").includes("0") && legend().split(",").filter(key => key === "?").length === 1 && !listed() && slots() === bodySlots;
+          const pinned = shown() === "Flip" && legend().split(",").includes("0") && legend().split(",").filter(key => key === "?").length === 1 && !listed()
+            && menu.bar.items.length === 0 && slots().endsWith("0") && menu.holds.Ctrl.length === ctrl && menu.dispatch("Ctrl+Down") && menu.open && menu.focused.island === "t" && !menu.bar.empty;
           const pinnedLegend = legend();
           menu.stepBack();
           const back = shown() === "" && legend() === bodyLegend && slots() === bodySlots;
           if (!body || !pinned || !back) console.info("# " + [bodyActions, bodyLegend, listed(), flipped, pinnedLegend, shown()].join(" | "));
           plugin.actions = {};
           return body && pinned && back && root.unpinning();
+        }
+      },
+      {
+        name: "the bar is empty only while no island the cursor may be on has anything for it, so the cursor moving never adds or removes it",
+        until: () => {
+          const was = [Config.menu.bar.left, Config.menu.bar.center, Config.menu.bar.right];
+          Config.menu.bar.left = Config.menu.bar.center = Config.menu.bar.right = [];
+          Config.menu.keysHint = false;
+          root.pinning(2);
+          const onBody = !menu.bar.empty;
+          menu.dispatch("t");
+          const onPin = !menu.bar.empty;
+          Config.menu.bar.left = was[0];
+          Config.menu.bar.center = was[1];
+          Config.menu.bar.right = was[2];
+          Config.menu.keysHint = true;
+          return onBody && onPin && root.unpinning();
         }
       },
       {
