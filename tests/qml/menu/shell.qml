@@ -267,6 +267,10 @@ ShellRoot {
         until: () => !Clock.text.includes(String(Clock.date.getFullYear())) && Clock.text.includes(Clock.time(Clock.date))
       },
       {
+        name: "the clock shows a glyph of its own, so a bar showing the date and the next event tells them apart",
+        until: () => Statuses.of("clock").glyph === Glyphs.clock && Glyphs.clock !== Glyphs.calendar && Statuses.of("calendar").glyph === Glyphs.calendar
+      },
+      {
         name: "without layouts to switch between, the keyboard layout status and action show nothing, so a bar hides them",
         until: () => KeyboardLayout.names.length < 2 && Statuses.of("keyboardLayout").glyph === "" && Statuses.of("keyboardLayout").text === "" && Actions.builtin.keyboardLayout.icon() === ""
       },

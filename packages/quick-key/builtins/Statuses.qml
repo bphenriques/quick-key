@@ -99,7 +99,7 @@ Singleton {
     },
     clock: {
       names: ["date"],
-      glyph: () => Glyphs.calendar,
+      glyph: () => Glyphs.clock,
       fields: () => ({ date: Clock.text }),
       // The bar's anchor: bold, and not dimmed with the rest.
       strong: true,

@@ -33,6 +33,7 @@ Singleton {
   readonly property string window: Config.glyphs.window ?? "\u{F0614}" // md-application_outline
   readonly property string record: Config.glyphs.record ?? "\u{F044B}" // md-record_rec
   readonly property string calendar: Config.glyphs.calendar ?? "\u{F00ED}" // md-calendar
+  readonly property string clock: Config.glyphs.clock ?? "\u{F0150}" // md-clock_outline
   readonly property string checkbox: Config.glyphs.checkbox ?? "\u{F0131}" // md-checkbox_blank_outline
   readonly property string checkboxChecked: Config.glyphs.checkboxChecked ?? "\u{F0132}" // md-checkbox_marked
   readonly property string tasks: Config.glyphs.tasks ?? "\u{F0756}" // md-format_list_checks
