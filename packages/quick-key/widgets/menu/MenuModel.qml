@@ -104,7 +104,7 @@ Scope {
       view: (binding, name, model) => model.viewModel.handleKey(name),
       row: (binding, name, model) => activate(binding.item, name, model),
       pin: binding => focusIsland(binding.key),
-      more: (binding, name, model) => pickList(model.level.entry.list, model.level.entry.hide),
+      more: (binding, name, model) => pickList(model.level.entry.list, model.level.entry.hide, model.level.entry.pins),
       // Typed in the input, which shows the cursor island's.
       filter: (binding, name, model) => {
         focusIsland(model.island);
@@ -346,11 +346,11 @@ Scope {
   }
 
   // Over a plugin panel it is the only level, so Escape shows the panel again.
-  function pickList(list, hide) {
+  function pickList(list, hide, pins) {
     const over = !open;
     if (over) Panels.remove(root);
     if (!open) show();
-    push({ kind: "entry", entry: { list: list, hide: hide }, picking: true, width: Config.menu.width });
+    push({ kind: "entry", entry: { list: list, hide: hide, pins: pins }, picking: true, width: Config.menu.width });
     if (over) base = levels.length;
     body.filterSlots = 9;
   }

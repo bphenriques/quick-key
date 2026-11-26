@@ -92,6 +92,6 @@ QtObject {
     const shown = menu.body.numbered(entry.list, entry.pins, all).slice(0, entry.limit ?? 9);
     const onBar = shown.map(item => item.id);
     const more = all.filter(item => !item.hidden && !onBar.includes(item.id)).length;
-    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => menu.pickList(entry.list, entry.hide) }) : shown;
+    return more > 0 ? shown.concat({ key: "0", desc: "+" + more, select: () => menu.pickList(entry.list, entry.hide, entry.pins) }) : shown;
   }
 }

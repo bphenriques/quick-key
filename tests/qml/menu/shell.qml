@@ -1145,6 +1145,26 @@ ShellRoot {
         }
       },
       {
+        name: "the whole list a pinned list's 0 or a bar's +N opens names its pins by their labels",
+        until: () => {
+          if (Lists.items("devices").length !== 2) return false;
+          const pins = [{ match: "b-*", label: "Bee" }];
+          root.pinning(1);
+          menu.hide();
+          Config.menu.entries = [Object.assign({}, Config.menu.entries[0], { pins })].concat(Config.menu.entries.slice(1));
+          menu.show();
+          const labels = () => menu.body.filter.items.map(item => item.desc).join();
+          const pinned = menu.dispatch("0") && menu.level?.picking && labels() === "Bee,a-1";
+          root.unpinning();
+          menu.show();
+          menu.bar.barOf([{ desc: "D", list: "devices", limit: 1, pins }]).find(item => item.key === "0")?.select();
+          const barred = menu.level?.picking && labels() === "Bee,a-1";
+          if (!pinned || !barred) console.info("# " + [pinned, barred, labels()].join(" | "));
+          menu.hide();
+          return pinned && barred;
+        }
+      },
+      {
         name: "an action keeps the menu open, keepOpen = false as unset",
         until: () => {
           const plugin = Plugins.get("devices");
