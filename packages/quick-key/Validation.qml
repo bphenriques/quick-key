@@ -316,6 +316,9 @@ Singleton {
     wrong(barKeys.filter(key => key !== "+" && key.includes("+")), "bar keys with a modifier, which Ctrl already takes");
     wrong(barKeys.filter(key => /^[^\sA-Za-z0-9]$/.test(key)), "bar keys on a symbol, which Ctrl gives no name");
     wrong(barKeys.filter(key => /^[0-9]$/.test(key)), "bar keys on a digit, reserved for its lists");
+    // Each list without a key numbers its items from 1 (BarModel), so a second's digits would reach the first's.
+    const lists = barEntries.filter(entry => entry.list != null && !entry.key).map(entry => "'" + (entry.desc ?? entry.list) + "'");
+    if (lists.length > 1) found.push("menu: " + path + "'s bar shows " + lists.join(" and ") + " as lists without a key, whose items would share its digits: give all but one a key");
     for (const name of parts.filter(part => typeof part === "string"))
       if (!(name in Statuses.builtin) && !plugins.includes(name)) found.push("menu: '" + name + "' in " + path + "'s bar is neither a status nor a plugin");
     for (const [entry, inBar] of entries.map(entry => [entry, false]).concat(barEntries.map(entry => [entry, true]))) {

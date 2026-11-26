@@ -113,6 +113,8 @@ ShellRoot {
     ["a name in a bar neither a status nor a plugin", { menu: { bar: { left: ["nope"] } } }, "'nope' in the top level's bar is neither a status nor a plugin"],
     ["a pop-up that is neither a status nor a plugin", { popups: { show: ["nope"] } }, "popups.show"],
     ["a bar key the body binds with Ctrl", { menu: { bar: { left: [{ key: "x", desc: "X", icon: "x", cmd: "true" }] }, entries: [{ key: "Ctrl+x", desc: "Y", icon: "x", cmd: "true" }] } }, "menu: the top level puts two things on Ctrl+x: 'Y' and 'X' on the bar"],
+    ["two lists without a key in one bar, across its slots", { menu: { bar: { left: [{ desc: "Wi-Fi", list: "wifi" }], right: [{ desc: "Tray", list: "tray" }] } } },
+      "menu: the top level's bar shows 'Wi-Fi' and 'Tray' as lists without a key, whose items would share its digits"],
     ["a bar key with a modifier", { menu: { bar: { left: [{ key: "Alt+x", desc: "X", icon: "x", cmd: "true" }] } } }, "bar keys with a modifier"],
     ["a limit outside a bar", menu([{ key: "x", desc: "X", icon: "x", list: "tray", limit: 3 }]), "can only set limit on a list in a bar"],
     ["a hide on a list other than the tray", menu([{ key: "x", desc: "X", icon: "x", list: "wifi", hide: ["blueman"] }]), "can only set hide with list 'tray'"],
