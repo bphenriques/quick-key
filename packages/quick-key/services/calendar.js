@@ -44,7 +44,7 @@ function timeline(json, now) {
   return { events, synced, days, rows };
 }
 
-// Whether a row is a timed event of today that is over, which the list folds into one line.
+// Whether a row is a timed event of today that is over, which the list folds into one line with any other.
 function earlier(row, now) {
   return row.key === Dates.dayKey(now) && !!row.event && !row.event.allDay && row.event.end <= now;
 }
@@ -55,14 +55,15 @@ function firstOn(rows, key, now) {
   return next >= 0 ? next : rows.findIndex(row => row.key >= key);
 }
 
-// The list's rows: the timeline's, with the day of `key` in it even when it has no events, and those of `ids` folded into one line where the first was, so what is over leaves today's heading and what is next in view.
+// The list's rows: the timeline's, with the day of `key` in it even when it has no events, and two or more of `ids` folded into one line where the first was, so what is over leaves today's heading and what is next in view; one alone keeps its row, as the line would cost as much.
 function rows(timeline, key, ids) {
   const at = timeline.findIndex(row => row.key >= key);
   const before = at < 0 ? timeline.length : at;
   const all = at >= 0 && timeline[at].key === key ? timeline : timeline.slice(0, before).concat([{ id: "", key, day: Dates.parse(key), event: null }], timeline.slice(before));
-  const first = all.find(row => ids.includes(row.id));
-  if (!first) return all;
-  const folded = { id: first.key + " earlier", key: first.key, day: first.day, event: null, earlier: all.filter(row => ids.includes(row.id)).map(row => row.event) };
+  const over = all.filter(row => ids.includes(row.id));
+  if (over.length < 2) return all;
+  const first = over[0];
+  const folded = { id: first.key + " earlier", key: first.key, day: first.day, event: null, earlier: over.map(row => row.event) };
   return all.filter(row => row === first || !ids.includes(row.id)).map(row => row === first ? folded : row);
 }
 

@@ -41,7 +41,7 @@ TestCase {
     compare(unsynced.synced, null);
   }
 
-  // Today's timed events that are over fold into one line where the first was, so its heading and what is next stay in view; a day without events shows still.
+  // Two or more of today's timed events that are over fold into one line where the first was, so its heading and what is next stay in view; one keeps its row; a day without events shows still.
   function test_rows() {
     const rows = [
       { id: "a", key: today, event: { title: "Holiday", allDay: true, end: at(24, 0) } },
@@ -55,6 +55,7 @@ TestCase {
     const titles = list => list.map(row => row.earlier ? row.earlier.map(event => event.title).join("+") : row.event ? row.event.title : row.key);
     compare(titles(Calendar.rows(rows, today, ids)), ["Holiday", "Standup+Coffee", "Review", "Gym"]);
     verify(Calendar.rows(rows, today, []) === rows);
+    verify(Calendar.rows(rows, today, ["b"]) === rows);
     compare(titles(Calendar.rows(rows, "2026-11-26", [])), ["Holiday", "Standup", "Review", "Coffee", "2026-11-26", "Gym"]);
     compare(titles(Calendar.rows(rows, "2026-12-01", [])).slice(-1), ["2026-12-01"]);
   }
