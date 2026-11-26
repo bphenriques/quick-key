@@ -133,7 +133,8 @@ ShellRoot {
     ["a field no entry takes", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", command: "true" }]), "sets command, which no entry takes"],
     ["a legend naming no key", menu([{ key: "c", desc: "Calendar", icon: "x", view: "calendar", legend: ["Ctrl+up", "Page_Down"] }]), "legend names no key as ? names them (Ctrl+Up, Page_Down): Ctrl+up"],
     ["a legend on an entry without a level", menu([{ key: "x", desc: "X", icon: "x", cmd: "true", legend: ["Escape"] }]), "can only set legend on a level"],
-    ["a plugin's legend naming no key", { plugins: { x: { type: "command", legend: ["PgDn"] } } }, "plugins.x.legend names no key as ? names them (Ctrl+Up, Page_Down): PgDn"],
+    ["an ask legend naming no key", { plugins: { a: { type: "ask", ask: "true", legend: ["PgDn"] } } }, "plugins.a.legend names no key as ? names them (Ctrl+Up, Page_Down): PgDn"],
+    ["a legend on a plugin without a panel listing keys", { plugins: { x: { type: "command", legend: ["PgDn"] } } }, "plugins.x.legend is not a setting"],
     ["a reserved key", menu([{ key: "Escape", desc: "X", icon: "x", cmd: "true" }]), "keys reserved for the menu in the top level: Escape"],
     ["a key bound twice", menu([{ key: "x", desc: "X", icon: "x", cmd: "true" }, { key: "x", desc: "Y", icon: "x", cmd: "true" }]), "menu: the top level puts two things on x: 'X' and 'Y'"],
     ["a pin that is an id", menu([{ key: "a", desc: "A", icon: "x", list: "sinks", pins: ["bluez_output.*"] }]), "takes each pin as { match, label }"],
@@ -230,9 +231,9 @@ ShellRoot {
         until: () => root.names({ menu: { bar: { left: [{ key: "x", desc: "Lock", cmd: "true" }] } } }, [])
       },
       {
-        name: "a plugin's own settings have nothing wrong",
+        name: "a plugin's own settings, an ask legend included, have nothing wrong",
         timeout: 0,
-        until: () => root.names({ plugins: { t: { type: "tasks", add: "true", sync: "true" } } }, [])
+        until: () => root.names({ plugins: { t: { type: "tasks", add: "true", sync: "true" }, a: { type: "ask", ask: "true", legend: ["Page_Up", "Page_Down"] } } }, [])
       },
       {
         name: "a command ending in an escaped semicolon has nothing wrong",

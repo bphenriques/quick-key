@@ -32,6 +32,8 @@ PluginSettings {
   property string placeholder: "Ask {title}..."
   // The conversation's height, in lines, declared so the panel holds still.
   property int lines: 14
+  // Keys its panel lists on `?` to show in its bar too, after the bar's own: ["Page_Up", "Page_Down"].
+  property var legend: []
 
   function problems() {
     return (ask ? [] : ["needs ask, the command it asks"]).concat(toolMatch && !toolPattern ? ["sets toolMatch to what is not a regular expression"] : []);

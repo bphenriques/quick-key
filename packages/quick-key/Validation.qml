@@ -267,7 +267,7 @@ Singleton {
       const given = Config.pluginSettings(defaults, plugin);
       found.push(...given.unknown.map(key => at + "." + key + " is not a setting"));
       found.push(...given.mistyped.map(problem => at + "." + problem));
-      if (Config.kind(plugin.legend) === "list" && legendProblem(plugin.legend)) found.push(at + "." + legendProblem(plugin.legend));
+      if ("legend" in defaults && Config.kind(plugin.legend) === "list" && legendProblem(plugin.legend)) found.push(at + "." + legendProblem(plugin.legend));
       defaults.destroy();
       // Its own checks on what it declares, so every problem shows at once, not one build at a time.
       const object = settings.createObject(null, given.values);
