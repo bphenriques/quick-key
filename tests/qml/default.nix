@@ -3,7 +3,7 @@
 let
   # This suite runs on a session bus of its own: music played by mpv over MPRIS.
   bus = name: name == "music";
-  # The folder is the shell's config and state at once, so its config.json, plugins, scripts and events.json are found by name.
+  # The folder is the shell's config, state and data at once, so its config.json, plugins, scripts, events.json and desktop entries are found by name.
   run =
     name:
     pkgs.runCommand "quick-key-qml-${name}"
@@ -19,7 +19,7 @@ let
         ];
       }
       ''
-        export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR/run XDG_CONFIG_HOME=$TMPDIR/home XDG_STATE_HOME=$TMPDIR/home
+        export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR/run XDG_CONFIG_HOME=$TMPDIR/home XDG_STATE_HOME=$TMPDIR/home XDG_DATA_HOME=$TMPDIR/home/quick-key
         export QT_QPA_PLATFORM=offscreen NO_COLOR=1 LC_ALL=C.UTF-8
         mkdir -p $XDG_RUNTIME_DIR $TMPDIR/home
         cp -r ${./. + "/${name}"} $TMPDIR/home/quick-key

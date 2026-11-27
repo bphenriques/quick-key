@@ -110,12 +110,19 @@ Singleton {
     });
   }
 
+  // A stream's icon by name: its own, else its app's desktop entry's, found by its binary.
+  function appIcon(properties) {
+    // Read so a list over it follows the entries, which load after the first lookup.
+    const loaded = DesktopEntries.applications.values.length > 0;
+    return properties["application.icon-name"] ?? (loaded ? DesktopEntries.heuristicLookup(properties["application.process.binary"] ?? "")?.icon : null) ?? "";
+  }
+
   // An app's stream, by its name and icon (else the volume's glyph), as a device is.
   function stream(node, picked) {
     return {
       id: String(node.id),
       desc: node.properties["application.name"],
-      image: Quickshell.iconPath(node.properties["application.icon-name"] ?? "", true),
+      image: Quickshell.iconPath(appIcon(node.properties), true),
       icon: Glyphs.volume,
       active: node === picked,
       detail: Audio.level(node),

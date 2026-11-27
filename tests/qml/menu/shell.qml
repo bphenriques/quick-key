@@ -280,6 +280,14 @@ ShellRoot {
         }
       },
       {
+        name: "a stream that names no icon takes its app's desktop entry's, found by its binary",
+        until: () => {
+          const binary = { "application.name": "Fixture player", "application.process.binary": "fixture-player" };
+          return Lists.appIcon(binary) === "fixture-player-icon" && Lists.appIcon(Object.assign({ "application.icon-name": "own" }, binary)) === "own"
+            && Lists.appIcon({ "application.name": "Unknown", "application.process.binary": "unknown" }) === "";
+        }
+      },
+      {
         name: "without its daemon, power profiles are offered nowhere: the action dims, the list is empty, the status shows nothing",
         until: () => !Power.profilesPresent && !Actions.builtin.powerProfile.available() && Lists.items("powerProfiles").length === 0 && Lists.empty("powerProfiles") === Words.noPowerProfiles
           && Statuses.builtin.powerProfile.glyph() === "" && Statuses.value(Statuses.builtin.powerProfile, Statuses.builtin.powerProfile.fields()).detail === ""
