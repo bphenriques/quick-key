@@ -22,7 +22,10 @@ Item {
   // Off where it stands in no column (a bar): a glyph as wide as its ink, so it meets the padding as a letter does, whatever cell its font gives it.
   property bool square: true
 
-  visible: busy || glyph !== "" || source !== ""
+  // Its square kept empty without a glyph, where the rows beside it have icons (an app's menu).
+  property bool holdsPlace: false
+
+  visible: holdsPlace || busy || glyph !== "" || source !== ""
   // The glyph's, held while the dots turn in its place.
   implicitWidth: square || source !== "" ? size : Metrics.glyphWidth(glyph, size)
   implicitHeight: size

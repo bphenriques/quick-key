@@ -113,9 +113,13 @@ Scope {
           const children = Array.from(menuOpener.children.values).filter(child => !child.isSeparator && child.enabled);
           const labels = children.map(child => child.text.replace(/_/g, ""));
           const keys = MenuKeys.assign(labels);
+          // Labels in one column where any entry has an icon.
+          const iconed = children.some(child => child.icon);
           return children.map((child, i) => ({
             key: keys[i],
             desc: labels[i],
+            image: child.icon,
+            iconHeld: iconed,
             glyphs: child.checkState === Qt.Checked ? [Glyphs.check] : child.hasChildren ? [Glyphs.submenu] : [],
             select: child.hasChildren ? () => root.menu.push({ kind: "menu", title: labels[i], handle: child, width: level.width }) : () => {
               // Before hide(), which releases the menu this entry belongs to.

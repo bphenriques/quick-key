@@ -28,6 +28,7 @@ StatusLine {
 
   glyph: item.icon || shape.glyph
   image: item.image ?? ""
+  iconHeld: item.iconHeld ?? false
   swatch: item.swatch ?? ""
   busy: item.busy ?? false
   squareIcon: !quiet

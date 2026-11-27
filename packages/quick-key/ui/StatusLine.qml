@@ -41,6 +41,8 @@ RowLayout {
   property bool busy: false
   // Its icon in the square, off where it stands in no column (see Icon).
   property bool squareIcon: true
+  // Its icon's square kept without one (see Icon).
+  property bool iconHeld: false
   property bool labelShown: true
   readonly property bool titled: title !== ""
   // Its value shortened to fit, so a bar item tips it whole.
@@ -53,6 +55,7 @@ RowLayout {
     square: root.squareIcon
     glyph: root.glyph
     source: root.image
+    holdsPlace: root.iconHeld
     tone: root.tone
   }
 
