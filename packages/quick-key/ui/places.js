@@ -1,9 +1,10 @@
 .pragma library
 
-// Which islands show, listed top to bottom: one holds its place while any farther from the edge shows, so an empty one stays out only at the far end, where it moves nothing.
+// Which islands show, listed top to bottom: one holds its place between two that show, so an empty one stays out only at either end, where nothing lies beyond it.
 function shown(empty) {
-  let beyond = false;
-  return empty.map(none => beyond = beyond || !none);
+  const first = empty.indexOf(false);
+  const last = empty.lastIndexOf(false);
+  return empty.map((_, i) => first >= 0 && i >= first && i <= last);
 }
 
 // Each island's { y, height } in a screen `screen` tall, listed top to bottom and stacked up from `margin`, `gap` apart; a hidden one takes no room.

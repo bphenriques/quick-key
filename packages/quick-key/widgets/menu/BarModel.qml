@@ -21,7 +21,7 @@ QtObject {
   readonly property var legend: legendOf(menu.focused)
   // That legend with the cursor's at its widest, which the actions' room keeps whether it shows or not, so moving the cursor never folds their labels.
   readonly property var widestLegend: legendOf(menu.focused, true)
-  // Nothing to show for any island the cursor may be on, so its moving never adds or removes it: it then shows empty, unless farthest from the edge (Places.shown).
+  // Nothing to show for any island the cursor may be on, so its moving never adds or removes it: it then shows empty, unless at either end (Places.shown).
   readonly property bool empty: keyed.length === 0 && items.length === 0 && menu.shown.every(model => model.barActions.length === 0 && legendOf(model).length === 0)
 
   // Its name in the layout, where the cursor crosses onto it (MenuModel.cross).

@@ -25,9 +25,10 @@ TestCase {
 
   // Given which are empty, top to bottom: an empty one shows while one farther from the edge (above it) shows.
   function test_shown() {
-    compare(Places.shown([true, false, true]), [false, true, true]);
+    compare(Places.shown([true, false, true]), [false, true, false]);
     compare(Places.shown([true, true, false]), [false, false, true]);
-    compare(Places.shown([false, false, true]), [true, true, true]);
+    compare(Places.shown([false, false, true]), [true, true, false]);
+    compare(Places.shown([false, true, false]), [true, true, true]);
     compare(Places.shown([true, true, true]), [false, false, false]);
     compare(Places.shown([false, false, false]), [true, true, true]);
     compare(Places.shown([]), []);

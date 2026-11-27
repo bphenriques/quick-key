@@ -54,7 +54,7 @@ Scope {
   readonly property BarModel bar: BarModel {
     menu: root
   }
-  // Nothing for the input to show: it then shows empty, unless farthest from the edge (Places.shown).
+  // Nothing for the input to show: it then shows empty, unless at either end (Places.shown).
   readonly property bool inputEmpty: input.input === null && !focused.filtering
   // The level islands on screen, top to bottom, and those with an input it shows.
   readonly property var shown: layout.map(name => modelOf(name)).filter(model => model)
