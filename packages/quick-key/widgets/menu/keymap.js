@@ -36,7 +36,7 @@ function rest(at) {
     for (const item of island.items ?? []) for (const key of names(item.key)) add(key, island.name, "row", { item, label: item.desc, desc: unshown(item) ? item.desc : undefined });
     for (const pin of island.pins ?? []) add(pin.key, island.name, "pin", { label: pin.desc, desc: pin.desc });
   }
-  out.push(...barred(at.bar));
+  out.push(...barred(at.bar, words));
   if (focused?.free?.length) {
     for (const key of focused.free) add(key, focused.name, "cursor", { desc: words.helpMove, cursor: true });
     add("Return", focused.name, "return", { item: focused.cursorItem ?? null, desc: focused.content ? undefined : words.helpRun, cursor: true });
@@ -57,12 +57,13 @@ function rest(at) {
   return out;
 }
 
-// The bar's keys, with Ctrl wherever the keys are: its entries, and a listed item's own menu with Alt too.
-function barred(bar) {
+// The bar's keys, with Ctrl wherever the keys are: its entries, and a listed item's own menu with Alt too, the first named on `?` given `words`.
+function barred(bar, words) {
   const out = [];
+  let menus = 0;
   for (const item of bar ?? []) {
     for (const name of names(item.key)) out.push({ key: "Ctrl+" + name, island: "bar", what: "bar", item, name, label: item.desc });
-    if (/^[0-9]$/.test(item.key) && hasMenu(item)) out.push({ key: "Ctrl+Alt+" + item.key, island: "bar", what: "itemMenu", item });
+    if (/^[0-9]$/.test(item.key) && hasMenu(item)) out.push({ key: "Ctrl+Alt+" + item.key, island: "bar", what: "itemMenu", item, desc: menus++ ? undefined : words?.helpBarItemMenu });
   }
   return out;
 }
