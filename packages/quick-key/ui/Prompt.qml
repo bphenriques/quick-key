@@ -66,6 +66,7 @@ RowLayout {
       anchors.left: parent.left
       anchors.verticalCenter: parent.verticalCenter
       visible: root.busy || root.focused || root.key === ""
+      square: false
       busy: root.busy
       tone: root.focused && !root.busy ? "primary" : "dim"
       glyph: root.glyph

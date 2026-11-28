@@ -1812,6 +1812,23 @@ ShellRoot {
           && Math.abs(iconItem.implicitWidth - glyphInk.tightBoundingRect.width - 2 * Metrics.itemPaddingX) < 0.5
       },
       {
+        name: "a prompt's glyph starts where its key does, as wide as its ink, its text still as it gives up the keys",
+        start: () => {
+          root.acted = Array.from(linePrompt.children).find(child => child instanceof TextArea).x;
+          linePrompt.key = "TAB";
+          linePrompt.focused = false;
+        },
+        until: () => {
+          const slot = linePrompt.children[0];
+          const glyph = Array.from(slot.children).find(child => child instanceof Icon);
+          const key = Array.from(slot.children).find(child => child instanceof KeyHint);
+          const ink = Metrics.glyphWidth(Glyphs.prompt, Metrics.line);
+          const still = key.visible && Array.from(linePrompt.children).find(child => child instanceof TextArea).x === root.acted;
+          if (still) linePrompt.focused = true;
+          return still && glyph.x === key.x && ink > 0 && ink < Metrics.line && Math.abs(glyph.width - ink) < 0.5;
+        }
+      },
+      {
         name: "a level whose layout is no list opens in the body of the layout showing",
         until: () => {
           menu.hide();
