@@ -161,6 +161,14 @@ ShellRoot {
     text: Glyphs.search
   }
 
+  function findIn(item, test) {
+    for (const child of Array.from(item.children)) {
+      const found = test(child) ? child : findIn(child, test);
+      if (found) return found;
+    }
+    return null;
+  }
+
   function tipOf(item) {
     return Array.from(item.children).find(child => child instanceof Tip)?.text;
   }
@@ -875,6 +883,13 @@ ShellRoot {
         name: "a plugin's empty list says why, in its words",
         start: () => menu.push({ kind: "entry", entry: { list: "nothing" } }),
         until: () => menu.body.emptyText === "Nothing found"
+      },
+      {
+        name: "an empty list's words sit where a row's label would, the body as tall as one row",
+        until: () => {
+          const words = root.findIn(bodyView, child => child instanceof Label && child.text === "Nothing found");
+          return words?.visible && words.height === Metrics.row && words.verticalAlignment === Text.AlignVCenter && bodyView.implicitHeight === Metrics.row;
+        }
       },
       {
         name: "? lists the keys no row shows, and any key closes the list",

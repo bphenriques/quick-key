@@ -56,8 +56,10 @@ ColumnLayout {
 
     Label {
       visible: body.level.emptyText !== ""
+      // Where a row's label would be, so an empty level is as tall as one of a row.
       Layout.leftMargin: Metrics.itemPaddingX
-      Layout.topMargin: body.level.filtering ? Metrics.itemPaddingY : 0
+      Layout.preferredHeight: Metrics.row
+      verticalAlignment: Text.AlignVCenter
       tone: "dim"
       text: body.level.emptyText
     }
