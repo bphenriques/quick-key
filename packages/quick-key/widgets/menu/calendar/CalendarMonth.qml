@@ -43,6 +43,8 @@ Item {
   Label {
     id: titleLabel
     x: Metrics.itemPaddingX
+    // As a day's heading beside it, so the two start on one line.
+    topPadding: Config.theme.spacing / 2
     strong: true
     text: root.title
   }

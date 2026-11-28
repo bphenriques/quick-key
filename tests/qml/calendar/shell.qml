@@ -22,6 +22,13 @@ ShellRoot {
     id: suite
     cases: [
       {
+        name: "the month's title starts as low as a day's heading beside it",
+        until: () => {
+          const title = Array.from(month.children).find(child => child.text === month.title);
+          return title.y + title.topPadding === events.headingPadding && events.headingPadding > 0;
+        }
+      },
+      {
         name: "an event shows on every day it overlaps, all-day ones first",
         until: () => Calendar.timeline.map(row => row.key.slice(8) + " " + row.event.title).join() ===
           "12 Holiday,12 Night shift,13 Night shift,14 Night shift,20 Trip,21 Trip,25 Call,26 Standup,26 Standup"
@@ -185,5 +192,12 @@ ShellRoot {
 
   CalendarModel {
     id: calendar
+  }
+
+  CalendarMonth {
+    id: month
+    width: 300
+    title: "November 2026"
+    selected: new Date(2026, 10, 12)
   }
 }
