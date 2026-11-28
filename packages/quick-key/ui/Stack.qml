@@ -35,6 +35,16 @@ Scope {
     property bool loaded: false
   }
 
+  // Built once, hidden, past start (the tray's apps registered), and torn down as a close does: Qt is slowest at a type's first creation, so the first open costs what later ones do.
+  Timer {
+    running: true
+    interval: 2000
+    onTriggered: if (!root.shown) {
+      internal.loaded = true;
+      Qt.callLater(() => internal.loaded = root.shown);
+    }
+  }
+
   LazyLoader {
     id: dismiss
     active: internal.loaded
