@@ -12,4 +12,15 @@ Singleton {
   function shown(hide) {
     return Lib.shown(items, hide);
   }
+
+  // Each icon looked up as it registers or changes, so the menu never waits on the theme's first lookup of a name, which Qt then keeps.
+  Instantiator {
+    model: SystemTray.items
+
+    Image {
+      required property SystemTrayItem modelData
+      source: modelData.icon
+      sourceSize: Qt.size(1, 1)
+    }
+  }
 }
