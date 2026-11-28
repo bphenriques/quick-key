@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import qs
 import qs.builtins
@@ -27,6 +28,8 @@ ShellRoot {
   property bool pathClosed: false
   // The keyed plugin's action a key ran.
   property string ran: ""
+  // A dim bar value, long enough to give way.
+  readonly property string neighbour: "tomorrow 11:00 Grocery run at the market"
 
   // A level where each key reaches something else: a row, the bar, a listed item and its own menu, the input.
   readonly property var keyedLevel: ({ kind: "entry", entry: { list: "keyed", input: { desc: "Add", cmd: "true" },
@@ -162,7 +165,7 @@ ShellRoot {
     return Array.from(item.children).find(child => child instanceof Tip)?.text;
   }
 
-  // The clock squeezed in a crowded bar, which lays it out only in a window.
+  // A bar squeezed: an item cut to fit, and the clock beside a neighbour too long for both; a bar lays them out only in a window.
   FloatingWindow {
     implicitWidth: 300
     implicitHeight: 100
@@ -171,7 +174,18 @@ ShellRoot {
       id: cutItem
       menu: menu
       width: 80
-      item: ({ desc: "Calendar", status: "clock" })
+      item: ({ desc: "Calendar", status: "calendar", format: root.neighbour })
+    }
+
+    RowLayout {
+      id: crowded
+      y: 80
+
+      HeaderSlot {
+        id: crowdedSlot
+        menu: menu
+        items: [{ key: "", desc: "clock", status: "clock", uid: "clock" }, { key: "", desc: "Calendar", status: "calendar", format: root.neighbour, uid: "next" }]
+      }
     }
 
     MenuRow {
@@ -1836,12 +1850,20 @@ ShellRoot {
       },
       {
         name: "a bar status cut to fit tips its value whole",
-        until: () => root.tipOf(cutItem) === Clock.text
+        until: () => root.tipOf(cutItem) === root.neighbour
       },
       {
         name: "a bar status shown whole has no tip",
         start: () => cutItem.width = cutItem.implicitWidth,
         until: () => root.tipOf(cutItem) === ""
+      },
+      {
+        name: "a crowded bar keeps the clock whole and cuts its neighbour",
+        start: () => crowded.width = crowdedSlot.wanted - 30,
+        until: () => {
+          const statuses = Array.from(crowdedSlot.content.children).filter(child => child instanceof HeaderItem).map(item => Array.from(item.content).find(child => child instanceof MenuStatus));
+          return crowdedSlot.width < crowdedSlot.wanted && statuses.length === 2 && statuses[0].strong && !statuses[0].cut && statuses[1].cut;
+        }
       },
       {
         name: "a crowded bar shows an action by its glyph alone, its name and value in its tip",

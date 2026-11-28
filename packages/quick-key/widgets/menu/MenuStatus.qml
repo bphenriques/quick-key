@@ -38,6 +38,7 @@ StatusLine {
   detailGlyphs: status ? value.glyphs ?? [] : item.glyphs ?? []
   // The one to find first: the bar's anchor (the clock), or on a row what is in use, so colour is not all that says so.
   strong: shape.strong || (!status && active)
+  keepsStrong: quiet
   // Its own meter (each output's volume), lit while in use; unset, the status's in its level, else none.
   meter: item.meter !== undefined ? item.meter : inLevel ? shape.meter : -1
   meterTone: item.meter !== undefined ? (active ? "primary" : "dim") : shape.muted ? "dim" : "primary"

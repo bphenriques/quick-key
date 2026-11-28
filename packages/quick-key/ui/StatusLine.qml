@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import qs
 
 // Icon, an optional title, text elided to fit and a detail on the right; with a title, the text is a value beside it, right-aligned.
-// Squeezed, the title keeps its width and the value and the detail shorten to `least`, so nothing leaves the card: each label fills, as a layout fixes one that does not fill at its full width.
+// Squeezed, the title keeps its width and the value and the detail shorten to `least` (a strong value, with `keepsStrong`, none), so nothing leaves the card: each label fills, as a layout fixes one that does not fill at its full width.
 RowLayout {
   id: root
 
@@ -37,6 +37,8 @@ RowLayout {
   property bool struck: false
   // Its text bold, the one to find first (the clock).
   property bool strong: false
+  // Squeezed, its strong text stays whole, so the shortage falls on its neighbours (a bar's anchor).
+  property bool keepsStrong: false
   // Still being made: a spinner in place of its icon.
   property bool busy: false
   // Its icon in the square, off where it stands in no column (see Icon).
@@ -79,7 +81,7 @@ RowLayout {
     Layout.fillWidth: true
     Layout.maximumWidth: root.packed ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
     // Squeezed, text ends in an ellipsis, but a short value (80%, EN) stays whole: only a longer one gives way.
-    Layout.minimumWidth: root.least(textLabel, 2)
+    Layout.minimumWidth: root.strong && root.keepsStrong ? Math.ceil(implicitWidth) : root.least(textLabel, 2)
     horizontalAlignment: root.titled && !root.packed ? Text.AlignRight : Text.AlignLeft
     elide: Text.ElideRight
     font.strikeout: root.struck
